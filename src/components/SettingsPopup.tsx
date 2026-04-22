@@ -338,7 +338,7 @@ const SettingsPopup = () => {
                     </div>
                     <div className="flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                         {/* Dynamic Keys for Toggle Visibility */}
-                        {(shortcuts.toggleVisibility || ['⌘', 'B']).map((key, index) => (
+                        {(shortcuts.toggleVisibility || ['⌘', '\\']).map((key, index) => (
                             <div key={index} className={`px-1.5 py-0.5 rounded border text-[10px] font-medium min-w-[20px] text-center ${shortcutKeyClass}`}>
                                 {key}
                             </div>

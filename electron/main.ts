@@ -164,13 +164,14 @@ import { SonioxStreamingSTT } from "./audio/SonioxStreamingSTT"
 import { ElevenLabsStreamingSTT } from "./audio/ElevenLabsStreamingSTT"
 import { OpenAIStreamingSTT } from "./audio/OpenAIStreamingSTT"
 import { NativelyProSTT } from "./audio/NativelyProSTT"
+import { FirebaseManagedSTT } from "./audio/FirebaseManagedSTT"
 import { ThemeManager } from "./ThemeManager"
 import { RAGManager } from "./rag/RAGManager"
 import { DatabaseManager } from "./db/DatabaseManager"
 import { warmupIntentClassifier } from "./llm"
 
 /** Unified type for all STT providers with optional extended capabilities */
-type STTProvider = (GoogleSTT | RestSTT | DeepgramStreamingSTT | SonioxStreamingSTT | ElevenLabsStreamingSTT | OpenAIStreamingSTT | NativelyProSTT) & {
+type STTProvider = (GoogleSTT | RestSTT | DeepgramStreamingSTT | SonioxStreamingSTT | ElevenLabsStreamingSTT | OpenAIStreamingSTT | NativelyProSTT | FirebaseManagedSTT) & {
   finalize?: () => void;
   setAudioChannelCount?: (count: number) => void;
   notifySpeechEnded?: () => void;
@@ -362,6 +363,7 @@ export class AppState {
           actionId === 'chat:clarify' ||
           actionId === 'chat:followUp' ||
           actionId === 'chat:answer' ||
+          actionId === 'chat:clearTranscript' ||
           actionId === 'chat:codeHint' ||
           actionId === 'chat:brainstorm' ||
           actionId === 'chat:dynamicAction4' ||
@@ -373,6 +375,7 @@ export class AppState {
             'chat:clarify': 'clarify',
             'chat:followUp': 'followUp',
             'chat:answer': 'answer',
+            'chat:clearTranscript': 'clearTranscript',
             'chat:codeHint': 'codeHint',
             'chat:brainstorm': 'brainstorm',
             'chat:dynamicAction4': 'dynamicAction4',
@@ -840,7 +843,10 @@ export class AppState {
 
     let stt: STTProvider;
 
-    if (sttProvider === 'natively') {
+    if (sttProvider === 'firebase') {
+      console.log(`[Main] Using FirebaseManagedSTT for ${speaker}`);
+      stt = new FirebaseManagedSTT();
+    } else if (sttProvider === 'natively') {
       const nativelyKey = CredentialsManager.getInstance().getNativelyApiKey();
       if (!nativelyKey) {
         // Natively is Coming Soon — no key means degrade gracefully like every other provider
@@ -2219,7 +2225,7 @@ export class AppState {
     const displayScreenshot = formatAccel(screenshotAccel);
     // We can also get the toggle visibility shortcut if desired
     const toggleKb = keybindManager.getKeybind('general:toggle-visibility');
-    const toggleAccel = toggleKb || 'CommandOrControl+B';
+    const toggleAccel = toggleKb || 'CommandOrControl+\\';
     const displayToggle = formatAccel(toggleAccel);
 
     const contextMenu = Menu.buildFromTemplate([

@@ -12,7 +12,7 @@ export interface KeybindConfig {
 
 export const DEFAULT_KEYBINDS: KeybindConfig[] = [
     // General
-    { id: 'general:toggle-visibility', label: 'Toggle Visibility', accelerator: 'CommandOrControl+B', isGlobal: true, defaultAccelerator: 'CommandOrControl+B' },
+    { id: 'general:toggle-visibility', label: 'Toggle Visibility', accelerator: 'CommandOrControl+\\', isGlobal: true, defaultAccelerator: 'CommandOrControl+\\' },
     { id: 'general:toggle-mouse-passthrough', label: 'Toggle Mouse Passthrough', accelerator: 'CommandOrControl+Shift+B', isGlobal: true, defaultAccelerator: 'CommandOrControl+Shift+B' },
     { id: 'general:process-screenshots', label: 'Process Screenshots', accelerator: 'CommandOrControl+Enter', isGlobal: true, defaultAccelerator: 'CommandOrControl+Enter' },
     { id: 'general:capture-and-process', label: 'Capture Screen & Ask AI (Global)', accelerator: 'CommandOrControl+Shift+Enter', isGlobal: true, defaultAccelerator: 'CommandOrControl+Shift+Enter' },
@@ -25,17 +25,18 @@ export const DEFAULT_KEYBINDS: KeybindConfig[] = [
     { id: 'chat:clarify', label: 'Clarify', accelerator: 'CommandOrControl+2', isGlobal: true, defaultAccelerator: 'CommandOrControl+2' },
     { id: 'chat:dynamicAction4', label: 'Recap / Brainstorm', accelerator: 'CommandOrControl+3', isGlobal: true, defaultAccelerator: 'CommandOrControl+3' },
     { id: 'chat:followUp', label: 'Follow Up', accelerator: 'CommandOrControl+4', isGlobal: true, defaultAccelerator: 'CommandOrControl+4' },
-    { id: 'chat:answer', label: 'Answer / Record', accelerator: 'CommandOrControl+5', isGlobal: true, defaultAccelerator: 'CommandOrControl+5' },
+    { id: 'chat:answer', label: 'Answer / Record', accelerator: 'CommandOrControl+[', isGlobal: true, defaultAccelerator: 'CommandOrControl+[' },
+    { id: 'chat:clearTranscript', label: 'Clear Transcript', accelerator: 'CommandOrControl+]', isGlobal: true, defaultAccelerator: 'CommandOrControl+]' },
     { id: 'chat:codeHint', label: 'Get Code Hint', accelerator: 'CommandOrControl+6', isGlobal: true, defaultAccelerator: 'CommandOrControl+6' },
     { id: 'chat:brainstorm', label: 'Brainstorm Approaches', accelerator: 'CommandOrControl+7', isGlobal: true, defaultAccelerator: 'CommandOrControl+7' },
     { id: 'chat:scrollUp', label: 'Scroll Up', accelerator: 'CommandOrControl+Up', isGlobal: true, defaultAccelerator: 'CommandOrControl+Up' },
     { id: 'chat:scrollDown', label: 'Scroll Down', accelerator: 'CommandOrControl+Down', isGlobal: true, defaultAccelerator: 'CommandOrControl+Down' },
 
     // Window Movement - Global shortcuts (stealth window positioning)
-    { id: 'window:move-up', label: 'Move Window Up', accelerator: 'CommandOrControl+Shift+Up', isGlobal: true, defaultAccelerator: 'CommandOrControl+Shift+Up' },
-    { id: 'window:move-down', label: 'Move Window Down', accelerator: 'CommandOrControl+Shift+Down', isGlobal: true, defaultAccelerator: 'CommandOrControl+Shift+Down' },
-    { id: 'window:move-left', label: 'Move Window Left', accelerator: 'CommandOrControl+Shift+Left', isGlobal: true, defaultAccelerator: 'CommandOrControl+Shift+Left' },
-    { id: 'window:move-right', label: 'Move Window Right', accelerator: 'CommandOrControl+Shift+Right', isGlobal: true, defaultAccelerator: 'CommandOrControl+Shift+Right' },
+    { id: 'window:move-up', label: 'Move Window Up', accelerator: 'CommandOrControl+Up', isGlobal: true, defaultAccelerator: 'CommandOrControl+Up' },
+    { id: 'window:move-down', label: 'Move Window Down', accelerator: 'CommandOrControl+Down', isGlobal: true, defaultAccelerator: 'CommandOrControl+Down' },
+    { id: 'window:move-left', label: 'Move Window Left', accelerator: 'CommandOrControl+Left', isGlobal: true, defaultAccelerator: 'CommandOrControl+Left' },
+    { id: 'window:move-right', label: 'Move Window Right', accelerator: 'CommandOrControl+Right', isGlobal: true, defaultAccelerator: 'CommandOrControl+Right' },
 ];
 
 export class KeybindManager {
@@ -170,6 +171,35 @@ export class KeybindManager {
             }
         } catch (error) {
             console.error('[KeybindManager] Failed to load keybinds:', error);
+        }
+
+        this.migrateLegacyWindowMoveShortcuts();
+    }
+
+    private migrateLegacyWindowMoveShortcuts() {
+        const legacyToCurrent: Record<string, string> = {
+            'general:toggle-visibility': 'CommandOrControl+B',
+            'window:move-up': 'CommandOrControl+Shift+Up',
+            'window:move-down': 'CommandOrControl+Shift+Down',
+            'window:move-left': 'CommandOrControl+Shift+Left',
+            'window:move-right': 'CommandOrControl+Shift+Right',
+        };
+
+        let updated = false;
+
+        Object.entries(legacyToCurrent).forEach(([id, legacyAccelerator]) => {
+            const keybind = this.keybinds.get(id);
+            if (!keybind) return;
+
+            if (this.normalizeAccelerator(keybind.accelerator) === this.normalizeAccelerator(legacyAccelerator)) {
+                keybind.accelerator = keybind.defaultAccelerator;
+                this.keybinds.set(id, keybind);
+                updated = true;
+            }
+        });
+
+        if (updated) {
+            this.save();
         }
     }
 
@@ -359,7 +389,7 @@ export class KeybindManager {
         }
 
         const toggleKb = this.keybinds.get('general:toggle-visibility');
-        const toggleAccelerator = toggleKb ? toggleKb.accelerator : 'CommandOrControl+B';
+        const toggleAccelerator = toggleKb ? toggleKb.accelerator : 'CommandOrControl+\\';
 
         const template: any[] = [
             {

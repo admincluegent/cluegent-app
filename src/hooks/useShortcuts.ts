@@ -10,6 +10,7 @@ export interface ShortcutConfig {
     followUp: string[];
     dynamicAction4: string[];
     answer: string[];
+    clearTranscript: string[];
     codeHint: string[];
     brainstorm: string[];
     shorten: string[];
@@ -40,18 +41,19 @@ function buildDefaultShortcuts(): ShortcutConfig {
         clarify: [mod, '2'],
         dynamicAction4: [mod, '3'],
         followUp: [mod, '4'],
-        answer: [mod, '5'],
+        answer: [mod, '['],
+        clearTranscript: [mod, ']'],
         codeHint: [mod, '6'],
         brainstorm: [mod, '7'],
         shorten: [],
         recap: [],
         scrollUp: ['↑'],
         scrollDown: ['↓'],
-        moveWindowUp: [mod, shift, '↑'],
-        moveWindowDown: [mod, shift, '↓'],
-        moveWindowLeft: [mod, shift, '←'],
-        moveWindowRight: [mod, shift, '→'],
-        toggleVisibility: [mod, 'B'],
+        moveWindowUp: [mod, '↑'],
+        moveWindowDown: [mod, '↓'],
+        moveWindowLeft: [mod, '←'],
+        moveWindowRight: [mod, '→'],
+        toggleVisibility: [mod, '\\'],
         toggleMousePassthrough: [mod, shift, 'B'],
         processScreenshots: [mod, 'Enter'],
         captureAndProcess: [mod, shift, 'Enter'],
@@ -67,18 +69,19 @@ export const DEFAULT_SHORTCUTS: ShortcutConfig = {
     clarify: ['⌘', '2'],
     dynamicAction4: ['⌘', '3'],   // slot 3 — matches KeybindManager
     followUp: ['⌘', '4'],          // slot 4 — matches KeybindManager
-    answer: ['⌘', '5'],
+    answer: ['⌘', '['],
+    clearTranscript: ['⌘', ']'],
     codeHint: ['⌘', '6'],
     brainstorm: ['⌘', '7'],
     shorten: [],
     recap: [],
     scrollUp: ['↑'],
     scrollDown: ['↓'],
-    moveWindowUp: ['⌘', '⇧', '↑'],
-    moveWindowDown: ['⌘', '⇧', '↓'],
-    moveWindowLeft: ['⌘', '⇧', '←'],
-    moveWindowRight: ['⌘', '⇧', '→'],
-    toggleVisibility: ['⌘', 'B'],
+    moveWindowUp: ['⌘', '↑'],
+    moveWindowDown: ['⌘', '↓'],
+    moveWindowLeft: ['⌘', '←'],
+    moveWindowRight: ['⌘', '→'],
+    toggleVisibility: ['⌘', '\\'],
     toggleMousePassthrough: ['⌘', '⇧', 'B'],
     processScreenshots: ['⌘', 'Enter'],
     captureAndProcess: ['⌘', '⇧', 'Enter'],
@@ -107,6 +110,7 @@ export const useShortcuts = () => {
                 else if (kb.id === 'chat:clarify') newShortcuts.clarify = keys;
                 else if (kb.id === 'chat:dynamicAction4') newShortcuts.dynamicAction4 = keys;
                 else if (kb.id === 'chat:answer') newShortcuts.answer = keys;
+                else if (kb.id === 'chat:clearTranscript') newShortcuts.clearTranscript = keys;
                 else if (kb.id === 'chat:codeHint') newShortcuts.codeHint = keys;
                 else if (kb.id === 'chat:brainstorm') newShortcuts.brainstorm = keys;
                 else if (kb.id === 'chat:shorten') newShortcuts.shorten = keys;
@@ -170,6 +174,7 @@ export const useShortcuts = () => {
             case 'followUp': backendId = 'chat:followUp'; break;
             case 'dynamicAction4': backendId = 'chat:dynamicAction4'; break;
             case 'answer': backendId = 'chat:answer'; break;
+            case 'clearTranscript': backendId = 'chat:clearTranscript'; break;
             case 'codeHint': backendId = 'chat:codeHint'; break;
             case 'brainstorm': backendId = 'chat:brainstorm'; break;
             case 'shorten': backendId = 'chat:shorten'; break;

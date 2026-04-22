@@ -8,6 +8,8 @@ import * as os from "os";
 import * as path from "path";
 import * as fs from "fs";
 import { AudioDevices } from "./audio/AudioDevices";
+import { startFirebaseGoogleSignIn } from "./services/FirebaseAuthManager";
+import { FirebaseSessionManager } from "./services/FirebaseSessionManager";
 
 
 import { RECOGNITION_LANGUAGES, AI_RESPONSE_LANGUAGES } from "./config/languages"
@@ -168,6 +170,15 @@ export function initializeIpcHandlers(appState: AppState): void {
 
   safeHandle("get-ai-response-languages", async () => {
     return AI_RESPONSE_LANGUAGES;
+  });
+
+  safeHandle("firebase-auth:start-google-sign-in", async (_, apiKey: string) => {
+    return await startFirebaseGoogleSignIn(apiKey);
+  });
+
+  safeHandle("firebase-auth:set-id-token", async (_, idToken: string | null) => {
+    FirebaseSessionManager.getInstance().setIdToken(idToken);
+    return { success: true };
   });
 
   safeHandle("set-ai-response-language", async (_, language: string) => {
@@ -1491,7 +1502,7 @@ export function initializeIpcHandlers(appState: AppState): void {
   // STT Provider Management Handlers
   // ==========================================
 
-  safeHandle("set-stt-provider", async (_, provider: 'none' | 'google' | 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox' | 'natively') => {
+  safeHandle("set-stt-provider", async (_, provider: 'none' | 'google' | 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox' | 'natively' | 'firebase') => {
     try {
       const { CredentialsManager } = require('./services/CredentialsManager');
       CredentialsManager.getInstance().setSttProvider(provider);
@@ -3149,17 +3160,24 @@ export function initializeIpcHandlers(appState: AppState): void {
   safeHandle("modes:upload-reference-file", async (_, modeId: string) => {
     try {
       if (!isProOrTrialActive()) return { success: false, error: 'pro_required' };
-      const result = await dialog.showOpenDialog({
+      const dialogResult = (await dialog.showOpenDialog({
         properties: ['openFile'],
         filters: [
           { name: 'Text & Documents', extensions: ['txt', 'md', 'pdf', 'docx', 'doc'] },
           { name: 'All Files', extensions: ['*'] },
         ],
-      });
-      if (result.canceled || !result.filePaths.length) {
+      })) as string[] | { canceled?: boolean; filePaths?: string[] };
+      const filePaths = Array.isArray(dialogResult)
+        ? dialogResult
+        : dialogResult.filePaths ?? [];
+      const canceled = Array.isArray(dialogResult)
+        ? filePaths.length === 0
+        : Boolean(dialogResult.canceled);
+
+      if (canceled || !filePaths.length) {
         return { success: false, cancelled: true };
       }
-      const filePath = result.filePaths[0];
+      const filePath = filePaths[0];
       const fileName = path.basename(filePath);
       const ext = path.extname(filePath).toLowerCase();
 
@@ -3258,4 +3276,3 @@ export function initializeIpcHandlers(appState: AppState): void {
     }
   });
 }
-

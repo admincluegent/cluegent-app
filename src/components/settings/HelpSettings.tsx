@@ -1396,7 +1396,7 @@ export const HelpSettings: React.FC<{ onNavigate?: (tab: string) => void }> = ({
                                         </div>
                                     </div>
                                     <div className="flex gap-1 shrink-0">
-                                        {(shortcuts.toggleVisibility || ['⌘', 'B']).map((key: string, i: number) => <span key={i} className={kbdClass}>{key}</span>)}
+                                        {(shortcuts.toggleVisibility || ['⌘', '\\']).map((key: string, i: number) => <span key={i} className={kbdClass}>{key}</span>)}
                                     </div>
                                 </div>
                                 

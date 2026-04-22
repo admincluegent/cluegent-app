@@ -33,7 +33,7 @@ export interface StoredCredentials {
     defaultModel?: string;
     nativelyApiKey?: string;
     // STT Provider settings
-    sttProvider?: 'none' | 'google' | 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox' | 'natively';
+    sttProvider?: 'none' | 'google' | 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox' | 'natively' | 'firebase';
     groqSttApiKey?: string;
     groqSttModel?: string;
     openAiSttApiKey?: string;
@@ -58,6 +58,20 @@ export interface StoredCredentials {
     trialExpiresAt?: string;   // ISO timestamp — local copy for startup check
     trialStartedAt?: string;   // ISO timestamp
     trialClaimed?:   boolean;  // set true on first claim, never cleared — hides start card permanently
+}
+
+function normalizeStoredModelId(model?: string): string | undefined {
+    if (!model) return model;
+
+    const normalized = model.trim();
+    if (!normalized) return undefined;
+
+    const legacyModelMap: Record<string, string> = {
+        'gemini-3-flash-preview': 'gemini-3.1-flash-lite-preview',
+        'gemini-3-pro-preview': 'gemini-3.1-pro-preview',
+    };
+
+    return legacyModelMap[normalized] || normalized;
 }
 
 export class CredentialsManager {
@@ -112,7 +126,7 @@ export class CredentialsManager {
         return this.credentials.customProviders || [];
     }
 
-    public getSttProvider(): 'none' | 'google' | 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox' | 'natively' {
+    public getSttProvider(): 'none' | 'google' | 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox' | 'natively' | 'firebase' {
         const provider = this.credentials.sttProvider || 'none';
         // Self-heal: if provider is 'none' but a Natively key exists, the user is in a
         // broken state (key cleared then re-entered via a path that skipped auto-promote,
@@ -178,7 +192,12 @@ export class CredentialsManager {
         return this.credentials.aiResponseLanguage || 'auto';
     }
     public getDefaultModel(): string {
-        return this.credentials.defaultModel || 'gemini-3.1-flash-lite-preview';
+        const normalized = normalizeStoredModelId(this.credentials.defaultModel) || 'gemini-3.1-flash-lite-preview';
+        if (normalized !== this.credentials.defaultModel) {
+            this.credentials.defaultModel = normalized;
+            this.saveCredentials();
+        }
+        return normalized;
     }
 
     public getNativelyApiKey(): string | undefined {
@@ -223,7 +242,7 @@ export class CredentialsManager {
         console.log('[CredentialsManager] Google Service Account path updated');
     }
 
-    public setSttProvider(provider: 'none' | 'google' | 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox' | 'natively'): void {
+    public setSttProvider(provider: 'none' | 'google' | 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox' | 'natively' | 'firebase'): void {
         this.credentials.sttProvider = provider;
         this.saveCredentials();
         console.log(`[CredentialsManager] STT Provider set to: ${provider}`);
@@ -308,9 +327,9 @@ export class CredentialsManager {
         console.log(`[CredentialsManager] AI Response Language set to: ${language}`);
     }
     public setDefaultModel(model: string): void {
-        this.credentials.defaultModel = model;
+        this.credentials.defaultModel = normalizeStoredModelId(model);
         this.saveCredentials();
-        console.log(`[CredentialsManager] Default Model set to: ${model}`);
+        console.log(`[CredentialsManager] Default Model set to: ${this.credentials.defaultModel}`);
     }
 
     public setNativelyApiKey(key: string): void {
@@ -355,14 +374,22 @@ export class CredentialsManager {
 
     public getPreferredModel(provider: 'gemini' | 'groq' | 'openai' | 'claude'): string | undefined {
         const key = `${provider}PreferredModel` as keyof StoredCredentials;
-        return this.credentials[key] as string | undefined;
+        const value = this.credentials[key] as string | undefined;
+        const normalized = provider === 'gemini' ? normalizeStoredModelId(value) : value;
+        if (normalized !== value) {
+            (this.credentials as any)[key] = normalized;
+            this.saveCredentials();
+        }
+        return normalized;
     }
 
     public setPreferredModel(provider: 'gemini' | 'groq' | 'openai' | 'claude', modelId: string): void {
         const key = `${provider}PreferredModel` as keyof StoredCredentials;
-        (this.credentials as any)[key] = modelId;
+        (this.credentials as any)[key] = provider === 'gemini'
+            ? normalizeStoredModelId(modelId)
+            : modelId;
         this.saveCredentials();
-        console.log(`[CredentialsManager] ${provider} preferred model set to: ${modelId}`);
+        console.log(`[CredentialsManager] ${provider} preferred model set to: ${(this.credentials as any)[key]}`);
     }
 
     public saveCustomProvider(provider: CustomProvider): void {

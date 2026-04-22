@@ -12,6 +12,22 @@ export interface ProviderModel {
 
 type Provider = 'gemini' | 'groq' | 'openai' | 'claude';
 
+function formatGeminiLabel(id: string, displayName?: string): string {
+    const normalizedId = id.trim();
+    const knownLabels: Record<string, string> = {
+        'gemini-3.1-flash-lite-preview': 'Gemini 3.1 Flash',
+        'gemini-3.1-pro-preview': 'Gemini 3.1 Pro',
+        'gemini-2.5-flash': 'Gemini 2.5 Flash',
+        'gemini-2.5-pro': 'Gemini 2.5 Pro',
+    };
+
+    if (knownLabels[normalizedId]) {
+        return knownLabels[normalizedId];
+    }
+
+    return displayName || normalizedId;
+}
+
 /**
  * Fetch available models from a provider's API.
  * Returns a filtered, sorted array of { id, label } objects.
@@ -158,7 +174,7 @@ async function fetchGeminiModels(apiKey: string): Promise<ProviderModel[]> {
     return filtered
         .map((m: any) => {
             const id = (m.name || '').replace(/^models\//, '');
-            return { id, label: m.displayName || id };
+            return { id, label: formatGeminiLabel(id, m.displayName) };
         })
         .sort((a, b) => a.label.localeCompare(b.label));
 }

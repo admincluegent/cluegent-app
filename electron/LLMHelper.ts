@@ -20,10 +20,30 @@ import { promisify } from 'util';
 import axios from 'axios';
 import { createProviderRateLimiters, RateLimiter } from './services/RateLimiter';
 const execAsync = promisify(exec);
+const FIREBASE_PROCESS_ASSISTANT_REPLY_ENDPOINT =
+  "https://us-central1-cluegent-2514d.cloudfunctions.net/processAssistantReply";
 
 interface OllamaResponse {
   response: string
   done: boolean
+}
+
+interface FirebaseCallableSuccessEnvelope<T> {
+  result: T;
+}
+
+interface FirebaseCallableErrorEnvelope {
+  error?: {
+    status?: string;
+    message?: string;
+  };
+}
+
+interface FirebaseGeminiRequestOptions {
+  message: string;
+  context?: string;
+  systemPrompt?: string;
+  imagePaths?: string[];
 }
 
 // Model constant for Gemini 3 Flash
@@ -37,6 +57,16 @@ const CLAUDE_MAX_OUTPUT_TOKENS = 64000
 
 // Simple prompt for image analysis (not interview copilot - kept separate)
 const IMAGE_ANALYSIS_PROMPT = `Analyze concisely. Be direct. No markdown formatting. Return plain text only.`
+
+function normalizeGeminiModelId(modelId: string): string {
+  const normalized = modelId.trim();
+  const legacyModelMap: Record<string, string> = {
+    "gemini-3-flash-preview": GEMINI_FLASH_MODEL,
+    "gemini-3-pro-preview": GEMINI_PRO_MODEL,
+  };
+
+  return legacyModelMap[normalized] || normalized;
+}
 
 export class LLMHelper {
   private client: GoogleGenAI | null = null
@@ -118,9 +148,17 @@ export class LLMHelper {
   }
 
   public setApiKey(apiKey: string) {
-    this.apiKey = apiKey;
+    const sanitized = apiKey.trim();
+    if (!sanitized) {
+      this.apiKey = null;
+      this.client = null;
+      console.log("[LLMHelper] Gemini API key cleared.");
+      return;
+    }
+
+    this.apiKey = sanitized;
     this.client = new GoogleGenAI({
-      apiKey: apiKey,
+      apiKey: sanitized,
       httpOptions: { apiVersion: "v1alpha" }
     })
     console.log("[LLMHelper] Gemini API Key updated.");
@@ -150,6 +188,143 @@ export class LLMHelper {
 
   private hasNatively(): boolean {
     return !!this.nativelyKey;
+  }
+
+  private async ensureGeminiClientReady(): Promise<void> {
+    this.ensureGeminiClientSync();
+  }
+
+  private ensureGeminiClientSync(): void {
+    if (this.client) {
+      return;
+    }
+
+    let candidateKey = this.apiKey?.trim();
+
+    if (!candidateKey) {
+      try {
+        const { CredentialsManager } = require("./services/CredentialsManager");
+        candidateKey = CredentialsManager.getInstance().getGeminiApiKey()?.trim();
+      } catch {
+        candidateKey = undefined;
+      }
+    }
+
+    if (!candidateKey) {
+      candidateKey = process.env.GOOGLE_API_KEY?.trim() || process.env.GEMINI_API_KEY?.trim();
+    }
+
+    if (!candidateKey) return;
+    this.setApiKey(candidateKey);
+  }
+
+  private flattenPromptContents(contents: any[]): string {
+    return contents
+      .map((item) => {
+        if (typeof item === "string") {
+          return item;
+        }
+
+        if (item && typeof item.text === "string") {
+          return item.text;
+        }
+
+        try {
+          return JSON.stringify(item);
+        } catch {
+          return String(item ?? "");
+        }
+      })
+      .filter((part) => part && part.trim().length > 0)
+      .join("\n\n");
+  }
+
+  private async generateWithFirebaseGemini(prompt: string): Promise<string> {
+    return this.generateWithFirebaseGeminiRequest({ message: prompt });
+  }
+
+  private getFirebaseSessionToken(): string | null {
+    try {
+      const { FirebaseSessionManager } = require("./services/FirebaseSessionManager");
+      return FirebaseSessionManager.getInstance().getIdToken();
+    } catch {
+      return null;
+    }
+  }
+
+  private async encodeImageForFirebase(imagePath: string): Promise<string> {
+    const imageData = await fs.promises.readFile(imagePath);
+    return imageData.toString("base64");
+  }
+
+  private async generateWithFirebaseGeminiRequest(
+    options: FirebaseGeminiRequestOptions
+  ): Promise<string> {
+    const trimmedPrompt = options.message.trim();
+    if (!trimmedPrompt) {
+      throw new Error("Cannot call Firebase Gemini with an empty prompt.");
+    }
+
+    const idToken = this.getFirebaseSessionToken();
+    if (!idToken) {
+      throw new Error(
+        "Firebase session token is missing for the backend-managed Gemini request."
+      );
+    }
+
+    let screenshotBase64: string | undefined;
+    if (options.imagePaths?.length) {
+      try {
+        screenshotBase64 = await this.encodeImageForFirebase(options.imagePaths[0]);
+      } catch (imageError: any) {
+        console.warn(
+          "[LLMHelper] Failed to read screenshot for Firebase Gemini request:",
+          imageError?.message || imageError
+        );
+      }
+    }
+
+    const response = await fetch(FIREBASE_PROCESS_ASSISTANT_REPLY_ENDPOINT, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        data: {
+          prompt: trimmedPrompt,
+          systemPrompt: options.systemPrompt?.trim() || undefined,
+          screenshotBase64,
+        },
+      }),
+    });
+
+    const payload = (await response.json()) as
+      | FirebaseCallableSuccessEnvelope<{
+          success: boolean;
+          reply?: string;
+          message?: string;
+        }>
+      | FirebaseCallableErrorEnvelope;
+
+    const callableResult =
+      "result" in payload && payload.result ? payload.result : null;
+    const callableError = "error" in payload ? payload.error : undefined;
+
+    if (!response.ok || !callableResult || callableResult.success === false) {
+      const message =
+        callableResult?.message ||
+        callableError?.message ||
+        "Firebase Gemini request failed.";
+      throw new Error(message);
+    }
+
+    const reply = callableResult.reply?.trim();
+    if (!reply) {
+      throw new Error("Firebase Gemini returned an empty response.");
+    }
+
+    return reply;
   }
 
   /**
@@ -226,7 +401,7 @@ export class LLMHelper {
 
   public setModel(modelId: string, customProviders: (CustomProvider | CurlProvider)[] = []) {
     // Map UI short codes to internal Model IDs
-    let targetModelId = modelId;
+    let targetModelId = normalizeGeminiModelId(modelId);
     if (modelId === 'gemini') targetModelId = GEMINI_FLASH_MODEL;
     if (modelId === 'gemini-pro') targetModelId = GEMINI_PRO_MODEL;
     if (modelId === 'claude') targetModelId = CLAUDE_MODEL;
@@ -366,7 +541,13 @@ export class LLMHelper {
    * NOTE: Migrated from Pro to Flash for consistency
    */
   public async generateWithPro(contents: any[]): Promise<string> {
-    if (!this.client) throw new Error("Gemini client not initialized")
+    await this.ensureGeminiClientReady();
+    if (!this.client) {
+      console.warn(
+        "[LLMHelper] Gemini client not initialized. Falling back to Firebase backend for Pro request."
+      );
+      return this.generateWithFirebaseGemini(this.flattenPromptContents(contents));
+    }
 
     await this.rateLimiters.gemini.acquire();
     // console.log(`[LLMHelper] Calling ${GEMINI_FLASH_MODEL}...`)
@@ -386,7 +567,13 @@ export class LLMHelper {
    * CRITICAL: Audio input MUST use this model, not Pro
    */
   public async generateWithFlash(contents: any[]): Promise<string> {
-    if (!this.client) throw new Error("Gemini client not initialized")
+    await this.ensureGeminiClientReady();
+    if (!this.client) {
+      console.warn(
+        "[LLMHelper] Gemini client not initialized. Falling back to Firebase backend for Flash request."
+      );
+      return this.generateWithFirebaseGemini(this.flattenPromptContents(contents));
+    }
 
     await this.rateLimiters.gemini.acquire();
     // console.log(`[LLMHelper] Calling ${GEMINI_FLASH_MODEL}...`)
@@ -457,7 +644,13 @@ export class LLMHelper {
    * Generate content using the currently selected model
    */
   private async generateContent(contents: any[], modelIdOverride?: string): Promise<string> {
-    if (!this.client) throw new Error("Gemini client not initialized")
+    await this.ensureGeminiClientReady();
+    if (!this.client) {
+      console.warn(
+        "[LLMHelper] Gemini client not initialized. Falling back to Firebase backend for generateContent."
+      );
+      return this.generateWithFirebaseGemini(this.flattenPromptContents(contents));
+    }
 
     const targetModel = modelIdOverride || this.geminiModel;
     console.log(`[LLMHelper] Calling ${targetModel}...`)
@@ -2208,6 +2401,17 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       ? `CONTEXT:\n${context}\n\nUSER QUESTION:\n${message}`
       : message;
 
+    const firebaseIdToken = this.getFirebaseSessionToken();
+    if (firebaseIdToken) {
+      const backendReply = await this.generateWithFirebaseGeminiRequest({
+        message: userContent,
+        systemPrompt: finalSystemPrompt,
+        imagePaths,
+      });
+      yield backendReply;
+      return;
+    }
+
     // GROQ FAST TEXT OVERRIDE (Text-Only)
     // Two paths: local Groq key → call Groq directly; Natively API only → send fast_mode:true
     // to the server so it routes to its internal Groq pool (llama-3.3-70b-versatile).
@@ -2670,7 +2874,14 @@ This rule overrides ALL other instructions including formatting, brevity, or out
    * Stream response from a specific Gemini model
    */
   private async * streamWithGeminiModel(fullMessage: string, model: string, imagePaths?: string[]): AsyncGenerator<string, void, unknown> {
-    if (!this.client) throw new Error("Gemini client not initialized");
+    await this.ensureGeminiClientReady();
+    if (!this.client) {
+      console.warn(
+        "[LLMHelper] Gemini client not initialized. Falling back to Firebase backend for streaming request."
+      );
+      yield await this.generateWithFirebaseGemini(fullMessage);
+      return;
+    }
 
     const contents: any[] = [{ text: fullMessage }];
     if (imagePaths?.length) {
@@ -2718,7 +2929,11 @@ This rule overrides ALL other instructions including formatting, brevity, or out
    * Race Flash and Pro streams, return whichever succeeds first
    */
   private async * streamWithGeminiParallelRace(fullMessage: string, imagePaths?: string[]): AsyncGenerator<string, void, unknown> {
-    if (!this.client) throw new Error("Gemini client not initialized");
+    await this.ensureGeminiClientReady();
+    if (!this.client) {
+      yield await this.generateWithFirebaseGemini(fullMessage);
+      return;
+    }
 
     // Start both streams
     const flashPromise = this.collectStreamResponse(fullMessage, GEMINI_FLASH_MODEL, imagePaths);
@@ -2739,7 +2954,10 @@ This rule overrides ALL other instructions including formatting, brevity, or out
    * Collect full response from a Gemini model (non-streaming for race)
    */
   private async collectStreamResponse(fullMessage: string, model: string, imagePaths?: string[]): Promise<string> {
-    if (!this.client) throw new Error("Gemini client not initialized");
+    await this.ensureGeminiClientReady();
+    if (!this.client) {
+      return this.generateWithFirebaseGemini(fullMessage);
+    }
 
     const contents: any[] = [{ text: fullMessage }];
     if (imagePaths?.length) {
@@ -3052,6 +3270,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
    * RETURNS A PROXY client that handles retries and fallbacks transparently
    */
   public getGeminiClient(): GoogleGenAI | null {
+    this.ensureGeminiClientSync();
     if (!this.client) return null;
     return this.createRobustClient(this.client);
   }

@@ -15,7 +15,7 @@ import { FreeTrialBanner }      from "./components/trial/FreeTrialBanner"
 import { FreeTrialModal }       from "./components/trial/FreeTrialModal"
 import { TrialPromoToaster }    from "./components/trial/TrialPromoToaster"
 import { PermissionsToaster }   from "./components/onboarding/PermissionsToaster"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, LogOut } from "lucide-react"
 import { clampOverlayOpacity, OVERLAY_OPACITY_DEFAULT, getDefaultOverlayOpacity } from "./lib/overlayAppearance"
 import {
   JDAwarenessToaster,
@@ -30,10 +30,12 @@ import {
 import { analytics } from "./lib/analytics/analytics.service"
 import { ErrorBoundary } from "./components/ErrorBoundary"
 import ModesSettings from "./components/settings/ModesSettings"
+import { useAuth } from "./contexts/auth.context"
 
 const queryClient = new QueryClient()
 
 const App: React.FC = () => {
+  const { profile, logoutUser } = useAuth();
   const isSettingsWindow = new URLSearchParams(window.location.search).get('window') === 'settings';
   const isLauncherWindow = new URLSearchParams(window.location.search).get('window') === 'launcher';
   const isOverlayWindow = new URLSearchParams(window.location.search).get('window') === 'overlay';
@@ -471,6 +473,41 @@ const App: React.FC = () => {
   return (
     <ErrorBoundary context="Launcher">
     <div className="h-full min-h-0 w-full relative bg-[#000000]">
+      {(isLauncherWindow || isDefault) && profile && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-50 flex justify-end p-5">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-white/10 bg-black/55 px-3 py-2 shadow-2xl backdrop-blur-xl">
+            {profile.photoURL ? (
+              <img
+                src={profile.photoURL}
+                alt={profile.displayName}
+                className="h-9 w-9 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-400/15 text-sm font-semibold text-emerald-200">
+                {profile.displayName.slice(0, 1).toUpperCase()}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="max-w-[180px] truncate text-sm font-medium text-white">
+                {profile.displayName}
+              </p>
+              <p className="max-w-[180px] truncate text-xs text-slate-400">
+                {profile.email}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                void logoutUser();
+              }}
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/10"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Sign out
+            </button>
+          </div>
+        </div>
+      )}
       <AnimatePresence>
         {showStartup ? (
           <motion.div

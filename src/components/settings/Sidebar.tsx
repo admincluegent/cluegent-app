@@ -1,9 +1,9 @@
 import React from 'react';
-import { Monitor, Cpu, Info, Zap } from 'lucide-react';
+import { Monitor, Info, Zap } from 'lucide-react';
 
 interface SidebarProps {
-    activeTab: 'general' | 'natively-api' | 'ai-providers' | 'about';
-    setActiveTab: (tab: 'general' | 'natively-api' | 'ai-providers' | 'about') => void;
+    activeTab: 'general' | 'natively-api' | 'about';
+    setActiveTab: (tab: 'general' | 'natively-api' | 'about') => void;
     onClose: () => void;
 }
 
@@ -24,12 +24,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onClo
                         className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${activeTab === 'natively-api' ? 'bg-bg-item-active text-text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-bg-item-active/50'}`}
                     >
                         <Zap size={16} className="text-blue-500" /> Natively API
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('ai-providers')}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${activeTab === 'ai-providers' ? 'bg-bg-item-active text-text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-bg-item-active/50'}`}
-                    >
-                        <Cpu size={16} /> AI Providers
                     </button>
                     {/* Add more tabs as needed */}
                 </nav>

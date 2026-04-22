@@ -149,8 +149,8 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         return () => unsub?.();
     }, []);
 
-    // Model Selection State
-    const [currentModel, setCurrentModel] = useState<string>('gemini-3-flash-preview');
+    // Backend-managed model badge
+    const [currentModel] = useState<string>('firebase-managed');
 
     // Dynamic Action Button Mode (Recap vs Brainstorm)
     const [actionButtonMode, setActionButtonMode] = useState<'recap' | 'brainstorm'>('recap');
@@ -182,38 +182,6 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     const quickActionClass = 'overlay-chip-surface overlay-text-interactive';
     const inputClass = `${isLightTheme ? 'focus:ring-black/10' : 'focus:ring-white/10'} overlay-input-surface overlay-input-text`;
     const controlSurfaceClass = 'overlay-control-surface overlay-text-interactive';
-
-    useEffect(() => {
-        // Load the persisted default model (not the runtime model)
-        // Each new meeting starts with the default from settings
-        if (window.electronAPI?.getDefaultModel) {
-            window.electronAPI.getDefaultModel()
-                .then((result: any) => {
-                    if (result && result.model) {
-                        setCurrentModel(result.model);
-                        // Also set the runtime model to the default
-                        window.electronAPI.setModel(result.model).catch(() => { });
-                    }
-                })
-                .catch((err: any) => console.error("Failed to fetch default model:", err));
-        }
-    }, []);
-
-    const handleModelSelect = (modelId: string) => {
-        setCurrentModel(modelId);
-        // Session-only: update runtime but don't persist as default
-        window.electronAPI.setModel(modelId)
-            .catch((err: any) => console.error("Failed to set model:", err));
-    };
-
-    // Listen for default model changes from Settings
-    useEffect(() => {
-        if (!window.electronAPI?.onModelChanged) return;
-        const unsubscribe = window.electronAPI.onModelChanged((modelId: string) => {
-            setCurrentModel(prev => prev === modelId ? prev : modelId);
-        });
-        return () => unsubscribe();
-    }, []);
 
     // Global State Sync
     useEffect(() => {
@@ -1761,6 +1729,9 @@ Provide only the answer, nothing else.`;
             } else if (isShortcutPressed(e, 'answer')) {
                 e.preventDefault();
                 handleAnswerNow();
+            } else if (isShortcutPressed(e, 'clearTranscript')) {
+                e.preventDefault();
+                clearRollingTranscript();
             } else if (isShortcutPressed(e, 'clarify')) {
                 e.preventDefault();
                 handleClarify();
@@ -1809,6 +1780,9 @@ Provide only the answer, nothing else.`;
                 setInputValue('');
             }
         },
+        clearTranscript: () => {
+            clearRollingTranscript();
+        },
         toggleMousePassthrough: () => {
             const newState = !isMousePassthrough;
             setIsMousePassthrough(newState);
@@ -1849,6 +1823,9 @@ Provide only the answer, nothing else.`;
                 setAttachedContext([]);
                 setInputValue('');
             }
+        },
+        clearTranscript: () => {
+            clearRollingTranscript();
         },
         toggleMousePassthrough: () => {
             const newState = !isMousePassthrough;
@@ -1896,6 +1873,9 @@ Provide only the answer, nothing else.`;
             } else if (isShortcutPressed(e, 'resetCancel')) {
                 e.preventDefault();
                 handlers.resetCancel();
+            } else if (isShortcutPressed(e, 'clearTranscript')) {
+                e.preventDefault();
+                handlers.clearTranscript();
             } else if (isShortcutPressed(e, 'takeScreenshot')) {
                 e.preventDefault();
                 handlers.takeScreenshot();
@@ -1966,6 +1946,7 @@ Provide only the answer, nothing else.`;
                 else handlers.handleRecap();
             }
             else if (action === 'answer') handlers.handleAnswerNow();
+            else if (action === 'clearTranscript') generalHandlers.clearTranscript();
             else if (action === 'clarify') handlers.handleClarify();
             else if (action === 'codeHint') handlers.handleCodeHint();
             else if (action === 'brainstorm') handlers.handleBrainstorm();
@@ -2022,6 +2003,11 @@ Provide only the answer, nothing else.`;
             document.execCommand('copy');
             document.body.removeChild(ta);
         }
+    };
+
+    const clearRollingTranscript = () => {
+        setRollingTranscript('');
+        setIsInterviewerSpeaking(false);
     };
 
     return (
@@ -2334,42 +2320,22 @@ Provide only the answer, nothing else.`;
                                 {/* Bottom Row */}
                                 <div className="flex items-center justify-between mt-3 px-0.5">
                                     <div className="flex items-center gap-1.5">
-                                        <button
-                                            onClick={(e) => {
-                                                // Calculate position for detached window
-                                                if (!contentRef.current) return;
-                                                const contentRect = contentRef.current.getBoundingClientRect();
-                                                const buttonRect = e.currentTarget.getBoundingClientRect();
-                                                const GAP = 8;
-
-                                                const x = window.screenX + buttonRect.left;
-                                                const y = window.screenY + contentRect.bottom + GAP;
-
-                                                window.electronAPI.toggleModelSelector({ x, y });
-                                            }}
+                                        <div
                                             className={`
                                                 flex items-center gap-2 px-3 py-1.5
-                                                border rounded-lg transition-colors
-                                                text-xs font-medium w-[140px]
-                                                interaction-base interaction-press
+                                                border rounded-lg
+                                                text-xs font-medium w-[160px]
                                                 ${controlSurfaceClass}
                                             `}
                                             style={appearance.controlStyle}
                                         >
                                             <span className="truncate min-w-0 flex-1">
-                                                {(() => {
-                                                    const m = currentModel;
-                                                    if (m.startsWith('ollama-')) return m.replace('ollama-', '');
-                                                    if (m === 'gemini-3.1-flash-lite-preview') return 'Gemini 3.1 Flash';
-                                                    if (m === 'gemini-3.1-pro-preview') return 'Gemini 3.1 Pro';
-                                                    if (m === 'llama-3.3-70b-versatile') return 'Groq Llama 3.3';
-                                                    if (m === 'gpt-5.4') return 'GPT 5.4';
-                                                    if (m === 'claude-sonnet-4-6') return 'Sonnet 4.6';
-                                                    return m;
-                                                })()}
+                                                Backend Managed
                                             </span>
-                                            <ChevronDown size={14} className="shrink-0 transition-transform" />
-                                        </button>
+                                            <span className="text-[10px] overlay-text-muted uppercase tracking-wide">
+                                                Gemini
+                                            </span>
+                                        </div>
 
                                         <div className="w-px h-3 mx-1" style={appearance.dividerStyle} />
 

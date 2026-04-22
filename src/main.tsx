@@ -1,6 +1,8 @@
 import React from "react"
 import ReactDOM from "react-dom/client"
 import App from "./App"
+import { AuthGate } from "./components/auth/AuthGate"
+import { AuthProvider } from "./contexts/auth.context"
 import "./index.css"
 
 const THEME_CACHE_KEY = 'natively_resolved_theme';
@@ -32,6 +34,10 @@ if (window.electronAPI?.getThemeMode) {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <AuthProvider>
+      <AuthGate>
+        <App />
+      </AuthGate>
+    </AuthProvider>
   </React.StrictMode>
 )
