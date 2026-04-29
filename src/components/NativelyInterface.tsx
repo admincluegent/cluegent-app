@@ -45,6 +45,8 @@ import { analytics, detectProviderType } from '../lib/analytics/analytics.servic
 import { useShortcuts } from '../hooks/useShortcuts';
 import { useResolvedTheme } from '../hooks/useResolvedTheme';
 import { getOverlayAppearance, OVERLAY_OPACITY_DEFAULT } from '../lib/overlayAppearance';
+import { useAuth } from '../contexts/auth.context';
+import { appendLocalMeetingEvent, finishCurrentLocalMeeting, getCurrentLocalMeetingId } from '../lib/localMeetingStorage';
 
 interface Message {
     id: string;
@@ -74,6 +76,7 @@ interface NativelyInterfaceProps {
 
 const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, overlayOpacity = OVERLAY_OPACITY_DEFAULT }) => {
     const isLightTheme = useResolvedTheme() === 'light';
+    const { planStatus } = useAuth();
     const [isExpanded, setIsExpanded] = useState(true);
     const [inputValue, setInputValue] = useState('');
     const { shortcuts, isShortcutPressed } = useShortcuts();
@@ -99,9 +102,17 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
     // Analytics State
     const requestStartTimeRef = useRef<number | null>(null);
+    const streamingResponseTextRef = useRef('');
+    const localMeetingIdRef = useRef<string | null>(getCurrentLocalMeetingId());
+    const isFreePlanExhausted = planStatus?.plan === 'free' && (
+        (planStatus.remaining.prompts ?? 0) <= 0 ||
+        (planStatus.remaining.sttSeconds ?? 0) <= 0
+    );
 
     // Sync transcript setting
     useEffect(() => {
+        localStorage.setItem('natively_interviewer_transcript', 'true');
+        setShowTranscript(true);
         const handleStorage = () => {
             const stored = localStorage.getItem('natively_interviewer_transcript');
             setShowTranscript(stored !== 'false');
@@ -112,6 +123,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
     const [rollingTranscript, setRollingTranscript] = useState('');  // For interviewer rolling text bar
     const [isInterviewerSpeaking, setIsInterviewerSpeaking] = useState(false);  // Track if actively speaking
+    const finalizedRollingTranscriptRef = useRef('');  // Stores only committed interviewer turns
     const [voiceInput, setVoiceInput] = useState('');  // Accumulated user voice input
     const voiceInputRef = useRef<string>('');  // Ref for capturing in async handlers
     const textInputRef = useRef<HTMLInputElement>(null); // Ref for input focus
@@ -180,7 +192,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     const codeHeaderClass = 'overlay-code-header-surface';
     const codeHeaderTextClass = 'overlay-text-muted';
     const quickActionClass = 'overlay-chip-surface overlay-text-interactive';
-    const inputClass = `${isLightTheme ? 'focus:ring-black/10' : 'focus:ring-white/10'} overlay-input-surface overlay-input-text`;
+    const inputClass = 'focus:ring-white/15 overlay-input-surface overlay-input-text text-white caret-white';
     const controlSurfaceClass = 'overlay-control-surface overlay-text-interactive';
 
     // Global State Sync
@@ -356,6 +368,8 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             setAttachedContext([]);
             setManualTranscript('');
             setVoiceInput('');
+            setRollingTranscript('');
+            finalizedRollingTranscriptRef.current = '';
             setIsProcessing(false);
             // Optionally reset connection status if needed, but connection persists
 
@@ -445,8 +459,40 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                 return;  // Safety check for any other speaker types
             }
 
-            // Route to rolling transcript bar - accumulate text continuously
+            // Route to rolling transcript bar - keep committed turns separate from
+            // the current interim preview so final turn text does not duplicate.
             setIsInterviewerSpeaking(!transcript.final);
+
+            const committed = finalizedRollingTranscriptRef.current;
+            const nextText = transcript.text.trim();
+
+            if (transcript.final) {
+                const nextTranscript = committed
+                    ? `${committed}  ·  ${nextText}`
+                    : nextText;
+                finalizedRollingTranscriptRef.current = nextTranscript;
+                setRollingTranscript(nextTranscript);
+                try {
+                    appendLocalMeetingEvent({
+                        type: 'transcript',
+                        text: nextText,
+                    }, localMeetingIdRef.current);
+                } catch (error) {
+                    console.warn('[NativelyInterface] Failed to save rolling transcript locally:', error);
+                }
+
+                setTimeout(() => {
+                    setIsInterviewerSpeaking(false);
+                }, 3000);
+                return;
+            }
+
+            setRollingTranscript(
+                committed && nextText
+                    ? `${committed}  ·  ${nextText}`
+                    : nextText || committed
+            );
+            return;
 
             if (transcript.final) {
                 // Append finalized text to accumulated transcript
@@ -980,6 +1026,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
         // Stream Token
         cleanups.push(window.electronAPI.onGeminiStreamToken((token) => {
+            streamingResponseTextRef.current += token;
             // Guard: if this token is the negotiation coaching JSON sentinel, accumulate it
             // silently. The JSON is always emitted as a single complete `yield JSON.stringify(...)`
             // call, so one parse attempt is sufficient. The onGeminiStreamDone handler will
@@ -1060,6 +1107,18 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                 }
                 return prev;
             });
+            const completedText = streamingResponseTextRef.current.trim();
+            if (completedText) {
+                try {
+                    appendLocalMeetingEvent({
+                        type: 'response',
+                        text: completedText,
+                    }, localMeetingIdRef.current);
+                } catch (error) {
+                    console.warn('[NativelyInterface] Failed to save LLM response locally:', error);
+                }
+            }
+            streamingResponseTextRef.current = '';
         }));
 
         // Stream Error
@@ -1074,11 +1133,17 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                 const lastMsg = prev[prev.length - 1];
                 if (lastMsg && lastMsg.isStreaming) {
                     const updated = [...prev];
+                    const errorText = lastMsg.text + `\n\n[Error: ${error}]`;
                     updated[prev.length - 1] = {
                         ...lastMsg,
                         isStreaming: false,
-                        text: lastMsg.text + `\n\n[Error: ${error}]`
+                        text: errorText
                     };
+                    appendLocalMeetingEvent({
+                        type: 'response',
+                        text: errorText,
+                    }, localMeetingIdRef.current);
+                    streamingResponseTextRef.current = '';
                     return updated;
                 }
                 return [...prev, {
@@ -1113,6 +1178,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                     // Normal text chunk — fall through.
                 }
 
+                streamingResponseTextRef.current += data.chunk;
                 setMessages(prev => {
                     const lastMsg = prev[prev.length - 1];
                     if (lastMsg && lastMsg.isStreaming && lastMsg.role === 'system') {
@@ -1160,6 +1226,18 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                     }
                     return prev;
                 });
+                const completedText = streamingResponseTextRef.current.trim();
+                if (completedText) {
+                    try {
+                        appendLocalMeetingEvent({
+                            type: 'response',
+                            text: completedText,
+                        }, localMeetingIdRef.current);
+                    } catch (error) {
+                        console.warn('[NativelyInterface] Failed to save RAG response locally:', error);
+                    }
+                }
+                streamingResponseTextRef.current = '';
             }));
         }
 
@@ -1171,11 +1249,17 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                     const lastMsg = prev[prev.length - 1];
                     if (lastMsg && lastMsg.isStreaming) {
                         const updated = [...prev];
+                        const errorText = lastMsg.text + `\n\n[RAG Error: ${data.error}]`;
                         updated[prev.length - 1] = {
                             ...lastMsg,
                             isStreaming: false,
-                            text: lastMsg.text + `\n\n[RAG Error: ${data.error}]`
+                            text: errorText
                         };
+                        appendLocalMeetingEvent({
+                            type: 'response',
+                            text: errorText,
+                        }, localMeetingIdRef.current);
+                        streamingResponseTextRef.current = '';
                         return updated;
                     }
                     return prev;
@@ -1231,6 +1315,11 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             }
 
             // Show user's spoken question
+            appendLocalMeetingEvent({
+                type: 'prompt',
+                text: question || (currentAttachments.length > 0 ? 'Analyze this screenshot' : ''),
+                hasScreenshot: currentAttachments.length > 0,
+            }, localMeetingIdRef.current);
             setMessages(prev => [...prev, {
                 id: Date.now().toString(),
                 role: 'user',
@@ -1245,6 +1334,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             }, 50);
 
             // Add placeholder for streaming response
+            streamingResponseTextRef.current = '';
             setMessages(prev => [...prev, {
                 id: Date.now().toString(),
                 role: 'system',
@@ -1339,6 +1429,11 @@ Provide only the answer, nothing else.`;
         setInputValue('');
         setAttachedContext([]);
 
+        appendLocalMeetingEvent({
+            type: 'prompt',
+            text: userText || (currentAttachments.length > 0 ? 'Analyze this screenshot' : ''),
+            hasScreenshot: currentAttachments.length > 0,
+        }, localMeetingIdRef.current);
         setMessages(prev => [...prev, {
             id: Date.now().toString(),
             role: 'user',
@@ -1353,6 +1448,7 @@ Provide only the answer, nothing else.`;
         }, 50);
 
         // Add placeholder for streaming response
+        streamingResponseTextRef.current = '';
         setMessages(prev => [...prev, {
             id: Date.now().toString(),
             role: 'system',
@@ -2005,9 +2101,19 @@ Provide only the answer, nothing else.`;
         }
     };
 
+    const handleQuitMeeting = () => {
+        finishCurrentLocalMeeting();
+        if (onEndMeeting) {
+            onEndMeeting();
+            return;
+        }
+        window.electronAPI.quitApp();
+    };
+
     const clearRollingTranscript = () => {
         setRollingTranscript('');
         setIsInterviewerSpeaking(false);
+        finalizedRollingTranscriptRef.current = '';
     };
 
     return (
@@ -2025,12 +2131,12 @@ Provide only the answer, nothing else.`;
                         <TopPill
                             expanded={isExpanded}
                             onToggle={() => setIsExpanded(!isExpanded)}
-                            onQuit={() => onEndMeeting ? onEndMeeting() : window.electronAPI.quitApp()}
+                            onQuit={handleQuitMeeting}
                             appearance={appearance}
                             onLogoClick={() => window.electronAPI?.setWindowMode?.('launcher')}
                         />
                         <div
-                            className={`relative w-[600px] max-w-full backdrop-blur-2xl border rounded-[24px] overflow-hidden flex flex-col draggable-area overlay-shell-surface ${overlayPanelClass}`}
+                            className={`cluegent-overlay-shell relative w-[600px] max-w-full backdrop-blur-2xl border rounded-[24px] overflow-hidden flex flex-col draggable-area overlay-shell-surface ${overlayPanelClass}`}
                             style={appearance.shellStyle}
                         >
 
@@ -2132,9 +2238,7 @@ Provide only the answer, nothing else.`;
                                             <div className={`
                       ${msg.role === 'user' ? 'max-w-[72.25%] px-[13.6px] py-[10.2px]' : 'max-w-[85%] px-4 py-3'} text-[14px] leading-relaxed relative group whitespace-pre-wrap
                       ${msg.role === 'user'
-                                                    ? (isLightTheme
-                                                        ? 'bg-blue-500/10 backdrop-blur-md border border-blue-500/20 text-blue-900 rounded-[20px] rounded-tr-[4px] shadow-sm font-medium'
-                                                        : 'bg-blue-600/20 backdrop-blur-md border border-blue-500/30 text-blue-100 rounded-[20px] rounded-tr-[4px] shadow-sm font-medium')
+                                                    ? 'bg-blue-500/20 backdrop-blur-md border border-blue-300/25 text-white rounded-[20px] rounded-tr-[4px] shadow-sm font-medium'
                                                     : ''
                                                 }
                       ${msg.role === 'system'
@@ -2203,6 +2307,28 @@ Provide only the answer, nothing else.`;
                                         </div>
                                     )}
                                     <div ref={messagesEndRef} />
+                                </div>
+                            )}
+
+                            {isFreePlanExhausted && (
+                                <div className="mx-4 mb-2 rounded-[16px] border border-violet-500/20 bg-violet-500/10 px-4 py-3 no-drag">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div>
+                                            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-violet-300">
+                                                Free Plan Limit Reached
+                                            </p>
+                                            <p className="mt-1 text-[12px] leading-5 text-violet-100/85">
+                                                Your free plan includes 3 LLM responses and 1 minute of STT. Subscribe to Pro to keep using Cluegent.
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => void window.electronAPI?.openSettingsTab?.('natively-api')}
+                                            className="inline-flex shrink-0 items-center gap-2 rounded-full bg-violet-500 px-4 py-2 text-[12px] font-semibold text-black transition hover:bg-violet-400"
+                                        >
+                                            Subscribe to Pro
+                                            <ArrowRight className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
                                 </div>
                             )}
 

@@ -312,6 +312,20 @@ export class LLMHelper {
     const callableError = "error" in payload ? payload.error : undefined;
 
     if (!response.ok || !callableResult || callableResult.success === false) {
+      if (
+        response.status === 401 ||
+        callableError?.status === "UNAUTHENTICATED" ||
+        callableResult?.message?.toLowerCase().includes("sign in with google")
+      ) {
+        console.warn(
+          "[LLMHelper] Backend-managed LLM request rejected by Firebase auth.",
+          {
+            status: response.status,
+            callableStatus: callableError?.status,
+            message: callableResult?.message || callableError?.message,
+          }
+        );
+      }
       const message =
         callableResult?.message ||
         callableError?.message ||

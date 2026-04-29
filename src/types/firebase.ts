@@ -1,5 +1,15 @@
 export type UserPlan = "free" | "pro" | "power";
-export type SubscriptionStatus = "active" | "inactive" | "canceled";
+export type SubscriptionStatus =
+  | "active"
+  | "inactive"
+  | "canceled"
+  | "pending"
+  | "on_hold"
+  | "failed"
+  | "expired";
+export type BillingInterval = "month" | "year";
+export type BillingProvider = "razorpay";
+export type BillingProviderMode = "test" | "live";
 
 export interface FirestoreUserProfile {
   uid: string;
@@ -19,6 +29,17 @@ export interface UserSubscription {
   promptLimit: number;
   screenshotLimit: number;
   sttSecondsLimit: number;
+  provider: BillingProvider | null;
+  providerMode: BillingProviderMode | null;
+  billingInterval: BillingInterval | null;
+  customerId: string | null;
+  subscriptionId: string | null;
+  startedAt: string | null;
+  renewsAt: string | null;
+  expiresAt: string | null;
+  cancelAtPeriodEnd: boolean;
+  lastWebhookEventId: string | null;
+  isTestEntitlement: boolean;
   createdAt: string;
   updatedAt: string;
 }

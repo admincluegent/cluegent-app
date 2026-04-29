@@ -47,16 +47,19 @@ export const getOverlayAppearance = (opacity: number, theme: OverlayTheme): Over
     if (theme === 'light') {
         return {
             shellStyle: {
-                backgroundColor: `rgba(214, 228, 247, ${scale(0.085, 1, surfaceStrength)})`,
-                borderColor: `rgba(37, 99, 235, ${scale(0.08, 0.16, surfaceStrength)})`,
-                boxShadow: `0 24px 48px rgba(37, 99, 235, ${scale(0.03, 0.12, surfaceStrength)})`,
+                backgroundColor: `rgba(5, 7, 12, ${scale(0.28, 0.68, surfaceStrength)})`,
+                borderColor: 'transparent',
+                borderStyle: 'dashed',
+                borderWidth: '2px',
+                borderRadius: '24px',
+                boxShadow: `0 18px 42px rgba(0, 0, 0, ${scale(0.08, 0.24, surfaceStrength)})`,
                 backdropFilter: `blur(${scale(4, 18, blurStrength)}px) saturate(145%)`,
                 WebkitBackdropFilter: `blur(${scale(4, 18, blurStrength)}px) saturate(145%)`,
             },
             pillStyle: {
-                backgroundColor: `rgba(221, 234, 250, ${scale(0.075, 0.98, surfaceStrength)})`,
-                borderColor: `rgba(37, 99, 235, ${scale(0.08, 0.16, surfaceStrength)})`,
-                boxShadow: `0 12px 28px rgba(37, 99, 235, ${scale(0.02, 0.09, surfaceStrength)})`,
+                backgroundColor: `rgba(22, 25, 32, ${scale(0.2, 0.94, surfaceStrength)})`,
+                borderColor: `rgba(255, 255, 255, ${scale(0.1, 0.18, surfaceStrength)})`,
+                boxShadow: `0 12px 28px rgba(0, 0, 0, ${scale(0.04, 0.16, surfaceStrength)})`,
                 backdropFilter: `blur(${scale(3, 11, blurStrength)}px) saturate(140%)`,
                 WebkitBackdropFilter: `blur(${scale(3, 11, blurStrength)}px) saturate(140%)`,
             },
@@ -67,43 +70,46 @@ export const getOverlayAppearance = (opacity: number, theme: OverlayTheme): Over
                 WebkitBackdropFilter: 'none',
             },
             subtleStyle: {
-                backgroundColor: `rgba(245, 249, 255, ${scale(0.05, 0.92, surfaceStrength)})`,
-                borderColor: `rgba(30, 64, 175, ${scale(0.06, 0.13, surfaceStrength)})`,
+                backgroundColor: `rgba(24, 29, 38, ${scale(0.22, 0.9, surfaceStrength)})`,
+                borderColor: `rgba(255, 255, 255, ${scale(0.06, 0.12, surfaceStrength)})`,
             },
             chipStyle: {
-                backgroundColor: `rgba(248, 251, 255, ${scale(0.055, 0.9, surfaceStrength)})`,
-                borderColor: `rgba(30, 64, 175, ${scale(0.06, 0.13, surfaceStrength)})`,
+                backgroundColor: `rgba(30, 35, 45, ${scale(0.24, 0.92, surfaceStrength)})`,
+                borderColor: `rgba(255, 255, 255, ${scale(0.08, 0.15, surfaceStrength)})`,
             },
             inputStyle: {
-                backgroundColor: `rgba(248, 251, 255, ${scale(0.065, 0.94, surfaceStrength)})`,
-                borderColor: `rgba(30, 64, 175, ${scale(0.07, 0.14, surfaceStrength)})`,
+                backgroundColor: `rgba(23, 28, 37, ${scale(0.28, 0.94, surfaceStrength)})`,
+                borderColor: `rgba(255, 255, 255, ${scale(0.08, 0.16, surfaceStrength)})`,
             },
             controlStyle: {
-                backgroundColor: `rgba(248, 251, 255, ${scale(0.06, 0.92, surfaceStrength)})`,
-                borderColor: `rgba(30, 64, 175, ${scale(0.07, 0.14, surfaceStrength)})`,
+                backgroundColor: `rgba(31, 36, 46, ${scale(0.25, 0.92, surfaceStrength)})`,
+                borderColor: `rgba(255, 255, 255, ${scale(0.07, 0.14, surfaceStrength)})`,
             },
             iconStyle: {
-                backgroundColor: `rgba(248, 251, 255, ${scale(0.055, 0.88, surfaceStrength)})`,
+                backgroundColor: `rgba(33, 38, 49, ${scale(0.24, 0.9, surfaceStrength)})`,
             },
             codeBlockStyle: {
-                backgroundColor: `rgba(245, 249, 255, ${scale(0.06, 0.94, surfaceStrength)})`,
-                borderColor: `rgba(30, 64, 175, ${scale(0.07, 0.15, surfaceStrength)})`,
+                backgroundColor: `rgba(18, 23, 32, ${scale(0.28, 0.94, surfaceStrength)})`,
+                borderColor: `rgba(255, 255, 255, ${scale(0.07, 0.14, surfaceStrength)})`,
             },
             codeHeaderStyle: {
-                backgroundColor: `rgba(236, 244, 255, ${scale(0.08, 0.96, surfaceStrength)})`,
-                borderBottomColor: `rgba(30, 64, 175, ${scale(0.08, 0.16, surfaceStrength)})`,
+                backgroundColor: `rgba(30, 35, 45, ${scale(0.26, 0.94, surfaceStrength)})`,
+                borderBottomColor: `rgba(255, 255, 255, ${scale(0.07, 0.14, surfaceStrength)})`,
             },
             dividerStyle: {
-                backgroundColor: `rgba(30, 64, 175, ${scale(0.08, 0.16, surfaceStrength)})`,
+                backgroundColor: `rgba(255, 255, 255, ${scale(0.08, 0.16, surfaceStrength)})`,
             },
         };
     }
 
     return {
         shellStyle: {
-            backgroundColor: `rgba(24, 26, 32, ${scale(0.12, 1, surfaceStrength)})`,
-            borderColor: `rgba(255, 255, 255, ${scale(0.08, 0.14, surfaceStrength)})`,
-            boxShadow: `0 24px 48px rgba(0, 0, 0, ${scale(0.05, 0.24, surfaceStrength)})`,
+            backgroundColor: `rgba(5, 7, 12, ${scale(0.28, 0.68, surfaceStrength)})`,
+            borderColor: 'transparent',
+            borderStyle: 'dashed',
+            borderWidth: '2px',
+            borderRadius: '24px',
+            boxShadow: `0 18px 42px rgba(0, 0, 0, ${scale(0.08, 0.24, surfaceStrength)})`,
             backdropFilter: `blur(${scale(6, 20, blurStrength)}px) saturate(140%)`,
             WebkitBackdropFilter: `blur(${scale(6, 20, blurStrength)}px) saturate(140%)`,
         },

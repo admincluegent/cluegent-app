@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { onIdTokenChanged, type User } from "firebase/auth";
@@ -41,6 +42,11 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+const PROFILE_SYNC_MIN_INTERVAL_MS = 5_000;
+const PROFILE_BACKGROUND_REFRESH_MS = 60_000;
+const TOKEN_SYNC_MIN_INTERVAL_MS = 5_000;
+const TOKEN_BACKGROUND_REFRESH_MS = 30 * 60 * 1000;
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<FirestoreUserProfile | null>(null);
@@ -53,25 +59,47 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const lastProfileSyncAtRef = useRef(0);
+  const syncUserStatePromiseRef = useRef<Promise<void> | null>(null);
+  const lastTokenSyncAtRef = useRef(0);
+  const syncTokenPromiseRef = useRef<Promise<void> | null>(null);
 
-  const syncUserState = useCallback(async () => {
-    setIsSyncing(true);
-    setError(null);
+  const syncUserState = useCallback(async (force = false) => {
+    if (!force && Date.now() - lastProfileSyncAtRef.current < PROFILE_SYNC_MIN_INTERVAL_MS) {
+      return;
+    }
 
+    if (syncUserStatePromiseRef.current) {
+      return syncUserStatePromiseRef.current;
+    }
+
+    const syncPromise = (async () => {
+      setIsSyncing(true);
+      setError(null);
+
+      try {
+        const synced = await getOrCreateUserProfile();
+        setProfile(synced.profile);
+        setSubscription(synced.subscription);
+        setUsage(synced.usage);
+        setPlanStatus(synced.planStatus);
+        lastProfileSyncAtRef.current = Date.now();
+      } catch (syncError) {
+        setError(
+          syncError instanceof Error
+            ? syncError.message
+            : "Failed to sync your Firebase profile."
+        );
+      } finally {
+        setIsSyncing(false);
+      }
+    })();
+
+    syncUserStatePromiseRef.current = syncPromise;
     try {
-      const synced = await getOrCreateUserProfile();
-      setProfile(synced.profile);
-      setSubscription(synced.subscription);
-      setUsage(synced.usage);
-      setPlanStatus(synced.planStatus);
-    } catch (syncError) {
-      setError(
-        syncError instanceof Error
-          ? syncError.message
-          : "Failed to sync your Firebase profile."
-      );
+      await syncPromise;
     } finally {
-      setIsSyncing(false);
+      syncUserStatePromiseRef.current = null;
     }
   }, []);
 
@@ -80,7 +108,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    await syncUserState();
+    await syncUserState(true);
   }, [syncUserState, user]);
 
   const handleGoogleLogin = useCallback(async () => {
@@ -98,7 +126,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       setUser(authUser);
-      await syncUserState();
+      await syncUserState(true);
     } catch (loginError) {
       setError(getFirebaseAuthErrorMessage(loginError));
     } finally {
@@ -121,6 +149,52 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
+  const syncElectronAuthToken = useCallback(
+    async (authUser: User | null, forceRefresh = false) => {
+      if (!window.electronAPI?.setFirebaseAuthToken) {
+        return;
+      }
+
+      if (!authUser) {
+        await window.electronAPI.setFirebaseAuthToken(null);
+        return;
+      }
+
+      if (
+        !forceRefresh &&
+        Date.now() - lastTokenSyncAtRef.current < TOKEN_SYNC_MIN_INTERVAL_MS
+      ) {
+        return;
+      }
+
+      if (syncTokenPromiseRef.current) {
+        await syncTokenPromiseRef.current;
+        return;
+      }
+
+      const syncPromise = (async () => {
+        try {
+          const idToken = await authUser.getIdToken(forceRefresh);
+          await window.electronAPI.setFirebaseAuthToken(idToken);
+          lastTokenSyncAtRef.current = Date.now();
+        } catch (tokenError) {
+          console.error(
+            "[AuthContext] Failed to sync Firebase ID token",
+            tokenError
+          );
+        }
+      })();
+
+      syncTokenPromiseRef.current = syncPromise;
+      try {
+        await syncPromise;
+      } finally {
+        syncTokenPromiseRef.current = null;
+      }
+    },
+    []
+  );
+
   useEffect(() => {
     initializeDesktopGoogleAuthBridge();
 
@@ -140,7 +214,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      await syncUserState();
+      await syncUserState(true);
       setIsLoading(false);
     });
 
@@ -153,19 +227,66 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     return onIdTokenChanged(auth, (authUser) => {
-      if (!authUser) {
-        void window.electronAPI.setFirebaseAuthToken(null);
+      void syncElectronAuthToken(authUser, false);
+    });
+  }, [syncElectronAuthToken]);
+
+  useEffect(() => {
+    if (!window.electronAPI?.setFirebaseAuthToken) {
+      return;
+    }
+
+    let disposed = false;
+
+    const refreshToken = () => {
+      if (disposed) {
         return;
       }
 
-      void authUser
-        .getIdToken()
-        .then((idToken) => window.electronAPI.setFirebaseAuthToken(idToken))
-        .catch((tokenError) => {
-          console.error("[AuthContext] Failed to sync Firebase ID token", tokenError);
-        });
-    });
-  }, []);
+      void syncElectronAuthToken(auth.currentUser, false);
+    };
+
+    refreshToken();
+
+    const intervalId = window.setInterval(
+      refreshToken,
+      TOKEN_BACKGROUND_REFRESH_MS
+    );
+    window.addEventListener("focus", refreshToken);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshToken();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshToken);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [syncElectronAuthToken]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+
+      void syncUserState();
+    }, PROFILE_BACKGROUND_REFRESH_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [syncUserState, user]);
 
   const value = useMemo(
     () => ({

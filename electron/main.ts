@@ -1034,6 +1034,18 @@ export class AppState {
       }
     });
 
+    stt.on('connected', () => {
+      _consecutiveErrors = 0;
+      if (_lastState !== 'connected') {
+        _lastState = 'connected';
+        this.broadcast('stt-status', {
+          state: 'connected',
+          provider: sttProvider,
+          channel: speaker,
+        } as SttStatusPayload);
+      }
+    });
+
     // Track successful transcripts — resets consecutive error counter
     // Broadcasts 'connected' whenever we recover from reconnecting/failed
     stt.on('transcript', (segment: { text: string, isFinal: boolean, confidence: number }) => {

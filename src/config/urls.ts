@@ -1,19 +1,14 @@
 /**
- * Centralised checkout & external URL constants.
+ * Centralized billing route hints.
  *
- * Change URLs here once — all files that import from this module
- * will pick up the update automatically.
+ * During test billing we intentionally do not ship raw checkout links in the
+ * desktop bundle. Razorpay subscriptions are created server-side from Firebase
+ * after the user is authenticated.
  */
 
+export const BILLING_SETTINGS_TAB = "natively-api" as const;
+
 export const CHECKOUT_URLS = {
-    /** Natively Pro (lifetime/yearly) */
-    pro: 'https://checkout.dodopayments.com/buy/pdt_0NcM6Aw0IWdspbsgUeCLA',
-    /** Natively API — Standard tier */
-    apiStandard: 'https://checkout.dodopayments.com/buy/pdt_0NbFixGmD8CSeawb5qvVl',
-    /** Natively API — Pro tier */
-    apiPro: 'https://checkout.dodopayments.com/buy/pdt_0NcM6Aw0IWdspbsgUeCLA',
-    /** Natively API — Max tier */
-    apiMax: 'https://checkout.dodopayments.com/buy/pdt_0NcM7JElX4Af6LNVFS1Yf',
-    /** Natively API — Ultra tier */
-    apiUltra: 'https://checkout.dodopayments.com/buy/pdt_0NcM7rC2kAb69TFKsZnUU',
+  sandboxManaged: null,
+  liveManaged: null,
 } as const;

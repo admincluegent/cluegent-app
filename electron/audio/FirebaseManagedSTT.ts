@@ -7,11 +7,19 @@ const TOKEN_ENDPOINT =
   "https://us-central1-cluegent-2514d.cloudfunctions.net/createDeepgramStreamToken";
 const TRACK_USAGE_ENDPOINT =
   "https://us-central1-cluegent-2514d.cloudfunctions.net/trackSttUsage";
+const ASSEMBLY_STREAMING_BASE_URL = "wss://streaming.assemblyai.com/v3/ws";
+
+const TOKEN_TTL_SECONDS = 60;
 const RECONNECT_BASE_DELAY_MS = 1000;
 const RECONNECT_MAX_DELAY_MS = 30000;
 const RECONNECT_MAX_ATTEMPTS = 10;
-const KEEPALIVE_INTERVAL_MS = 8000;
 const REPORT_USAGE_INTERVAL_SECONDS = 15;
+const ASSEMBLY_MIN_AUDIO_MS = 50;
+const ASSEMBLY_TARGET_AUDIO_MS = 60;
+const ASSEMBLY_MAX_AUDIO_MS = 1000;
+const TURN_MIN_SILENCE_MS = 240;
+const TURN_MAX_SILENCE_MS = 900;
+const TURN_END_CONFIDENCE_THRESHOLD = 0.4;
 
 interface TokenResponse {
   success: true;
@@ -58,27 +66,60 @@ interface CallableErrorEnvelope {
   };
 }
 
+interface AssemblyBeginMessage {
+  type: "Begin";
+  id?: string;
+  expires_at?: number;
+}
+
+interface AssemblyTurnMessage {
+  type: "Turn";
+  turn_order?: number;
+  transcript?: string;
+  end_of_turn?: boolean;
+}
+
+interface AssemblyTerminationMessage {
+  type: "Termination";
+  audio_duration_seconds?: number;
+  session_duration_seconds?: number;
+}
+
+type AssemblyServerMessage =
+  | AssemblyBeginMessage
+  | AssemblyTurnMessage
+  | AssemblyTerminationMessage
+  | Record<string, unknown>;
+
 export class FirebaseManagedSTT extends EventEmitter {
   private ws: WebSocket | null = null;
   private isActive = false;
   private shouldReconnect = false;
   private isOpen = false;
   private isConnecting = false;
+
   private sampleRate = 16000;
   private numChannels = 1;
   private languageCode = "en";
+
   private reconnectAttempts = 0;
   private reconnectTimer: NodeJS.Timeout | null = null;
-  private keepAliveInterval: NodeJS.Timeout | null = null;
   private buffer: Buffer[] = [];
+  private outboundAudioQueue: Buffer[] = [];
+  private outboundAudioBytes = 0;
   private sentAudioSeconds = 0;
   private reportedAudioSeconds = 0;
   private usageReportInFlight: Promise<void> | null = null;
+  private lastTurnOrder: number | null = null;
+  private lastTurnTranscript = "";
   private readonly tokenEndpoint: string;
   private readonly trackUsageEndpoint: string;
 
   constructor(
-    tokenEndpoint = process.env.FIREBASE_DEEPGRAM_TOKEN_ENDPOINT || TOKEN_ENDPOINT,
+    tokenEndpoint =
+      process.env.FIREBASE_ASSEMBLY_TOKEN_ENDPOINT ||
+      process.env.FIREBASE_DEEPGRAM_TOKEN_ENDPOINT ||
+      TOKEN_ENDPOINT,
     trackUsageEndpoint =
       process.env.FIREBASE_STT_USAGE_ENDPOINT || TRACK_USAGE_ENDPOINT
   ) {
@@ -102,20 +143,14 @@ export class FirebaseManagedSTT extends EventEmitter {
   }
 
   public setRecognitionLanguage(key: string): void {
-    if (key === "auto") {
-      if (this.languageCode === "multi") return;
-      this.languageCode = "multi";
-      console.log("[FirebaseManagedSTT] Language set to multilingual mode");
-      if (this.isActive) this.restartStream();
-      return;
-    }
-
-    const config = RECOGNITION_LANGUAGES[key];
-    if (config && this.languageCode !== config.iso639) {
-      this.languageCode = config.iso639;
-      console.log(`[FirebaseManagedSTT] Language set to ${this.languageCode}`);
-      if (this.isActive) this.restartStream();
-    }
+    const nextLanguage =
+      key === "auto"
+        ? "multi"
+        : (RECOGNITION_LANGUAGES[key]?.iso639 ?? this.languageCode);
+    if (this.languageCode === nextLanguage) return;
+    this.languageCode = nextLanguage;
+    console.log(`[FirebaseManagedSTT] Language set to ${this.languageCode}`);
+    if (this.isActive) this.restartStream();
   }
 
   public setCredentials(_path: string): void {}
@@ -127,6 +162,8 @@ export class FirebaseManagedSTT extends EventEmitter {
     this.reconnectAttempts = 0;
     this.sentAudioSeconds = 0;
     this.reportedAudioSeconds = 0;
+    this.lastTurnOrder = null;
+    this.lastTurnTranscript = "";
     void this.connect();
   }
 
@@ -138,7 +175,7 @@ export class FirebaseManagedSTT extends EventEmitter {
     if (this.ws) {
       try {
         if (this.ws.readyState === WebSocket.OPEN) {
-          this.ws.send(JSON.stringify({ type: "CloseStream" }));
+          this.ws.send(JSON.stringify({ type: "Terminate" }));
         }
         this.ws.close();
       } catch {
@@ -151,6 +188,10 @@ export class FirebaseManagedSTT extends EventEmitter {
     this.isConnecting = false;
     this.isOpen = false;
     this.buffer = [];
+    this.outboundAudioQueue = [];
+    this.outboundAudioBytes = 0;
+    this.lastTurnOrder = null;
+    this.lastTurnTranscript = "";
     console.log("[FirebaseManagedSTT] Stopped realtime stream");
   }
 
@@ -158,8 +199,7 @@ export class FirebaseManagedSTT extends EventEmitter {
     if (!this.isActive) return;
 
     this.sentAudioSeconds +=
-      chunk.length /
-      Math.max(this.sampleRate * this.numChannels * 2, 1);
+      chunk.length / Math.max(this.sampleRate * this.numChannels * 2, 1);
     void this.flushUsage(false);
 
     if (!this.isOpen) {
@@ -172,15 +212,14 @@ export class FirebaseManagedSTT extends EventEmitter {
       return;
     }
 
-    try {
-      this.ws?.send(chunk);
-    } catch (error) {
-      console.error("[FirebaseManagedSTT] Send error", error);
-    }
+    this.enqueueOutboundAudio(chunk);
+    this.flushOutboundAudio();
   }
 
   public notifySpeechEnded(): void {
-    // Deepgram endpointing handles finalization for realtime mode.
+    // Flush a trailing partial packet with silence padding if needed so
+    // AssemblyAI still receives the end of the utterance in a valid frame.
+    this.flushOutboundAudio(true);
   }
 
   private restartStream(): void {
@@ -189,41 +228,49 @@ export class FirebaseManagedSTT extends EventEmitter {
     this.start();
   }
 
+  private resolveSpeechModel() {
+    // English gets the lowest-latency model; all other languages use whisper-rt.
+    return this.languageCode === "en"
+      ? "universal-streaming-english"
+      : "whisper-rt";
+  }
+
+  private buildStreamingUrl(token: string) {
+    const url = new URL(ASSEMBLY_STREAMING_BASE_URL);
+    url.searchParams.set("token", token);
+    url.searchParams.set("sample_rate", String(this.sampleRate));
+    // Keep partial turns raw for maximum "live" feel; formatting can wait until final.
+    url.searchParams.set("format_turns", "false");
+    // Lower endpointing silence thresholds to reduce lag before final turn emission.
+    url.searchParams.set("min_turn_silence", String(TURN_MIN_SILENCE_MS));
+    url.searchParams.set("max_turn_silence", String(TURN_MAX_SILENCE_MS));
+    url.searchParams.set(
+      "end_of_turn_confidence_threshold",
+      String(TURN_END_CONFIDENCE_THRESHOLD)
+    );
+    url.searchParams.set("speech_model", this.resolveSpeechModel());
+    return url.toString();
+  }
+
   private async connect(): Promise<void> {
     if (this.isConnecting || !this.isActive) return;
     this.isConnecting = true;
 
     try {
-      const accessToken = await this.fetchDeepgramAccessToken();
-      this.ws = new WebSocket(this.buildListenUrl(), {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const accessToken = await this.fetchAssemblyAccessToken();
+      this.ws = new WebSocket(this.buildStreamingUrl(accessToken));
 
       this.ws.on("open", () => {
         this.isConnecting = false;
         this.isOpen = true;
-        console.log("[FirebaseManagedSTT] Connected to Deepgram realtime");
+        console.log("[FirebaseManagedSTT] Connected to AssemblyAI realtime");
+        this.emit("connected");
 
         const buffered = this.buffer.splice(0);
         for (const chunk of buffered) {
-          try {
-            this.ws?.send(chunk);
-          } catch {
-            // ignore single buffered chunk failure
-          }
+          this.enqueueOutboundAudio(chunk);
         }
-
-        this.keepAliveInterval = setInterval(() => {
-          if (this.isOpen) {
-            try {
-              this.ws?.send(JSON.stringify({ type: "KeepAlive" }));
-            } catch {
-              // ignore
-            }
-          }
-        }, KEEPALIVE_INTERVAL_MS);
+        this.flushOutboundAudio();
 
         setTimeout(() => {
           if (this.isOpen) this.reconnectAttempts = 0;
@@ -235,7 +282,7 @@ export class FirebaseManagedSTT extends EventEmitter {
       });
 
       this.ws.on("error", (error: Error) => {
-        console.error("[FirebaseManagedSTT] Deepgram realtime socket error", error);
+        console.error("[FirebaseManagedSTT] Assembly realtime socket error", error);
         this.emit("error", this.normalizeError(error));
       });
 
@@ -254,96 +301,71 @@ export class FirebaseManagedSTT extends EventEmitter {
           this.scheduleReconnect();
         }
       });
-
-      this.ws.on("unexpected-response", (_request, response) => {
-        const statusCode = response.statusCode ?? "unknown";
-        const statusMessage = response.statusMessage ?? "";
-        const details = [String(statusCode), statusMessage].filter(Boolean).join(" ");
-        let body = "";
-
-        response.on("data", (chunk: Buffer | string) => {
-          body += chunk.toString();
-        });
-
-        response.on("end", () => {
-          const suffix = body.trim() ? ` | ${body.trim()}` : "";
-          console.error(
-            `[FirebaseManagedSTT] Deepgram unexpected response during handshake: ${details}${suffix}`
-          );
-          this.emit(
-            "error",
-            new Error(`Deepgram websocket handshake failed: ${details}${suffix}`)
-          );
-        });
-      });
     } catch (error) {
       console.error("[FirebaseManagedSTT] Failed to connect realtime stream", error);
       this.isConnecting = false;
       if (this.shouldReconnect) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (/stt limit exceeded/i.test(message)) {
+          this.shouldReconnect = false;
+          this.emit("error", this.normalizeError(error));
+          this.stop();
+          return;
+        }
         this.scheduleReconnect();
       }
-      this.emit(
-        "error",
-        this.normalizeError(error)
-      );
+      this.emit("error", this.normalizeError(error));
     }
-  }
-
-  private buildListenUrl(): string {
-    const url = new URL("wss://api.deepgram.com/v1/listen");
-    url.searchParams.set("model", "nova-3");
-    url.searchParams.set("smart_format", "true");
-    url.searchParams.set("interim_results", "true");
-    url.searchParams.set("encoding", "linear16");
-    url.searchParams.set("sample_rate", String(this.sampleRate));
-    url.searchParams.set("channels", String(this.numChannels));
-    url.searchParams.set("endpointing", "200");
-    url.searchParams.set("utterance_end_ms", "1000");
-    url.searchParams.set("vad_events", "true");
-
-    if (this.languageCode && this.languageCode !== "multi") {
-      url.searchParams.set("language", this.languageCode);
-    }
-
-    return url.toString();
   }
 
   private handleMessage(payload: WebSocket.RawData): void {
     try {
-      const message = JSON.parse(payload.toString());
+      const textPayload =
+        typeof payload === "string" ? payload : payload.toString("utf8");
+      const message = JSON.parse(textPayload) as AssemblyServerMessage;
+      const type = (message as { type?: string }).type;
 
-      if (message.type === "Results") {
-        const alt = message.channel?.alternatives?.[0];
-        const transcript = alt?.transcript?.trim();
-        const isFinal = message.is_final ?? false;
+      if (type === "Begin") {
+        return;
+      }
+
+      if (type === "Turn") {
+        const turn = message as AssemblyTurnMessage;
+        const transcript = (turn.transcript ?? "").trim();
+        const turnOrder = typeof turn.turn_order === "number" ? turn.turn_order : -1;
 
         if (!transcript) {
           return;
         }
 
+        if (
+          this.lastTurnOrder === turnOrder &&
+          this.lastTurnTranscript === transcript
+        ) {
+          return;
+        }
+
+        this.lastTurnOrder = turnOrder;
+        this.lastTurnTranscript = transcript;
+
         this.emit("transcript", {
           text: transcript,
-          isFinal,
-          confidence: alt?.confidence ?? 1.0,
+          isFinal: Boolean(turn.end_of_turn),
+          confidence: 1,
         });
         return;
       }
 
-      if (message.type === "Metadata") {
+      if (type === "Termination") {
         return;
       }
 
-      if (message.type === "UtteranceEnd" || message.type === "SpeechStarted") {
-        return;
-      }
-
-      if (message.type === "Error" || message.error || message.message) {
-        console.error("[FirebaseManagedSTT] Deepgram realtime message error", message);
+      if (
+        typeof (message as { error?: unknown }).error === "string" ||
+        typeof (message as { message?: unknown }).message === "string"
+      ) {
         this.emit("error", this.normalizeError(message));
-        return;
       }
-
-      console.warn("[FirebaseManagedSTT] Unhandled realtime event", message);
     } catch (error) {
       console.error("[FirebaseManagedSTT] Failed to parse realtime message", error);
       this.emit("error", this.normalizeError(error));
@@ -361,7 +383,6 @@ export class FirebaseManagedSTT extends EventEmitter {
           reason?: unknown;
           code?: unknown;
           error?: unknown;
-          event?: { message?: unknown; error?: unknown };
         }
       | undefined;
 
@@ -371,9 +392,7 @@ export class FirebaseManagedSTT extends EventEmitter {
         : "",
       typeof payload?.message === "string" ? payload.message : "",
       typeof payload?.reason === "string" ? payload.reason : "",
-      typeof payload?.event?.message === "string" ? payload.event.message : "",
       typeof payload?.error === "string" ? payload.error : "",
-      typeof payload?.event?.error === "string" ? payload.event.error : "",
     ].filter(Boolean);
 
     if (messageParts.length > 0) {
@@ -415,19 +434,102 @@ export class FirebaseManagedSTT extends EventEmitter {
     }, delay);
   }
 
+  private bytesForDurationMs(durationMs: number) {
+    const bytesPerSecond = Math.max(this.sampleRate * this.numChannels * 2, 1);
+    return Math.max(2, Math.ceil((bytesPerSecond * durationMs) / 1000));
+  }
+
+  private enqueueOutboundAudio(chunk: Buffer) {
+    if (chunk.length <= 0) return;
+    this.outboundAudioQueue.push(chunk);
+    this.outboundAudioBytes += chunk.length;
+  }
+
+  private consumeOutboundAudio(byteCount: number) {
+    if (byteCount <= 0 || this.outboundAudioBytes <= 0) {
+      return Buffer.alloc(0);
+    }
+
+    let remaining = Math.min(byteCount, this.outboundAudioBytes);
+    const consumed: Buffer[] = [];
+
+    while (remaining > 0 && this.outboundAudioQueue.length > 0) {
+      const next = this.outboundAudioQueue[0];
+      if (next.length <= remaining) {
+        consumed.push(next);
+        this.outboundAudioQueue.shift();
+        this.outboundAudioBytes -= next.length;
+        remaining -= next.length;
+        continue;
+      }
+
+      consumed.push(next.subarray(0, remaining));
+      this.outboundAudioQueue[0] = next.subarray(remaining);
+      this.outboundAudioBytes -= remaining;
+      remaining = 0;
+    }
+
+    return consumed.length === 1 ? consumed[0] : Buffer.concat(consumed);
+  }
+
+  private sendAudioPacket(packet: Buffer) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN || packet.length <= 0) {
+      return;
+    }
+
+    try {
+      this.ws.send(packet);
+    } catch (error) {
+      console.error("[FirebaseManagedSTT] Send error", error);
+    }
+  }
+
+  private flushOutboundAudio(force = false) {
+    if (!this.isOpen || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      return;
+    }
+
+    const minPacketBytes = this.bytesForDurationMs(ASSEMBLY_MIN_AUDIO_MS);
+    const targetPacketBytes = this.bytesForDurationMs(ASSEMBLY_TARGET_AUDIO_MS);
+    const maxPacketBytes = this.bytesForDurationMs(ASSEMBLY_MAX_AUDIO_MS);
+
+    while (this.outboundAudioBytes >= targetPacketBytes) {
+      this.sendAudioPacket(this.consumeOutboundAudio(targetPacketBytes));
+    }
+
+    if (!force || this.outboundAudioBytes <= 0) {
+      return;
+    }
+
+    if (this.outboundAudioBytes > maxPacketBytes) {
+      while (this.outboundAudioBytes > maxPacketBytes) {
+        this.sendAudioPacket(this.consumeOutboundAudio(maxPacketBytes));
+      }
+    }
+
+    if (this.outboundAudioBytes >= minPacketBytes) {
+      this.sendAudioPacket(this.consumeOutboundAudio(this.outboundAudioBytes));
+      return;
+    }
+
+    const remainder = this.consumeOutboundAudio(this.outboundAudioBytes);
+    if (remainder.length <= 0) {
+      return;
+    }
+
+    const paddedPacket = Buffer.alloc(minPacketBytes);
+    remainder.copy(paddedPacket, 0, 0, remainder.length);
+    this.sendAudioPacket(paddedPacket);
+  }
+
   private clearTimers(): void {
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
-
-    if (this.keepAliveInterval) {
-      clearInterval(this.keepAliveInterval);
-      this.keepAliveInterval = null;
-    }
   }
 
-  private async fetchDeepgramAccessToken() {
+  private async fetchAssemblyAccessToken() {
     const idToken = FirebaseSessionManager.getInstance().getIdToken();
 
     if (!idToken) {
@@ -441,7 +543,7 @@ export class FirebaseManagedSTT extends EventEmitter {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        ttlSeconds: 60,
+        ttlSeconds: TOKEN_TTL_SECONDS,
       }),
     });
 
@@ -451,7 +553,7 @@ export class FirebaseManagedSTT extends EventEmitter {
       throw new Error(
         json.success === false
           ? json.message
-          : "Failed to create Deepgram access token."
+          : "Failed to create AssemblyAI access token."
       );
     }
 
@@ -509,8 +611,7 @@ export class FirebaseManagedSTT extends EventEmitter {
       | CallableSuccessEnvelope<TrackUsageResponse | TrackUsageFailureResponse>
       | CallableErrorEnvelope;
 
-    const result =
-      "result" in json && json.result ? json.result : null;
+    const result = "result" in json && json.result ? json.result : null;
     const errorEnvelope = "error" in json ? json.error : undefined;
 
     if (!response.ok || result?.success === false) {

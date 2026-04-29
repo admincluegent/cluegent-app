@@ -64,7 +64,7 @@ export default function TopPill({
             rounded-full
             backdrop-blur-md
             overlay-chip-surface
-            overlay-text-interactive
+            text-white
             text-[12px]
             font-medium
             border
@@ -89,10 +89,10 @@ export default function TopPill({
             w-8 h-8
             rounded-full
             overlay-icon-surface
-            overlay-text-primary
+            text-white
             flex items-center justify-center
             interaction-base interaction-press
-            hover:bg-red-500/10 hover:text-red-400
+            hover:bg-white/10 hover:text-white
           `}
                     style={appearance.iconStyle}
                 >

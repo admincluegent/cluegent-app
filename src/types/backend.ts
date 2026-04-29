@@ -1,8 +1,10 @@
 import type {
+  BillingInterval,
   FirestoreUserProfile,
   MonthlyUsage,
   PlanStatus,
   UserSubscription,
+  UserPlan,
 } from "@/types/firebase";
 
 export interface BackendEnvelope<T> {
@@ -26,4 +28,30 @@ export interface GetPlanStatusResponse {
 export interface ActivatePlanResponse {
   monthKey: string;
   planStatus: PlanStatus;
+}
+
+export interface CreateRazorpayTestSubscriptionResponse {
+  providerMode: "test";
+  keyId: string;
+  subscriptionId: string;
+  planId: UserPlan;
+  interval: BillingInterval;
+  name: string;
+  description: string;
+  prefill: {
+    name: string;
+    email: string;
+  };
+  notes: Record<string, string>;
+}
+
+export interface VerifyRazorpayTestPaymentResponse {
+  verified: boolean;
+  subscriptionId: string;
+  paymentId: string;
+}
+
+export interface ResetTestSubscriptionResponse {
+  reset: boolean;
+  planId: UserPlan;
 }

@@ -16,6 +16,15 @@ export interface AuthenticatedUser {
   emailVerified: boolean;
   displayName: string;
   photoURL: string;
+  authTime: string | null;
+}
+
+function toIsoAuthTime(value: unknown): string | null {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+
+  return new Date(value * 1000).toISOString();
 }
 
 function toAuthenticatedUser(decodedToken: DecodedIdToken): AuthenticatedUser {
@@ -32,6 +41,7 @@ function toAuthenticatedUser(decodedToken: DecodedIdToken): AuthenticatedUser {
       typeof decodedToken.name === "string" ? decodedToken.name : "Aura User",
     photoURL:
       typeof decodedToken.picture === "string" ? decodedToken.picture : "",
+    authTime: toIsoAuthTime(decodedToken.auth_time),
   };
 }
 
@@ -51,6 +61,7 @@ export function requireAuth(request: CallableRequest<unknown>): AuthenticatedUse
     emailVerified: token.email_verified === true,
     displayName: typeof token.name === "string" ? token.name : "Aura User",
     photoURL: typeof token.picture === "string" ? token.picture : "",
+    authTime: toIsoAuthTime(token.auth_time),
   };
 }
 

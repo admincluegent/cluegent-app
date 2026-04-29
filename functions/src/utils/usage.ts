@@ -1,4 +1,4 @@
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
 import {
   DEFAULT_PLAN,
@@ -10,6 +10,9 @@ import {
 import { getMonthKey } from "./monthKey.js";
 
 export type UsageActionType = "stt" | "prompt" | "screenshot";
+export type BillingInterval = "month" | "year";
+export type BillingProvider = "razorpay";
+export type BillingProviderMode = "test" | "live";
 
 export interface UserProfileDoc {
   uid: string;
@@ -29,6 +32,17 @@ export interface SubscriptionDoc {
   promptLimit: number;
   screenshotLimit: number;
   sttSecondsLimit: number;
+  provider: BillingProvider | null;
+  providerMode: BillingProviderMode | null;
+  billingInterval: BillingInterval | null;
+  customerId: string | null;
+  subscriptionId: string | null;
+  startedAt: string | null;
+  renewsAt: string | null;
+  expiresAt: string | null;
+  cancelAtPeriodEnd: boolean;
+  lastWebhookEventId: string | null;
+  isTestEntitlement: boolean;
   createdAt: FieldValue;
   updatedAt: FieldValue;
 }
@@ -51,6 +65,17 @@ export interface MaterializedSubscription {
   promptLimit: number;
   screenshotLimit: number;
   sttSecondsLimit: number;
+  provider: BillingProvider | null;
+  providerMode: BillingProviderMode | null;
+  billingInterval: BillingInterval | null;
+  customerId: string | null;
+  subscriptionId: string | null;
+  startedAt: string | null;
+  renewsAt: string | null;
+  expiresAt: string | null;
+  cancelAtPeriodEnd: boolean;
+  lastWebhookEventId: string | null;
+  isTestEntitlement: boolean;
   createdAt?: unknown;
   updatedAt?: unknown;
 }
@@ -81,6 +106,7 @@ export function buildUserProfileDoc(input: {
   emailVerified: boolean;
   displayName: string;
   photoURL: string;
+  authTime?: string | null;
 }): UserProfileDoc {
   return {
     uid: input.uid,
@@ -91,7 +117,27 @@ export function buildUserProfileDoc(input: {
     provider: "google",
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
-    lastLoginAt: FieldValue.serverTimestamp(),
+    lastLoginAt: toFirestoreTimestamp(input.authTime) ?? FieldValue.serverTimestamp(),
+  };
+}
+
+export function buildUserProfileUpdate(input: {
+  email: string;
+  emailVerified: boolean;
+  displayName: string;
+  photoURL: string;
+  authTime?: string | null;
+}) {
+  return {
+    email: input.email,
+    emailVerified: input.emailVerified,
+    displayName: input.displayName,
+    photoURL: input.photoURL,
+    provider: "google" as const,
+    updatedAt: FieldValue.serverTimestamp(),
+    ...(toFirestoreTimestamp(input.authTime)
+      ? { lastLoginAt: toFirestoreTimestamp(input.authTime) }
+      : {}),
   };
 }
 
@@ -107,6 +153,17 @@ export function buildSubscriptionDoc(
     promptLimit: plan.promptLimit,
     screenshotLimit: plan.screenshotLimit,
     sttSecondsLimit: plan.sttSecondsLimit,
+    provider: null,
+    providerMode: null,
+    billingInterval: null,
+    customerId: null,
+    subscriptionId: null,
+    startedAt: null,
+    renewsAt: null,
+    expiresAt: null,
+    cancelAtPeriodEnd: false,
+    lastWebhookEventId: null,
+    isTestEntitlement: false,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   };
@@ -137,6 +194,17 @@ export function materializeSubscription(
     promptLimit: raw?.promptLimit ?? fallbackPlan.promptLimit,
     screenshotLimit: raw?.screenshotLimit ?? fallbackPlan.screenshotLimit,
     sttSecondsLimit: raw?.sttSecondsLimit ?? fallbackPlan.sttSecondsLimit,
+    provider: raw?.provider ?? null,
+    providerMode: raw?.providerMode ?? null,
+    billingInterval: raw?.billingInterval ?? null,
+    customerId: raw?.customerId ?? null,
+    subscriptionId: raw?.subscriptionId ?? null,
+    startedAt: raw?.startedAt ?? null,
+    renewsAt: raw?.renewsAt ?? null,
+    expiresAt: raw?.expiresAt ?? null,
+    cancelAtPeriodEnd: raw?.cancelAtPeriodEnd ?? false,
+    lastWebhookEventId: raw?.lastWebhookEventId ?? null,
+    isTestEntitlement: raw?.isTestEntitlement ?? false,
     createdAt: raw?.createdAt,
     updatedAt: raw?.updatedAt,
   };
@@ -157,6 +225,66 @@ export function materializeUsage(
     createdAt: raw?.createdAt,
     updatedAt: raw?.updatedAt,
   };
+}
+
+export function serializeForClient<T>(value: T): T {
+  return serializeValue(value) as T;
+}
+
+function serializeValue(value: unknown): unknown {
+  if (value instanceof Timestamp) {
+    return value.toDate().toISOString();
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => serializeValue(entry));
+  }
+
+  if (value && typeof value === "object") {
+    if (typeof (value as { toDate?: unknown }).toDate === "function") {
+      try {
+        const parsedDate = (value as { toDate: () => Date }).toDate();
+        if (parsedDate instanceof Date && !Number.isNaN(parsedDate.getTime())) {
+          return parsedDate.toISOString();
+        }
+      } catch {
+        // Fall through to object serialization below.
+      }
+    }
+
+    const timestampLike = value as {
+      _seconds?: unknown;
+      _nanoseconds?: unknown;
+    };
+    if (
+      typeof timestampLike._seconds === "number" &&
+      typeof timestampLike._nanoseconds === "number"
+    ) {
+      return new Date(
+        timestampLike._seconds * 1000 +
+          Math.floor(timestampLike._nanoseconds / 1_000_000)
+      ).toISOString();
+    }
+
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [key, serializeValue(entry)])
+    );
+  }
+
+  return value;
+}
+
+function toFirestoreTimestamp(value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return Timestamp.fromDate(parsed);
 }
 
 export function buildPlanStatus(

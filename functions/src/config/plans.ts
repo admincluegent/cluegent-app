@@ -1,5 +1,12 @@
 export type PlanId = "free" | "pro" | "power";
-export type SubscriptionStatus = "active" | "inactive" | "canceled";
+export type SubscriptionStatus =
+  | "active"
+  | "inactive"
+  | "canceled"
+  | "pending"
+  | "on_hold"
+  | "failed"
+  | "expired";
 
 export interface PlanConfig {
   id: PlanId;
@@ -13,9 +20,9 @@ export const PLAN_CONFIGS: Record<PlanId, PlanConfig> = {
   free: {
     id: "free",
     label: "Free",
-    sttSecondsLimit: 1800,
-    promptLimit: 30,
-    screenshotLimit: 10,
+    sttSecondsLimit: 60,
+    promptLimit: 3,
+    screenshotLimit: 3,
   },
   pro: {
     id: "pro",

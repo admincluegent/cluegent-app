@@ -12,11 +12,6 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { Zap, Key, ArrowRight, Loader2, CheckCircle, Brain, Mic, Flame, ShieldCheck } from 'lucide-react';
 import { NativelyLogoMark } from '../NativelyLogoMark';
 
-const PLAN_STANDARD_URL = 'https://checkout.dodopayments.com/buy/pdt_0NbFixGmD8CSeawb5qvVl';
-const PLAN_PRO_URL      = 'https://checkout.dodopayments.com/buy/pdt_0NcM6Aw0IWdspbsgUeCLA';
-const PLAN_MAX_URL      = 'https://checkout.dodopayments.com/buy/pdt_0NcM7JElX4Af6LNVFS1Yf';
-const PLAN_ULTRA_URL    = 'https://checkout.dodopayments.com/buy/pdt_0NcM7rC2kAb69TFKsZnUU';
-
 const F = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif';
 
 // Apple easing curve
@@ -109,7 +104,7 @@ export const FreeTrialModal: React.FC<TrialModalProps> = ({ usage, onByok, onSta
   const [error, setError] = useState<string | null>(null);
   const reduced = useReducedMotion() ?? false;
 
-  const openUrl = (url: string) => (window.electronAPI as any)?.openExternal?.(url);
+  const openBillingSettings = () => void window.electronAPI?.openSettingsTab?.('natively-api');
 
   const handleByok = async () => {
     setStep('wiping');
@@ -180,13 +175,13 @@ export const FreeTrialModal: React.FC<TrialModalProps> = ({ usage, onByok, onSta
               {step==='choose' && (
                 <ChooseState
                   usage={usage} error={error} reduced={reduced}
-                  onPro={()=>{ window.electronAPI?.convertTrial?.('pro')?.catch(()=>{}); openUrl(PLAN_PRO_URL); }}
-                  onMax={()=>{ window.electronAPI?.convertTrial?.('max')?.catch(()=>{}); openUrl(PLAN_MAX_URL); }}
-                  onUltra={()=>{ window.electronAPI?.convertTrial?.('ultra')?.catch(()=>{}); openUrl(PLAN_ULTRA_URL); }}
+                  onPro={()=>{ window.electronAPI?.convertTrial?.('pro')?.catch(()=>{}); openBillingSettings(); }}
+                  onMax={()=>{ window.electronAPI?.convertTrial?.('max')?.catch(()=>{}); openBillingSettings(); }}
+                  onUltra={()=>{ window.electronAPI?.convertTrial?.('ultra')?.catch(()=>{}); openBillingSettings(); }}
                   onStandard={()=>{
                     window.electronAPI?.convertTrial?.('standard')?.catch(()=>{});
                     if (onStandard) onStandard().catch(()=>{});
-                    openUrl(PLAN_STANDARD_URL);
+                    openBillingSettings();
                   }}
                   onByok={handleByok}
                 />
@@ -251,7 +246,7 @@ function ChooseState({ usage, error, reduced, onPro, onMax, onUltra, onStandard,
 
       <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px',marginTop:'-2px'}}>
         <ShieldCheck size={9.5} strokeWidth={2} color={C.t3} />
-        <span style={{fontSize:'10px',color:C.t3}}>Cancel anytime · Secure checkout via Dodo Payments</span>
+        <span style={{fontSize:'10px',color:C.t3}}>Cancel anytime · Secure checkout via Razorpay</span>
       </div>
 
       {error && <p style={{fontSize:'11px',color:'rgba(248,113,113,.85)',textAlign:'center',margin:0}}>{error}</p>}

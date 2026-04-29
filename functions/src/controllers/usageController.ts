@@ -1,4 +1,3 @@
-import { FieldValue } from "firebase-admin/firestore";
 import { type CallableRequest, HttpsError } from "firebase-functions/v2/https";
 import { PLAN_CONFIGS, type PlanId } from "../config/plans.js";
 import { db, requireAuth } from "../utils/auth.js";
@@ -12,6 +11,7 @@ import {
   getUserRefs,
   materializeSubscription,
   materializeUsage,
+  serializeForClient,
   type UsageActionType,
 } from "../utils/usage.js";
 
@@ -49,6 +49,7 @@ export async function ensureUsageDocuments(
           emailVerified: identity.emailVerified,
           displayName: identity.displayName,
           photoURL: identity.photoURL,
+          authTime: identity.authTime,
         }),
         { merge: true }
       );
@@ -93,7 +94,7 @@ export async function getPlanStatusController(
     success: true,
     data: {
       monthKey,
-      planStatus: buildPlanStatus(subscription, usage),
+      planStatus: serializeForClient(buildPlanStatus(subscription, usage)),
     },
   };
 }
@@ -134,50 +135,9 @@ export async function checkUsageBeforeActionController(
 export async function activatePlanController(
   request: CallableRequest<ActivatePlanData>
 ) {
-  const authUser = requireAuth(request);
-  const planId = request.data?.planId;
-
-  if (!planId || !(planId in PLAN_CONFIGS)) {
-    throw new HttpsError(
-      "invalid-argument",
-      "planId must be one of: free, pro, power."
-    );
-  }
-
-  const { monthKey } = await ensureUsageDocuments(authUser.uid, authUser);
-  const refs = getUserRefs(authUser.uid, monthKey);
-  const subscriptionRef = db.doc(refs.subscriptionPath);
-  const plan = PLAN_CONFIGS[planId];
-
-  await subscriptionRef.set(
-    {
-      plan: plan.id,
-      status: "active",
-      promptLimit: plan.promptLimit,
-      screenshotLimit: plan.screenshotLimit,
-      sttSecondsLimit: plan.sttSecondsLimit,
-      updatedAt: FieldValue.serverTimestamp(),
-    },
-    { merge: true }
+  requireAuth(request);
+  throw new HttpsError(
+    "failed-precondition",
+    "Manual plan activation is disabled. Use the Razorpay test checkout flow or resetTestSubscription instead."
   );
-
-  const [updatedSubscriptionSnap, updatedUsageSnap] = await Promise.all([
-    subscriptionRef.get(),
-    db.doc(refs.usagePath).get(),
-  ]);
-  const subscription = materializeSubscription(
-    updatedSubscriptionSnap.data() as ReturnType<typeof materializeSubscription>
-  );
-  const usage = materializeUsage(
-    updatedUsageSnap.data() as ReturnType<typeof materializeUsage>,
-    monthKey
-  );
-
-  return {
-    success: true,
-    data: {
-      monthKey,
-      planStatus: buildPlanStatus(subscription, usage),
-    },
-  };
 }

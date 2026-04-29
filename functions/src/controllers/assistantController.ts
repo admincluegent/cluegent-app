@@ -9,15 +9,18 @@ import {
   materializeUsage,
 } from "../utils/usage.js";
 import {
-  generateGeminiReply,
-  type AssistantHistoryEntry,
-  GeminiServiceError,
-} from "../services/geminiService.js";
+  DeepSeekServiceError,
+  generateDeepSeekReply,
+} from "../services/deepseekService.js";
 import {
-  createDeepgramAccessToken,
-  DeepgramServiceError,
-  transcribeWithDeepgram,
-} from "../services/deepgramService.js";
+  AssemblyServiceError,
+  createAssemblyStreamingAccessToken,
+} from "../services/assemblyService.js";
+import {
+  GeminiServiceError,
+  generateGeminiReply,
+} from "../services/geminiService.js";
+import { estimateDeepSeekRequestCost } from "../utils/deepseekCost.js";
 import { estimateGeminiRequestCost } from "../utils/geminiCost.js";
 
 interface ProcessAssistantReplyData {
@@ -26,6 +29,11 @@ interface ProcessAssistantReplyData {
   screenshotUrl?: string;
   systemPrompt?: string;
   history?: AssistantHistoryEntry[];
+}
+
+interface AssistantHistoryEntry {
+  role: "user" | "assistant" | "system";
+  content: string;
 }
 
 interface TrackSttUsageData {
@@ -62,7 +70,10 @@ interface TrackUsageSuccessResponse {
   };
 }
 
-type CreateTokenErrorCode = "UNAUTHENTICATED" | "STT_LIMIT_EXCEEDED" | "DEEPGRAM_REQUEST_FAILED";
+type CreateTokenErrorCode =
+  | "UNAUTHENTICATED"
+  | "STT_LIMIT_EXCEEDED"
+  | "ASSEMBLY_REQUEST_FAILED";
 
 interface CreateTokenFailureResponse {
   success: false;
@@ -85,12 +96,12 @@ type AssistantErrorCode =
   | "PROMPT_LIMIT_EXCEEDED"
   | "SCREENSHOT_LIMIT_EXCEEDED"
   | "UNAUTHENTICATED"
-  | "GEMINI_REQUEST_FAILED";
+  | "GROQ_REQUEST_FAILED";
 
 type TranscriptionErrorCode =
   | "UNAUTHENTICATED"
   | "STT_LIMIT_EXCEEDED"
-  | "DEEPGRAM_REQUEST_FAILED";
+  | "GROQ_REQUEST_FAILED";
 
 interface AssistantFailureResponse {
   success: false;
@@ -179,6 +190,7 @@ export async function processAssistantReplyController(
   request: CallableRequest<ProcessAssistantReplyData>,
   input: {
     geminiApiKey: string;
+    deepseekApiKey: string;
   }
 ): Promise<AssistantFailureResponse | AssistantSuccessResponse> {
   try {
@@ -192,10 +204,13 @@ export async function processAssistantReplyController(
       throw new HttpsError("invalid-argument", "prompt is required.");
     }
 
-    if (!input.geminiApiKey.trim()) {
+    const geminiApiKey = input.geminiApiKey.trim();
+    const deepseekApiKey = input.deepseekApiKey.trim();
+
+    if (!geminiApiKey && !deepseekApiKey) {
       return assistantFailure(
-        "GEMINI_REQUEST_FAILED",
-        "GEMINI_API_KEY secret is not configured in Firebase Functions."
+        "GROQ_REQUEST_FAILED",
+        "None of GEMINI_API_KEY or DEEPSEEK_AI_API_KEY is configured in Firebase Functions."
       );
     }
 
@@ -219,29 +234,132 @@ export async function processAssistantReplyController(
       );
     }
 
-    const geminiResult = await generateGeminiReply({
-      apiKey: input.geminiApiKey,
+    const fallbackInputText = [
+      request.data?.systemPrompt,
+      ...(request.data?.history?.map((entry) => entry.content) ?? []),
       prompt,
-      screenshotBase64: request.data?.screenshotBase64,
-      screenshotUrl: request.data?.screenshotUrl,
-      systemPrompt: request.data?.systemPrompt,
-      history: request.data?.history,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    let replyText = "";
+    let costEstimate: {
+      inputTokens: number;
+      outputTokens: number;
+      estimatedCostUsd: number;
+    } | null = null;
+    let lastLlmError: Error | null = null;
+    let resolvedProvider: "gemini" | "deepseek" | null = null;
+
+    const tryGemini = async () => {
+      if (!geminiApiKey || replyText) {
+        return;
+      }
+
+      try {
+        const geminiResult = await generateGeminiReply({
+          apiKey: geminiApiKey,
+          prompt,
+          screenshotBase64: request.data?.screenshotBase64,
+          screenshotUrl: request.data?.screenshotUrl,
+          systemPrompt: request.data?.systemPrompt,
+          history: request.data?.history,
+          modelId: "gemini-2.5-flash-lite",
+        });
+
+        replyText = geminiResult.reply;
+        resolvedProvider = "gemini";
+        costEstimate = estimateGeminiRequestCost({
+          modelId: geminiResult.modelId,
+          inputTokens: geminiResult.usage.inputTokens,
+          outputTokens: geminiResult.usage.outputTokens,
+          screenshotCount: hasScreenshot ? 1 : 0,
+          fallbackInputText,
+          fallbackOutputText: geminiResult.reply,
+        });
+      } catch (error) {
+        if (error instanceof GeminiServiceError) {
+          lastLlmError = error;
+        } else {
+          throw error;
+        }
+      }
+    };
+
+    const tryDeepSeek = async () => {
+      if (!deepseekApiKey || replyText) {
+        return;
+      }
+
+      try {
+        const deepseekResult = await generateDeepSeekReply({
+          apiKey: deepseekApiKey,
+          prompt,
+          systemPrompt: request.data?.systemPrompt,
+          history: request.data?.history,
+        });
+
+        replyText = deepseekResult.reply;
+        resolvedProvider = "deepseek";
+        costEstimate = estimateDeepSeekRequestCost({
+          modelId: deepseekResult.modelId,
+          inputTokens: deepseekResult.usage.inputTokens,
+          outputTokens: deepseekResult.usage.outputTokens,
+          fallbackInputText,
+          fallbackOutputText: deepseekResult.reply,
+        });
+      } catch (error) {
+        if (error instanceof DeepSeekServiceError) {
+          lastLlmError = error;
+        } else {
+          throw error;
+        }
+      }
+    };
+
+    if (hasScreenshot) {
+      if (!geminiApiKey) {
+        return assistantFailure(
+          "GROQ_REQUEST_FAILED",
+          "GEMINI_API_KEY is required for screenshot-attached requests."
+        );
+      }
+      await tryGemini();
+    } else {
+      if (!deepseekApiKey) {
+        return assistantFailure(
+          "GROQ_REQUEST_FAILED",
+          "DEEPSEEK_AI_API_KEY is required for text-only requests."
+        );
+      }
+      await tryDeepSeek();
+    }
+
+    if (!replyText || !costEstimate) {
+      const fallbackMessage = lastLlmError
+        ? String((lastLlmError as Error).message)
+        : hasScreenshot
+          ? "The backend-managed Gemini request failed."
+          : "The backend-managed DeepSeek request failed.";
+      return assistantFailure(
+        "GROQ_REQUEST_FAILED",
+        fallbackMessage
+      );
+    }
+
+    console.info("[processAssistantReplyController] LLM provider used", {
+      uid: authUser.uid,
+      hasScreenshot,
+      provider: resolvedProvider,
+      model: hasScreenshot ? "gemini-2.5-flash-lite" : "deepseek-v4-flash",
     });
 
-    const costEstimate = estimateGeminiRequestCost({
-      modelId: geminiResult.modelId,
-      inputTokens: geminiResult.usage.inputTokens,
-      outputTokens: geminiResult.usage.outputTokens,
-      screenshotCount: hasScreenshot ? 1 : 0,
-      fallbackInputText: [
-        request.data?.systemPrompt,
-        ...(request.data?.history?.map((entry) => entry.content) ?? []),
-        prompt,
-      ]
-        .filter(Boolean)
-        .join("\n"),
-      fallbackOutputText: geminiResult.reply,
-    });
+    const finalCostEstimate = costEstimate as {
+      inputTokens: number;
+      outputTokens: number;
+      estimatedCostUsd: number;
+    };
+
     const refs = getUserRefs(authUser.uid, monthKey);
     const subscriptionRef = db.doc(refs.subscriptionPath);
     const usageRef = db.doc(refs.usagePath);
@@ -273,9 +391,9 @@ export async function processAssistantReplyController(
           monthKey,
           promptCount: FieldValue.increment(1),
           screenshotCount: FieldValue.increment(hasScreenshot ? 1 : 0),
-          inputTokens: FieldValue.increment(costEstimate.inputTokens),
-          outputTokens: FieldValue.increment(costEstimate.outputTokens),
-          estimatedCostUsd: FieldValue.increment(costEstimate.estimatedCostUsd),
+          inputTokens: FieldValue.increment(finalCostEstimate.inputTokens),
+          outputTokens: FieldValue.increment(finalCostEstimate.outputTokens),
+          estimatedCostUsd: FieldValue.increment(finalCostEstimate.estimatedCostUsd),
           updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true }
@@ -292,12 +410,12 @@ export async function processAssistantReplyController(
 
     return {
       success: true,
-      reply: geminiResult.reply,
+      reply: replyText,
       usage: {
-        inputTokens: costEstimate.inputTokens,
-        outputTokens: costEstimate.outputTokens,
+        inputTokens: finalCostEstimate.inputTokens,
+        outputTokens: finalCostEstimate.outputTokens,
         screenshotCountAdded: hasScreenshot ? 1 : 0,
-        estimatedCostUsdAdded: costEstimate.estimatedCostUsd,
+        estimatedCostUsdAdded: finalCostEstimate.estimatedCostUsd,
       },
       remaining: updatedRemaining,
     };
@@ -326,8 +444,8 @@ export async function processAssistantReplyController(
       );
     }
 
-    if (error instanceof GeminiServiceError) {
-      return assistantFailure("GEMINI_REQUEST_FAILED", error.message);
+    if (error instanceof DeepSeekServiceError) {
+      return assistantFailure("GROQ_REQUEST_FAILED", error.message);
     }
 
     throw error;
@@ -439,7 +557,7 @@ export async function trackSttUsageForAuthenticatedUser(
 export async function createDeepgramTokenController(
   request: CallableRequest<CreateDeepgramTokenData>,
   input: {
-    deepgramApiKey: string;
+    assemblyAiApiKey: string;
   }
 ): Promise<CreateTokenFailureResponse | CreateTokenSuccessResponse> {
   const authUser = requireAuth(request);
@@ -450,14 +568,14 @@ export async function createDeepgramTokenForAuthenticatedUser(
   authUser: AuthenticatedUser,
   data: CreateDeepgramTokenData | undefined,
   input: {
-    deepgramApiKey: string;
+    assemblyAiApiKey: string;
   }
 ): Promise<CreateTokenFailureResponse | CreateTokenSuccessResponse> {
   try {
-    if (!input.deepgramApiKey.trim()) {
+    if (!input.assemblyAiApiKey.trim()) {
       return createTokenFailure(
-        "DEEPGRAM_REQUEST_FAILED",
-        "DEEPGRAM_API_KEY secret is not configured in Firebase Functions."
+        "ASSEMBLY_REQUEST_FAILED",
+        "ASSEMBLY_AI_API_KEY secret is not configured in Firebase Functions."
       );
     }
 
@@ -474,8 +592,8 @@ export async function createDeepgramTokenForAuthenticatedUser(
       );
     }
 
-    const token = await createDeepgramAccessToken({
-      apiKey: input.deepgramApiKey,
+    const token = await createAssemblyStreamingAccessToken({
+      apiKey: input.assemblyAiApiKey,
       ttlSeconds: data?.ttlSeconds,
     });
 
@@ -494,8 +612,8 @@ export async function createDeepgramTokenForAuthenticatedUser(
       );
     }
 
-    if (error instanceof DeepgramServiceError) {
-      return createTokenFailure("DEEPGRAM_REQUEST_FAILED", error.message);
+    if (error instanceof AssemblyServiceError) {
+      return createTokenFailure("ASSEMBLY_REQUEST_FAILED", error.message);
     }
 
     throw error;
@@ -519,7 +637,7 @@ export function getCreateTokenHttpStatus(code: string) {
       return 401;
     case "STT_LIMIT_EXCEEDED":
       return 429;
-    case "DEEPGRAM_REQUEST_FAILED":
+    case "ASSEMBLY_REQUEST_FAILED":
       return 502;
     default:
       return 400;
@@ -550,144 +668,35 @@ export function isCreateDeepgramTokenData(
 
 export async function transcribeAudioController(
   request: CallableRequest<TranscribeAudioData>,
-  input: {
-    deepgramApiKey: string;
-  }
+  _input: Record<string, never>
 ): Promise<TranscriptionFailureResponse | TranscriptionSuccessResponse> {
   const authUser = requireAuth(request);
-  return transcribeAudioForAuthenticatedUser(authUser, request.data, input);
+  return transcribeAudioForAuthenticatedUser(authUser, request.data);
 }
 
 export async function transcribeAudioForAuthenticatedUser(
   authUser: AuthenticatedUser,
-  data: TranscribeAudioData | undefined,
-  input: {
-    deepgramApiKey: string;
-  }
+  data: TranscribeAudioData | undefined
 ): Promise<TranscriptionFailureResponse | TranscriptionSuccessResponse> {
   try {
-    const audioBase64 = data?.audioBase64?.trim();
-    const durationSeconds = Math.max(
-      1,
-      Math.ceil(data?.durationSeconds ?? 0)
-    );
-    console.info("[legacy-chunk-stt] transcribeAudio callable invoked", {
+    const durationSeconds = Math.max(1, Math.ceil(data?.durationSeconds ?? 0));
+    console.warn("[legacy-chunk-stt] transcribeAudio callable is disabled", {
       uid: authUser.uid,
       durationSeconds,
       mimeType: data?.mimeType ?? "audio/wav",
       language: data?.language ?? "default",
     });
 
-    if (!audioBase64) {
-      throw new HttpsError("invalid-argument", "audioBase64 is required.");
-    }
-
-    if (!input.deepgramApiKey.trim()) {
-      return transcriptionFailure(
-        "DEEPGRAM_REQUEST_FAILED",
-        "DEEPGRAM_API_KEY secret is not configured in Firebase Functions."
-      );
-    }
-
-    const { monthKey, subscription, usage } = await ensureUsageDocuments(
-      authUser.uid,
-      authUser
+    return transcriptionFailure(
+      "GROQ_REQUEST_FAILED",
+      "Legacy chunk transcription is disabled. Use Firebase-managed AssemblyAI streaming STT."
     );
-    const planStatus = buildPlanStatus(subscription, usage);
-
-    if (planStatus.remaining.sttSeconds <= 0) {
-      return transcriptionFailure(
-        "STT_LIMIT_EXCEEDED",
-        "Monthly STT limit exceeded for the current plan."
-      );
-    }
-
-    if (durationSeconds > planStatus.remaining.sttSeconds) {
-      return transcriptionFailure(
-        "STT_LIMIT_EXCEEDED",
-        "Not enough STT time remaining for this transcription."
-      );
-    }
-
-    const deepgramResult = await transcribeWithDeepgram({
-      apiKey: input.deepgramApiKey,
-      audioBase64,
-      mimeType: data?.mimeType,
-      language: data?.language,
-    });
-
-    const estimatedCostUsdAdded = 0;
-    const refs = getUserRefs(authUser.uid, monthKey);
-    const subscriptionRef = db.doc(refs.subscriptionPath);
-    const usageRef = db.doc(refs.usagePath);
-
-    const updatedRemaining = await db.runTransaction(async (transaction) => {
-      const [subscriptionSnap, usageSnap] = await Promise.all([
-        transaction.get(subscriptionRef),
-        transaction.get(usageRef),
-      ]);
-      const latestSubscription = materializeSubscription(
-        subscriptionSnap.data() as ReturnType<typeof materializeSubscription>
-      );
-      const latestUsage = materializeUsage(
-        usageSnap.data() as ReturnType<typeof materializeUsage>,
-        monthKey
-      );
-      const latestPlanStatus = buildPlanStatus(latestSubscription, latestUsage);
-
-      if (latestPlanStatus.remaining.sttSeconds <= 0) {
-        throw new Error("STT_LIMIT_EXCEEDED");
-      }
-
-      if (durationSeconds > latestPlanStatus.remaining.sttSeconds) {
-        throw new Error("STT_LIMIT_EXCEEDED");
-      }
-
-      transaction.set(
-        usageRef,
-        {
-          monthKey,
-          sttSecondsUsed: FieldValue.increment(durationSeconds),
-          estimatedCostUsd: FieldValue.increment(estimatedCostUsdAdded),
-          updatedAt: FieldValue.serverTimestamp(),
-        },
-        { merge: true }
-      );
-
-      return {
-        sttSecondsRemaining: Math.max(
-          latestPlanStatus.remaining.sttSeconds - durationSeconds,
-          0
-        ),
-      };
-    });
-
-    return {
-      success: true,
-      transcript: deepgramResult.transcript,
-      usage: {
-        sttSecondsAdded: durationSeconds,
-        estimatedCostUsdAdded,
-      },
-      remaining: updatedRemaining,
-    };
   } catch (error) {
-    if (error instanceof Error && error.message === "STT_LIMIT_EXCEEDED") {
-      return transcriptionFailure(
-        "STT_LIMIT_EXCEEDED",
-        "Monthly STT limit exceeded for the current plan."
-      );
-    }
-
     if (error instanceof HttpsError && error.code === "unauthenticated") {
       return transcriptionFailure(
         "UNAUTHENTICATED",
         "Sign in with Google before transcribing audio."
       );
-    }
-
-    if (error instanceof DeepgramServiceError) {
-      return transcriptionFailure("DEEPGRAM_REQUEST_FAILED", error.message);
     }
 
     throw error;

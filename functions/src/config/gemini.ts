@@ -7,6 +7,13 @@ export interface GeminiModelConfig {
 }
 
 export const GEMINI_MODELS = {
+  "gemini-2.5-flash-lite": {
+    id: "gemini-2.5-flash-lite",
+    apiVersion: "v1beta",
+    fallbackImageTokens: 1200,
+    maxOutputTokens: 2048,
+    temperature: 0.4,
+  },
   "gemini-2.5-flash": {
     id: "gemini-2.5-flash",
     apiVersion: "v1beta",

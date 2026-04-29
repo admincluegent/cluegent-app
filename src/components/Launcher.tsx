@@ -15,6 +15,15 @@ import { useShortcuts } from '../hooks/useShortcuts';
 import { useResolvedTheme } from '../hooks/useResolvedTheme';
 import { isMac } from '../utils/platformUtils';
 import WindowControls from './WindowControls';
+import {
+    beginLocalMeeting,
+    deleteLocalMeeting,
+    formatLocalMeetingDuration,
+    getLocalMeetingById,
+    getLocalMeetings,
+    subscribeLocalMeetings,
+    type LocalMeetingRecord,
+} from '../lib/localMeetingStorage';
 
 interface Meeting {
     id: string;
@@ -23,6 +32,7 @@ interface Meeting {
     duration: string;
     summary: string;
     detailedSummary?: {
+        overview?: string;
         actionItems: string[];
         keyPoints: string[];
     };
@@ -41,6 +51,59 @@ interface Meeting {
     active?: boolean; // UI state
     time?: string; // Optional for compatibility
 }
+
+const localMeetingToMeeting = (meeting: LocalMeetingRecord): Meeting => {
+    const usage: NonNullable<Meeting['usage']> = [];
+    let pendingQuestion: NonNullable<Meeting['usage']>[number] | null = null;
+
+    meeting.events.forEach(event => {
+        if (event.type === 'prompt') {
+            pendingQuestion = {
+                type: event.hasScreenshot ? 'assist' : 'chat',
+                timestamp: event.timestamp,
+                question: event.text,
+                answer: '',
+            };
+            usage.push(pendingQuestion);
+            return;
+        }
+
+        if (event.type === 'response') {
+            if (pendingQuestion && !pendingQuestion.answer) {
+                pendingQuestion.answer = event.text;
+                pendingQuestion.timestamp = event.timestamp;
+            } else {
+                usage.push({
+                    type: 'chat',
+                    timestamp: event.timestamp,
+                    question: '',
+                    answer: event.text,
+                });
+            }
+        }
+    });
+
+    return {
+        id: meeting.id,
+        title: meeting.title,
+        date: new Date(meeting.startedAt).toISOString(),
+        duration: formatLocalMeetingDuration(meeting),
+        summary: 'Local Cluegent meeting',
+        detailedSummary: {
+            overview: 'This meeting was saved locally on this device.',
+            actionItems: [],
+            keyPoints: [],
+        },
+        transcript: meeting.events
+            .filter(event => event.type === 'transcript')
+            .map(event => ({
+                speaker: 'interviewer',
+                text: event.text,
+                timestamp: event.timestamp,
+            })),
+        usage,
+    };
+};
 
 interface LauncherProps {
     onStartMeeting: () => void;
@@ -96,9 +159,20 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onO
     const [showModesOnboarding, setShowModesOnboarding] = useState(false);
 
     const fetchMeetings = () => {
+        const localMeetings = getLocalMeetings().map(localMeetingToMeeting);
         if (window.electronAPI && window.electronAPI.getRecentMeetings) {
-            window.electronAPI.getRecentMeetings().then(setMeetings).catch(err => console.error("Failed to fetch meetings:", err));
+            window.electronAPI.getRecentMeetings()
+                .then(nativeMeetings => {
+                    setMeetings([...localMeetings, ...(nativeMeetings || [])]
+                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+                })
+                .catch(err => {
+                    console.error("Failed to fetch meetings:", err);
+                    setMeetings(localMeetings);
+                });
+            return;
         }
+        setMeetings(localMeetings);
     };
 
     const fetchEvents = () => {
@@ -187,6 +261,7 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onO
             console.log("Received meetings-updated event");
             fetchMeetings();
         });
+        const removeLocalMeetingsListener = subscribeLocalMeetings(fetchMeetings);
 
         // Simple polling for events every minute
         const interval = setInterval(fetchEvents, 60000);
@@ -194,6 +269,7 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onO
         return () => {
             mounted = false;
             if (removeMeetingsListener) removeMeetingsListener();
+            removeLocalMeetingsListener();
             if (removeUndetectableListener) removeUndetectableListener();
             if (removeMeetingStateListener) removeMeetingStateListener();
             clearInterval(interval);
@@ -251,6 +327,7 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onO
                 source: 'calendar',
                 audio: { inputDeviceId, outputDeviceId }
             });
+            beginLocalMeeting(preparedEvent.title);
             setIsPrepared(false);
         } catch (e) {
             console.error("Failed to start prepared meeting", e);
@@ -315,6 +392,12 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onO
         setForwardMeeting(null); // Clear forward history on new navigation
         console.log("[Launcher] Opening meeting:", meeting.id);
         analytics.trackCommandExecuted('open_meeting_details');
+
+        if (meeting.id.startsWith('local-')) {
+            const localMeeting = getLocalMeetingById(meeting.id);
+            setSelectedMeeting(localMeeting ? localMeetingToMeeting(localMeeting) : meeting);
+            return;
+        }
 
         // Fetch full meeting details including transcript and usage
         if (window.electronAPI && window.electronAPI.getMeetingDetails) {
@@ -989,6 +1072,12 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onO
                                                                             <button
                                                                                 className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg transition-colors text-left"
                                                                                 onClick={async () => {
+                                                                                    if (m.id.startsWith('local-')) {
+                                                                                        deleteLocalMeeting(m.id);
+                                                                                        setMeetings(prev => prev.filter(meeting => meeting.id !== m.id));
+                                                                                        setActiveMenuId(null);
+                                                                                        return;
+                                                                                    }
                                                                                     if (window.electronAPI && window.electronAPI.deleteMeeting) {
                                                                                         const success = await window.electronAPI.deleteMeeting(m.id);
                                                                                         if (success) {

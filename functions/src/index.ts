@@ -7,6 +7,12 @@ import {
   getPlanStatusController,
 } from "./controllers/usageController.js";
 import {
+  createRazorpayTestSubscriptionController,
+  razorpayTestWebhookController,
+  resetTestSubscriptionController,
+  verifyRazorpayTestPaymentController,
+} from "./controllers/billingController.js";
+import {
   createDeepgramTokenForAuthenticatedUser,
   getCreateTokenHttpStatus,
   getTrackUsageHttpStatus,
@@ -25,7 +31,14 @@ const callableOptions = {
   cors: true,
 };
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
-const deepgramApiKey = defineSecret("DEEPGRAM_API_KEY");
+const deepseekApiKey = defineSecret("DEEPSEEK_AI_API_KEY");
+const assemblyAiApiKey = defineSecret("ASSEMBLY_AI_API_KEY");
+const razorpayTestKeyId = defineSecret("RAZORPAY_TEST_KEY_ID");
+const razorpayTestKeySecret = defineSecret("RAZORPAY_TEST_KEY_SECRET");
+const razorpayTestWebhookSecret = defineSecret("RAZORPAY_TEST_WEBHOOK_SECRET");
+const razorpayTestAllowedEmails = defineSecret("RAZORPAY_TEST_ALLOWED_EMAILS");
+const razorpayTestPlanProMonthly = defineSecret("RAZORPAY_TEST_PLAN_PRO_MONTHLY");
+const razorpayTestPlanProYearly = defineSecret("RAZORPAY_TEST_PLAN_PRO_YEARLY");
 
 export const getOrCreateUserProfile = onCall(
   callableOptions,
@@ -42,6 +55,45 @@ export const activatePlan = onCall(
   activatePlanController
 );
 
+export const createRazorpayTestSubscription = onCall(
+  {
+    ...callableOptions,
+    secrets: [
+      razorpayTestKeyId,
+      razorpayTestKeySecret,
+      razorpayTestAllowedEmails,
+      razorpayTestPlanProMonthly,
+      razorpayTestPlanProYearly,
+    ],
+  },
+  (request) =>
+    createRazorpayTestSubscriptionController(request, {
+      keyId: razorpayTestKeyId.value(),
+      keySecret: razorpayTestKeySecret.value(),
+      allowedEmails: razorpayTestAllowedEmails.value(),
+      plans: {
+        proMonthly: razorpayTestPlanProMonthly.value(),
+        proYearly: razorpayTestPlanProYearly.value(),
+      },
+    })
+);
+
+export const verifyRazorpayTestPayment = onCall(
+  {
+    ...callableOptions,
+    secrets: [razorpayTestKeySecret],
+  },
+  (request) =>
+    verifyRazorpayTestPaymentController(request, {
+      keySecret: razorpayTestKeySecret.value(),
+    })
+);
+
+export const resetTestSubscription = onCall(
+  callableOptions,
+  resetTestSubscriptionController
+);
+
 export const checkUsageBeforeAction = onCall(
   callableOptions,
   checkUsageBeforeActionController
@@ -50,22 +102,22 @@ export const checkUsageBeforeAction = onCall(
 export const processAssistantReply = onCall(
   {
     ...callableOptions,
-    secrets: [geminiApiKey],
+    secrets: [geminiApiKey, deepseekApiKey],
   },
   (request) =>
     processAssistantReplyController(request, {
       geminiApiKey: geminiApiKey.value(),
+      deepseekApiKey: deepseekApiKey.value(),
     })
 );
 
 export const transcribeAudio = onCall(
   {
     ...callableOptions,
-    secrets: [deepgramApiKey],
+    secrets: [],
   },
   (request) =>
     transcribeAudioController(request, {
-      deepgramApiKey: deepgramApiKey.value(),
     })
 );
 
@@ -74,12 +126,33 @@ export const trackSttUsage = onCall(
   trackSttUsageController
 );
 
+export const razorpayTestWebhook = onRequest(
+  {
+    region: "us-central1",
+    cors: true,
+    invoker: "public",
+    secrets: [
+      razorpayTestWebhookSecret,
+      razorpayTestPlanProMonthly,
+      razorpayTestPlanProYearly,
+    ],
+  },
+  async (request, response) =>
+    razorpayTestWebhookController(request, response, {
+      webhookSecret: razorpayTestWebhookSecret.value(),
+      plans: {
+        proMonthly: razorpayTestPlanProMonthly.value(),
+        proYearly: razorpayTestPlanProYearly.value(),
+      },
+    })
+);
+
 export const createDeepgramStreamToken = onRequest(
   {
     region: "us-central1",
     cors: true,
     invoker: "public",
-    secrets: [deepgramApiKey],
+    secrets: [assemblyAiApiKey],
   },
   async (request, response) => {
     if (request.method !== "POST") {
@@ -97,7 +170,7 @@ export const createDeepgramStreamToken = onRequest(
         authUser,
         isCreateDeepgramTokenData(request.body) ? request.body : undefined,
         {
-          deepgramApiKey: deepgramApiKey.value(),
+          assemblyAiApiKey: assemblyAiApiKey.value(),
         }
       );
 
@@ -182,7 +255,7 @@ function getHttpStatusFromTranscriptionFailure(code: string) {
       return 401;
     case "STT_LIMIT_EXCEEDED":
       return 429;
-    case "DEEPGRAM_REQUEST_FAILED":
+    case "GROQ_REQUEST_FAILED":
       return 502;
     default:
       return 400;
@@ -203,7 +276,7 @@ export const transcribeAudioHttp = onRequest(
     region: "us-central1",
     cors: true,
     invoker: "public",
-    secrets: [deepgramApiKey],
+    secrets: [],
   },
   async (request, response) => {
     if (request.method !== "POST") {
@@ -224,9 +297,6 @@ export const transcribeAudioHttp = onRequest(
           mimeType?: string;
           durationSeconds?: number;
           language?: string;
-        },
-        {
-          deepgramApiKey: deepgramApiKey.value(),
         }
       );
 

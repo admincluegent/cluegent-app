@@ -17,8 +17,6 @@ interface NearLimitBucket {
 
 const STARTUP_DELAY_MS = 3000;
 const THRESHOLD_PCT    = 90;
-const UPGRADE_URL      = 'https://checkout.dodopayments.com/buy/pdt_0NbFixGmD8CSeawb5qvVl';
-
 export const NativelyQuotaBanner: React.FC = () => {
     const [nearLimitBuckets, setNearLimitBuckets] = useState<NearLimitBucket[]>([]);
     const [visible, setVisible] = useState(false);
@@ -117,7 +115,7 @@ export const NativelyQuotaBanner: React.FC = () => {
                     <div className="flex items-center justify-between pt-0.5">
                         <span className="text-[11px] text-white/30">Resets on your next billing date</span>
                         <button
-                            onClick={() => (window.electronAPI as any)?.openExternal?.(UPGRADE_URL)}
+                            onClick={() => void window.electronAPI?.openSettingsTab?.('natively-api')}
                             className="flex items-center gap-1 text-[11px] font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
                         >
                             Upgrade <ArrowUpRight size={11} strokeWidth={2.5} />

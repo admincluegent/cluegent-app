@@ -470,7 +470,7 @@ You explicitly control:
 
 ### Prerequisites
 
-- Node.js (v20+ recommended)
+- Node.js 22.x
 - Git
 - Rust (required for native audio capture)
 
@@ -541,6 +541,26 @@ Setup Summary:
 git clone https://github.com/Natively-AI-assistant/natively-cluely-ai-assistant.git
 cd natively-cluely-ai-assistant
 ```
+
+### Use The Correct Node Version
+
+This repo now targets **Node.js 22** for local development and Firebase Functions.
+
+```bash
+node -v
+```
+
+Expected result:
+
+```bash
+v22.x.x
+```
+
+The repo includes both `.nvmrc` and `.node-version` pinned to `22` so version managers and editors can detect the correct runtime automatically.
+
+If your local machine is still on Node 20, upgrade to a Node 22 release before installing dependencies. On Windows, the simplest reliable route is to install a Node 22.x release directly from the official Node.js website:
+
+- https://nodejs.org/en/download/releases/
 
 ### Install Dependencies
 

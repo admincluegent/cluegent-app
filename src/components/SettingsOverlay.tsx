@@ -12,9 +12,11 @@ import { analytics } from '../lib/analytics/analytics.service';
 import { AboutSection } from './AboutSection';
 import { HelpSettings } from './settings/HelpSettings';
 import { NativelyApiSettings } from './settings/NativelyApiSettings';
+import { RecentLocalMeetings } from './settings/RecentLocalMeetings';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { useResolvedTheme } from '../hooks/useResolvedTheme';
+import { useAuth } from '../contexts/auth.context';
 import {
     clampOverlayOpacity,
     getOverlayAppearance,
@@ -201,9 +203,9 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon, value, options
                 {isOpen && (
                     <div className="absolute top-full left-0 w-full mt-1 bg-bg-elevated border border-border-subtle rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto animated fadeIn">
                         <div className="p-1 space-y-0.5">
-                            {options.map((device) => (
+                            {options.map((device, index) => (
                                 <button
-                                    key={device.deviceId}
+                                    key={`${device.deviceId || 'empty-device-id'}-${index}`}
                                     onClick={() => {
                                         onChange(device.deviceId);
                                         setIsOpen(false);
@@ -323,11 +325,11 @@ const ProviderSelect: React.FC<ProviderSelectProps> = ({ value, options, onChang
                         className={`absolute top-full left-0 w-full mt-2 backdrop-blur-xl rounded-xl shadow-2xl overflow-hidden ring-1 ring-black/5 ${isLight ? 'bg-bg-elevated border border-border-subtle' : 'bg-bg-elevated/90 border border-white/5'}`}
                     >
                         <div className="max-h-[320px] overflow-y-auto p-1.5 space-y-0.5 custom-scrollbar">
-                            {options.map(option => {
+                            {options.map((option, index) => {
                                 const isSelected = value === option.id;
                                 return (
                                     <button
-                                        key={option.id}
+                                        key={`${option.id || 'empty-option-id'}-${index}`}
                                         onClick={() => { onChange(option.id); setIsOpen(false); }}
                                         className={`w-full rounded-[10px] p-2 flex items-center gap-3 transition-all duration-200 group relative ${isSelected ? (isLight ? 'bg-bg-item-active shadow-inner' : 'bg-white/10 shadow-inner') : (isLight ? 'hover:bg-bg-item-surface' : 'hover:bg-white/5')}`}
                                     >
@@ -371,6 +373,7 @@ const normalizeSettingsTab = (tab: string) =>
 const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, initialTab = 'general', isTrialActive = false }) => {
     const isLight = useResolvedTheme() === 'light';
     const [activeTab, setActiveTab] = useState(normalizeSettingsTab(initialTab));
+    const { profile, subscription, logoutUser } = useAuth();
     
     // Sync active tab when modal opens
     useEffect(() => {
@@ -1296,6 +1299,14 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                         }}
                         className="bg-bg-elevated w-full max-w-4xl h-[80vh] rounded-2xl border border-border-subtle shadow-2xl overflow-hidden relative"
                     >
+                        <button
+                            onClick={onClose}
+                            aria-label="Close settings"
+                            title="Close settings"
+                            className="absolute right-4 top-4 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-bg-item-surface text-text-secondary transition-colors hover:bg-bg-item-active hover:text-text-primary"
+                        >
+                            <X size={16} />
+                        </button>
                         <div 
                             id="settings-panel" 
                             className="flex w-full h-full"
@@ -1307,6 +1318,12 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                 <h2 className="font-semibold text-gray-400 text-xs uppercase tracking-wider mb-2">Settings</h2>
                                 <nav className="space-y-1">
                                     <button
+                                        onClick={() => setActiveTab('account')}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${activeTab === 'account' ? 'bg-bg-item-active text-text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-bg-item-active/50'}`}
+                                    >
+                                        <User size={16} /> Profile
+                                    </button>
+                                    <button
                                         onClick={() => setActiveTab('general')}
                                         className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${activeTab === 'general' ? 'bg-bg-item-active text-text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-bg-item-active/50'}`}
                                     >
@@ -1317,7 +1334,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                         className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${activeTab === 'natively-api' ? 'bg-bg-item-active text-text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-bg-item-active/50'}`}
                                     >
                                         <Zap size={16} className={activeTab === 'natively-api' ? 'text-blue-500' : 'text-blue-500/70'} />
-                                        <span>Backend</span>
+                                        <span>Billing</span>
                                     </button>
                                     <button
                                         onClick={() => {
@@ -1368,6 +1385,15 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                     >
                                         <Info size={16} /> About
                                     </button>
+                                    <button
+                                        onClick={() => {
+                                            void logoutUser();
+                                            onClose();
+                                        }}
+                                        className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 text-red-400 hover:bg-red-500/10"
+                                    >
+                                        <LogOut size={16} /> Sign out
+                                    </button>
                                 </nav>
                             </div>
 
@@ -1386,6 +1412,61 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
 
                         {/* Content */}
                         <div className="flex-1 bg-bg-main overflow-y-auto p-8">
+                            {activeTab === 'account' && (
+                                <div className="space-y-6 animated fadeIn">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-text-primary mb-1">Profile</h3>
+                                        <p className="text-xs text-text-secondary">
+                                            Your signed-in account and current Cluegent plan.
+                                        </p>
+                                    </div>
+
+                                    <div className="rounded-2xl border border-border-subtle bg-bg-card p-6">
+                                        <div className="flex items-center gap-4">
+                                            {profile?.photoURL ? (
+                                                <img
+                                                    src={profile.photoURL}
+                                                    alt={profile.displayName}
+                                                    className="h-16 w-16 rounded-full object-cover border border-border-subtle"
+                                                />
+                                            ) : (
+                                                <div className="flex h-16 w-16 items-center justify-center rounded-full border border-border-subtle bg-bg-item-surface text-xl font-semibold text-text-primary">
+                                                    {(profile?.displayName || profile?.email || 'U').slice(0, 1).toUpperCase()}
+                                                </div>
+                                            )}
+
+                                            <div className="min-w-0">
+                                                <p className="text-lg font-semibold text-text-primary">
+                                                    {profile?.displayName || 'Signed-in user'}
+                                                </p>
+                                                <p className="mt-1 text-sm text-text-secondary break-all">
+                                                    {profile?.email || 'No email available'}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-6 grid gap-3 md:grid-cols-2">
+                                            <div className="rounded-xl border border-border-subtle bg-bg-item-surface p-4">
+                                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-tertiary">
+                                                    Email address
+                                                </p>
+                                                <p className="mt-2 text-sm font-medium text-text-primary break-all">
+                                                    {profile?.email || 'No email available'}
+                                                </p>
+                                            </div>
+
+                                            <div className="rounded-xl border border-border-subtle bg-bg-item-surface p-4">
+                                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-tertiary">
+                                                    Current plan
+                                                </p>
+                                                <p className="mt-2 text-sm font-medium capitalize text-text-primary">
+                                                    {subscription?.plan || 'free'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                             {activeTab === 'general' && (
                                 <div className="space-y-6 animated fadeIn">
                                     <div className="space-y-3.5">
@@ -1883,6 +1964,8 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                         </p>
                                     </div>
 
+                                    <RecentLocalMeetings />
+
                                     {/* Intelligence Graph Hero Card */}
                                     <div className="bg-bg-item-surface rounded-xl border border-border-subtle flex flex-col justify-between overflow-hidden">
                                         <div className="flex flex-col justify-between min-h-[160px]">
@@ -2346,7 +2429,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                         <span className="shrink-0 mt-[1px]">⚠</span>
                                                         <span>
                                                             Web search credits exhausted for this month — showing AI-only research instead.
-                                                            Resets next billing cycle or <span className="underline cursor-pointer" onClick={() => (window.electronAPI as any)?.openExternal?.('https://checkout.dodopayments.com/buy/pdt_0NbFixGmD8CSeawb5qvVl')}>upgrade your plan</span>.
+                                                            Resets next billing cycle or <span className="underline cursor-pointer" onClick={() => setActiveTab('natively-api')}>upgrade your plan</span>.
                                                         </span>
                                                     </div>
                                                 )}
@@ -2941,7 +3024,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                         value={sttProvider}
                                                         onChange={(val) => handleSttProviderChange(val as any)}
                                                         options={[
-                                                            { id: 'firebase', label: 'Firebase Managed', badge: 'Backend' as const, recommended: true, desc: 'Chunked STT via your Firebase plan and server-side Deepgram key', color: 'blue', icon: <Mic size={14} /> },
+                                                            { id: 'firebase', label: 'Firebase Managed', badge: 'Backend' as const, recommended: true, desc: 'Live STT via your Firebase plan and server-side AssemblyAI key', color: 'blue', icon: <Mic size={14} /> },
                                                             ...(hasNativelyKey ? [{ id: 'natively', label: 'Natively API', badge: 'Saved' as const, recommended: true, desc: 'Managed transcription via Natively backend', color: 'blue', icon: <Mic size={14} /> }] : []),
                                                             { id: 'google', label: 'Google Cloud', badge: googleServiceAccountPath ? 'Saved' : null, recommended: true, desc: 'gRPC streaming via Service Account', color: 'blue', icon: <Mic size={14} /> },
                                                             { id: 'groq', label: 'Groq Whisper', badge: hasStoredSttGroqKey ? 'Saved' : null, recommended: true, desc: 'Ultra-fast REST transcription', color: 'orange', icon: <Mic size={14} /> },
@@ -3188,10 +3271,10 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                 <div className="bg-bg-card rounded-xl border border-border-subtle p-4">
                                                     <label className="text-xs font-medium text-text-secondary block mb-2">Firebase Managed STT</label>
                                                     <p className="text-sm text-text-primary leading-relaxed">
-                                                        Audio chunks stay in the desktop app, but transcription runs through your Firebase backend. The Deepgram key never leaves Firebase Functions.
+                                                        Live audio streams from the desktop app to AssemblyAI using temporary tokens minted by your Firebase backend. The AssemblyAI key never leaves Firebase Functions.
                                                     </p>
                                                     <p className="text-[11px] text-text-tertiary mt-3">
-                                                        Sign in with Google, activate a Firebase plan in the backend settings tab, then start the meeting to see rolling transcripts.
+                                                        Sign in with Google, open the Billing tab, then complete a checkout or reset to free before starting the meeting.
                                                     </p>
                                                 </div>
                                             )}

@@ -6,9 +6,11 @@ import {
   buildSubscriptionDoc,
   buildUsageDoc,
   buildUserProfileDoc,
+  buildUserProfileUpdate,
   getUserRefs,
   materializeSubscription,
   materializeUsage,
+  serializeForClient,
 } from "../utils/usage.js";
 
 export async function getOrCreateUserProfileController(
@@ -20,6 +22,21 @@ export async function getOrCreateUserProfileController(
   const userRef = db.doc(refs.userPath);
   const subscriptionRef = db.doc(refs.subscriptionPath);
   const usageRef = db.doc(refs.usagePath);
+  const profileDoc = buildUserProfileDoc({
+    uid: authUser.uid,
+    email: authUser.email,
+    emailVerified: authUser.emailVerified,
+    displayName: authUser.displayName,
+    photoURL: authUser.photoURL,
+    authTime: authUser.authTime,
+  });
+  const profileUpdate = buildUserProfileUpdate({
+    email: authUser.email,
+    emailVerified: authUser.emailVerified,
+    displayName: authUser.displayName,
+    photoURL: authUser.photoURL,
+    authTime: authUser.authTime,
+  });
 
   await db.runTransaction(async (transaction) => {
     const [userSnap, subscriptionSnap, usageSnap] = await Promise.all([
@@ -28,17 +45,11 @@ export async function getOrCreateUserProfileController(
       transaction.get(usageRef),
     ]);
 
-    transaction.set(
-      userRef,
-      buildUserProfileDoc({
-        uid: authUser.uid,
-        email: authUser.email,
-        emailVerified: authUser.emailVerified,
-        displayName: authUser.displayName,
-        photoURL: authUser.photoURL,
-      }),
-      { merge: true }
-    );
+    if (!userSnap.exists) {
+      transaction.set(userRef, profileDoc);
+    } else {
+      transaction.update(userRef, profileUpdate);
+    }
 
     if (!subscriptionSnap.exists) {
       transaction.set(subscriptionRef, buildSubscriptionDoc());
@@ -46,25 +57,6 @@ export async function getOrCreateUserProfileController(
 
     if (!usageSnap.exists) {
       transaction.set(usageRef, buildUsageDoc(monthKey));
-    }
-
-    if (userSnap.exists) {
-      transaction.update(userRef, {
-        updatedAt: buildUserProfileDoc({
-          uid: authUser.uid,
-          email: authUser.email,
-          emailVerified: authUser.emailVerified,
-          displayName: authUser.displayName,
-          photoURL: authUser.photoURL,
-        }).updatedAt,
-        lastLoginAt: buildUserProfileDoc({
-          uid: authUser.uid,
-          email: authUser.email,
-          emailVerified: authUser.emailVerified,
-          displayName: authUser.displayName,
-          photoURL: authUser.photoURL,
-        }).lastLoginAt,
-      });
     }
   });
 
@@ -81,15 +73,16 @@ export async function getOrCreateUserProfileController(
     usageSnap.data() as ReturnType<typeof materializeUsage>,
     monthKey
   );
+  const planStatus = buildPlanStatus(subscription, usage);
 
   return {
     success: true,
     data: {
-      profile: userSnap.data(),
-      subscription,
-      usage,
+      profile: serializeForClient(userSnap.data()),
+      subscription: serializeForClient(subscription),
+      usage: serializeForClient(usage),
       monthKey,
-      planStatus: buildPlanStatus(subscription, usage),
+      planStatus: serializeForClient(planStatus),
     },
   };
 }

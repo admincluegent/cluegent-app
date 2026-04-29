@@ -15,7 +15,7 @@ import { FreeTrialBanner }      from "./components/trial/FreeTrialBanner"
 import { FreeTrialModal }       from "./components/trial/FreeTrialModal"
 import { TrialPromoToaster }    from "./components/trial/TrialPromoToaster"
 import { PermissionsToaster }   from "./components/onboarding/PermissionsToaster"
-import { AlertCircle, LogOut } from "lucide-react"
+import { AlertCircle } from "lucide-react"
 import { clampOverlayOpacity, OVERLAY_OPACITY_DEFAULT, getDefaultOverlayOpacity } from "./lib/overlayAppearance"
 import {
   JDAwarenessToaster,
@@ -28,6 +28,7 @@ import {
   useAdCampaigns
 } from './premium'
 import { analytics } from "./lib/analytics/analytics.service"
+import { beginLocalMeeting, finishCurrentLocalMeeting } from "./lib/localMeetingStorage"
 import { ErrorBoundary } from "./components/ErrorBoundary"
 import ModesSettings from "./components/settings/ModesSettings"
 import { useAuth } from "./contexts/auth.context"
@@ -35,7 +36,7 @@ import { useAuth } from "./contexts/auth.context"
 const queryClient = new QueryClient()
 
 const App: React.FC = () => {
-  const { profile, logoutUser } = useAuth();
+  const { profile } = useAuth();
   const isSettingsWindow = new URLSearchParams(window.location.search).get('window') === 'settings';
   const isLauncherWindow = new URLSearchParams(window.location.search).get('window') === 'launcher';
   const isOverlayWindow = new URLSearchParams(window.location.search).get('window') === 'overlay';
@@ -369,6 +370,7 @@ const App: React.FC = () => {
         audio: { inputDeviceId, outputDeviceId }
       });
       if (result.success) {
+        beginLocalMeeting();
         analytics.trackMeetingStarted();
         // Switch to Overlay Mode via IPC
         // The main process handles window switching, but we can reinforce it or just trust main.
@@ -390,6 +392,7 @@ const App: React.FC = () => {
     setIsProcessingMeeting(true);
     try {
       await window.electronAPI.endMeeting();
+      finishCurrentLocalMeeting();
       console.log("[App.tsx] endMeeting IPC completed");
       
       const startStr = localStorage.getItem('natively_last_meeting_start');
@@ -487,24 +490,11 @@ const App: React.FC = () => {
                 {profile.displayName.slice(0, 1).toUpperCase()}
               </div>
             )}
-            <div className="min-w-0">
-              <p className="max-w-[180px] truncate text-sm font-medium text-white">
-                {profile.displayName}
-              </p>
-              <p className="max-w-[180px] truncate text-xs text-slate-400">
+            <div className="min-w-0 pr-2">
+              <p className="max-w-[220px] truncate text-sm font-medium text-white">
                 {profile.email}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                void logoutUser();
-              }}
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-200 transition hover:bg-white/10"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-              Sign out
-            </button>
           </div>
         </div>
       )}
