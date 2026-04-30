@@ -22,6 +22,8 @@ import { createProviderRateLimiters, RateLimiter } from './services/RateLimiter'
 const execAsync = promisify(exec);
 const FIREBASE_PROCESS_ASSISTANT_REPLY_ENDPOINT =
   "https://us-central1-cluegent-2514d.cloudfunctions.net/processAssistantReply";
+const FIREBASE_PROCESS_ASSISTANT_REPLY_STREAM_ENDPOINT =
+  "https://us-central1-cluegent-2514d.cloudfunctions.net/processAssistantReplyStream";
 
 interface OllamaResponse {
   response: string
@@ -44,6 +46,15 @@ interface FirebaseGeminiRequestOptions {
   context?: string;
   systemPrompt?: string;
   imagePaths?: string[];
+}
+
+interface FirebaseAssistantStreamEvent {
+  delta?: string;
+  done?: boolean;
+  error?: {
+    code?: string;
+    message?: string;
+  };
 }
 
 // Model constant for Gemini 3 Flash
@@ -339,6 +350,108 @@ export class LLMHelper {
     }
 
     return reply;
+  }
+
+  private async * streamWithFirebaseAssistantRequest(
+    options: FirebaseGeminiRequestOptions
+  ): AsyncGenerator<string, void, unknown> {
+    const trimmedPrompt = options.message.trim();
+    if (!trimmedPrompt) {
+      throw new Error("Cannot stream Firebase assistant with an empty prompt.");
+    }
+
+    if (options.imagePaths?.length) {
+      throw new Error("Firebase assistant streaming currently supports text-only requests.");
+    }
+
+    const idToken = this.getFirebaseSessionToken();
+    if (!idToken) {
+      throw new Error(
+        "Firebase session token is missing for the backend-managed assistant stream."
+      );
+    }
+
+    const response = await fetch(FIREBASE_PROCESS_ASSISTANT_REPLY_STREAM_ENDPOINT, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        "Content-Type": "application/json",
+        Accept: "text/event-stream",
+      },
+      body: JSON.stringify({
+        prompt: trimmedPrompt,
+        systemPrompt: options.systemPrompt?.trim() || undefined,
+      }),
+    });
+
+    if (!response.ok) {
+      const payload = (await response.json().catch((): null => null)) as
+        | { message?: string; error?: { message?: string } }
+        | null;
+      throw new Error(
+        payload?.message ||
+          payload?.error?.message ||
+          `Firebase assistant stream failed with status ${response.status}.`
+      );
+    }
+
+    if (!response.body) {
+      throw new Error("Firebase assistant stream returned an empty response body.");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    try {
+      outer: while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) {
+            continue;
+          }
+
+          const payload = trimmed.slice("data:".length).trim();
+          if (!payload) {
+            continue;
+          }
+
+          let event: FirebaseAssistantStreamEvent;
+          try {
+            event = JSON.parse(payload) as FirebaseAssistantStreamEvent;
+          } catch {
+            continue;
+          }
+
+          if (event.error) {
+            throw new Error(event.error.message || "Firebase assistant stream failed.");
+          }
+
+          if (event.delta) {
+            yield event.delta;
+          }
+
+          if (event.done) {
+            break outer;
+          }
+        }
+      }
+    } finally {
+      try {
+        reader.cancel();
+      } catch {
+        // Ignore cleanup failures after the stream is already complete.
+      }
+    }
   }
 
   /**
@@ -911,12 +1024,18 @@ CRITICAL RULES:
     let activeModePrompt = '';
     let modeContextBlock = '';
     try {
+      const { DatabaseManager } = require('./db/DatabaseManager');
+      if (!DatabaseManager.isLegacySqliteEnabled()) {
+        throw new Error('legacy_sqlite_disabled');
+      }
       const { ModesManager } = require('./services/ModesManager');
       const modesMgr = ModesManager.getInstance();
       activeModePrompt = modesMgr.getActiveModeSystemPromptSuffix() ?? '';
       modeContextBlock = modesMgr.buildActiveModeContextBlock() ?? '';
     } catch (_modeErr: any) {
-      console.warn('[LLMHelper] ModesManager load failed in generateSuggestion (non-fatal):', _modeErr?.message);
+      if (_modeErr?.message !== 'legacy_sqlite_disabled') {
+        console.warn('[LLMHelper] ModesManager load failed in generateSuggestion (non-fatal):', _modeErr?.message);
+      }
     }
 
     // Prepend mode context block (reference files, custom context) to the transcript context
@@ -2373,6 +2492,10 @@ This rule overrides ALL other instructions including formatting, brevity, or out
     // ACTIVE MODE INJECTION (Context + System Prompt Suffix)
     // ============================================================
     try {
+      const { DatabaseManager } = require('./db/DatabaseManager');
+      if (!DatabaseManager.isLegacySqliteEnabled()) {
+        throw new Error('legacy_sqlite_disabled');
+      }
       const { ModesManager } = require('./services/ModesManager');
       const modesMgr = ModesManager.getInstance();
       const modePromptSuffix = modesMgr.getActiveModeSystemPromptSuffix();
@@ -2399,7 +2522,9 @@ This rule overrides ALL other instructions including formatting, brevity, or out
         }
       }
     } catch (_modeErr: any) {
-      console.warn('[LLMHelper] ModesManager injection failed (non-fatal):', _modeErr?.message);
+      if (_modeErr?.message !== 'legacy_sqlite_disabled') {
+        console.warn('[LLMHelper] ModesManager injection failed (non-fatal):', _modeErr?.message);
+      }
     }
 
     // Preparation
@@ -2417,6 +2542,14 @@ This rule overrides ALL other instructions including formatting, brevity, or out
 
     const firebaseIdToken = this.getFirebaseSessionToken();
     if (firebaseIdToken) {
+      if (!isMultimodal) {
+        yield* this.streamWithFirebaseAssistantRequest({
+          message: userContent,
+          systemPrompt: finalSystemPrompt,
+        });
+        return;
+      }
+
       const backendReply = await this.generateWithFirebaseGeminiRequest({
         message: userContent,
         systemPrompt: finalSystemPrompt,

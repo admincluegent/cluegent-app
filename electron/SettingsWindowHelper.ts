@@ -149,15 +149,15 @@ export class SettingsWindowHelper {
 
     private createWindow(x?: number, y?: number, showWhenReady: boolean = true): void {
         const windowSettings: Electron.BrowserWindowConstructorOptions = {
-            width: 200, // Match React component width
-            height: 238, // Increased to accommodate new Transcript toggle
+            width: 216,
+            height: 320,
             frame: false,
-            transparent: true,
+            transparent: false,
             resizable: false,
             fullscreenable: false,
-            hasShadow: false,
+            hasShadow: true,
             alwaysOnTop: true,
-            backgroundColor: "#00000000",
+            backgroundColor: "#05070c",
             show: false,
             skipTaskbar: true,
             webPreferences: {

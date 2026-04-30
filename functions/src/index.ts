@@ -19,6 +19,7 @@ import {
   isCreateDeepgramTokenData,
   isTrackSttUsageData,
   processAssistantReplyController,
+  processAssistantReplyStreamController,
   transcribeAudioController,
   transcribeAudioForAuthenticatedUser,
   trackSttUsageForAuthenticatedUser,
@@ -107,6 +108,19 @@ export const processAssistantReply = onCall(
   (request) =>
     processAssistantReplyController(request, {
       geminiApiKey: geminiApiKey.value(),
+      deepseekApiKey: deepseekApiKey.value(),
+    })
+);
+
+export const processAssistantReplyStream = onRequest(
+  {
+    region: "us-central1",
+    cors: true,
+    invoker: "public",
+    secrets: [deepseekApiKey],
+  },
+  async (request, response) =>
+    processAssistantReplyStreamController(request, response, {
       deepseekApiKey: deepseekApiKey.value(),
     })
 );

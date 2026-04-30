@@ -51,6 +51,12 @@ export class MeetingPersistence {
         this.session.reset();
 
         const meetingId = crypto.randomUUID();
+
+        if (!DatabaseManager.isLegacySqliteEnabled()) {
+            console.log('[MeetingPersistence] Legacy SQLite disabled; skipping old DB meeting save. Renderer localStorage keeps Cluegent recent meetings.');
+            return meetingId;
+        }
+
         this.processAndSaveMeeting(snapshot, meetingId, metadataSnapshot).catch(err => {
             console.error('[MeetingPersistence] Background processing failed:', err);
         });
@@ -280,6 +286,10 @@ Return ONLY valid JSON (no markdown code blocks):
      * Recover meetings that were started but not fully processed (e.g. app crash)
      */
     public async recoverUnprocessedMeetings(): Promise<void> {
+        if (!DatabaseManager.isLegacySqliteEnabled()) {
+            return;
+        }
+
         console.log('[MeetingPersistence] Checking for unprocessed meetings...');
         const db = DatabaseManager.getInstance();
         const unprocessed = db.getUnprocessedMeetings();

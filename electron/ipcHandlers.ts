@@ -3,6 +3,7 @@
 import { app, ipcMain, shell, dialog, desktopCapturer, systemPreferences, BrowserWindow, screen } from "electron"
 import { AppState } from "./main"
 import { GEMINI_FLASH_MODEL } from "./IntelligenceManager"
+import { FAST_LIVE_COPILOT_SYSTEM_PROMPT } from "./llm/prompts"
 import { DatabaseManager } from "./db/DatabaseManager"; // Import Database Manager
 import * as os from "os";
 import * as path from "path";
@@ -49,8 +50,9 @@ export function initializeIpcHandlers(appState: AppState): void {
   // and reference files stop being injected into LLM calls.
   const clearActiveModeOnLicenseLoss = (): void => {
     try {
-      const { DatabaseManager } = require('./db/DatabaseManager');
-      DatabaseManager.getInstance().setActiveMode(null);
+      if (DatabaseManager.isLegacySqliteEnabled()) {
+        DatabaseManager.getInstance().setActiveMode(null);
+      }
       BrowserWindow.getAllWindows().forEach(win => {
         if (!win.isDestroyed()) win.webContents.send('modes-active-cleared');
       });
@@ -481,7 +483,8 @@ export function initializeIpcHandlers(appState: AppState): void {
 
       try {
         // USE streamChat which handles routing
-        const stream = llmHelper.streamChat(message, imagePaths, context, options?.skipSystemPrompt ? "" : undefined, options?.ignoreKnowledgeMode);
+        const compactSystemPrompt = options?.skipSystemPrompt ? FAST_LIVE_COPILOT_SYSTEM_PROMPT : undefined;
+        const stream = llmHelper.streamChat(message, imagePaths, context, compactSystemPrompt, options?.ignoreKnowledgeMode);
 
         for await (const token of stream) {
           // Bail if a newer stream has taken over (user triggered a new request)
@@ -538,6 +541,9 @@ export function initializeIpcHandlers(appState: AppState): void {
   })
 
   safeHandle("delete-meeting", async (_, id: string) => {
+    if (!DatabaseManager.isLegacySqliteEnabled()) {
+      return false;
+    }
     return DatabaseManager.getInstance().deleteMeeting(id);
   });
 
@@ -2122,25 +2128,84 @@ export function initializeIpcHandlers(appState: AppState): void {
     }
   });
 
+  safeHandle("start-listening", async (event, metadata?: any) => {
+    try {
+      await appState.startListening(metadata);
+      return { success: true };
+    } catch (error: any) {
+      console.error("Error starting listening:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  safeHandle("stop-listening", async () => {
+    try {
+      await appState.stopListening();
+      return { success: true };
+    } catch (error: any) {
+      console.error("Error stopping listening:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  safeHandle("get-listening-active", async () => {
+    return appState.getIsListeningActive();
+  });
+
+  safeHandle("start-mic-stt", async () => {
+    try {
+      await appState.startMicStt();
+      return { success: true };
+    } catch (error: any) {
+      console.error("Error starting mic STT:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  safeHandle("stop-mic-stt", async () => {
+    try {
+      await appState.stopMicStt();
+      return { success: true };
+    } catch (error: any) {
+      console.error("Error stopping mic STT:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
   safeHandle("get-recent-meetings", async () => {
-    // Fetch from SQLite (limit 50)
+    if (!DatabaseManager.isLegacySqliteEnabled()) {
+      return [];
+    }
+    // Legacy SQLite meetings are disabled by default. Current Cluegent recent meetings live in renderer localStorage.
     return DatabaseManager.getInstance().getRecentMeetings(50);
   });
 
   safeHandle("get-meeting-details", async (event, id) => {
+    if (!DatabaseManager.isLegacySqliteEnabled()) {
+      return null;
+    }
     // Helper to fetch full details
     return DatabaseManager.getInstance().getMeetingDetails(id);
   });
 
   safeHandle("update-meeting-title", async (_, { id, title }: { id: string; title: string }) => {
+    if (!DatabaseManager.isLegacySqliteEnabled()) {
+      return false;
+    }
     return DatabaseManager.getInstance().updateMeetingTitle(id, title);
   });
 
   safeHandle("update-meeting-summary", async (_, { id, updates }: { id: string; updates: any }) => {
+    if (!DatabaseManager.isLegacySqliteEnabled()) {
+      return false;
+    }
     return DatabaseManager.getInstance().updateMeetingSummary(id, updates);
   });
 
   safeHandle("seed-demo", async () => {
+    if (!DatabaseManager.isLegacySqliteEnabled()) {
+      return { success: true, skipped: true };
+    }
     DatabaseManager.getInstance().seedDemoMeeting();
 
     // Ensure RAG embeddings exist for the demo meeting.
@@ -2155,6 +2220,9 @@ export function initializeIpcHandlers(appState: AppState): void {
   });
 
   safeHandle("flush-database", async () => {
+    if (!DatabaseManager.isLegacySqliteEnabled()) {
+      return { success: true, skipped: true };
+    }
     const result = DatabaseManager.getInstance().clearAllData();
     return { success: result };
   });
@@ -2194,11 +2262,11 @@ export function initializeIpcHandlers(appState: AppState): void {
   });
 
   // MODE 2: What Should I Say (Primary auto-answer)
-  safeHandle("generate-what-to-say", async (_, question?: string, imagePaths?: string[]) => {
+  safeHandle("generate-what-to-say", async (_, question?: string, imagePaths?: string[], behaviorInstructions?: string) => {
     try {
       const intelligenceManager = appState.getIntelligenceManager();
       // Question and imagePaths are now optional - IntelligenceManager infers from transcript
-      const answer = await intelligenceManager.runWhatShouldISay(question, 0.8, imagePaths);
+      const answer = await intelligenceManager.runWhatShouldISay(question, 0.8, imagePaths, behaviorInstructions);
       return { answer, question: question || 'inferred from context' };
     } catch (error: any) {
       // Return graceful fallback instead of throwing
@@ -2208,10 +2276,10 @@ export function initializeIpcHandlers(appState: AppState): void {
     }
   });
 
-  safeHandle("generate-clarify", async () => {
+  safeHandle("generate-clarify", async (_, behaviorInstructions?: string) => {
     try {
       const intelligenceManager = appState.getIntelligenceManager();
-      const clarification = await intelligenceManager.runClarify();
+      const clarification = await intelligenceManager.runClarify(behaviorInstructions);
       // If null returned without throwing, the engine already set mode to idle.
       // We must still ensure the frontend un-sticks — emit an error so onIntelligenceError fires.
       if (clarification === null) {
@@ -2246,7 +2314,7 @@ export function initializeIpcHandlers(appState: AppState): void {
     }
   });
 
-  safeHandle("generate-brainstorm", async (_, imagePaths?: string[], problemStatement?: string) => {
+  safeHandle("generate-brainstorm", async (_, imagePaths?: string[], problemStatement?: string, behaviorInstructions?: string) => {
     try {
       // If no explicit images were passed from the frontend, fall back to the
       // screenshot queue so the AI can always "see" the user's screen.
@@ -2260,7 +2328,8 @@ export function initializeIpcHandlers(appState: AppState): void {
       const intelligenceManager = appState.getIntelligenceManager();
       const script = await intelligenceManager.runBrainstorm(
         resolvedImagePaths.length > 0 ? resolvedImagePaths : undefined,
-        problemStatement
+        problemStatement,
+        behaviorInstructions
       );
       return { script };
     } catch (error: any) {
@@ -2312,10 +2381,10 @@ export function initializeIpcHandlers(appState: AppState): void {
   });
 
   // MODE 6: Follow-Up Questions
-  safeHandle("generate-follow-up-questions", async () => {
+  safeHandle("generate-follow-up-questions", async (_, behaviorInstructions?: string) => {
     try {
       const intelligenceManager = appState.getIntelligenceManager();
-      const questions = await intelligenceManager.runFollowUpQuestions();
+      const questions = await intelligenceManager.runFollowUpQuestions(behaviorInstructions);
       return { questions };
     } catch (error: any) {
       throw error;
@@ -2964,6 +3033,9 @@ export function initializeIpcHandlers(appState: AppState): void {
 
   safeHandle("profile:get-notes", async () => {
     try {
+      if (!DatabaseManager.isLegacySqliteEnabled()) {
+        return { success: true, content: '' };
+      }
       const content = DatabaseManager.getInstance().getCustomNotes();
       return { success: true, content };
     } catch (error: any) {
@@ -2975,7 +3047,9 @@ export function initializeIpcHandlers(appState: AppState): void {
     try {
       // Enforce a max length of 4000 chars to prevent prompt bloat
       const trimmed = typeof content === 'string' ? content.slice(0, 4000) : '';
-      DatabaseManager.getInstance().saveCustomNotes(trimmed);
+      if (DatabaseManager.isLegacySqliteEnabled()) {
+        DatabaseManager.getInstance().saveCustomNotes(trimmed);
+      }
 
       // Propagate to orchestrator (premium path) and LLMHelper (all-provider path)
       const orchestrator = appState.getKnowledgeOrchestrator();

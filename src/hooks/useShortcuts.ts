@@ -41,7 +41,7 @@ function buildDefaultShortcuts(): ShortcutConfig {
         clarify: [mod, '2'],
         dynamicAction4: [mod, '3'],
         followUp: [mod, '4'],
-        answer: [mod, '['],
+        answer: [mod, '5'],
         clearTranscript: [mod, ']'],
         codeHint: [mod, '6'],
         brainstorm: [mod, '7'],
@@ -58,7 +58,7 @@ function buildDefaultShortcuts(): ShortcutConfig {
         processScreenshots: [mod, 'Enter'],
         captureAndProcess: [mod, shift, 'Enter'],
         resetCancel: [mod, 'R'],
-        takeScreenshot: [mod, 'H'],
+        takeScreenshot: [mod, '['],
         selectiveScreenshot: [mod, shift, 'H']
     };
 }
@@ -69,7 +69,7 @@ export const DEFAULT_SHORTCUTS: ShortcutConfig = {
     clarify: ['⌘', '2'],
     dynamicAction4: ['⌘', '3'],   // slot 3 — matches KeybindManager
     followUp: ['⌘', '4'],          // slot 4 — matches KeybindManager
-    answer: ['⌘', '['],
+    answer: ['⌘', '5'],
     clearTranscript: ['⌘', ']'],
     codeHint: ['⌘', '6'],
     brainstorm: ['⌘', '7'],
@@ -86,7 +86,7 @@ export const DEFAULT_SHORTCUTS: ShortcutConfig = {
     processScreenshots: ['⌘', 'Enter'],
     captureAndProcess: ['⌘', '⇧', 'Enter'],
     resetCancel: ['⌘', 'R'],
-    takeScreenshot: ['⌘', 'H'],
+    takeScreenshot: ['⌘', '['],
     selectiveScreenshot: ['⌘', '⇧', 'H']
 };
 

@@ -30,7 +30,7 @@ const providerLabel = (provider?: string): string => {
         azure: 'Azure',
         ibmwatson: 'IBM Watson',
         soniox: 'Soniox',
-        natively: 'Natively Pro',
+        natively: 'Cluegent Pro',
         firebase: 'Firebase Managed',
     };
     return labels[provider.toLowerCase()] || provider;

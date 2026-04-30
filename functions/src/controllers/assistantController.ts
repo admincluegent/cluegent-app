@@ -1,6 +1,11 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { type CallableRequest, HttpsError } from "firebase-functions/v2/https";
-import { type AuthenticatedUser, db, requireAuth } from "../utils/auth.js";
+import {
+  type AuthenticatedUser,
+  db,
+  requireAuth,
+  requireBearerAuth,
+} from "../utils/auth.js";
 import { ensureUsageDocuments } from "./usageController.js";
 import {
   buildPlanStatus,
@@ -11,6 +16,7 @@ import {
 import {
   DeepSeekServiceError,
   generateDeepSeekReply,
+  streamDeepSeekReply,
 } from "../services/deepseekService.js";
 import {
   AssemblyServiceError,
@@ -184,6 +190,57 @@ function createTokenFailure(
     code,
     message,
   };
+}
+
+function getHttpAssistantData(request: {
+  body?: unknown;
+}): Partial<ProcessAssistantReplyData> {
+  const body = request.body as Record<string, unknown> | undefined;
+
+  if (body?.data && typeof body.data === "object") {
+    return body.data as Partial<ProcessAssistantReplyData>;
+  }
+
+  return (body ?? {}) as Partial<ProcessAssistantReplyData>;
+}
+
+function getAuthorizationHeader(request: {
+  get?: (name: string) => string | undefined;
+  headers?: Record<string, string | string[] | undefined>;
+}) {
+  return (
+    request.get?.("authorization") ??
+    request.get?.("Authorization") ??
+    request.headers?.authorization
+  );
+}
+
+function writeSse(response: { write: (chunk: string) => void }, payload: unknown) {
+  response.write(`data: ${JSON.stringify(payload)}\n\n`);
+}
+
+function sendAssistantHttpFailure(
+  response: {
+    headersSent?: boolean;
+    status: (code: number) => { json: (payload: unknown) => void };
+    write: (chunk: string) => void;
+    end: () => void;
+  },
+  status: number,
+  code: AssistantErrorCode,
+  message: string
+) {
+  if (response.headersSent) {
+    writeSse(response, { error: { code, message } });
+    response.end();
+    return;
+  }
+
+  response.status(status).json({
+    success: false,
+    code,
+    message,
+  });
 }
 
 export async function processAssistantReplyController(
@@ -449,6 +506,235 @@ export async function processAssistantReplyController(
     }
 
     throw error;
+  }
+}
+
+export async function processAssistantReplyStreamController(
+  request: {
+    method?: string;
+    body?: unknown;
+    get?: (name: string) => string | undefined;
+    headers?: Record<string, string | string[] | undefined>;
+  },
+  response: {
+    headersSent?: boolean;
+    writableEnded?: boolean;
+    setHeader: (name: string, value: string) => void;
+    status: (code: number) => {
+      json: (payload: unknown) => void;
+      send: (payload?: unknown) => void;
+    };
+    write: (chunk: string) => void;
+    end: () => void;
+    flushHeaders?: () => void;
+  },
+  input: {
+    deepseekApiKey: string;
+  }
+) {
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  if (request.method !== "POST") {
+    response.status(405).json({
+      success: false,
+      code: "METHOD_NOT_ALLOWED",
+      message: "Use POST for assistant streaming.",
+    });
+    return;
+  }
+
+  try {
+    const authHeader = getAuthorizationHeader(request);
+    const authUser = await requireBearerAuth(
+      Array.isArray(authHeader) ? authHeader[0] : authHeader
+    );
+    const data = getHttpAssistantData(request);
+    const prompt = data.prompt?.trim();
+    const hasScreenshot = Boolean(
+      data.screenshotBase64?.trim() || data.screenshotUrl?.trim()
+    );
+    const deepseekApiKey = input.deepseekApiKey.trim();
+
+    if (!prompt) {
+      sendAssistantHttpFailure(
+        response,
+        400,
+        "GROQ_REQUEST_FAILED",
+        "prompt is required."
+      );
+      return;
+    }
+
+    if (hasScreenshot) {
+      sendAssistantHttpFailure(
+        response,
+        400,
+        "GROQ_REQUEST_FAILED",
+        "Streaming is currently enabled for text-only DeepSeek requests."
+      );
+      return;
+    }
+
+    if (!deepseekApiKey) {
+      sendAssistantHttpFailure(
+        response,
+        500,
+        "GROQ_REQUEST_FAILED",
+        "DEEPSEEK_AI_API_KEY is required for text-only requests."
+      );
+      return;
+    }
+
+    const { monthKey, subscription, usage } = await ensureUsageDocuments(
+      authUser.uid,
+      authUser
+    );
+    const planStatus = buildPlanStatus(subscription, usage);
+
+    if (planStatus.remaining.prompts <= 0) {
+      sendAssistantHttpFailure(
+        response,
+        429,
+        "PROMPT_LIMIT_EXCEEDED",
+        "Monthly prompt limit exceeded for the current plan."
+      );
+      return;
+    }
+
+    response.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+    response.setHeader("Cache-Control", "no-cache, no-transform");
+    response.setHeader("Connection", "keep-alive");
+    response.setHeader("X-Accel-Buffering", "no");
+    response.flushHeaders?.();
+
+    writeSse(response, {
+      meta: {
+        provider: "deepseek",
+        model: "deepseek-v4-flash",
+      },
+    });
+
+    const fallbackInputText = [
+      data.systemPrompt,
+      ...(data.history?.map((entry) => entry.content) ?? []),
+      prompt,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const deepseekResult = await streamDeepSeekReply(
+      {
+        apiKey: deepseekApiKey,
+        prompt,
+        systemPrompt: data.systemPrompt,
+        history: data.history,
+      },
+      (delta) => {
+        if (!response.writableEnded) {
+          writeSse(response, { delta });
+        }
+      }
+    );
+
+    const costEstimate = estimateDeepSeekRequestCost({
+      modelId: deepseekResult.modelId,
+      inputTokens: deepseekResult.usage.inputTokens,
+      outputTokens: deepseekResult.usage.outputTokens,
+      fallbackInputText,
+      fallbackOutputText: deepseekResult.reply,
+    });
+
+    const refs = getUserRefs(authUser.uid, monthKey);
+    const subscriptionRef = db.doc(refs.subscriptionPath);
+    const usageRef = db.doc(refs.usagePath);
+    const updatedRemaining = await db.runTransaction(async (transaction) => {
+      const [subscriptionSnap, usageSnap] = await Promise.all([
+        transaction.get(subscriptionRef),
+        transaction.get(usageRef),
+      ]);
+      const latestSubscription = materializeSubscription(
+        subscriptionSnap.data() as ReturnType<typeof materializeSubscription>
+      );
+      const latestUsage = materializeUsage(
+        usageSnap.data() as ReturnType<typeof materializeUsage>,
+        monthKey
+      );
+      const latestPlanStatus = buildPlanStatus(latestSubscription, latestUsage);
+
+      if (latestPlanStatus.remaining.prompts <= 0) {
+        throw new Error("PROMPT_LIMIT_EXCEEDED");
+      }
+
+      transaction.set(
+        usageRef,
+        {
+          monthKey,
+          promptCount: FieldValue.increment(1),
+          inputTokens: FieldValue.increment(costEstimate.inputTokens),
+          outputTokens: FieldValue.increment(costEstimate.outputTokens),
+          estimatedCostUsd: FieldValue.increment(costEstimate.estimatedCostUsd),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      return {
+        promptsRemaining: Math.max(latestPlanStatus.remaining.prompts - 1, 0),
+        screenshotsRemaining: latestPlanStatus.remaining.screenshots,
+      };
+    });
+
+    writeSse(response, {
+      done: true,
+      usage: {
+        inputTokens: costEstimate.inputTokens,
+        outputTokens: costEstimate.outputTokens,
+        screenshotCountAdded: 0,
+        estimatedCostUsdAdded: costEstimate.estimatedCostUsd,
+      },
+      remaining: updatedRemaining,
+    });
+    response.end();
+  } catch (error) {
+    if (error instanceof HttpsError && error.code === "unauthenticated") {
+      sendAssistantHttpFailure(
+        response,
+        401,
+        "UNAUTHENTICATED",
+        "Sign in with Google before sending assistant requests."
+      );
+      return;
+    }
+
+    if (error instanceof Error && error.message === "PROMPT_LIMIT_EXCEEDED") {
+      sendAssistantHttpFailure(
+        response,
+        429,
+        "PROMPT_LIMIT_EXCEEDED",
+        "Monthly prompt limit exceeded for the current plan."
+      );
+      return;
+    }
+
+    if (error instanceof DeepSeekServiceError) {
+      sendAssistantHttpFailure(
+        response,
+        502,
+        "GROQ_REQUEST_FAILED",
+        error.message
+      );
+      return;
+    }
+
+    sendAssistantHttpFailure(
+      response,
+      500,
+      "GROQ_REQUEST_FAILED",
+      error instanceof Error ? error.message : "Assistant streaming failed."
+    );
   }
 }
 

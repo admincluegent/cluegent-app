@@ -17,7 +17,7 @@ export const DEFAULT_KEYBINDS: KeybindConfig[] = [
     { id: 'general:process-screenshots', label: 'Process Screenshots', accelerator: 'CommandOrControl+Enter', isGlobal: true, defaultAccelerator: 'CommandOrControl+Enter' },
     { id: 'general:capture-and-process', label: 'Capture Screen & Ask AI (Global)', accelerator: 'CommandOrControl+Shift+Enter', isGlobal: true, defaultAccelerator: 'CommandOrControl+Shift+Enter' },
     { id: 'general:reset-cancel', label: 'Reset / Cancel', accelerator: 'CommandOrControl+R', isGlobal: true, defaultAccelerator: 'CommandOrControl+R' },
-    { id: 'general:take-screenshot', label: 'Take Screenshot', accelerator: 'CommandOrControl+H', isGlobal: true, defaultAccelerator: 'CommandOrControl+H' },
+    { id: 'general:take-screenshot', label: 'Take Screenshot', accelerator: 'CommandOrControl+[', isGlobal: true, defaultAccelerator: 'CommandOrControl+[' },
     { id: 'general:selective-screenshot', label: 'Selective Screenshot', accelerator: 'CommandOrControl+Shift+H', isGlobal: true, defaultAccelerator: 'CommandOrControl+Shift+H' },
 
     // Chat - Global shortcuts (work even when app is not focused - stealth mode)
@@ -25,7 +25,7 @@ export const DEFAULT_KEYBINDS: KeybindConfig[] = [
     { id: 'chat:clarify', label: 'Clarify', accelerator: 'CommandOrControl+2', isGlobal: true, defaultAccelerator: 'CommandOrControl+2' },
     { id: 'chat:dynamicAction4', label: 'Recap / Brainstorm', accelerator: 'CommandOrControl+3', isGlobal: true, defaultAccelerator: 'CommandOrControl+3' },
     { id: 'chat:followUp', label: 'Follow Up', accelerator: 'CommandOrControl+4', isGlobal: true, defaultAccelerator: 'CommandOrControl+4' },
-    { id: 'chat:answer', label: 'Answer / Record', accelerator: 'CommandOrControl+[', isGlobal: true, defaultAccelerator: 'CommandOrControl+[' },
+    { id: 'chat:answer', label: 'Answer / Record', accelerator: 'CommandOrControl+5', isGlobal: true, defaultAccelerator: 'CommandOrControl+5' },
     { id: 'chat:clearTranscript', label: 'Clear Transcript', accelerator: 'CommandOrControl+]', isGlobal: true, defaultAccelerator: 'CommandOrControl+]' },
     { id: 'chat:codeHint', label: 'Get Code Hint', accelerator: 'CommandOrControl+6', isGlobal: true, defaultAccelerator: 'CommandOrControl+6' },
     { id: 'chat:brainstorm', label: 'Brainstorm Approaches', accelerator: 'CommandOrControl+7', isGlobal: true, defaultAccelerator: 'CommandOrControl+7' },
@@ -174,6 +174,7 @@ export class KeybindManager {
         }
 
         this.migrateLegacyWindowMoveShortcuts();
+        this.migrateUpdatedDefaultShortcuts();
     }
 
     private migrateLegacyWindowMoveShortcuts() {
@@ -193,6 +194,36 @@ export class KeybindManager {
 
             if (this.normalizeAccelerator(keybind.accelerator) === this.normalizeAccelerator(legacyAccelerator)) {
                 keybind.accelerator = keybind.defaultAccelerator;
+                this.keybinds.set(id, keybind);
+                updated = true;
+            }
+        });
+
+        if (updated) {
+            this.save();
+        }
+    }
+
+    private migrateUpdatedDefaultShortcuts() {
+        const updatedDefaults: Record<string, { previous: string; next: string }> = {
+            'general:take-screenshot': {
+                previous: 'CommandOrControl+H',
+                next: 'CommandOrControl+[',
+            },
+            'chat:answer': {
+                previous: 'CommandOrControl+[',
+                next: 'CommandOrControl+5',
+            },
+        };
+
+        let updated = false;
+
+        Object.entries(updatedDefaults).forEach(([id, migration]) => {
+            const keybind = this.keybinds.get(id);
+            if (!keybind) return;
+
+            if (this.normalizeAccelerator(keybind.accelerator) === this.normalizeAccelerator(migration.previous)) {
+                keybind.accelerator = migration.next;
                 this.keybinds.set(id, keybind);
                 updated = true;
             }

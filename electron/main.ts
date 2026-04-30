@@ -249,6 +249,8 @@ export class AppState {
   private hasDebugged: boolean = false
   private isMeetingActive: boolean = false; // Guard for session state leaks
   private _isQuitting: boolean = false;
+  private isListeningActive: boolean = false;
+  private isMicListeningActive: boolean = false;
   private _verboseLogging: boolean = false;
   private _disguiseTimers: NodeJS.Timeout[] = []; // Track forceUpdate timeouts
   private _dockDebounceTimer: NodeJS.Timeout | null = null; // Debounce dock state changes
@@ -450,19 +452,23 @@ export class AppState {
         console.log('[AppState] Fast mode restored from settings');
       }
       // Restore custom notes for non-premium path
-      try {
-        const savedNotes = DatabaseManager.getInstance().getCustomNotes();
-        if (savedNotes) {
-          llmHelper.setCustomNotes(savedNotes);
-        }
-      } catch (_) {}
+      if (DatabaseManager.isLegacySqliteEnabled()) {
+        try {
+          const savedNotes = DatabaseManager.getInstance().getCustomNotes();
+          if (savedNotes) {
+            llmHelper.setCustomNotes(savedNotes);
+          }
+        } catch (_) {}
+      }
     }
 
-    // Initialize RAGManager (requires database to be ready)
-    this.initializeRAGManager()
-    
-    // Check and prep Ollama embedding model
-    this.bootstrapOllamaEmbeddings()
+    if (DatabaseManager.isLegacySqliteEnabled()) {
+      // Initialize legacy SQLite/RAG stack only when explicitly enabled.
+      this.initializeRAGManager()
+      this.bootstrapOllamaEmbeddings()
+    } else {
+      console.log('[AppState] Legacy SQLite/RAG stack disabled; using Cluegent localStorage flows.');
+    }
 
 
     this.setupIntelligenceEvents()
@@ -493,6 +499,10 @@ export class AppState {
     return this.isMeetingActive;
   }
 
+  public getIsListeningActive(): boolean {
+    return this.isListeningActive;
+  }
+
   public isQuitting(): boolean {
     return this._isQuitting;
   }
@@ -503,6 +513,10 @@ export class AppState {
 
   private broadcastMeetingState(): void {
     this.broadcast('meeting-state-changed', { isActive: this.isMeetingActive });
+  }
+
+  private broadcastListeningState(): void {
+    this.broadcast('listening-state-changed', { isListening: this.isListeningActive });
   }
 
   private async bootstrapOllamaEmbeddings() {
@@ -538,6 +552,10 @@ export class AppState {
   }
 
   private initializeRAGManager(): void {
+    if (!DatabaseManager.isLegacySqliteEnabled()) {
+      return;
+    }
+
     try {
       const db = DatabaseManager.getInstance();
       const sqliteDb = db.getDb();
@@ -1036,14 +1054,12 @@ export class AppState {
 
     stt.on('connected', () => {
       _consecutiveErrors = 0;
-      if (_lastState !== 'connected') {
-        _lastState = 'connected';
-        this.broadcast('stt-status', {
-          state: 'connected',
-          provider: sttProvider,
-          channel: speaker,
-        } as SttStatusPayload);
-      }
+      _lastState = 'connected';
+      this.broadcast('stt-status', {
+        state: 'connected',
+        provider: sttProvider,
+        channel: speaker,
+      } as SttStatusPayload);
     });
 
     // Track successful transcripts — resets consecutive error counter
@@ -1077,13 +1093,16 @@ export class AppState {
     return stt;
   }
 
-  private setupSystemAudioPipeline(): void {
+  private setupSystemAudioPipeline(mode: 'all' | 'system' | 'mic' = 'all'): void {
     // REMOVED EARLY RETURN: if (this.systemAudioCapture && this.microphoneCapture) return; // Already initialized
 
     try {
+      const needsSystem = mode === 'all' || mode === 'system';
+      const needsMic = mode === 'all' || mode === 'mic';
+
       // 1. Initialize Captures if missing
       // If they already exist (e.g. from reconfigureAudio), they are already wired to write to this.googleSTT/User
-      if (!this.systemAudioCapture) {
+      if (needsSystem && !this.systemAudioCapture) {
         this.systemAudioCapture = new SystemAudioCapture();
         // Wire Capture -> STT
         let _sysChunkCount = 0;
@@ -1108,7 +1127,7 @@ export class AppState {
         this.setupAudioRecoveryHandler();
       }
 
-      if (!this.microphoneCapture) {
+      if (needsMic && !this.microphoneCapture) {
         this.microphoneCapture = new MicrophoneCapture();
         this.microphoneCapture.on('data', (chunk: Buffer) => {
           this.googleSTT_User?.write(chunk);
@@ -1127,14 +1146,14 @@ export class AppState {
       }
 
       // 2. Initialize STT Services if missing
-      if (!this.googleSTT) {
+      if (needsSystem && !this.googleSTT) {
         const { CredentialsManager } = require('./services/CredentialsManager');
         const sttProv = CredentialsManager.getInstance().getSttProvider();
         console.log(`[Main] Creating interviewer STT provider: ${sttProv}`);
         this.googleSTT = this.createSTTProvider('interviewer');
       }
 
-      if (!this.googleSTT_User) {
+      if (needsMic && !this.googleSTT_User) {
         const { CredentialsManager } = require('./services/CredentialsManager');
         const sttProv = CredentialsManager.getInstance().getSttProvider();
         console.log(`[Main] Creating user STT provider: ${sttProv}`);
@@ -1145,16 +1164,20 @@ export class AppState {
       // Always sync rates, even if just initialized, to ensure consistency
 
       // 1. Sync System Audio Rate
-      const sysRate = this.systemAudioCapture?.getSampleRate() || 48000;
-      if (this._verboseLogging) console.log(`[Main] Configuring Interviewer STT to ${sysRate}Hz`);
-      this.googleSTT?.setSampleRate(sysRate);
-      this.googleSTT?.setAudioChannelCount?.(1);
+      if (needsSystem) {
+        const sysRate = this.systemAudioCapture?.getSampleRate() || 48000;
+        if (this._verboseLogging) console.log(`[Main] Configuring Interviewer STT to ${sysRate}Hz`);
+        this.googleSTT?.setSampleRate(sysRate);
+        this.googleSTT?.setAudioChannelCount?.(1);
+      }
 
       // 2. Sync Mic Rate
-      const micRate = this.microphoneCapture?.getSampleRate() || 48000;
-      if (this._verboseLogging) console.log(`[Main] Configuring User STT to ${micRate}Hz`);
-      this.googleSTT_User?.setSampleRate(micRate);
-      this.googleSTT_User?.setAudioChannelCount?.(1);
+      if (needsMic) {
+        const micRate = this.microphoneCapture?.getSampleRate() || 48000;
+        if (this._verboseLogging) console.log(`[Main] Configuring User STT to ${micRate}Hz`);
+        this.googleSTT_User?.setSampleRate(micRate);
+        this.googleSTT_User?.setAudioChannelCount?.(1);
+      }
 
       if (this._verboseLogging) console.log('[Main] Full Audio Pipeline (System + Mic) Initialized (Ready)');
 
@@ -1298,8 +1321,8 @@ export class AppState {
     // before we null-out the STT instances. Without this, buffered 'data' events
     // still in-flight call this.googleSTT?.write() while googleSTT is already null.
     if (this.isMeetingActive) {
-      this.systemAudioCapture?.stop();
-      this.microphoneCapture?.stop();
+      if (this.isListeningActive) this.systemAudioCapture?.stop();
+      if (this.isMicListeningActive) this.microphoneCapture?.stop();
     }
 
     // Now safe to destroy STT instances — no more audio events incoming
@@ -1319,11 +1342,22 @@ export class AppState {
     // eagerly construct a MicrophoneCapture (which calls build_input_stream on
     // macOS and immediately triggers the orange mic indicator even without .play()).
     if (this.isMeetingActive) {
-      this.setupSystemAudioPipeline();
-      this.systemAudioCapture?.start();
-      this.microphoneCapture?.start();
-      this.googleSTT?.start();
-      this.googleSTT_User?.start();
+      if (this.isListeningActive || this.isMicListeningActive) {
+        const mode = this.isListeningActive && this.isMicListeningActive
+          ? 'all'
+          : this.isListeningActive
+            ? 'system'
+            : 'mic';
+        this.setupSystemAudioPipeline(mode);
+        if (this.isListeningActive) {
+          this.systemAudioCapture?.start();
+          this.googleSTT?.start();
+        }
+        if (this.isMicListeningActive) {
+          this.microphoneCapture?.start();
+          this.googleSTT_User?.start();
+        }
+      }
     }
 
     console.log('[Main] STT Provider reconfigured');
@@ -1353,7 +1387,7 @@ export class AppState {
     if (!this.systemAudioCapture) return;
 
     this.systemAudioCapture.on('error', async (err: Error) => {
-      if (!this.isMeetingActive) return; // Only attempt recovery during active meetings
+      if (!this.isMeetingActive || !this.isListeningActive) return; // Only recover during active listening sessions
 
       const now = Date.now();
       this._systemAudioLastFailureAt = now;
@@ -1521,7 +1555,7 @@ export class AppState {
         // auto-open System Settings. Forcing that window open every meeting start
         // is extremely disruptive, especially when mic transcription is still working.
         // The UI will show a non-blocking banner; the user can fix it deliberately.
-        const message = 'Screen Recording permission denied. System audio will not be captured. To fix: System Settings → Privacy & Security → Screen Recording → enable Natively.';
+        const message = 'Screen Recording permission denied. System audio will not be captured. To fix: System Settings → Privacy & Security → Screen Recording → enable Cluegent.';
         console.warn('[Main]', message);
         this.broadcast('system-audio-permission-denied', message);
         // NOTE: Do NOT call shell.openExternal() here — it hijacks focus on every meeting
@@ -1546,61 +1580,87 @@ export class AppState {
     this.getWindowHelper().getOverlayWindow()?.webContents.send('session-reset');
     this.getWindowHelper().getLauncherWindow()?.webContents.send('session-reset');
 
-    // ★ ASYNC AUDIO INIT: Return INSTANTLY so the IPC response goes back
-    // to the renderer immediately, allowing the UI to switch to overlay
-    // without waiting for SCK/audio initialization (which takes 5-7 seconds).
-    // setTimeout(0) ensures setWindowMode IPC is processed first.
-    setTimeout(async () => {
-      // BUG-02 fix: a fast start→stop sequence can call endMeeting() before
-      // this callback fires, leaving isMeetingActive=false. If that happened,
-      // do NOT boot the audio pipeline — it would run forever with no stop signal.
-      if (!this.isMeetingActive) {
-        console.warn('[Main] Meeting was cancelled before audio pipeline could start — aborting init.');
-        return;
+    // Audio is intentionally not started here. The overlay now opens idle so
+    // AssemblyAI streaming time is spent only after the user clicks Start listening
+    // or explicitly records with the Mic button.
+    this.isListeningActive = false;
+    this.isMicListeningActive = false;
+    this.broadcastListeningState();
+  }
+
+  public async startListening(metadata?: any): Promise<void> {
+    if (!this.isMeetingActive) {
+      await this.startMeeting(metadata);
+    }
+    if (this.isListeningActive) return;
+
+    try {
+      if (metadata?.audio) {
+        await this.reconfigureAudio(metadata.audio.inputDeviceId, metadata.audio.outputDeviceId);
       }
-      try {
-        // Check for audio configuration preference
-        if (metadata?.audio) {
-          await this.reconfigureAudio(metadata.audio.inputDeviceId, metadata.audio.outputDeviceId);
-        }
 
-        // LAZY INIT: Ensure pipeline is ready (if not reconfigured above)
-        this.setupSystemAudioPipeline();
+      this.setupSystemAudioPipeline('system');
+      this.systemAudioCapture?.start();
+      this.googleSTT?.start();
 
-        // Start System Audio
-        this.systemAudioCapture?.start();
-        this.googleSTT?.start();
-
-        // Start Microphone
-        this.microphoneCapture?.start();
-        this.googleSTT_User?.start();
-
-        // Start JIT RAG live indexing
-        if (this.ragManager) {
-          this.ragManager.startLiveIndexing('live-meeting-current');
-        }
-
-        if (this._verboseLogging) {
-          const requestedInput = metadata?.audio?.inputDeviceId || 'default';
-          const requestedOutput = metadata?.audio?.outputDeviceId || 'default';
-          const backend = requestedOutput === 'sck' ? 'sck' : 'coreaudio';
-          const sysRate = this.systemAudioCapture?.getSampleRate() || 48000;
-          const micRate = this.microphoneCapture?.getSampleRate() || 48000;
-          console.log(`[Main][debug] Audio pipeline: input=${requestedInput} output=${requestedOutput} backend=${backend} sysRate=${sysRate}Hz micRate=${micRate}Hz`);
-        }
-        console.log('[Main] Audio pipeline started successfully.');
-      } catch (err) {
-        console.error('[Main] Error initializing audio pipeline:', err);
-        // Notify UI so user knows microphone/audio failed to start
-        this.broadcast('meeting-audio-error', (err as Error).message || 'Audio pipeline failed to start');
+      if (this.ragManager) {
+        this.ragManager.startLiveIndexing('live-meeting-current');
       }
-    }, 0); // Defer to next event loop tick — ensures IPC response reaches renderer before audio init
+
+      this.isListeningActive = true;
+      this.broadcastListeningState();
+      console.log('[Main] System listening started.');
+    } catch (err) {
+      console.error('[Main] Error starting listening:', err);
+      this.broadcast('meeting-audio-error', (err as Error).message || 'Listening failed to start');
+      throw err;
+    }
+  }
+
+  public async stopListening(): Promise<void> {
+    if (!this.isListeningActive) return;
+
+    this.systemAudioCapture?.stop();
+    this.googleSTT?.stop();
+    this.isListeningActive = false;
+    this.broadcastListeningState();
+
+    if (this.ragManager) {
+      this.ragManager.stopLiveIndexing().catch(() => {});
+    }
+
+    console.log('[Main] System listening stopped.');
+  }
+
+  public async startMicStt(): Promise<void> {
+    if (!this.isMeetingActive) {
+      await this.startMeeting();
+    }
+    if (this.isMicListeningActive) return;
+
+    this.setupSystemAudioPipeline('mic');
+    this.microphoneCapture?.start();
+    this.googleSTT_User?.start();
+    this.isMicListeningActive = true;
+    console.log('[Main] Mic STT started.');
+  }
+
+  public async stopMicStt(): Promise<void> {
+    if (!this.isMicListeningActive) return;
+
+    this.microphoneCapture?.stop();
+    this.googleSTT_User?.stop();
+    this.isMicListeningActive = false;
+    console.log('[Main] Mic STT stopped.');
   }
 
   public async endMeeting(): Promise<void> {
     console.log('[Main] Ending Meeting...');
     this.isMeetingActive = false; // Block new data immediately
+    this.isListeningActive = false;
+    this.isMicListeningActive = false;
     this.broadcastMeetingState();
+    this.broadcastListeningState();
 
     // Reset Mouse Passthrough so the next meeting overlay starts fresh and focusable
     if (this.overlayMousePassthrough) {
@@ -1676,7 +1736,7 @@ export class AppState {
   }
 
   private async processCompletedMeetingForRAG(meetingId: string): Promise<void> {
-    if (!this.ragManager) return;
+    if (!DatabaseManager.isLegacySqliteEnabled() || !this.ragManager) return;
 
     try {
       // Use the explicit meetingId passed from endMeeting() — deterministic, never
@@ -2204,7 +2264,7 @@ export class AppState {
     trayIcon.setTemplateImage(iconToUse.endsWith('Template.png'));
 
     this.tray = new Tray(trayIcon)
-    this.tray.setToolTip('Natively') // This tooltip might also need update if we change global shortcut, but global shortcut is removed.
+    this.tray.setToolTip('Cluegent')
     this.updateTrayMenu();
 
     // Double-click to show window
@@ -2217,12 +2277,12 @@ export class AppState {
     if (!this.tray) return;
 
     const keybindManager = KeybindManager.getInstance();
-    const screenshotAccel = keybindManager.getKeybind('general:take-screenshot') || 'CommandOrControl+H';
+    const screenshotAccel = keybindManager.getKeybind('general:take-screenshot') || 'CommandOrControl+[';
 
     console.log('[Main] updateTrayMenu called. Screenshot Accelerator:', screenshotAccel);
 
     // Update tooltip for verification
-    this.tray.setToolTip('Natively');
+    this.tray.setToolTip('Cluegent');
 
     // Helper to format accelerator for display (e.g. CommandOrControl+H -> Cmd+H)
     const formatAccel = (accel: string) => {
@@ -2242,7 +2302,7 @@ export class AppState {
 
     const contextMenu = Menu.buildFromTemplate([
       {
-        label: 'Show Natively',
+        label: 'Show Cluegent',
         click: () => {
           this.centerAndShowWindow()
         }
@@ -2469,7 +2529,7 @@ export class AppState {
   }
 
   private _applyDisguise(mode: 'terminal' | 'settings' | 'activity' | 'none'): void {
-    let appName = "Natively";
+    let appName = "Cluegent";
     let iconPath = "";
 
     const isWin = process.platform === 'win32';
@@ -2513,7 +2573,7 @@ export class AppState {
         }
         break;
       case 'none':
-        appName = "Natively";
+        appName = "Cluegent";
         if (isMac) {
           iconPath = app.isPackaged
             ? path.join(process.resourcesPath, "natively.icns")
@@ -2549,7 +2609,7 @@ export class AppState {
     // 3. Update App User Model ID (Windows Taskbar grouping)
     if (isWin) {
       // Use unique AUMID per disguise to avoid grouping with the real app
-      app.setAppUserModelId(`com.natively.assistant.${mode}`);
+      app.setAppUserModelId(`com.cluegent.desktop.${mode}`);
     }
 
     // 4. Update Icons
@@ -2777,7 +2837,7 @@ async function initializeApp() {
             if (!win.isDestroyed()) {
               win.webContents.send(
                 'system-audio-permission-denied',
-                'Screen Recording is disabled. System audio capture will not work. Click "Open Settings" to enable it, then restart Natively.'
+                'Screen Recording is disabled. System audio capture will not work. Click "Open Settings" to enable it, then restart Cluegent.'
               );
             }
           });

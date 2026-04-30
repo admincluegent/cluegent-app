@@ -114,7 +114,7 @@ interface ElectronAPI {
 
   // Intelligence Mode IPC
   generateAssist: () => Promise<{ insight: string | null }>
-  generateWhatToSay: (question?: string, imagePaths?: string[]) => Promise<{ answer: string | null; question?: string; error?: string }>
+  generateWhatToSay: (question?: string, imagePaths?: string[], behaviorInstructions?: string) => Promise<{ answer: string | null; question?: string; error?: string }>
   generateFollowUp: (intent: string, userRequest?: string) => Promise<{ refined: string | null; intent: string }>
   generateRecap: () => Promise<{ summary: string | null }>
   submitManualQuestion: (question: string) => Promise<{ answer: string | null; question: string }>
@@ -124,6 +124,12 @@ interface ElectronAPI {
   // Meeting Lifecycle
   startMeeting: (metadata?: any) => Promise<{ success: boolean; error?: string }>
   endMeeting: () => Promise<{ success: boolean; error?: string }>
+  startListening: (metadata?: any) => Promise<{ success: boolean; error?: string }>
+  stopListening: () => Promise<{ success: boolean; error?: string }>
+  getListeningActive: () => Promise<boolean>
+  onListeningStateChanged: (callback: (data: { isListening: boolean }) => void) => () => void
+  startMicSTT: () => Promise<{ success: boolean; error?: string }>
+  stopMicSTT: () => Promise<{ success: boolean; error?: string }>
   finalizeMicSTT: () => Promise<void>
   getRecentMeetings: () => Promise<Array<{ id: string; title: string; date: string; duration: string; summary: string }>>
   getMeetingDetails: (id: string) => Promise<any>
@@ -685,12 +691,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   // Intelligence Mode IPC
   generateAssist: () => ipcRenderer.invoke("generate-assist"),
-  generateWhatToSay: (question?: string, imagePaths?: string[]) => ipcRenderer.invoke("generate-what-to-say", question, imagePaths),
-  generateClarify: () => ipcRenderer.invoke("generate-clarify"),
+  generateWhatToSay: (question?: string, imagePaths?: string[], behaviorInstructions?: string) => ipcRenderer.invoke("generate-what-to-say", question, imagePaths, behaviorInstructions),
+  generateClarify: (behaviorInstructions?: string) => ipcRenderer.invoke("generate-clarify", behaviorInstructions),
   generateCodeHint: (imagePaths?: string[], problemStatement?: string) => ipcRenderer.invoke("generate-code-hint", imagePaths, problemStatement),
-  generateBrainstorm: (imagePaths?: string[], problemStatement?: string) => ipcRenderer.invoke("generate-brainstorm", imagePaths, problemStatement),
+  generateBrainstorm: (imagePaths?: string[], problemStatement?: string, behaviorInstructions?: string) => ipcRenderer.invoke("generate-brainstorm", imagePaths, problemStatement, behaviorInstructions),
   generateFollowUp: (intent: string, userRequest?: string) => ipcRenderer.invoke("generate-follow-up", intent, userRequest),
-  generateFollowUpQuestions: () => ipcRenderer.invoke("generate-follow-up-questions"),
+  generateFollowUpQuestions: (behaviorInstructions?: string) => ipcRenderer.invoke("generate-follow-up-questions", behaviorInstructions),
   generateRecap: () => ipcRenderer.invoke("generate-recap"),
   submitManualQuestion: (question: string) => ipcRenderer.invoke("submit-manual-question", question),
   getIntelligenceContext: () => ipcRenderer.invoke("get-intelligence-context"),
@@ -714,6 +720,18 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Meeting Lifecycle
   startMeeting: (metadata?: any) => ipcRenderer.invoke("start-meeting", metadata),
   endMeeting: () => ipcRenderer.invoke("end-meeting"),
+  startListening: (metadata?: any) => ipcRenderer.invoke("start-listening", metadata),
+  stopListening: () => ipcRenderer.invoke("stop-listening"),
+  getListeningActive: () => ipcRenderer.invoke("get-listening-active"),
+  onListeningStateChanged: (callback: (data: { isListening: boolean }) => void) => {
+    const subscription = (_: any, data: { isListening: boolean }) => callback(data);
+    ipcRenderer.on("listening-state-changed", subscription);
+    return () => {
+      ipcRenderer.removeListener("listening-state-changed", subscription);
+    };
+  },
+  startMicSTT: () => ipcRenderer.invoke("start-mic-stt"),
+  stopMicSTT: () => ipcRenderer.invoke("stop-mic-stt"),
   finalizeMicSTT: () => ipcRenderer.invoke("finalize-mic-stt"),
   getRecentMeetings: () => ipcRenderer.invoke("get-recent-meetings"),
   getMeetingDetails: (id: string) => ipcRenderer.invoke("get-meeting-details", id),

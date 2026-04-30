@@ -11,10 +11,13 @@ export class ClarifyLLM {
     /**
      * Generate a clarification question
      */
-    async generate(context: string): Promise<string> {
+    async generate(context: string, behaviorInstructions?: string): Promise<string> {
         if (!context.trim()) return "";
         try {
-            const stream = this.llmHelper.streamChat(context, undefined, undefined, CLARIFY_MODE_PROMPT);
+            const message = behaviorInstructions?.trim()
+                ? `${behaviorInstructions.trim()}\n\n${context}`
+                : context;
+            const stream = this.llmHelper.streamChat(message, undefined, undefined, CLARIFY_MODE_PROMPT);
             let fullResponse = "";
             for await (const chunk of stream) fullResponse += chunk;
             return fullResponse.trim();
@@ -27,10 +30,13 @@ export class ClarifyLLM {
     /**
      * Generate a clarification question (Streamed)
      */
-    async *generateStream(context: string): AsyncGenerator<string> {
+    async *generateStream(context: string, behaviorInstructions?: string): AsyncGenerator<string> {
         if (!context.trim()) return;
         try {
-            yield* this.llmHelper.streamChat(context, undefined, undefined, CLARIFY_MODE_PROMPT);
+            const message = behaviorInstructions?.trim()
+                ? `${behaviorInstructions.trim()}\n\n${context}`
+                : context;
+            yield* this.llmHelper.streamChat(message, undefined, undefined, CLARIFY_MODE_PROMPT);
         } catch (error) {
             console.error("[ClarifyLLM] Streaming generation failed:", error);
         }

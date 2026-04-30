@@ -20,18 +20,15 @@ import {
     LogOut,
     Zap,
     Edit3,
-    SlidersHorizontal,
     LayoutGrid,
     Ghost,
     Link,
     Code,
     Copy,
-    Check,
-    PointerOff
+    Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneLight, vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 // import { ModelSelector } from './ui/ModelSelector'; // REMOVED
 import TopPill from './ui/TopPill';
 import RollingTranscript from './ui/RollingTranscript';
@@ -47,6 +44,13 @@ import { useResolvedTheme } from '../hooks/useResolvedTheme';
 import { getOverlayAppearance, OVERLAY_OPACITY_DEFAULT } from '../lib/overlayAppearance';
 import { useAuth } from '../contexts/auth.context';
 import { appendLocalMeetingEvent, finishCurrentLocalMeeting, getCurrentLocalMeetingId } from '../lib/localMeetingStorage';
+import { buildAiBehaviorInstruction } from '../lib/aiBehaviorSettings';
+import {
+    DEFAULT_QUICK_ACTIONS,
+    buildQuickActionInstruction,
+    getQuickActionSettings,
+    subscribeQuickActionSettings,
+} from '../lib/quickActionSettings';
 
 interface Message {
     id: string;
@@ -82,6 +86,10 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     const { shortcuts, isShortcutPressed } = useShortcuts();
     const [messages, setMessages] = useState<Message[]>([]);
     const [isConnected, setIsConnected] = useState(false);
+    const [isListening, setIsListening] = useState(false);
+    const [listeningSeconds, setListeningSeconds] = useState(0);
+    const listeningStartedAtRef = useRef<number | null>(null);
+    const isListeningRef = useRef(false);
     const [sttUserStatus, setSttUserStatus] = useState<'connected' | 'reconnecting' | 'failed'>('connected');
     const [sttUserError, setSttUserError] = useState<string>('');
     const [sttUserProvider, setSttUserProvider] = useState<string>('');
@@ -108,6 +116,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         (planStatus.remaining.prompts ?? 0) <= 0 ||
         (planStatus.remaining.sttSeconds ?? 0) <= 0
     );
+    const listeningDuration = `${Math.floor(listeningSeconds / 60).toString().padStart(2, '0')}:${(listeningSeconds % 60).toString().padStart(2, '0')}`;
 
     // Sync transcript setting
     useEffect(() => {
@@ -166,6 +175,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
     // Dynamic Action Button Mode (Recap vs Brainstorm)
     const [actionButtonMode, setActionButtonMode] = useState<'recap' | 'brainstorm'>('recap');
+    const [quickActions, setQuickActions] = useState(() => getQuickActionSettings());
 
     useEffect(() => {
         // Load persisted mode
@@ -180,8 +190,41 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         return () => { unsubscribe?.(); };
     }, []);
 
-    const codeTheme = isLightTheme ? oneLight : vscDarkPlus;
-    const codeLineNumberColor = isLightTheme ? 'rgba(15,23,42,0.35)' : 'rgba(255,255,255,0.2)';
+    useEffect(() => {
+        const refreshQuickActions = () => setQuickActions(getQuickActionSettings());
+        refreshQuickActions();
+        return subscribeQuickActionSettings(refreshQuickActions);
+    }, []);
+
+    useEffect(() => {
+        window.electronAPI?.getListeningActive?.().then((active) => {
+            setIsListening(active);
+            isListeningRef.current = active;
+            listeningStartedAtRef.current = active ? Date.now() : null;
+            setListeningSeconds(0);
+        }).catch(() => {});
+
+        const unsubscribe = window.electronAPI?.onListeningStateChanged?.((data) => {
+            setIsListening(data.isListening);
+            isListeningRef.current = data.isListening;
+            listeningStartedAtRef.current = data.isListening ? Date.now() : null;
+            setListeningSeconds(0);
+        });
+
+        return () => unsubscribe?.();
+    }, []);
+
+    useEffect(() => {
+        if (!isListening) return;
+        const timer = window.setInterval(() => {
+            const startedAt = listeningStartedAtRef.current ?? Date.now();
+            setListeningSeconds(Math.max(0, Math.floor((Date.now() - startedAt) / 1000)));
+        }, 1000);
+        return () => window.clearInterval(timer);
+    }, [isListening]);
+
+    const codeTheme = {};
+    const codeLineNumberColor = 'rgba(255,255,255,0.5)';
     const appearance = useMemo(
         () => getOverlayAppearance(overlayOpacity, isLightTheme ? 'light' : 'dark'),
         [overlayOpacity, isLightTheme]
@@ -190,7 +233,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     const subtleSurfaceClass = 'overlay-subtle-surface';
     const codeBlockClass = 'overlay-code-block-surface';
     const codeHeaderClass = 'overlay-code-header-surface';
-    const codeHeaderTextClass = 'overlay-text-muted';
+    const codeHeaderTextClass = 'text-white';
     const quickActionClass = 'overlay-chip-surface overlay-text-interactive';
     const inputClass = 'focus:ring-white/15 overlay-input-surface overlay-input-text text-white caret-white';
     const controlSurfaceClass = 'overlay-control-surface overlay-text-interactive';
@@ -309,10 +352,39 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         const context = messages
             .filter(m => m.role !== 'user' || !m.hasScreenshot)
             .map(m => `${m.role === 'interviewer' ? 'Interviewer' : m.role === 'user' ? 'User' : 'Assistant'}: ${m.text}`)
-            .slice(-20)
+            .slice(-8)
             .join('\n');
         setConversationContext(context);
     }, [messages]);
+
+    const buildLiveCopilotContext = (extraInstructions?: string) => {
+        const contextBlocks: string[] = [];
+        const liveTranscript = rollingTranscript.trim().slice(-2500);
+        const chatContext = conversationContext.trim();
+
+        if (liveTranscript) {
+            contextBlocks.push(`[ROLLING TRANSCRIPT - latest live audio]\n${liveTranscript}`);
+        }
+
+        if (chatContext) {
+            contextBlocks.push(`[RECENT CHAT CONTEXT]\n${chatContext}`);
+        }
+
+        if (extraInstructions?.trim()) {
+            contextBlocks.push(`[REQUEST INSTRUCTIONS]\n${extraInstructions.trim()}`);
+        }
+
+        return contextBlocks.join('\n\n');
+    };
+
+    const shouldQueryLiveRag = (text: string) =>
+        /\b(previous|earlier|before|meeting|transcript|recap|summari[sz]e|mentioned|what did|history)\b/i.test(text);
+
+    const combineInstructions = (...instructions: Array<string | undefined>) =>
+        instructions
+            .map(instruction => instruction?.trim())
+            .filter(Boolean)
+            .join('\n');
 
     // Listen for settings window visibility changes
     useEffect(() => {
@@ -452,6 +524,10 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             // Only interviewer (system audio) transcripts should appear in chat
             if (transcript.speaker === 'user') {
                 return;  // Skip user mic input - only relevant when Answer button is active
+            }
+
+            if (!isListeningRef.current) {
+                return;
             }
 
             // Only show interviewer (system audio) transcripts in rolling bar
@@ -849,11 +925,16 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
         if (currentAttachments.length > 0) {
             setAttachedContext([]);
+            appendLocalMeetingEvent({
+                type: 'prompt',
+                text: 'Screenshot attached',
+                hasScreenshot: true,
+            }, localMeetingIdRef.current);
             // Show the attached image in chat
             setMessages(prev => [...prev, {
                 id: Date.now().toString(),
                 role: 'user',
-                text: 'What should I say about this?',
+                text: '',
                 hasScreenshot: true,
                 screenshotPreview: currentAttachments[0].preview
             }]);
@@ -865,7 +946,14 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
         try {
             // Pass imagePath if attached
-            await window.electronAPI.generateWhatToSay(undefined, currentAttachments.length > 0 ? currentAttachments.map(s => s.path) : undefined);
+            await window.electronAPI.generateWhatToSay(
+                undefined,
+                currentAttachments.length > 0 ? currentAttachments.map(s => s.path) : undefined,
+                combineInstructions(
+                    buildAiBehaviorInstruction(currentAttachments.length > 0 ? 'screenshot' : 'rolling'),
+                    buildQuickActionInstruction('whatToAnswer')
+                )
+            );
         } catch (err) {
             setMessages(prev => [...prev, {
                 id: Date.now().toString(),
@@ -874,6 +962,94 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             }]);
         } finally {
             setIsProcessing(false);
+        }
+    };
+
+    const handleQuickActionPrompt = async (actionId: keyof typeof quickActions) => {
+        const action = quickActions[actionId];
+        const defaultAction = DEFAULT_QUICK_ACTIONS.find(item => item.id === actionId);
+        const labelChanged = action.label.trim() !== defaultAction?.label;
+        const instructionChanged = action.instruction.trim() !== defaultAction?.instruction;
+        const promptText = labelChanged
+            ? action.label.trim()
+            : (action.instruction.trim() || action.label);
+        const extraBehavior = instructionChanged ? action.instruction.trim() : '';
+
+        setIsExpanded(true);
+        setIsProcessing(true);
+        analytics.trackCommandExecuted(`quick_action_${actionId}`);
+
+        const pending = pendingCaptureRef.current;
+        let currentAttachments = attachedContext;
+        if (pending && !currentAttachments.some(s => s.path === pending.path)) {
+            currentAttachments = [...currentAttachments, pending].slice(-5);
+        }
+
+        if (currentAttachments.length > 0) {
+            setAttachedContext([]);
+        }
+
+        appendLocalMeetingEvent({
+            type: 'prompt',
+            text: action.label,
+            hasScreenshot: currentAttachments.length > 0,
+        }, localMeetingIdRef.current);
+
+        setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            role: 'user',
+            text: action.label,
+            hasScreenshot: currentAttachments.length > 0,
+            screenshotPreview: currentAttachments[0]?.preview,
+        }]);
+
+        setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 50);
+
+        streamingResponseTextRef.current = '';
+        setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            role: 'system',
+            text: '',
+            isStreaming: true,
+        }]);
+
+        try {
+            const scenarioBehavior = buildAiBehaviorInstruction(currentAttachments.length > 0 ? 'screenshot' : 'typed');
+            const quickActionPrompt = [
+                `The user clicked a saved quick-action prompt named "${action.label}".`,
+                `Treat this quick action as the user's current prompt: ${promptText}`,
+                extraBehavior ? `Additional quick-action behavior: ${extraBehavior}` : '',
+                'Answer using the most recent relevant context from the rolling transcript and chat history.',
+                'If this is a follow-up like "give example", "explain more", or "make it shorter", apply it to the latest user question and assistant answer.',
+                currentAttachments.length > 0 ? 'Use the attached screenshot as visual context.' : '',
+            ].filter(Boolean).join('\n');
+
+            requestStartTimeRef.current = Date.now();
+            await window.electronAPI.streamGeminiChat(
+                promptText,
+                currentAttachments.length > 0 ? currentAttachments.map(s => s.path) : undefined,
+                buildLiveCopilotContext(combineInstructions(scenarioBehavior, quickActionPrompt)),
+                { skipSystemPrompt: true, ignoreKnowledgeMode: true }
+            );
+        } catch (err) {
+            setIsProcessing(false);
+            setMessages(prev => {
+                const last = prev[prev.length - 1];
+                if (last && last.isStreaming && last.text === '') {
+                    return prev.slice(0, -1).concat({
+                        id: Date.now().toString(),
+                        role: 'system',
+                        text: `Error starting quick action: ${err}`,
+                    });
+                }
+                return [...prev, {
+                    id: Date.now().toString(),
+                    role: 'system',
+                    text: `Error: ${err}`,
+                }];
+            });
         }
     };
 
@@ -919,7 +1095,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         analytics.trackCommandExecuted('suggest_questions');
 
         try {
-            await window.electronAPI.generateFollowUpQuestions();
+            await window.electronAPI.generateFollowUpQuestions(buildQuickActionInstruction('followUpQuestions'));
         } catch (err) {
             setMessages(prev => [...prev, {
                 id: Date.now().toString(),
@@ -937,7 +1113,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         analytics.trackCommandExecuted('clarify');
 
         try {
-            await window.electronAPI.generateClarify();
+            await window.electronAPI.generateClarify(buildQuickActionInstruction('clarify'));
         } catch (err) {
             setMessages(prev => [...prev, {
                 id: Date.now().toString(),
@@ -1007,7 +1183,11 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         }
 
         try {
-            await window.electronAPI.generateBrainstorm(currentAttachments.length > 0 ? currentAttachments.map(s => s.path) : undefined);
+            await window.electronAPI.generateBrainstorm(
+                currentAttachments.length > 0 ? currentAttachments.map(s => s.path) : undefined,
+                undefined,
+                buildQuickActionInstruction('brainstorm')
+            );
         } catch (err) {
             setMessages(prev => [...prev, {
                 id: Date.now().toString(),
@@ -1273,23 +1453,30 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
     const handleAnswerNow = async () => {
         if (isManualRecording) {
-            // Stop recording - send accumulated voice input to Gemini
+            // Stop recording and move captured speech into the input box.
+            // The response is generated only when the user sends explicitly.
             isRecordingRef.current = false;  // Update ref immediately
             setIsManualRecording(false);
             setManualTranscript('');  // Clear live preview
 
-            // Send manual finalization signal to STT Providers
-            window.electronAPI.finalizeMicSTT().catch(err => console.error('[NativelyInterface] Failed to send finalizeMicSTT:', err));
-
-            const currentAttachments = attachedContext;
-            setAttachedContext([]); // Clear context immediately on send
+            // Finalize first, then give the provider a tiny moment to emit its last final turn.
+            await window.electronAPI.finalizeMicSTT().catch(err => console.error('[NativelyInterface] Failed to send finalizeMicSTT:', err));
+            await new Promise(resolve => window.setTimeout(resolve, 250));
 
             const question = (voiceInputRef.current + (manualTranscriptRef.current ? ' ' + manualTranscriptRef.current : '')).trim();
             setVoiceInput('');
             voiceInputRef.current = '';
             setManualTranscript('');
             manualTranscriptRef.current = '';
+            window.electronAPI.stopMicSTT?.().catch(err => console.error('[NativelyInterface] Failed to stop mic STT:', err));
 
+            if (question) {
+                setInputValue(prev => [prev.trim(), question].filter(Boolean).join(prev.trim() ? ' ' : ''));
+                setTimeout(() => textInputRef.current?.focus(), 0);
+            }
+            return;
+
+            /*
             if (!question && currentAttachments.length === 0) {
                 // No voice input and no image — show real STT error if available
                 if (sttUserStatus === 'failed' && sttUserError) {
@@ -1317,7 +1504,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             // Show user's spoken question
             appendLocalMeetingEvent({
                 type: 'prompt',
-                text: question || (currentAttachments.length > 0 ? 'Analyze this screenshot' : ''),
+                text: question || (currentAttachments.length > 0 ? 'Screenshot attached' : ''),
                 hasScreenshot: currentAttachments.length > 0,
             }, localMeetingIdRef.current);
             setMessages(prev => [...prev, {
@@ -1346,6 +1533,10 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
             try {
                 let prompt = '';
+                const scenarioBehavior = combineInstructions(
+                    buildAiBehaviorInstruction(currentAttachments.length > 0 ? 'screenshot' : 'typed'),
+                    buildQuickActionInstruction('answer')
+                );
 
                 if (currentAttachments.length > 0) {
                     // Image + Voice Context
@@ -1355,30 +1546,34 @@ User said: "${question}"
 Instructions:
 1. Analyze the screenshot in the context of what the user said.
 2. Provide a direct, helpful answer.
-3. Be concise.`;
+3. Be concise but complete.
+
+${buildLiveCopilotContext(scenarioBehavior)}`;
                 } else {
                     // JIT RAG pre-flight: try to use indexed meeting context first
-                    const ragResult = await window.electronAPI.ragQueryLive?.(question);
+                    const ragResult = shouldQueryLiveRag(question)
+                        ? await window.electronAPI.ragQueryLive?.(question)
+                        : undefined;
                     if (ragResult?.success) {
                         // JIT RAG handled it — response streamed via rag:stream-chunk events
                         return;
                     }
 
                     // Voice Only (Smart Extract) — fallback
-                    prompt = `You are a real-time interview assistant. The user just repeated or paraphrased a question from their interviewer.
+                    prompt = `You are a real-time technical copilot. The user just asked a live or typed question.
 Instructions:
-1. Extract the core question being asked
-2. Provide a clear, concise, and professional answer that the user can say out loud
-3. Keep the answer conversational but informative (2-4 sentences ideal)
-4. Do NOT include phrases like "The question is..." - just give the answer directly
-5. Format for speaking out loud, not for reading
+1. Answer the latest explicit request directly.
+2. If the request is a follow-up, use recent transcript/chat context.
+3. If it is a new topic, ignore older topic context.
+4. For technical questions, explain what/how with medium detail and include code or examples when asked.
+5. Do NOT include phrases like "The question is..." - just give the answer directly.
 
-Provide only the answer, nothing else.`;
+${buildLiveCopilotContext(scenarioBehavior)}`;
                 }
 
                 // Call Streaming API: message = question, context = instructions
                 requestStartTimeRef.current = Date.now();
-                await window.electronAPI.streamGeminiChat(question, currentAttachments.length > 0 ? currentAttachments.map(s => s.path) : undefined, prompt, { skipSystemPrompt: true });
+                await window.electronAPI.streamGeminiChat(question, currentAttachments.length > 0 ? currentAttachments.map(s => s.path) : undefined, prompt, { skipSystemPrompt: true, ignoreKnowledgeMode: true });
 
             } catch (err) {
                 // Initial invocation failing (e.g. IPC error before stream starts)
@@ -1400,8 +1595,18 @@ Provide only the answer, nothing else.`;
                     }];
                 });
             }
+            */
         } else {
             // Start recording - reset voice input state
+            const micStart = await window.electronAPI.startMicSTT?.();
+            if (micStart && !micStart.success) {
+                setMessages(prev => [...prev, {
+                    id: Date.now().toString(),
+                    role: 'system',
+                    text: `Mic STT error: ${micStart.error || 'Failed to start microphone transcription'}`
+                }]);
+                return;
+            }
             setVoiceInput('');
             voiceInputRef.current = '';
             setManualTranscript('');
@@ -1431,13 +1636,13 @@ Provide only the answer, nothing else.`;
 
         appendLocalMeetingEvent({
             type: 'prompt',
-            text: userText || (currentAttachments.length > 0 ? 'Analyze this screenshot' : ''),
+            text: userText || (currentAttachments.length > 0 ? 'Screenshot attached' : ''),
             hasScreenshot: currentAttachments.length > 0,
         }, localMeetingIdRef.current);
         setMessages(prev => [...prev, {
             id: Date.now().toString(),
             role: 'user',
-            text: userText || (currentAttachments.length > 0 ? 'Analyze this screenshot' : ''),
+            text: userText,
             hasScreenshot: currentAttachments.length > 0,
             screenshotPreview: currentAttachments[0]?.preview
         }]);
@@ -1461,7 +1666,7 @@ Provide only the answer, nothing else.`;
 
         try {
             // JIT RAG pre-flight: try to use indexed meeting context first
-            if (currentAttachments.length === 0) {
+            if (currentAttachments.length === 0 && shouldQueryLiveRag(userText || '')) {
                 const ragResult = await window.electronAPI.ragQueryLive?.(userText || '');
                 if (ragResult?.success) {
                     // JIT RAG handled it — response streamed via rag:stream-chunk events
@@ -1471,10 +1676,15 @@ Provide only the answer, nothing else.`;
 
             // Pass imagePath if attached, AND conversation context
             requestStartTimeRef.current = Date.now();
+            const scenarioBehavior = buildAiBehaviorInstruction(currentAttachments.length > 0 ? 'screenshot' : 'typed');
+            const screenshotInstruction = currentAttachments.length > 0
+                ? 'Use the attached screenshot with the latest user request.'
+                : '';
             await window.electronAPI.streamGeminiChat(
                 userText || 'Analyze this screenshot',
                 currentAttachments.length > 0 ? currentAttachments.map(s => s.path) : undefined,
-                conversationContext // Pass context so "answer this" works
+                buildLiveCopilotContext([scenarioBehavior, screenshotInstruction].filter(Boolean).join('\n')),
+                { skipSystemPrompt: true, ignoreKnowledgeMode: true }
             );
         } catch (err) {
             setIsProcessing(false);
@@ -1495,6 +1705,20 @@ Provide only the answer, nothing else.`;
                 }];
             });
         }
+    };
+
+    const handleAnswerShortcut = () => {
+        if (isManualRecording) {
+            void handleAnswerNow();
+            return;
+        }
+
+        if (inputValue.trim() || attachedContext.length > 0) {
+            void handleManualSubmit();
+            return;
+        }
+
+        void handleAnswerNow();
     };
 
     const clearChat = () => {
@@ -1522,18 +1746,22 @@ Provide only the answer, nothing else.`;
             );
         }
 
+        if (msg.role === 'user' && msg.hasScreenshot && !msg.text.trim()) {
+            return null;
+        }
+
         // Code-containing messages get special styling
         // We split by code blocks to keep the "Code Solution" UI intact for the code parts
         // But use ReactMarkdown for the text parts around it
         if (msg.isCode || (msg.role === 'system' && msg.text.includes('```'))) {
             const parts = msg.text.split(/(```[\s\S]*?```)/g);
             return (
-                <div className={`rounded-lg p-3 my-1 border ${subtleSurfaceClass}`} style={appearance.subtleStyle}>
-                    <div className={`flex items-center gap-2 mb-2 font-semibold text-xs uppercase tracking-wide ${isLightTheme ? 'text-violet-600' : 'text-purple-300'}`}>
+                <div className={`w-full min-w-0 rounded-lg p-3 my-1 border ${subtleSurfaceClass}`} style={appearance.subtleStyle}>
+                    <div className="flex items-center gap-2 mb-2 font-semibold text-xs uppercase tracking-wide text-white">
                         <Code className="w-3.5 h-3.5" />
                         <span>Code Solution</span>
                     </div>
-                    <div className={`space-y-2 text-[13px] leading-relaxed ${isLightTheme ? 'text-slate-800' : 'text-slate-200'}`}>
+                    <div className="w-full min-w-0 space-y-2 text-[13px] leading-relaxed text-white">
                         {parts.map((part, i) => {
                             if (part.startsWith('```')) {
                                 const match = part.match(/```(\w+)?\n?([\s\S]*?)```/);
@@ -1541,14 +1769,14 @@ Provide only the answer, nothing else.`;
                                     const lang = match[1] || 'python';
                                     const code = match[2].trim();
                                     return (
-                                        <div key={i} className={`my-3 rounded-xl overflow-hidden border shadow-lg ${codeBlockClass}`} style={appearance.codeBlockStyle}>
+                                        <div key={i} className={`my-3 w-full min-w-0 rounded-xl overflow-x-auto overflow-y-hidden border shadow-lg ${codeBlockClass}`} style={appearance.codeBlockStyle}>
                                             {/* Minimalist Apple Header */}
                                             <div className={`px-3 py-1.5 border-b ${codeHeaderClass}`} style={appearance.codeHeaderStyle}>
                                                 <span className={`text-[10px] uppercase tracking-widest font-semibold font-mono ${codeHeaderTextClass}`}>
                                                     {lang || 'CODE'}
                                                 </span>
                                             </div>
-                                            <div className="bg-transparent">
+                                            <div className="w-full min-w-0 bg-transparent">
                                                 <SyntaxHighlighter
                                                     language={lang}
                                                     style={codeTheme}
@@ -1559,8 +1787,11 @@ Provide only the answer, nothing else.`;
                                                         lineHeight: '1.6',
                                                         background: 'transparent',
                                                         padding: '16px',
+                                                        color: '#ffffff',
                                                         fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
                                                     }}
+                                                    codeTagProps={{ style: { color: '#ffffff' } }}
+                                                    PreTag={({ children, ...props }: any) => <pre {...props} style={{ ...props.style, color: '#ffffff', maxWidth: '100%', whiteSpace: 'pre-wrap', wordBreak: 'normal', overflowWrap: 'normal' }}>{children}</pre>}
                                                     wrapLongLines={true}
                                                     showLineNumbers={true}
                                                     lineNumberStyle={{ minWidth: '2.5em', paddingRight: '1.2em', color: codeLineNumberColor, textAlign: 'right', fontSize: '11px' }}
@@ -1574,23 +1805,23 @@ Provide only the answer, nothing else.`;
                             }
                             // Regular text - Render with Markdown
                             return (
-                                <div key={i} className="markdown-content">
+                                <div key={i} className="markdown-content w-full min-w-0">
                                     <ReactMarkdown
                                         remarkPlugins={[remarkGfm, remarkMath]}
                                         rehypePlugins={[rehypeKatex]}
                                         components={{
-                                            p: ({ node, ...props }: any) => <p className="mb-2 last:mb-0 whitespace-pre-wrap" {...props} />,
-                                            strong: ({ node, ...props }: any) => <strong className="font-bold overlay-text-strong" {...props} />,
-                                            em: ({ node, ...props }: any) => <em className="italic overlay-text-secondary" {...props} />,
-                                            ul: ({ node, ...props }: any) => <ul className="list-disc ml-4 mb-2 space-y-1" {...props} />,
-                                            ol: ({ node, ...props }: any) => <ol className="list-decimal ml-4 mb-2 space-y-1" {...props} />,
-                                            li: ({ node, ...props }: any) => <li className="pl-1" {...props} />,
-                                            h1: ({ node, ...props }: any) => <h1 className="text-lg font-bold mb-2 mt-3 overlay-text-strong" {...props} />,
-                                            h2: ({ node, ...props }: any) => <h2 className="text-base font-bold mb-2 mt-3 overlay-text-strong" {...props} />,
-                                            h3: ({ node, ...props }: any) => <h3 className="text-sm font-bold mb-1 mt-2 overlay-text-primary" {...props} />,
-                                            code: ({ node, ...props }: any) => <code className={`overlay-inline-code-surface rounded px-1 py-0.5 text-xs font-mono whitespace-pre-wrap ${isLightTheme ? 'text-violet-700' : 'text-purple-200'}`} {...props} />,
-                                            blockquote: ({ node, ...props }: any) => <blockquote className={`border-l-2 pl-3 italic my-2 ${isLightTheme ? 'border-violet-500/30 text-slate-600' : 'border-purple-500/50 text-slate-400'}`} {...props} />,
-                                            a: ({ node, ...props }: any) => <a className={`hover:underline ${isLightTheme ? 'text-blue-600 hover:text-blue-700' : 'text-blue-400 hover:text-blue-300'}`} target="_blank" rel="noopener noreferrer" {...props} />,
+                                            p: ({ node, ...props }: any) => <p className="mb-1 last:mb-0 whitespace-pre-wrap" {...props} />,
+                                            strong: ({ node, ...props }: any) => <strong className="font-bold text-white" {...props} />,
+                                            em: ({ node, ...props }: any) => <em className="italic text-white" {...props} />,
+                                            ul: ({ node, ...props }: any) => <ul className="list-disc ml-4 my-1 space-y-0.5" {...props} />,
+                                            ol: ({ node, ...props }: any) => <ol className="list-decimal ml-4 my-1 space-y-0.5" {...props} />,
+                                            li: ({ node, ...props }: any) => <li className="pl-1 leading-snug [&>p]:m-0" {...props} />,
+                                            h1: ({ node, ...props }: any) => <h1 className="text-lg font-bold mb-1 mt-2 text-white" {...props} />,
+                                            h2: ({ node, ...props }: any) => <h2 className="text-base font-bold mb-1 mt-2 text-white" {...props} />,
+                                            h3: ({ node, ...props }: any) => <h3 className="text-sm font-bold mb-1 mt-1.5 text-white" {...props} />,
+                                            code: ({ node, ...props }: any) => <code className="overlay-inline-code-surface rounded px-1 py-0.5 text-xs font-mono whitespace-pre-wrap text-white" {...props} />,
+                                            blockquote: ({ node, ...props }: any) => <blockquote className="border-l-2 border-white/40 pl-3 italic my-2 text-white" {...props} />,
+                                            a: ({ node, ...props }: any) => <a className="text-white underline hover:opacity-80" target="_blank" rel="noopener noreferrer" {...props} />,
                                         }}
                                     >
                                         {part}
@@ -1606,17 +1837,17 @@ Provide only the answer, nothing else.`;
         // Custom Styled Labels (Shorten, Recap, Follow-up) - also use Markdown for content
         if (msg.intent === 'shorten') {
             return (
-                <div className={`rounded-lg p-3 my-1 border ${subtleSurfaceClass}`} style={appearance.subtleStyle}>
-                    <div className={`flex items-center gap-2 mb-2 font-semibold text-xs uppercase tracking-wide ${isLightTheme ? 'text-cyan-700' : 'text-cyan-300'}`}>
+                <div className={`w-full min-w-0 rounded-lg p-3 my-1 border ${subtleSurfaceClass}`} style={appearance.subtleStyle}>
+                    <div className="flex items-center gap-2 mb-2 font-semibold text-xs uppercase tracking-wide text-white">
                         <MessageSquare className="w-3.5 h-3.5" />
                         <span>Shortened</span>
                     </div>
-                    <div className={`text-[13px] leading-relaxed markdown-content ${isLightTheme ? 'text-slate-800' : 'text-slate-200'}`}>
+                    <div className="text-[13px] leading-relaxed markdown-content text-white">
                         <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={{
-                            p: ({ node, ...props }: any) => <p className="mb-2 last:mb-0" {...props} />,
-                            strong: ({ node, ...props }: any) => <strong className={`font-bold ${isLightTheme ? 'text-cyan-800' : 'text-cyan-100'}`} {...props} />,
-                            ul: ({ node, ...props }: any) => <ul className="list-disc ml-4 mb-2" {...props} />,
-                            li: ({ node, ...props }: any) => <li className="pl-1" {...props} />,
+                            p: ({ node, ...props }: any) => <p className="mb-1 last:mb-0" {...props} />,
+                            strong: ({ node, ...props }: any) => <strong className="font-bold text-white" {...props} />,
+                            ul: ({ node, ...props }: any) => <ul className="list-disc ml-4 my-1 space-y-0.5" {...props} />,
+                            li: ({ node, ...props }: any) => <li className="pl-1 leading-snug [&>p]:m-0" {...props} />,
                         }}>
                             {msg.text}
                         </ReactMarkdown>
@@ -1627,17 +1858,17 @@ Provide only the answer, nothing else.`;
 
         if (msg.intent === 'recap') {
             return (
-                <div className={`rounded-lg p-3 my-1 border ${subtleSurfaceClass}`} style={appearance.subtleStyle}>
-                    <div className={`flex items-center gap-2 mb-2 font-semibold text-xs uppercase tracking-wide ${isLightTheme ? 'text-indigo-700' : 'text-indigo-300'}`}>
+                <div className={`w-full min-w-0 rounded-lg p-3 my-1 border ${subtleSurfaceClass}`} style={appearance.subtleStyle}>
+                    <div className="flex items-center gap-2 mb-2 font-semibold text-xs uppercase tracking-wide text-white">
                         <RefreshCw className="w-3.5 h-3.5" />
                         <span>Recap</span>
                     </div>
-                    <div className={`text-[13px] leading-relaxed markdown-content ${isLightTheme ? 'text-slate-800' : 'text-slate-200'}`}>
+                    <div className="text-[13px] leading-relaxed markdown-content text-white">
                         <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={{
-                            p: ({ node, ...props }: any) => <p className="mb-2 last:mb-0" {...props} />,
-                            strong: ({ node, ...props }: any) => <strong className={`font-bold ${isLightTheme ? 'text-indigo-800' : 'text-indigo-100'}`} {...props} />,
-                            ul: ({ node, ...props }: any) => <ul className="list-disc ml-4 mb-2" {...props} />,
-                            li: ({ node, ...props }: any) => <li className="pl-1" {...props} />,
+                            p: ({ node, ...props }: any) => <p className="mb-1 last:mb-0" {...props} />,
+                            strong: ({ node, ...props }: any) => <strong className="font-bold text-white" {...props} />,
+                            ul: ({ node, ...props }: any) => <ul className="list-disc ml-4 my-1 space-y-0.5" {...props} />,
+                            li: ({ node, ...props }: any) => <li className="pl-1 leading-snug [&>p]:m-0" {...props} />,
                         }}>
                             {msg.text}
                         </ReactMarkdown>
@@ -1648,17 +1879,17 @@ Provide only the answer, nothing else.`;
 
         if (msg.intent === 'follow_up_questions') {
             return (
-                <div className={`rounded-lg p-3 my-1 border ${subtleSurfaceClass}`} style={appearance.subtleStyle}>
-                    <div className={`flex items-center gap-2 mb-2 font-semibold text-xs uppercase tracking-wide ${isLightTheme ? 'text-amber-700' : 'text-[#FFD60A]'}`}>
+                <div className={`w-full min-w-0 rounded-lg p-3 my-1 border ${subtleSurfaceClass}`} style={appearance.subtleStyle}>
+                    <div className="flex items-center gap-2 mb-2 font-semibold text-xs uppercase tracking-wide text-white">
                         <HelpCircle className="w-3.5 h-3.5" />
                         <span>Follow-Up Questions</span>
                     </div>
-                    <div className={`text-[13px] leading-relaxed markdown-content ${isLightTheme ? 'text-slate-800' : 'text-slate-200'}`}>
+                    <div className="text-[13px] leading-relaxed markdown-content text-white">
                         <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={{
-                            p: ({ node, ...props }: any) => <p className="mb-2 last:mb-0" {...props} />,
-                            strong: ({ node, ...props }: any) => <strong className={`font-bold ${isLightTheme ? 'text-amber-800' : 'text-[#FFF9C4]'}`} {...props} />,
-                            ul: ({ node, ...props }: any) => <ul className="list-disc ml-4 mb-2" {...props} />,
-                            li: ({ node, ...props }: any) => <li className="pl-1" {...props} />,
+                            p: ({ node, ...props }: any) => <p className="mb-1 last:mb-0" {...props} />,
+                            strong: ({ node, ...props }: any) => <strong className="font-bold text-white" {...props} />,
+                            ul: ({ node, ...props }: any) => <ul className="list-disc ml-4 my-1 space-y-0.5" {...props} />,
+                            li: ({ node, ...props }: any) => <li className="pl-1 leading-snug [&>p]:m-0" {...props} />,
                         }}>
                             {msg.text}
                         </ReactMarkdown>
@@ -1672,11 +1903,11 @@ Provide only the answer, nothing else.`;
             const parts = msg.text.split(/(```[\s\S]*?(?:```|$))/g);
 
             return (
-                <div className={`rounded-lg p-3 my-1 border ${subtleSurfaceClass}`} style={appearance.subtleStyle}>
-                    <div className="flex items-center gap-2 mb-2 text-emerald-400 font-semibold text-xs uppercase tracking-wide">
+                <div className={`w-full min-w-0 rounded-lg p-3 my-1 border ${subtleSurfaceClass}`} style={appearance.subtleStyle}>
+                    <div className="flex items-center gap-2 mb-2 text-white font-semibold text-xs uppercase tracking-wide">
                         <span>Say this</span>
                     </div>
-                    <div className="text-[14px] leading-relaxed overlay-text-primary">
+                    <div className="w-full min-w-0 text-[14px] leading-relaxed text-white">
                         {parts.map((part, i) => {
                             if (part.startsWith('```')) {
                                 // Robust matching: handles unclosed blocks for streaming (```...$)
@@ -1695,7 +1926,7 @@ Provide only the answer, nothing else.`;
                                     }
 
                                     return (
-                                        <div key={i} className={`my-3 rounded-xl overflow-hidden border shadow-lg ${codeBlockClass}`} style={appearance.codeBlockStyle}>
+                                        <div key={i} className={`my-3 w-full min-w-0 rounded-xl overflow-x-auto overflow-y-hidden border shadow-lg ${codeBlockClass}`} style={appearance.codeBlockStyle}>
                                             {/* Minimalist Apple Header */}
                                             <div className={`px-3 py-1.5 border-b ${codeHeaderClass}`} style={appearance.codeHeaderStyle}>
                                                 <span className={`text-[10px] uppercase tracking-widest font-semibold font-mono ${codeHeaderTextClass}`}>
@@ -1703,7 +1934,7 @@ Provide only the answer, nothing else.`;
                                                 </span>
                                             </div>
 
-                                            <div className="bg-transparent">
+                                            <div className="w-full min-w-0 bg-transparent">
                                                 <SyntaxHighlighter
                                                     language={lang}
                                                     style={codeTheme}
@@ -1714,8 +1945,11 @@ Provide only the answer, nothing else.`;
                                                         lineHeight: '1.6',
                                                         background: 'transparent',
                                                         padding: '16px',
+                                                        color: '#ffffff',
                                                         fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
                                                     }}
+                                                    codeTagProps={{ style: { color: '#ffffff' } }}
+                                                    PreTag={({ children, ...props }: any) => <pre {...props} style={{ ...props.style, color: '#ffffff', maxWidth: '100%', whiteSpace: 'pre-wrap', wordBreak: 'normal', overflowWrap: 'normal' }}>{children}</pre>}
                                                     wrapLongLines={true}
                                                     showLineNumbers={true}
                                                     lineNumberStyle={{ minWidth: '2.5em', paddingRight: '1.2em', color: codeLineNumberColor, textAlign: 'right', fontSize: '11px' }}
@@ -1729,17 +1963,17 @@ Provide only the answer, nothing else.`;
                             }
                             // Regular text - Render Markdown
                             return (
-                                <div key={i} className="markdown-content">
+                                <div key={i} className="markdown-content w-full min-w-0">
                                     <ReactMarkdown
                                         remarkPlugins={[remarkGfm, remarkMath]}
                                         rehypePlugins={[rehypeKatex]}
                                         components={{
-                                            p: ({ node, ...props }: any) => <p className="mb-2 last:mb-0" {...props} />,
-                                            strong: ({ node, ...props }: any) => <strong className={`font-bold ${isLightTheme ? 'text-emerald-700' : 'text-emerald-100'}`} {...props} />,
-                                            em: ({ node, ...props }: any) => <em className={`italic ${isLightTheme ? 'text-emerald-700/80' : 'text-emerald-200/80'}`} {...props} />,
-                                            ul: ({ node, ...props }: any) => <ul className="list-disc ml-4 mb-2 space-y-1" {...props} />,
-                                            ol: ({ node, ...props }: any) => <ol className="list-decimal ml-4 mb-2 space-y-1" {...props} />,
-                                            li: ({ node, ...props }: any) => <li className="pl-1" {...props} />,
+                                            p: ({ node, ...props }: any) => <p className="mb-1 last:mb-0" {...props} />,
+                                            strong: ({ node, ...props }: any) => <strong className="font-bold text-white" {...props} />,
+                                            em: ({ node, ...props }: any) => <em className="italic text-white" {...props} />,
+                                            ul: ({ node, ...props }: any) => <ul className="list-disc ml-4 my-1 space-y-0.5" {...props} />,
+                                            ol: ({ node, ...props }: any) => <ol className="list-decimal ml-4 my-1 space-y-0.5" {...props} />,
+                                            li: ({ node, ...props }: any) => <li className="pl-1 leading-snug [&>p]:m-0" {...props} />,
                                         }}
                                     >
                                         {part}
@@ -1755,19 +1989,19 @@ Provide only the answer, nothing else.`;
         // Standard Text Messages (e.g. from User or Interviewer)
         // We still want basic markdown support here too
         return (
-            <div className="markdown-content">
+            <div className="markdown-content w-full min-w-0">
                 <ReactMarkdown
                     remarkPlugins={[remarkGfm, remarkMath]}
                     rehypePlugins={[rehypeKatex]}
                     components={{
-                        p: ({ node, ...props }: any) => <p className="mb-2 last:mb-0 whitespace-pre-wrap" {...props} />,
-                        strong: ({ node, ...props }: any) => <strong className="font-bold opacity-100 overlay-text-strong" {...props} />,
-                        em: ({ node, ...props }: any) => <em className="italic opacity-90 overlay-text-secondary" {...props} />,
-                        ul: ({ node, ...props }: any) => <ul className="list-disc ml-4 mb-2 space-y-1" {...props} />,
-                        ol: ({ node, ...props }: any) => <ol className="list-decimal ml-4 mb-2 space-y-1" {...props} />,
-                        li: ({ node, ...props }: any) => <li className="pl-1" {...props} />,
-                        code: ({ node, ...props }: any) => <code className={`overlay-inline-code-surface rounded px-1 py-0.5 text-xs font-mono ${isLightTheme ? 'text-slate-800' : ''}`} {...props} />,
-                        a: ({ node, ...props }: any) => <a className="underline hover:opacity-80" target="_blank" rel="noopener noreferrer" {...props} />,
+                        p: ({ node, ...props }: any) => <p className="mb-1 last:mb-0 whitespace-pre-wrap" {...props} />,
+                        strong: ({ node, ...props }: any) => <strong className="font-bold opacity-100 text-white" {...props} />,
+                        em: ({ node, ...props }: any) => <em className="italic opacity-90 text-white" {...props} />,
+                        ul: ({ node, ...props }: any) => <ul className="list-disc ml-4 my-1 space-y-0.5" {...props} />,
+                        ol: ({ node, ...props }: any) => <ol className="list-decimal ml-4 my-1 space-y-0.5" {...props} />,
+                        li: ({ node, ...props }: any) => <li className="pl-1 leading-snug [&>p]:m-0" {...props} />,
+                        code: ({ node, ...props }: any) => <code className="overlay-inline-code-surface rounded px-1 py-0.5 text-xs font-mono text-white" {...props} />,
+                        a: ({ node, ...props }: any) => <a className="text-white underline hover:opacity-80" target="_blank" rel="noopener noreferrer" {...props} />,
                     }}
                 >
                     {msg.text}
@@ -1784,6 +2018,7 @@ Provide only the answer, nothing else.`;
         handleFollowUpQuestions,
         handleRecap,
         handleAnswerNow,
+        handleAnswerShortcut,
         handleClarify,
         handleCodeHint,
         handleBrainstorm
@@ -1796,6 +2031,7 @@ Provide only the answer, nothing else.`;
         handleFollowUpQuestions,
         handleRecap,
         handleAnswerNow,
+        handleAnswerShortcut,
         handleClarify,
         handleCodeHint,
         handleBrainstorm
@@ -1803,7 +2039,7 @@ Provide only the answer, nothing else.`;
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            const { handleWhatToSay, handleFollowUp, handleFollowUpQuestions, handleRecap, handleAnswerNow, handleClarify, handleCodeHint, handleBrainstorm } = handlersRef.current;
+            const { handleWhatToSay, handleFollowUp, handleFollowUpQuestions, handleRecap, handleAnswerShortcut, handleClarify, handleCodeHint, handleBrainstorm } = handlersRef.current;
 
             // Chat Shortcuts (Scope: Local to Chat/Overlay usually, but we allow them here if focused)
             if (isShortcutPressed(e, 'whatToAnswer')) {
@@ -1824,7 +2060,7 @@ Provide only the answer, nothing else.`;
                 }
             } else if (isShortcutPressed(e, 'answer')) {
                 e.preventDefault();
-                handleAnswerNow();
+                handleAnswerShortcut();
             } else if (isShortcutPressed(e, 'clearTranscript')) {
                 e.preventDefault();
                 clearRollingTranscript();
@@ -1874,6 +2110,8 @@ Provide only the answer, nothing else.`;
                 setMessages([]);
                 setAttachedContext([]);
                 setInputValue('');
+                setConversationContext('');
+                clearRollingTranscript();
             }
         },
         clearTranscript: () => {
@@ -1918,6 +2156,8 @@ Provide only the answer, nothing else.`;
                 setMessages([]);
                 setAttachedContext([]);
                 setInputValue('');
+                setConversationContext('');
+                clearRollingTranscript();
             }
         },
         clearTranscript: () => {
@@ -2041,7 +2281,7 @@ Provide only the answer, nothing else.`;
                 if (actionButtonMode === 'brainstorm') handlers.handleBrainstorm();
                 else handlers.handleRecap();
             }
-            else if (action === 'answer') handlers.handleAnswerNow();
+            else if (action === 'answer') handlers.handleAnswerShortcut();
             else if (action === 'clearTranscript') generalHandlers.clearTranscript();
             else if (action === 'clarify') handlers.handleClarify();
             else if (action === 'codeHint') handlers.handleCodeHint();
@@ -2110,10 +2350,63 @@ Provide only the answer, nothing else.`;
         window.electronAPI.quitApp();
     };
 
+    const handleToggleListening = async () => {
+        try {
+            if (isListening) {
+                clearRollingTranscript();
+                setIsListening(false);
+                isListeningRef.current = false;
+                listeningStartedAtRef.current = null;
+                setListeningSeconds(0);
+                await window.electronAPI.stopListening();
+                return;
+            }
+
+            clearRollingTranscript();
+            setIsListening(true);
+            isListeningRef.current = true;
+            listeningStartedAtRef.current = Date.now();
+            setListeningSeconds(0);
+            setSttInterviewerStatus('reconnecting');
+            setSttInterviewerError('');
+            const result = await window.electronAPI.startListening();
+            if (!result?.success && result?.error) {
+                setIsListening(false);
+                isListeningRef.current = false;
+                listeningStartedAtRef.current = null;
+                setListeningSeconds(0);
+                setSttInterviewerStatus('failed');
+                setSttInterviewerError(result.error);
+            }
+        } catch (error) {
+            setIsListening(false);
+            isListeningRef.current = false;
+            listeningStartedAtRef.current = null;
+            setListeningSeconds(0);
+            setSttInterviewerStatus('failed');
+            setSttInterviewerError(error instanceof Error ? error.message : 'Failed to toggle listening');
+        }
+    };
+
     const clearRollingTranscript = () => {
         setRollingTranscript('');
         setIsInterviewerSpeaking(false);
         finalizedRollingTranscriptRef.current = '';
+    };
+
+    const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+        if (isSettingsOpen) {
+            window.electronAPI.toggleSettingsWindow();
+            return;
+        }
+
+        const buttonRect = event.currentTarget.getBoundingClientRect();
+        const POPUP_WIDTH = 270;
+        const GAP = 8;
+        const x = window.screenX + Math.max(8, buttonRect.right - POPUP_WIDTH);
+        const y = window.screenY + buttonRect.bottom + GAP;
+
+        window.electronAPI.toggleSettingsWindow({ x, y });
     };
 
     return (
@@ -2134,6 +2427,11 @@ Provide only the answer, nothing else.`;
                             onQuit={handleQuitMeeting}
                             appearance={appearance}
                             onLogoClick={() => window.electronAPI?.setWindowMode?.('launcher')}
+                            isListening={isListening}
+                            listeningDuration={listeningDuration}
+                            onToggleListening={handleToggleListening}
+                            isOptionsOpen={isSettingsOpen}
+                            onOptionsClick={handleOptionsClick}
                         />
                         <div
                             className={`cluegent-overlay-shell relative w-[600px] max-w-full backdrop-blur-2xl border rounded-[24px] overflow-hidden flex flex-col draggable-area overlay-shell-surface ${overlayPanelClass}`}
@@ -2211,7 +2509,7 @@ Provide only the answer, nothing else.`;
                             )}
 
                             {/* Rolling Transcript Bar — includes STT status indicator inline */}
-                            {(showTranscript && rollingTranscript) || interviewerSttIndicatorStatus !== 'connected' || sttUserStatus !== 'connected' ? (
+                            {isListening && ((showTranscript && rollingTranscript) || interviewerSttIndicatorStatus !== 'connected' || (isManualRecording && sttUserStatus !== 'connected')) ? (
                                 <RollingTranscript
                                     text={showTranscript ? rollingTranscript : ''}
                                     isActive={isInterviewerSpeaking}
@@ -2236,7 +2534,7 @@ Provide only the answer, nothing else.`;
                                     {messages.map((msg) => (
                                         <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}>
                                             <div className={`
-                      ${msg.role === 'user' ? 'max-w-[72.25%] px-[13.6px] py-[10.2px]' : 'max-w-[85%] px-4 py-3'} text-[14px] leading-relaxed relative group whitespace-pre-wrap
+                      ${msg.role === 'user' ? 'max-w-[72.25%] px-[13.6px] py-[10.2px]' : 'w-full max-w-full px-4 py-3'} text-[14px] leading-relaxed relative group whitespace-pre-wrap min-w-0
                       ${msg.role === 'user'
                                                     ? 'bg-blue-500/20 backdrop-blur-md border border-blue-300/25 text-white rounded-[20px] rounded-tr-[4px] shadow-sm font-medium'
                                                     : ''
@@ -2333,21 +2631,21 @@ Provide only the answer, nothing else.`;
                             )}
 
                             {/* Quick Actions - Minimal & Clean */}
-                            <div className={`flex flex-nowrap justify-center items-center gap-1.5 px-4 pb-3 overflow-x-hidden ${rollingTranscript && showTranscript ? 'pt-1' : 'pt-3'}`}>
-                                <button onClick={handleWhatToSay} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all active:scale-95 duration-200 interaction-base interaction-press whitespace-nowrap shrink-0 ${quickActionClass}`} style={appearance.chipStyle}>
-                                    <Pencil className="w-3 h-3 opacity-70" /> What to answer?
+                            <div className={`flex flex-nowrap justify-start items-center gap-1.5 px-4 pb-3 overflow-x-auto ${isListening && rollingTranscript && showTranscript ? 'pt-1' : 'pt-3'}`} style={{ scrollbarWidth: 'none' }}>
+                                <button onClick={() => handleQuickActionPrompt('whatToAnswer')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all active:scale-95 duration-200 interaction-base interaction-press whitespace-nowrap shrink-0 ${quickActionClass}`} style={appearance.chipStyle}>
+                                    <Pencil className="w-3 h-3 opacity-70" /> {quickActions.whatToAnswer.label}
                                 </button>
-                                <button onClick={handleClarify} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all active:scale-95 duration-200 interaction-base interaction-press whitespace-nowrap shrink-0 ${quickActionClass}`} style={appearance.chipStyle}>
-                                    <MessageSquare className="w-3 h-3 opacity-70" /> Clarify
+                                <button onClick={() => handleQuickActionPrompt('clarify')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all active:scale-95 duration-200 interaction-base interaction-press whitespace-nowrap shrink-0 ${quickActionClass}`} style={appearance.chipStyle}>
+                                    <MessageSquare className="w-3 h-3 opacity-70" /> {quickActions.clarify.label}
                                 </button>
-                                <button onClick={actionButtonMode === 'brainstorm' ? handleBrainstorm : handleRecap} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all active:scale-95 duration-200 interaction-base interaction-press whitespace-nowrap shrink-0 ${quickActionClass}`} style={appearance.chipStyle}>
+                                <button onClick={() => handleQuickActionPrompt('brainstorm')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all active:scale-95 duration-200 interaction-base interaction-press whitespace-nowrap shrink-0 ${quickActionClass}`} style={appearance.chipStyle}>
                                     {actionButtonMode === 'brainstorm'
-                                        ? <><Lightbulb className="w-3 h-3 opacity-70" /> Brainstorm</>
-                                        : <><RefreshCw className="w-3 h-3 opacity-70" /> Recap</>
+                                        ? <><Lightbulb className="w-3 h-3 opacity-70" /> {quickActions.brainstorm.label}</>
+                                        : <><RefreshCw className="w-3 h-3 opacity-70" /> {quickActions.brainstorm.label}</>
                                     }
                                 </button>
-                                <button onClick={handleFollowUpQuestions} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all active:scale-95 duration-200 interaction-base interaction-press whitespace-nowrap shrink-0 ${quickActionClass}`} style={appearance.chipStyle}>
-                                    <HelpCircle className="w-3 h-3 opacity-70" /> Follow Up Question
+                                <button onClick={() => handleQuickActionPrompt('followUpQuestions')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all active:scale-95 duration-200 interaction-base interaction-press whitespace-nowrap shrink-0 ${quickActionClass}`} style={appearance.chipStyle}>
+                                    <HelpCircle className="w-3 h-3 opacity-70" /> {quickActions.followUpQuestions.label}
                                 </button>
                                 <button
                                     onClick={handleAnswerNow}
@@ -2363,7 +2661,7 @@ Provide only the answer, nothing else.`;
                                             Stop
                                         </>
                                     ) : (
-                                        <><Zap className="w-3 h-3 opacity-70" /> Answer</>
+                                        <><Mic className="w-3 h-3 opacity-70" /> Mic</>
                                     )}
                                 </button>
                             </div>
@@ -2404,7 +2702,7 @@ Provide only the answer, nothing else.`;
                                                 </div>
                                             ))}
                                         </div>
-                                        <span className="text-[10px] overlay-text-muted">Ask a question or click Answer</span>
+                                        <span className="text-[10px] overlay-text-muted">Ask a question or click Mic</span>
                                     </div>
                                 )}
 
@@ -2443,93 +2741,8 @@ Provide only the answer, nothing else.`;
                                     )}
                                 </div>
 
-                                {/* Bottom Row */}
-                                <div className="flex items-center justify-between mt-3 px-0.5">
-                                    <div className="flex items-center gap-1.5">
-                                        <div
-                                            className={`
-                                                flex items-center gap-2 px-3 py-1.5
-                                                border rounded-lg
-                                                text-xs font-medium w-[160px]
-                                                ${controlSurfaceClass}
-                                            `}
-                                            style={appearance.controlStyle}
-                                        >
-                                            <span className="truncate min-w-0 flex-1">
-                                                Backend Managed
-                                            </span>
-                                            <span className="text-[10px] overlay-text-muted uppercase tracking-wide">
-                                                Gemini
-                                            </span>
-                                        </div>
-
-                                        <div className="w-px h-3 mx-1" style={appearance.dividerStyle} />
-
-                                        <div className="relative">
-                                            <button
-                                                onClick={(e) => {
-                                                    if (isSettingsOpen) {
-                                                        // If open, just close it (toggle will handle logic but we can be explicit or just toggle)
-                                                        // Actually toggle-settings-window handles hiding if visible, so logic is same.
-                                                        window.electronAPI.toggleSettingsWindow();
-                                                        return;
-                                                    }
-
-                                                    if (!contentRef.current) return;
-
-                                                    const contentRect = contentRef.current.getBoundingClientRect();
-                                                    const buttonRect = e.currentTarget.getBoundingClientRect();
-                                                    const POPUP_WIDTH = 270; // Matches SettingsWindowHelper actual width
-                                                    const GAP = 8; // Same gap as between TopPill and main body (gap-2 = 8px)
-
-                                                    // X: Left-aligned relative to the Settings Button
-                                                    const x = window.screenX + buttonRect.left;
-
-                                                    // Y: Below the main content + gap
-                                                    const y = window.screenY + contentRect.bottom + GAP;
-
-                                                    window.electronAPI.toggleSettingsWindow({ x, y });
-                                                }}
-                                                className={`
-                                            w-7 h-7 flex items-center justify-center rounded-lg
-                                            interaction-base interaction-press
-                                            ${isSettingsOpen
-                                                    ? 'overlay-icon-surface overlay-icon-surface-hover overlay-text-primary'
-                                                    : 'overlay-icon-surface overlay-icon-surface-hover overlay-text-interactive'}
-                                        `}
-
-                                                style={appearance.iconStyle}
-                                            >
-                                                <SlidersHorizontal className="w-3.5 h-3.5" />
-                                            </button>
-                                        </div>
-
-
-
-                                        {/* Mouse Passthrough Toggle */}
-                                        <div className="relative">
-                                            <button
-                                                onClick={() => {
-                                                    const newState = !isMousePassthrough;
-                                                    setIsMousePassthrough(newState);
-                                                    window.electronAPI?.setOverlayMousePassthrough?.(newState);
-                                                }}
-                                                className={`
-                                                    w-7 h-7 flex items-center justify-center rounded-lg
-                                                    interaction-base interaction-press
-                                                    ${isMousePassthrough
-                                                        ? 'overlay-icon-surface overlay-icon-surface-hover text-sky-400 opacity-100'
-                                                        : 'overlay-icon-surface overlay-icon-surface-hover overlay-text-interactive'}
-                                                `}
-
-                                                style={appearance.iconStyle}
-                                            >
-                                                <PointerOff className="w-3.5 h-3.5" />
-                                            </button>
-                                        </div>
-
-                                    </div>
-
+                                {/* Submit Row */}
+                                <div className="flex items-center justify-end mt-2 px-0.5">
                                     <button
                                         onClick={handleManualSubmit}
                                         disabled={!inputValue.trim()}

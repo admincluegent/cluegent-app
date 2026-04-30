@@ -140,8 +140,8 @@ export class IntelligenceManager extends EventEmitter {
         return this.engine.runAssistMode();
     }
 
-    async runWhatShouldISay(question?: string, confidence?: number, imagePaths?: string[]): Promise<string | null> {
-        return this.engine.runWhatShouldISay(question, confidence, imagePaths);
+    async runWhatShouldISay(question?: string, confidence?: number, imagePaths?: string[], behaviorInstructions?: string): Promise<string | null> {
+        return this.engine.runWhatShouldISay(question, confidence, imagePaths, behaviorInstructions);
     }
 
     async runFollowUp(intent: string, userRequest?: string): Promise<string | null> {
@@ -152,12 +152,12 @@ export class IntelligenceManager extends EventEmitter {
         return this.engine.runRecap();
     }
 
-    async runClarify(): Promise<string | null> {
-        return this.engine.runClarify();
+    async runClarify(behaviorInstructions?: string): Promise<string | null> {
+        return this.engine.runClarify(behaviorInstructions);
     }
 
-    async runFollowUpQuestions(): Promise<string | null> {
-        return this.engine.runFollowUpQuestions();
+    async runFollowUpQuestions(behaviorInstructions?: string): Promise<string | null> {
+        return this.engine.runFollowUpQuestions(behaviorInstructions);
     }
 
     async runManualAnswer(question: string): Promise<string | null> {
@@ -180,8 +180,8 @@ export class IntelligenceManager extends EventEmitter {
         this.session.clearCodingQuestion();
     }
 
-    async runBrainstorm(imagePaths?: string[], problemStatement?: string): Promise<string | null> {
-        return this.engine.runBrainstorm(imagePaths, problemStatement);
+    async runBrainstorm(imagePaths?: string[], problemStatement?: string, behaviorInstructions?: string): Promise<string | null> {
+        return this.engine.runBrainstorm(imagePaths, problemStatement, behaviorInstructions);
     }
 
     // ============================================

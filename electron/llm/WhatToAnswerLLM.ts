@@ -1,5 +1,5 @@
 import { LLMHelper } from "../LLMHelper";
-import { UNIVERSAL_WHAT_TO_ANSWER_PROMPT } from "./prompts";
+import { FAST_LIVE_COPILOT_SYSTEM_PROMPT } from "./prompts";
 import { TemporalContext } from "./TemporalContextBuilder";
 import { IntentResult } from "./IntentClassifier";
 
@@ -23,7 +23,8 @@ export class WhatToAnswerLLM {
         cleanedTranscript: string,
         temporalContext?: TemporalContext,
         intentResult?: IntentResult,
-        imagePaths?: string[]
+        imagePaths?: string[],
+        behaviorInstructions?: string
     ): AsyncGenerator<string> {
         try {
             // Build a rich message context
@@ -40,10 +41,14 @@ ANSWER SHAPE: ${intentResult.answerShape}
             }
 
             if (temporalContext && temporalContext.hasRecentResponses) {
-                // ... simplify temporal context injection for universal prompt ...
-                // Just dump it in context if possible
+                // Keep recent answers available so short follow-ups like
+                // "give example" or "change that name" can resolve correctly.
                 const history = temporalContext.previousResponses.map((r, i) => `${i + 1}. "${r}"`).join('\n');
-                contextParts.push(`PREVIOUS RESPONSES (Avoid Repetition):\n${history}`);
+                contextParts.push(`PREVIOUS RESPONSES (Use only for follow-ups; do not repeat them):\n${history}`);
+            }
+
+            if (behaviorInstructions?.trim()) {
+                contextParts.push(`REQUEST-SPECIFIC BEHAVIOR:\n${behaviorInstructions.trim()}`);
             }
 
             const extraContext = contextParts.join('\n\n');
@@ -51,11 +56,7 @@ ANSWER SHAPE: ${intentResult.answerShape}
                 ? `${extraContext}\n\nCONVERSATION:\n${cleanedTranscript}`
                 : cleanedTranscript;
 
-            // Use Universal Prompt
-            // Note: WhatToAnswer has a very specific prompt. 
-            // We should use UNIVERSAL_WHAT_TO_ANSWER_PROMPT as override
-
-            yield* this.llmHelper.streamChat(fullMessage, imagePaths, undefined, UNIVERSAL_WHAT_TO_ANSWER_PROMPT);
+            yield* this.llmHelper.streamChat(fullMessage, imagePaths, undefined, FAST_LIVE_COPILOT_SYSTEM_PROMPT, true);
 
         } catch (error) {
             console.error("[WhatToAnswerLLM] Stream failed:", error);

@@ -4,8 +4,8 @@ import {
     X, Mic, Speaker, Monitor, Keyboard, User, LifeBuoy, LogOut, Upload,
     ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
     Camera, RotateCcw, Eye, Layout, MessageSquare, Crop,
-    ChevronDown, ChevronUp, Check, BadgeCheck, Power, Palette, Calendar, Ghost, Sun, Moon, RefreshCw, Info, Globe, FlaskConical, Terminal, Settings, Activity, ExternalLink, Trash2,
-    Sparkles, Pencil, Briefcase, Building2, Search, MapPin, CheckCircle, HelpCircle, Zap, SlidersHorizontal, PointerOff,
+    ChevronDown, ChevronUp, Check, BadgeCheck, Power, Palette, Calendar, Clock, Ghost, Sun, Moon, RefreshCw, Info, Globe, FlaskConical, Terminal, Settings, Activity, ExternalLink, Trash2,
+    Sparkles, Pencil, Edit3, Briefcase, Building2, Search, MapPin, CheckCircle, HelpCircle, Zap, SlidersHorizontal, PointerOff,
     Star, AlertCircle, Gift
 } from 'lucide-react';
 import { analytics } from '../lib/analytics/analytics.service';
@@ -27,6 +27,24 @@ import {
 import { KeyRecorder } from './ui/KeyRecorder';
 import { ProfileVisualizer, PremiumUpgradeModal } from '../premium';
 import icon from './icon.png';
+import {
+    AI_BEHAVIOR_CUSTOM_LIMIT,
+    AI_BEHAVIOR_SCENARIOS,
+    AiBehaviorScenario,
+    AiBehaviorSettings,
+    compactAiBehaviorText,
+    getAiBehaviorSettings,
+    saveAiBehaviorSettings,
+} from '../lib/aiBehaviorSettings';
+import {
+    DEFAULT_QUICK_ACTIONS,
+    QUICK_ACTION_INSTRUCTION_LIMIT,
+    QUICK_ACTION_LABEL_LIMIT,
+    QuickActionId,
+    QuickActionSettings,
+    getQuickActionSettings,
+    saveQuickActionSettings,
+} from '../lib/quickActionSettings';
 
 // ---------------------------------------------------------------------------
 // StarRating — renders filled/empty stars for culture ratings
@@ -71,11 +89,18 @@ const MockupNativelyInterface = ({ opacity }: { opacity: number }) => {
                     {/* TopPill Replica */}
                     <div className="flex justify-center mb-2 select-none z-50">
                         <div className="flex items-center gap-2 rounded-full overlay-pill-surface backdrop-blur-md pl-1.5 pr-1.5 py-1.5" style={appearance.pillStyle}>
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden overlay-icon-surface" style={appearance.iconStyle}>
+                            <div
+                                className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden overlay-icon-surface"
+                                style={{
+                                    ...appearance.iconStyle,
+                                    backgroundColor: "#ffffff",
+                                    borderColor: "rgba(255, 255, 255, 0.96)",
+                                }}
+                            >
                                 <img
                                     src={icon}
-                                    alt="Natively"
-                                    className="w-[24px] h-[24px] object-contain opacity-95 scale-105 force-black-icon"
+                                    alt="Cluegent"
+                                    className="w-[24px] h-[24px] object-contain opacity-95 scale-105"
                                     draggable="false"
                                 />
                             </div>
@@ -125,7 +150,7 @@ const MockupNativelyInterface = ({ opacity }: { opacity: number }) => {
                                 <HelpCircle className="w-3 h-3 opacity-70" /> Follow Up Question
                             </div>
                             <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium min-w-[74px] shrink-0 border overlay-chip-surface overlay-text-interactive" style={appearance.chipStyle}>
-                                <Zap className="w-3 h-3 opacity-70" /> Answer
+                                <Mic className="w-3 h-3 opacity-70" /> Mic
                             </div>
                         </div>
 
@@ -379,18 +404,6 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
     useEffect(() => {
         if (isOpen && initialTab) {
             setActiveTab(normalizeSettingsTab(initialTab));
-            
-            // Proactively load profile data if starting on profile tab
-            if (initialTab === 'profile') {
-                window.electronAPI?.profileGetStatus?.().then(setProfileStatus).catch(() => { });
-                window.electronAPI?.profileGetProfile?.().then(data => {
-                    setProfileData(data);
-                    if (data?.negotiationScript) setNegotiationScript(data.negotiationScript);
-                }).catch(() => { });
-                window.electronAPI?.profileGetNotes?.().then(res => {
-                    if (res?.success) setCustomNotes(res.content ?? '');
-                }).catch(() => { });
-            }
         }
     }, [isOpen, initialTab]);
     
@@ -436,6 +449,11 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
     const [negotiationError, setNegotiationError] = useState('');
     const [customNotes, setCustomNotes] = useState('');
     const [customNotesSaved, setCustomNotesSaved] = useState(false);
+    const [aiBehaviorSettings, setAiBehaviorSettings] = useState<AiBehaviorSettings>(() => getAiBehaviorSettings());
+    const [savedBehaviorScenario, setSavedBehaviorScenario] = useState<AiBehaviorScenario | null>(null);
+    const [quickActionSettings, setQuickActionSettings] = useState<QuickActionSettings>(() => getQuickActionSettings());
+    const [editingQuickActionId, setEditingQuickActionId] = useState<QuickActionId | null>(null);
+    const [quickActionsSaved, setQuickActionsSaved] = useState(false);
     const customNotesDebounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const [verboseLogging, setVerboseLogging] = useState(false);
     const [showVerboseToast, setShowVerboseToast] = useState(false);
@@ -1275,6 +1293,56 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
         }
     }, [isOpen, activeTab, selectedInput]);
 
+    const updateAiBehaviorScenario = (
+        scenario: AiBehaviorScenario,
+        patch: Partial<AiBehaviorSettings[AiBehaviorScenario]>
+    ) => {
+        setSavedBehaviorScenario(null);
+        setAiBehaviorSettings(prev => ({
+            ...prev,
+            [scenario]: {
+                ...prev[scenario],
+                ...patch,
+                customPrompt: patch.customPrompt !== undefined
+                    ? patch.customPrompt.slice(0, AI_BEHAVIOR_CUSTOM_LIMIT)
+                    : prev[scenario].customPrompt,
+            },
+        }));
+    };
+
+    const handleSaveAiBehaviorScenario = (scenario: AiBehaviorScenario) => {
+        saveAiBehaviorSettings(aiBehaviorSettings);
+        setSavedBehaviorScenario(scenario);
+        setTimeout(() => setSavedBehaviorScenario(null), 1600);
+    };
+
+    const updateQuickAction = (
+        id: QuickActionId,
+        patch: Partial<Pick<QuickActionSettings[QuickActionId], 'label' | 'instruction'>>
+    ) => {
+        setQuickActionsSaved(false);
+        setQuickActionSettings(prev => ({
+            ...prev,
+            [id]: {
+                ...prev[id],
+                ...patch,
+                label: patch.label !== undefined
+                    ? patch.label.slice(0, QUICK_ACTION_LABEL_LIMIT)
+                    : prev[id].label,
+                instruction: patch.instruction !== undefined
+                    ? patch.instruction.slice(0, QUICK_ACTION_INSTRUCTION_LIMIT)
+                    : prev[id].instruction,
+            },
+        }));
+    };
+
+    const handleSaveQuickActions = () => {
+        saveQuickActionSettings(quickActionSettings);
+        setEditingQuickActionId(null);
+        setQuickActionsSaved(true);
+        setTimeout(() => setQuickActionsSaved(false), 1600);
+    };
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -1313,8 +1381,8 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                             style={{ visibility: isPreviewingOpacity ? 'hidden' : 'visible' }}
                         >
                         {/* Sidebar */}
-                        <div className="w-64 bg-bg-sidebar flex flex-col border-r border-border-subtle">
-                            <div className="p-6">
+                        <div className="w-64 bg-bg-sidebar flex min-h-0 flex-col border-r border-border-subtle">
+                            <div className="min-h-0 flex-1 overflow-y-auto p-6 pb-4">
                                 <h2 className="font-semibold text-gray-400 text-xs uppercase tracking-wider mb-2">Settings</h2>
                                 <nav className="space-y-1">
                                     <button
@@ -1337,21 +1405,16 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                         <span>Billing</span>
                                     </button>
                                     <button
-                                        onClick={() => {
-                                            setActiveTab('profile');
-                                            // Load profile status when switching to this tab
-                                            window.electronAPI?.profileGetStatus?.().then(setProfileStatus).catch(() => { });
-                                            window.electronAPI?.profileGetProfile?.().then(data => {
-                                                setProfileData(data);
-                                                if (data?.negotiationScript) setNegotiationScript(data.negotiationScript);
-                                            }).catch(() => { });
-                                            window.electronAPI?.profileGetNotes?.().then(res => {
-                                                if (res?.success) setCustomNotes(res.content ?? '');
-                                            }).catch(() => { });
-                                        }}
+                                        onClick={() => setActiveTab('profile')}
                                         className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${activeTab === 'profile' ? 'bg-bg-item-active text-text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-bg-item-active/50'}`}
                                     >
-                                        <User size={16} /> Profile Intelligence
+                                        <User size={16} /> Customize
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('recent-meetings')}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${activeTab === 'recent-meetings' ? 'bg-bg-item-active text-text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-bg-item-active/50'}`}
+                                    >
+                                        <Clock size={16} /> Recent Meetings
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('calendar')}
@@ -1397,12 +1460,12 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                 </nav>
                             </div>
 
-                            <div className="mt-auto p-6 border-t border-border-subtle">
+                            <div className="shrink-0 p-4 border-t border-border-subtle">
                                 <button
                                     onClick={() => window.electronAPI.quitApp()}
                                     className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-3"
                                 >
-                                    <LogOut size={16} /> Quit Natively
+                                    <LogOut size={16} /> Quit Cluegent
                                 </button>
                                 <button onClick={onClose} className="group mt-2 w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-bg-item-active/50 transition-colors flex items-center gap-3">
                                     <X size={18} className="group-hover:text-red-500 transition-colors" /> Close
@@ -1496,7 +1559,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                     <h3 className="text-lg font-bold text-text-primary">{isUndetectable ? 'Undetectable' : 'Detectable'}</h3>
                                                 </div>
                                                 <p className="text-xs text-text-secondary">
-                                                    Natively is currently {isUndetectable ? 'undetectable' : 'detectable'} by screen-sharing. <button className="text-blue-400 hover:underline">Supported apps here</button>
+                                                    Cluegent is currently {isUndetectable ? 'undetectable' : 'detectable'} by screen-sharing. <button className="text-blue-400 hover:underline">Supported apps here</button>
                                                 </p>
                                             </div>
                                             <div
@@ -1538,7 +1601,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
 
                                         <div>
                                             <h3 className="text-lg font-bold text-text-primary mb-1">General settings</h3>
-                                            <p className="text-xs text-text-secondary mb-2">Customize how Natively works for you</p>
+                                            <p className="text-xs text-text-secondary mb-2">Customize how Cluegent works for you</p>
 
                                             <div className={`rounded-xl border ${isLight ? 'bg-bg-card border-border-subtle divide-y divide-border-subtle' : 'bg-transparent border-transparent divide-y divide-border-subtle/20'}`}>
                                             <div className="space-y-0">
@@ -1549,8 +1612,8 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                             <Power size={20} />
                                                         </div>
                                                         <div>
-                                                            <h3 className="text-sm font-bold text-text-primary">Open Natively when you log in</h3>
-                                                            <p className="text-xs text-text-secondary mt-0.5">Natively will open automatically when you log in to your computer</p>
+                                                <h3 className="text-sm font-bold text-text-primary">Open Cluegent when you log in</h3>
+                                                <p className="text-xs text-text-secondary mt-0.5">Cluegent will open automatically when you log in to your computer</p>
                                                         </div>
                                                     </div>
                                                     <div
@@ -1660,7 +1723,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                         </div>
                                                         <div>
                                                             <h3 className="text-sm font-bold text-text-primary">Theme</h3>
-                                                            <p className="text-xs text-text-secondary mt-0.5">Customize how Natively looks on your device</p>
+                                                        <p className="text-xs text-text-secondary mt-0.5">Customize how Cluegent looks on your device</p>
                                                         </div>
                                                     </div>
 
@@ -1766,7 +1829,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                         <div>
                                                             <h3 className="text-sm font-bold text-text-primary">Version</h3>
                                                             <p className="text-xs text-text-secondary mt-0.5">
-                                                                You are currently using Natively version {packageJson.version}
+                                        You are currently using Cluegent version {packageJson.version}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -1879,7 +1942,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                 <h3 className="text-lg font-bold text-text-primary">Process Disguise</h3>
                                             </div>
                                             <p className="text-xs text-text-secondary">
-                                                Disguise Natively as another application to prevent detection during screen sharing.
+                                                Disguise Cluegent as another application to prevent detection during screen sharing.
                                                 <span className="block mt-1 text-text-tertiary">
                                                     Select a disguise to be automatically applied when Undetectable mode is on.
                                                 </span>
@@ -1928,6 +1991,225 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                 </div>
                             )}
                             {activeTab === 'profile' && (
+                                <div className="space-y-5 animated fadeIn pb-6">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div>
+                                            <div className="inline-flex items-center gap-2 rounded-full bg-accent-primary/10 border border-accent-primary/20 px-3 py-1 mb-3">
+                                                <Sparkles size={13} className="text-accent-primary" />
+                                                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-accent-primary">Customize</span>
+                                            </div>
+                                            <h3 className="text-xl font-bold text-text-primary tracking-tight">AI behavior</h3>
+                                            <p className="text-sm text-text-secondary mt-1 max-w-2xl leading-relaxed">
+                                                Choose how Cluegent should answer in each mode. Custom instructions are kept short on purpose so responses stay fast and the model has less prompt noise.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="rounded-2xl border border-border-subtle bg-bg-item-surface p-5">
+                                        <div className="flex items-start gap-4">
+                                            <div className="w-10 h-10 rounded-xl bg-bg-input border border-border-subtle flex items-center justify-center text-accent-primary shrink-0">
+                                                <Pencil size={18} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h4 className="text-sm font-bold text-text-primary">Custom Context</h4>
+                                                <p className="text-xs text-text-secondary mt-1 leading-relaxed">
+                                                    Add response style context like “keep it short”, “explain step by step”, or “always include code examples”.
+                                                    Cluegent stores only a compact instruction per mode, then injects the selected behavior into the LLM request.
+                                                </p>
+                                                <p className="text-[11px] text-text-tertiary mt-2">
+                                                    Recommended limit: {AI_BEHAVIOR_CUSTOM_LIMIT} characters. Shorter context usually means faster answers.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {AI_BEHAVIOR_SCENARIOS.map((scenario) => {
+                                            const setting = aiBehaviorSettings[scenario.id];
+                                            const isCustom = setting.mode === 'custom';
+                                            const isSaved = savedBehaviorScenario === scenario.id;
+
+                                            return (
+                                                <div key={scenario.id} className="rounded-2xl border border-border-subtle bg-bg-item-surface overflow-hidden">
+                                                    <div className="p-5 border-b border-border-subtle/70">
+                                                        <div>
+                                                            <div>
+                                                                <h4 className="text-base font-bold text-text-primary">{scenario.title}</h4>
+                                                                <p className="text-xs text-text-secondary mt-1">{scenario.description}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="p-5 space-y-4">
+                                                        <div className={`rounded-xl border p-4 transition-all ${!isCustom ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-bg-input border-border-subtle'}`}>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => updateAiBehaviorScenario(scenario.id, { mode: 'default' })}
+                                                                className="flex items-center gap-2 mb-3 text-left"
+                                                            >
+                                                                <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full border transition-all ${!isCustom ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-border-muted text-transparent'}`}>
+                                                                    <Check size={12} />
+                                                                </span>
+                                                                <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-text-secondary">Default behavior</span>
+                                                            </button>
+                                                            <ul className="space-y-2">
+                                                                {scenario.defaultBullets.map((bullet) => (
+                                                                    <li key={bullet} className="flex items-start gap-2 text-xs text-text-secondary leading-relaxed">
+                                                                        <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-accent-primary/70 shrink-0" />
+                                                                        <span>{bullet}</span>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+
+                                                        <div className={`rounded-xl border p-4 transition-all ${isCustom ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-bg-input border-border-subtle'}`}>
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => updateAiBehaviorScenario(scenario.id, { mode: 'custom' })}
+                                                                    className="flex items-center gap-2 text-left"
+                                                                >
+                                                                    <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full border transition-all ${isCustom ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-border-muted text-transparent'}`}>
+                                                                        <Check size={12} />
+                                                                    </span>
+                                                                    <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-text-secondary">Your custom behavior</span>
+                                                                </button>
+                                                                <span className={`text-[10px] tabular-nums ${setting.customPrompt.length > AI_BEHAVIOR_CUSTOM_LIMIT * 0.85 ? 'text-amber-500' : 'text-text-tertiary'}`}>
+                                                                    {setting.customPrompt.length}/{AI_BEHAVIOR_CUSTOM_LIMIT}
+                                                                </span>
+                                                            </div>
+                                                            <textarea
+                                                                value={setting.customPrompt}
+                                                                onChange={(event) => updateAiBehaviorScenario(scenario.id, {
+                                                                    customPrompt: event.target.value,
+                                                                })}
+                                                                onKeyDown={(event) => event.stopPropagation()}
+                                                                onKeyUp={(event) => event.stopPropagation()}
+                                                                placeholder={scenario.placeholder}
+                                                                rows={3}
+                                                                className="w-full bg-bg-input border border-border-subtle rounded-xl px-3 py-2.5 text-xs text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent-primary/50 focus:ring-1 focus:ring-accent-primary/20 transition-all resize-none leading-relaxed"
+                                                            />
+                                                        </div>
+
+                                                        <div className="flex items-center justify-between gap-3">
+                                                            <p className="text-[11px] text-text-tertiary">
+                                                                Active mode: <span className="ml-1 inline-flex rounded-full bg-emerald-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white">{isCustom ? 'Custom' : 'Default'}</span>
+                                                            </p>
+                                                            <button
+                                                                onClick={() => handleSaveAiBehaviorScenario(scenario.id)}
+                                                                className={`px-4 py-2 rounded-full text-xs font-semibold transition-all ${isSaved ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/25' : 'bg-slate-950 text-white hover:bg-slate-800 shadow-sm'}`}
+                                                            >
+                                                                {isSaved ? 'Saved' : 'Save behavior'}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <div className="rounded-2xl border border-border-subtle bg-bg-item-surface overflow-hidden">
+                                        <div className="flex items-start justify-between gap-4 border-b border-border-subtle/70 p-5">
+                                            <div>
+                                                <h4 className="text-base font-bold text-text-primary">Quick Action Buttons</h4>
+                                                <p className="text-xs text-text-secondary mt-1 max-w-2xl leading-relaxed">
+                                                    Rename the prompt buttons and tune what each button asks the LLM to do.
+                                                    The Mic button stays fixed for voice input and is not editable.
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={handleSaveQuickActions}
+                                                className={`px-4 py-2 rounded-full text-xs font-semibold transition-all shrink-0 ${quickActionsSaved ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/25' : 'bg-slate-950 text-white hover:bg-slate-800 shadow-sm'}`}
+                                            >
+                                                {quickActionsSaved ? 'Saved' : 'Save buttons'}
+                                            </button>
+                                        </div>
+
+                                        <div className="p-5 space-y-3">
+                                            {DEFAULT_QUICK_ACTIONS.map((action) => {
+                                                const current = quickActionSettings[action.id];
+                                                const isEditing = editingQuickActionId === action.id;
+
+                                                return (
+                                                    <div key={action.id} className="rounded-xl border border-border-subtle bg-bg-input p-4">
+                                                        <div className="flex items-center justify-between gap-3">
+                                                            <div className="min-w-0">
+                                                                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-text-secondary">
+                                                                    Default: {action.label}
+                                                                </p>
+                                                                {!isEditing && (
+                                                                    <p className="mt-1 truncate text-sm font-semibold text-text-primary">
+                                                                        {current.label}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                            <button
+                                                                onClick={() => setEditingQuickActionId(isEditing ? null : action.id)}
+                                                                className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-item-surface px-3 py-1.5 text-xs font-medium text-text-secondary transition hover:text-text-primary"
+                                                            >
+                                                                <Edit3 size={12} />
+                                                                {isEditing ? 'Close' : 'Edit'}
+                                                            </button>
+                                                        </div>
+
+                                                        {isEditing ? (
+                                                            <div className="mt-4 space-y-3">
+                                                                <div>
+                                                                    <div className="mb-1.5 flex items-center justify-between">
+                                                                        <label className="text-[10px] font-bold uppercase tracking-[0.14em] text-text-tertiary">Button text</label>
+                                                                        <span className="text-[10px] text-text-tertiary">{current.label.length}/{QUICK_ACTION_LABEL_LIMIT}</span>
+                                                                    </div>
+                                                                    <input
+                                                                        value={current.label}
+                                                                        onChange={(event) => updateQuickAction(action.id, { label: event.target.value })}
+                                                                        onKeyDown={(event) => event.stopPropagation()}
+                                                                        onKeyUp={(event) => event.stopPropagation()}
+                                                                        className="w-full rounded-lg border border-border-subtle bg-bg-item-surface px-3 py-2 text-xs text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent-primary/50 focus:ring-1 focus:ring-accent-primary/20"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <div className="mb-1.5 flex items-center justify-between">
+                                                                        <label className="text-[10px] font-bold uppercase tracking-[0.14em] text-text-tertiary">LLM behavior for this button</label>
+                                                                        <span className="text-[10px] text-text-tertiary">{current.instruction.length}/{QUICK_ACTION_INSTRUCTION_LIMIT}</span>
+                                                                    </div>
+                                                                    <textarea
+                                                                        value={current.instruction}
+                                                                        onChange={(event) => updateQuickAction(action.id, { instruction: event.target.value })}
+                                                                        onKeyDown={(event) => event.stopPropagation()}
+                                                                        onKeyUp={(event) => event.stopPropagation()}
+                                                                        rows={3}
+                                                                        className="w-full resize-none rounded-lg border border-border-subtle bg-bg-item-surface px-3 py-2 text-xs leading-relaxed text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent-primary/50 focus:ring-1 focus:ring-accent-primary/20"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <p className="mt-2 text-xs leading-relaxed text-text-secondary">
+                                                                {current.instruction}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            {activeTab === 'recent-meetings' && (
+                                <div className="space-y-5 animated fadeIn pb-6">
+                                    <div>
+                                        <div className="inline-flex items-center gap-2 rounded-full bg-bg-item-surface border border-border-subtle px-3 py-1 mb-3">
+                                            <Clock size={13} className="text-accent-primary" />
+                                            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-text-secondary">Local history</span>
+                                        </div>
+                                        <h3 className="text-xl font-bold text-text-primary tracking-tight">Recent Meetings</h3>
+                                        <p className="text-sm text-text-secondary mt-1 max-w-2xl leading-relaxed">
+                                            View meetings saved on this device. Rolling transcript, prompts, screenshot markers, and Cluegent responses stay in local storage.
+                                        </p>
+                                    </div>
+                                    <RecentLocalMeetings />
+                                </div>
+                            )}
+                            {activeTab === '__legacy_profile' && (
                                 <div className="space-y-6 animated fadeIn">
                                     {/* Introduction */}
                                     <div className="mb-5">
@@ -1963,8 +2245,6 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                             This engine constructs an intelligent representation of your career history.
                                         </p>
                                     </div>
-
-                                    <RecentLocalMeetings />
 
                                     {/* Intelligence Graph Hero Card */}
                                     <div className="bg-bg-item-surface rounded-xl border border-border-subtle flex flex-col justify-between overflow-hidden">
@@ -2861,7 +3141,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                     <div className="flex items-start justify-between">
                                         <div>
                                             <h3 className="text-lg font-bold text-text-primary mb-1">Keyboard shortcuts</h3>
-                                            <p className="text-xs text-text-secondary">Natively works with these easy to remember commands.</p>
+                                        <p className="text-xs text-text-secondary">Cluegent works with these easy to remember commands.</p>
                                         </div>
                                         <button
                                             onClick={resetShortcuts}
@@ -2961,7 +3241,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                     { id: 'clarify', label: 'Clarify', icon: <MessageSquare size={14} /> },
                                                     { id: 'followUp', label: 'Follow Up', icon: <MessageSquare size={14} /> },
                                                     { id: 'dynamicAction4', label: 'Recap / Brainstorm', icon: <RefreshCw size={14} /> },
-                                                    { id: 'answer', label: 'Answer / Record', icon: <Mic size={14} /> },
+                                                    { id: 'answer', label: 'Mic / Record', icon: <Mic size={14} /> },
                                                     { id: 'clearTranscript', label: 'Clear Transcript', icon: <Trash2 size={14} /> },
                                                     { id: 'codeHint', label: 'Get Code Hint', icon: <Zap size={14} /> },
                                                     { id: 'brainstorm', label: 'Brainstorm Approaches', icon: <Zap size={14} /> },

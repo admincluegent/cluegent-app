@@ -8,9 +8,12 @@ export class FollowUpQuestionsLLM {
         this.llmHelper = llmHelper;
     }
 
-    async generate(context: string): Promise<string> {
+    async generate(context: string, behaviorInstructions?: string): Promise<string> {
         try {
-            const stream = this.llmHelper.streamChat(context, undefined, undefined, UNIVERSAL_FOLLOW_UP_QUESTIONS_PROMPT);
+            const message = behaviorInstructions?.trim()
+                ? `${behaviorInstructions.trim()}\n\n${context}`
+                : context;
+            const stream = this.llmHelper.streamChat(message, undefined, undefined, UNIVERSAL_FOLLOW_UP_QUESTIONS_PROMPT);
             let full = "";
             for await (const chunk of stream) full += chunk;
             return full;
@@ -20,9 +23,12 @@ export class FollowUpQuestionsLLM {
         }
     }
 
-    async *generateStream(context: string): AsyncGenerator<string> {
+    async *generateStream(context: string, behaviorInstructions?: string): AsyncGenerator<string> {
         try {
-            yield* this.llmHelper.streamChat(context, undefined, undefined, UNIVERSAL_FOLLOW_UP_QUESTIONS_PROMPT);
+            const message = behaviorInstructions?.trim()
+                ? `${behaviorInstructions.trim()}\n\n${context}`
+                : context;
+            yield* this.llmHelper.streamChat(message, undefined, undefined, UNIVERSAL_FOLLOW_UP_QUESTIONS_PROMPT);
         } catch (e) {
             console.error("[FollowUpQuestionsLLM] Stream Failed:", e);
         }

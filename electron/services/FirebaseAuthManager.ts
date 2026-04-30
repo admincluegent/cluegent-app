@@ -27,7 +27,7 @@ function buildCallbackHtml() {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Return to Natively</title>
+    <title>Return to Cluegent</title>
     <style>
       :root {
         color-scheme: dark;
@@ -74,7 +74,7 @@ function buildCallbackHtml() {
   <body>
     <main>
       <h1>Google sign-in complete</h1>
-      <p id="message">Sending your Firebase session back to Natively.</p>
+      <p id="message">Sending your Firebase session back to Cluegent.</p>
       <p class="status" id="status">You can return to the app once this finishes.</p>
     </main>
     <script>
@@ -109,7 +109,7 @@ function buildCallbackHtml() {
           }
 
           if (message) {
-            message.textContent = "Your account is connected. Return to Natively.";
+            message.textContent = "Your account is connected. Return to Cluegent.";
           }
 
           if (status) {
@@ -121,7 +121,7 @@ function buildCallbackHtml() {
           }
 
           if (status) {
-            status.textContent = "Keep this tab open and try the sign-in again from Natively.";
+            status.textContent = "Keep this tab open and try the sign-in again from Cluegent.";
           }
         }
       }

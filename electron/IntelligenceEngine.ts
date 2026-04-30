@@ -219,7 +219,7 @@ export class IntelligenceEngine extends EventEmitter {
      * Manual trigger - uses clean transcript pipeline for question inference
      * NEVER returns null - always provides a usable response
      */
-    async runWhatShouldISay(question?: string, confidence: number = 0.8, imagePaths?: string[]): Promise<string | null> {
+    async runWhatShouldISay(question?: string, confidence: number = 0.8, imagePaths?: string[], behaviorInstructions?: string): Promise<string | null> {
         const now = Date.now();
 
         // Bypass cooldown when the user explicitly attached images (capture-and-process intent).
@@ -300,7 +300,7 @@ export class IntelligenceEngine extends EventEmitter {
             let fullAnswer = "";
             // RC-03 fix: hold a reference to the generator so we can call .return()
             // to properly terminate the network request when a new generation starts.
-            const stream = this.whatToAnswerLLM.generateStream(preparedTranscript, temporalContext, intentResult, imagePaths);
+            const stream = this.whatToAnswerLLM.generateStream(preparedTranscript, temporalContext, intentResult, imagePaths, behaviorInstructions);
             let streamAborted = false;
 
             for await (const token of stream) {
@@ -492,7 +492,7 @@ export class IntelligenceEngine extends EventEmitter {
      * MODE: Clarify
      * Ask a clarifying question to the interviewer
      */
-    async runClarify(): Promise<string | null> {
+    async runClarify(behaviorInstructions?: string): Promise<string | null> {
         console.log('[IntelligenceEngine] runClarify called');
         this.setMode('clarify');
 
@@ -509,7 +509,7 @@ export class IntelligenceEngine extends EventEmitter {
 
             const generationId = ++this.currentGenerationId;
             let fullClarification = "";
-            const stream = this.clarifyLLM.generateStream(context);
+            const stream = this.clarifyLLM.generateStream(context, behaviorInstructions);
             let streamAborted = false;
 
             for await (const token of stream) {
@@ -556,7 +556,7 @@ export class IntelligenceEngine extends EventEmitter {
      * MODE 6: Follow-Up Questions
      * Suggest strategic questions for the user to ask
      */
-    async runFollowUpQuestions(): Promise<string | null> {
+    async runFollowUpQuestions(behaviorInstructions?: string): Promise<string | null> {
         console.log('[IntelligenceEngine] runFollowUpQuestions called');
         this.setMode('follow_up_questions');
 
@@ -576,7 +576,7 @@ export class IntelligenceEngine extends EventEmitter {
 
             const generationId = ++this.currentGenerationId;
             let fullQuestions = "";
-            const stream = this.followUpQuestionsLLM.generateStream(context);
+            const stream = this.followUpQuestionsLLM.generateStream(context, behaviorInstructions);
 
             for await (const token of stream) {
                 if (this.currentGenerationId !== generationId) {
@@ -728,7 +728,7 @@ export class IntelligenceEngine extends EventEmitter {
      * MODE 8: Brainstorm (Strategic Approach Generator)
      * Generates a spoken script outlining 2-3 problem-solving approaches with trade-offs.
      */
-    async runBrainstorm(imagePaths?: string[], problemStatement?: string): Promise<string | null> {
+    async runBrainstorm(imagePaths?: string[], problemStatement?: string, behaviorInstructions?: string): Promise<string | null> {
         if (this.assistCancellationToken) {
             this.assistCancellationToken.abort();
             this.assistCancellationToken = null;
@@ -760,7 +760,7 @@ export class IntelligenceEngine extends EventEmitter {
             }
             const generationId = ++this.currentGenerationId;
             let fullResult = "";
-            const stream = this.brainstormLLM.generateStream(context, imagePaths);
+            const stream = this.brainstormLLM.generateStream(context, imagePaths, behaviorInstructions);
             let streamAborted = false;
 
             for await (const token of stream) {

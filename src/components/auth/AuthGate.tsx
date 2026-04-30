@@ -36,7 +36,7 @@ function AuthShell({
                 Cluegent Firebase workspace
               </div>
               <h1 className="max-w-xl text-4xl font-semibold leading-tight text-white lg:text-5xl">
-                Bring your existing Google sign-in and backend into Natively.
+              Bring your existing Google sign-in and backend into Cluegent.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 lg:text-lg">
                 {body}
@@ -107,7 +107,7 @@ function AuthShell({
 
                 <p className="mt-4 text-xs leading-5 text-slate-500">
                   The desktop app opens Google in your system browser and then
-                  securely hands the Firebase token back to Natively.
+              securely hands the Firebase token back to Cluegent.
                 </p>
               </div>
             </div>
@@ -133,7 +133,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return (
       <AuthShell
         title="Restoring your workspace"
-        body="Natively is waiting for your Firebase session and profile bootstrap to finish before it loads the main app."
+        body="Cluegent is waiting for your Firebase session and profile bootstrap to finish before it loads the main app."
         error={error}
       />
     );
@@ -143,7 +143,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return (
       <AuthShell
         title="Sign in to continue"
-        body="This build is now backed by your Cluegent Firebase project. Sign in once with Google and the Natively app will continue with the same authenticated backend foundation."
+        body="This build is now backed by your Cluegent Firebase project. Sign in once with Google and the Cluegent app will continue with the same authenticated backend foundation."
         actionLabel={isAuthenticating ? "Connecting to Google" : "Continue with Google"}
         actionDisabled={isAuthenticating || isSyncing}
         actionPending={isAuthenticating}
