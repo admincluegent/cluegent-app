@@ -1788,13 +1788,33 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                                         background: 'transparent',
                                                         padding: '16px',
                                                         color: '#ffffff',
-                                                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+                                                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                                                        whiteSpace: 'pre-wrap',
+                                                        wordBreak: 'normal',
+                                                        overflowWrap: 'anywhere',
                                                     }}
-                                                    codeTagProps={{ style: { color: '#ffffff' } }}
+                                                    codeTagProps={{
+                                                        style: {
+                                                            color: '#ffffff',
+                                                            whiteSpace: 'inherit',
+                                                            wordBreak: 'inherit',
+                                                            overflowWrap: 'inherit',
+                                                        }
+                                                    }}
                                                     PreTag={({ children, ...props }: any) => <pre {...props} style={{ ...props.style, color: '#ffffff', maxWidth: '100%', whiteSpace: 'pre-wrap', wordBreak: 'normal', overflowWrap: 'normal' }}>{children}</pre>}
                                                     wrapLongLines={true}
+                                                    wrapLines={true}
                                                     showLineNumbers={true}
                                                     lineNumberStyle={{ minWidth: '2.5em', paddingRight: '1.2em', color: codeLineNumberColor, textAlign: 'right', fontSize: '11px' }}
+                                                    lineProps={() => ({
+                                                        style: {
+                                                            display: 'block',
+                                                            width: '100%',
+                                                            whiteSpace: 'pre-wrap',
+                                                            wordBreak: 'normal',
+                                                            overflowWrap: 'anywhere',
+                                                        }
+                                                    })}
                                                 >
                                                     {code}
                                                 </SyntaxHighlighter>
@@ -1946,13 +1966,33 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                                         background: 'transparent',
                                                         padding: '16px',
                                                         color: '#ffffff',
-                                                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+                                                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                                                        whiteSpace: 'pre-wrap',
+                                                        wordBreak: 'normal',
+                                                        overflowWrap: 'anywhere',
                                                     }}
-                                                    codeTagProps={{ style: { color: '#ffffff' } }}
+                                                    codeTagProps={{
+                                                        style: {
+                                                            color: '#ffffff',
+                                                            whiteSpace: 'inherit',
+                                                            wordBreak: 'inherit',
+                                                            overflowWrap: 'inherit',
+                                                        }
+                                                    }}
                                                     PreTag={({ children, ...props }: any) => <pre {...props} style={{ ...props.style, color: '#ffffff', maxWidth: '100%', whiteSpace: 'pre-wrap', wordBreak: 'normal', overflowWrap: 'normal' }}>{children}</pre>}
                                                     wrapLongLines={true}
+                                                    wrapLines={true}
                                                     showLineNumbers={true}
                                                     lineNumberStyle={{ minWidth: '2.5em', paddingRight: '1.2em', color: codeLineNumberColor, textAlign: 'right', fontSize: '11px' }}
+                                                    lineProps={() => ({
+                                                        style: {
+                                                            display: 'block',
+                                                            width: '100%',
+                                                            whiteSpace: 'pre-wrap',
+                                                            wordBreak: 'normal',
+                                                            overflowWrap: 'anywhere',
+                                                        }
+                                                    })}
                                                 >
                                                     {code}
                                                 </SyntaxHighlighter>
@@ -2706,7 +2746,8 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                     </div>
                                 )}
 
-                                <div className="relative group">
+                                <div className="flex items-center gap-2">
+                                    <div className="relative group flex-1 min-w-0">
                                     <input
                                         ref={textInputRef}
                                         type="text"
@@ -2714,14 +2755,14 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                         onChange={(e) => setInputValue(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleManualSubmit()}
 
-                                        className={`w-full border focus:ring-1 rounded-xl pl-3 pr-10 py-2.5 focus:outline-none transition-all duration-200 ease-sculpted text-[13px] leading-relaxed ${inputClass}`}
+                                        className={`w-full border focus:ring-1 rounded-xl pl-3 pr-3 py-2.5 focus:outline-none transition-all duration-200 ease-sculpted text-[13px] leading-relaxed ${inputClass}`}
                                         style={appearance.inputStyle}
                                     />
 
                                     {/* Custom Rich Placeholder */}
-                                    {!inputValue && (
-                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none text-[13px] overlay-text-muted">
-                                            <span>Ask anything on screen or conversation, or</span>
+                                    {false && !inputValue && (
+                                        <div className="absolute inset-y-0 left-3 right-3 flex items-center gap-1.5 pointer-events-none text-[13px] overlay-text-muted overflow-hidden whitespace-nowrap">
+                                            <span className="shrink-0">Ask anything...</span>
                                             <div className="flex items-center gap-1 opacity-80">
                                                 {(shortcuts.selectiveScreenshot || ['⌘', 'Shift', 'H']).map((key, i) => (
                                                     <React.Fragment key={i}>
@@ -2734,15 +2775,40 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                         </div>
                                     )}
 
-                                    {!inputValue && (
+                                    {false && !inputValue && (
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none opacity-20">
                                             <span className="text-[10px]">↵</span>
+                                        </div>
+                                    )}
+                                    {!inputValue && (
+                                        <div className="absolute inset-y-0 left-3 right-3 flex items-center gap-1.5 pointer-events-none text-[13px] overlay-text-muted overflow-hidden whitespace-nowrap">
+                                            <span className="shrink-0">Ask anything...</span>
+                                            <span className="opacity-45 shrink-0">•</span>
+                                            <div className="flex items-center gap-1 opacity-80 shrink-0">
+                                                {(shortcuts.processScreenshots || ['⌘', 'Enter']).map((key, i) => (
+                                                    <React.Fragment key={`submit-${i}`}>
+                                                        {i > 0 && <span className="text-[10px]">+</span>}
+                                                        <kbd className="px-1.5 py-0.5 rounded border text-[10px] font-sans min-w-[20px] text-center overlay-control-surface overlay-text-secondary" style={appearance.controlStyle}>{key}</kbd>
+                                                    </React.Fragment>
+                                                ))}
+                                            </div>
+                                            <span className="shrink-0">to submit</span>
+                                            <span className="opacity-45 shrink-0">•</span>
+                                            <div className="flex items-center gap-1 opacity-80 shrink-0">
+                                                {(shortcuts.takeScreenshot || ['⌘', '[']).map((key, i) => (
+                                                    <React.Fragment key={`shot-${i}`}>
+                                                        {i > 0 && <span className="text-[10px]">+</span>}
+                                                        <kbd className="px-1.5 py-0.5 rounded border text-[10px] font-sans min-w-[20px] text-center overlay-control-surface overlay-text-secondary" style={appearance.controlStyle}>{key}</kbd>
+                                                    </React.Fragment>
+                                                ))}
+                                            </div>
+                                            <span className="shrink-0">for screenshot</span>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Submit Row */}
-                                <div className="flex items-center justify-end mt-2 px-0.5">
+                                <div className="flex items-center shrink-0 px-0.5">
                                     <button
                                         onClick={handleManualSubmit}
                                         disabled={!inputValue.trim()}
@@ -2761,6 +2827,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                 </div>
                             </div>
                         </div>
+                    </div>
                     </motion.div>
                 )}
             </AnimatePresence>
