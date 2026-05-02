@@ -637,9 +637,6 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onO
             </header>
 
             <div className="relative flex-1 flex flex-col overflow-hidden">
-                {!isDetectable && (
-                    <div className={`absolute inset-1 border-2 border-dashed rounded-2xl pointer-events-none z-[100] ${isLight ? 'border-black/15' : 'border-white/20'}`} />
-                )}
                 <AnimatePresence mode="wait">
                     {selectedMeeting ? (
                         <motion.div

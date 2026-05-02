@@ -8,12 +8,18 @@ export interface LocalMeetingEvent {
     hasScreenshot?: boolean;
 }
 
+export interface LocalMeetingListeningSession {
+    startedAt: number;
+    endedAt?: number;
+}
+
 export interface LocalMeetingRecord {
     id: string;
     startedAt: number;
     endedAt?: number;
     title: string;
     events: LocalMeetingEvent[];
+    listeningSessions?: LocalMeetingListeningSession[];
 }
 
 const MEETINGS_KEY = 'cluegent.localMeetings.v1';
@@ -69,6 +75,7 @@ export const beginLocalMeeting = (title?: string): LocalMeetingRecord => {
         startedAt: Date.now(),
         title: title || 'Cluegent meeting',
         events: [],
+        listeningSessions: [],
     };
 
     const meetings = readMeetings().filter(item => item.id !== meeting.id);
@@ -122,6 +129,68 @@ export const appendLocalMeetingEvent = (
     writeMeetings(updatedMeetings);
 };
 
+export const startCurrentLocalMeetingListening = (startedAt = Date.now()) => {
+    if (!canUseLocalStorage()) return;
+
+    const activeMeeting = ensureCurrentMeeting();
+    const meetings = readMeetings();
+    const updatedMeetings = meetings.map(meeting => {
+        if (meeting.id !== activeMeeting.id) return meeting;
+
+        const listeningSessions = Array.isArray(meeting.listeningSessions)
+            ? [...meeting.listeningSessions]
+            : [];
+        const lastSession = listeningSessions[listeningSessions.length - 1];
+
+        if (lastSession && typeof lastSession.endedAt !== 'number') {
+            return meeting;
+        }
+
+        return {
+            ...meeting,
+            listeningSessions: [
+                ...listeningSessions,
+                { startedAt },
+            ],
+        };
+    });
+
+    writeMeetings(updatedMeetings);
+};
+
+export const stopCurrentLocalMeetingListening = (endedAt = Date.now()) => {
+    if (!canUseLocalStorage()) return;
+
+    const currentId = getCurrentLocalMeetingId();
+    if (!currentId) return;
+
+    const meetings = readMeetings();
+    const updatedMeetings = meetings.map(meeting => {
+        if (meeting.id !== currentId) return meeting;
+
+        const listeningSessions = Array.isArray(meeting.listeningSessions)
+            ? [...meeting.listeningSessions]
+            : [];
+        const lastSession = listeningSessions[listeningSessions.length - 1];
+
+        if (!lastSession || typeof lastSession.endedAt === 'number') {
+            return meeting;
+        }
+
+        listeningSessions[listeningSessions.length - 1] = {
+            ...lastSession,
+            endedAt: Math.max(endedAt, lastSession.startedAt),
+        };
+
+        return {
+            ...meeting,
+            listeningSessions,
+        };
+    });
+
+    writeMeetings(updatedMeetings);
+};
+
 export const finishCurrentLocalMeeting = () => {
     if (!canUseLocalStorage()) return;
 
@@ -136,6 +205,14 @@ export const finishCurrentLocalMeeting = () => {
                     ...meeting,
                     endedAt: Date.now(),
                     title: summarizeTitle(meeting),
+                    listeningSessions: (meeting.listeningSessions || []).map(session => (
+                        typeof session.endedAt === 'number'
+                            ? session
+                            : {
+                                ...session,
+                                endedAt: Date.now(),
+                            }
+                    )),
                 }
                 : meeting
         ))
@@ -172,11 +249,24 @@ export const subscribeLocalMeetings = (callback: () => void) => {
     };
 };
 
-export const formatLocalMeetingDuration = (meeting: LocalMeetingRecord) => {
-    const end = meeting.endedAt || Date.now();
-    const durationMs = Math.max(0, end - meeting.startedAt);
-    const minutes = Math.floor(durationMs / 60000);
-    const seconds = Math.floor((durationMs % 60000) / 1000);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+export const getLocalMeetingListeningDurationSeconds = (meeting: LocalMeetingRecord) => {
+    const listeningSessions = Array.isArray(meeting.listeningSessions) ? meeting.listeningSessions : [];
+    if (listeningSessions.length === 0) {
+        const fallbackEnd = meeting.endedAt || Date.now();
+        return Math.max(0, Math.floor((fallbackEnd - meeting.startedAt) / 1000));
+    }
+
+    const totalMs = listeningSessions.reduce((sum, session) => {
+        const sessionEnd = typeof session.endedAt === 'number' ? session.endedAt : Date.now();
+        return sum + Math.max(0, sessionEnd - session.startedAt);
+    }, 0);
+
+    return Math.max(0, Math.floor(totalMs / 1000));
 };
 
+export const formatLocalMeetingDuration = (meeting: LocalMeetingRecord) => {
+    const durationSeconds = getLocalMeetingListeningDurationSeconds(meeting);
+    const minutes = Math.floor(durationSeconds / 60);
+    const seconds = durationSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+};

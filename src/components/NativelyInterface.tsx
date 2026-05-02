@@ -43,12 +43,22 @@ import { useShortcuts } from '../hooks/useShortcuts';
 import { useResolvedTheme } from '../hooks/useResolvedTheme';
 import { getOverlayAppearance, OVERLAY_OPACITY_DEFAULT } from '../lib/overlayAppearance';
 import { useAuth } from '../contexts/auth.context';
-import { appendLocalMeetingEvent, finishCurrentLocalMeeting, getCurrentLocalMeetingId } from '../lib/localMeetingStorage';
+import {
+    appendLocalMeetingEvent,
+    finishCurrentLocalMeeting,
+    getCurrentLocalMeetingId,
+    startCurrentLocalMeetingListening,
+    stopCurrentLocalMeetingListening,
+} from '../lib/localMeetingStorage';
 import { buildAiBehaviorInstruction } from '../lib/aiBehaviorSettings';
 import {
     DEFAULT_QUICK_ACTIONS,
     buildQuickActionInstruction,
+    getCustomQuickActions,
+    getQuickActionVisibility,
     getQuickActionSettings,
+    getVisibleDefaultQuickActions,
+    QuickActionConfig,
     subscribeQuickActionSettings,
 } from '../lib/quickActionSettings';
 
@@ -176,6 +186,13 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     // Dynamic Action Button Mode (Recap vs Brainstorm)
     const [actionButtonMode, setActionButtonMode] = useState<'recap' | 'brainstorm'>('recap');
     const [quickActions, setQuickActions] = useState(() => getQuickActionSettings());
+    const [customQuickActions, setCustomQuickActions] = useState<QuickActionConfig[]>(() => getCustomQuickActions());
+    const [visibleDefaultQuickActions, setVisibleDefaultQuickActions] = useState(() => getVisibleDefaultQuickActions());
+    const [showQuickActionButtons, setShowQuickActionButtons] = useState(() => getQuickActionVisibility());
+    const allQuickActions = useMemo(
+        () => [...visibleDefaultQuickActions.map((action) => quickActions[action.id as keyof typeof quickActions]), ...customQuickActions],
+        [customQuickActions, quickActions, visibleDefaultQuickActions]
+    );
 
     useEffect(() => {
         // Load persisted mode
@@ -191,7 +208,12 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     }, []);
 
     useEffect(() => {
-        const refreshQuickActions = () => setQuickActions(getQuickActionSettings());
+        const refreshQuickActions = () => {
+            setQuickActions(getQuickActionSettings());
+            setCustomQuickActions(getCustomQuickActions());
+            setVisibleDefaultQuickActions(getVisibleDefaultQuickActions());
+            setShowQuickActionButtons(getQuickActionVisibility());
+        };
         refreshQuickActions();
         return subscribeQuickActionSettings(refreshQuickActions);
     }, []);
@@ -202,6 +224,9 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             isListeningRef.current = active;
             listeningStartedAtRef.current = active ? Date.now() : null;
             setListeningSeconds(0);
+            if (active) {
+                startCurrentLocalMeetingListening();
+            }
         }).catch(() => {});
 
         const unsubscribe = window.electronAPI?.onListeningStateChanged?.((data) => {
@@ -209,6 +234,11 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             isListeningRef.current = data.isListening;
             listeningStartedAtRef.current = data.isListening ? Date.now() : null;
             setListeningSeconds(0);
+            if (data.isListening) {
+                startCurrentLocalMeetingListening();
+            } else {
+                stopCurrentLocalMeetingListening();
+            }
         });
 
         return () => unsubscribe?.();
@@ -400,11 +430,6 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         if (isExpanded) {
             window.electronAPI.showWindow(isStealthRef.current);
             isStealthRef.current = false; // Reset back to default
-        } else {
-            // Slight delay to allow animation to clean up if needed, though immediate is safer for click-through
-            // Using setTimeout to ensure the render cycle completes first
-            // Increased to 400ms to allow "contract to bottom" exit animation to finish
-            setTimeout(() => window.electronAPI.hideWindow(), 400);
         }
     }, [isExpanded]);
 
@@ -965,9 +990,8 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         }
     };
 
-    const handleQuickActionPrompt = async (actionId: keyof typeof quickActions) => {
-        const action = quickActions[actionId];
-        const defaultAction = DEFAULT_QUICK_ACTIONS.find(item => item.id === actionId);
+    const handleQuickActionPrompt = async (action: QuickActionConfig) => {
+        const defaultAction = DEFAULT_QUICK_ACTIONS.find(item => item.id === action.id);
         const labelChanged = action.label.trim() !== defaultAction?.label;
         const instructionChanged = action.instruction.trim() !== defaultAction?.instruction;
         const promptText = labelChanged
@@ -977,7 +1001,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
         setIsExpanded(true);
         setIsProcessing(true);
-        analytics.trackCommandExecuted(`quick_action_${actionId}`);
+        analytics.trackCommandExecuted(`quick_action_${action.id.replace(/[^a-z0-9_-]/gi, '_').toLowerCase()}`);
 
         const pending = pendingCaptureRef.current;
         let currentAttachments = attachedContext;
@@ -2450,7 +2474,19 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
     };
 
     return (
-        <div ref={contentRef} className="flex flex-col items-center w-fit mx-auto h-fit min-h-0 bg-transparent p-0 rounded-[24px] font-sans gap-2 overlay-text-primary">
+        <div ref={contentRef} className="flex flex-col items-center w-[600px] max-w-full mx-auto h-fit min-h-0 bg-transparent p-0 rounded-[24px] font-sans gap-2 overlay-text-primary">
+            <TopPill
+                expanded={isExpanded}
+                onToggle={() => setIsExpanded(!isExpanded)}
+                onQuit={handleQuitMeeting}
+                appearance={appearance}
+                onLogoClick={() => window.electronAPI?.setWindowMode?.('launcher')}
+                isListening={isListening}
+                listeningDuration={listeningDuration}
+                onToggleListening={handleToggleListening}
+                isOptionsOpen={isSettingsOpen}
+                onOptionsClick={handleOptionsClick}
+            />
 
             <AnimatePresence>
                 {isExpanded && (
@@ -2461,18 +2497,6 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                         className="flex flex-col items-center gap-2 w-full"
                     >
-                        <TopPill
-                            expanded={isExpanded}
-                            onToggle={() => setIsExpanded(!isExpanded)}
-                            onQuit={handleQuitMeeting}
-                            appearance={appearance}
-                            onLogoClick={() => window.electronAPI?.setWindowMode?.('launcher')}
-                            isListening={isListening}
-                            listeningDuration={listeningDuration}
-                            onToggleListening={handleToggleListening}
-                            isOptionsOpen={isSettingsOpen}
-                            onOptionsClick={handleOptionsClick}
-                        />
                         <div
                             className={`cluegent-overlay-shell relative w-[600px] max-w-full backdrop-blur-2xl border rounded-[24px] overflow-hidden flex flex-col draggable-area overlay-shell-surface ${overlayPanelClass}`}
                             style={appearance.shellStyle}
@@ -2671,22 +2695,18 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                             )}
 
                             {/* Quick Actions - Minimal & Clean */}
+                            {showQuickActionButtons && (
                             <div className={`flex flex-nowrap justify-start items-center gap-1.5 px-4 pb-3 overflow-x-auto ${isListening && rollingTranscript && showTranscript ? 'pt-1' : 'pt-3'}`} style={{ scrollbarWidth: 'none' }}>
-                                <button onClick={() => handleQuickActionPrompt('whatToAnswer')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all active:scale-95 duration-200 interaction-base interaction-press whitespace-nowrap shrink-0 ${quickActionClass}`} style={appearance.chipStyle}>
-                                    <Pencil className="w-3 h-3 opacity-70" /> {quickActions.whatToAnswer.label}
-                                </button>
-                                <button onClick={() => handleQuickActionPrompt('clarify')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all active:scale-95 duration-200 interaction-base interaction-press whitespace-nowrap shrink-0 ${quickActionClass}`} style={appearance.chipStyle}>
-                                    <MessageSquare className="w-3 h-3 opacity-70" /> {quickActions.clarify.label}
-                                </button>
-                                <button onClick={() => handleQuickActionPrompt('brainstorm')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all active:scale-95 duration-200 interaction-base interaction-press whitespace-nowrap shrink-0 ${quickActionClass}`} style={appearance.chipStyle}>
-                                    {actionButtonMode === 'brainstorm'
-                                        ? <><Lightbulb className="w-3 h-3 opacity-70" /> {quickActions.brainstorm.label}</>
-                                        : <><RefreshCw className="w-3 h-3 opacity-70" /> {quickActions.brainstorm.label}</>
-                                    }
-                                </button>
-                                <button onClick={() => handleQuickActionPrompt('followUpQuestions')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all active:scale-95 duration-200 interaction-base interaction-press whitespace-nowrap shrink-0 ${quickActionClass}`} style={appearance.chipStyle}>
-                                    <HelpCircle className="w-3 h-3 opacity-70" /> {quickActions.followUpQuestions.label}
-                                </button>
+                                {allQuickActions.map((action) => (
+                                    <button
+                                        key={action.id}
+                                        onClick={() => handleQuickActionPrompt(action)}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all active:scale-95 duration-200 interaction-base interaction-press whitespace-nowrap shrink-0 ${quickActionClass}`}
+                                        style={appearance.chipStyle}
+                                    >
+                                        {action.label}
+                                    </button>
+                                ))}
                                 <button
                                     onClick={handleAnswerNow}
                                     className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all active:scale-95 duration-200 interaction-base interaction-press min-w-[74px] whitespace-nowrap shrink-0 ${isManualRecording
@@ -2705,9 +2725,10 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                     )}
                                 </button>
                             </div>
+                            )}
 
                             {/* Input Area */}
-                            <div className="p-3 pt-0">
+                            <div className={`p-3 ${showQuickActionButtons ? 'pt-0' : 'pt-3'}`}>
                                 {/* Latent Context Preview (Attached Screenshot) */}
                                 {attachedContext.length > 0 && (
                                     <div className={`mb-2 rounded-lg p-2 transition-all duration-200 border ${subtleSurfaceClass}`} style={appearance.subtleStyle}>

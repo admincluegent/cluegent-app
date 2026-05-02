@@ -49,8 +49,8 @@ export const getOverlayAppearance = (opacity: number, theme: OverlayTheme): Over
             shellStyle: {
                 backgroundColor: `rgba(5, 7, 12, ${scale(0.28, 0.68, surfaceStrength)})`,
                 borderColor: 'transparent',
-                borderStyle: 'dashed',
-                borderWidth: '2px',
+                borderStyle: 'solid',
+                borderWidth: '0px',
                 borderRadius: '24px',
                 boxShadow: `0 18px 42px rgba(0, 0, 0, ${scale(0.08, 0.24, surfaceStrength)})`,
                 backdropFilter: `blur(${scale(4, 18, blurStrength)}px) saturate(145%)`,
@@ -106,8 +106,8 @@ export const getOverlayAppearance = (opacity: number, theme: OverlayTheme): Over
         shellStyle: {
             backgroundColor: `rgba(5, 7, 12, ${scale(0.28, 0.68, surfaceStrength)})`,
             borderColor: 'transparent',
-            borderStyle: 'dashed',
-            borderWidth: '2px',
+            borderStyle: 'solid',
+            borderWidth: '0px',
             borderRadius: '24px',
             boxShadow: `0 18px 42px rgba(0, 0, 0, ${scale(0.08, 0.24, surfaceStrength)})`,
             backdropFilter: `blur(${scale(6, 20, blurStrength)}px) saturate(140%)`,

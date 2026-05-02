@@ -37,13 +37,22 @@ import {
     saveAiBehaviorSettings,
 } from '../lib/aiBehaviorSettings';
 import {
+    createEmptyCustomQuickAction,
     DEFAULT_QUICK_ACTIONS,
+    getCustomQuickActions,
+    getRemovedDefaultQuickActionIds,
+    getQuickActionVisibility,
+    getVisibleDefaultQuickActions,
     QUICK_ACTION_INSTRUCTION_LIMIT,
     QUICK_ACTION_LABEL_LIMIT,
     QuickActionId,
+    QuickActionConfig,
     QuickActionSettings,
     getQuickActionSettings,
+    saveCustomQuickActions,
+    saveRemovedDefaultQuickActionIds,
     saveQuickActionSettings,
+    saveQuickActionVisibility,
 } from '../lib/quickActionSettings';
 
 // ---------------------------------------------------------------------------
@@ -452,8 +461,11 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
     const [aiBehaviorSettings, setAiBehaviorSettings] = useState<AiBehaviorSettings>(() => getAiBehaviorSettings());
     const [savedBehaviorScenario, setSavedBehaviorScenario] = useState<AiBehaviorScenario | null>(null);
     const [quickActionSettings, setQuickActionSettings] = useState<QuickActionSettings>(() => getQuickActionSettings());
-    const [editingQuickActionId, setEditingQuickActionId] = useState<QuickActionId | null>(null);
-    const [quickActionsSaved, setQuickActionsSaved] = useState(false);
+    const [customQuickActions, setCustomQuickActions] = useState<QuickActionConfig[]>(() => getCustomQuickActions());
+    const [removedDefaultQuickActionIds, setRemovedDefaultQuickActionIds] = useState<QuickActionId[]>(() => getRemovedDefaultQuickActionIds());
+    const [showQuickActionButtons, setShowQuickActionButtons] = useState(() => getQuickActionVisibility());
+    const [editingQuickActionId, setEditingQuickActionId] = useState<string | null>(null);
+    const [savedQuickActionId, setSavedQuickActionId] = useState<string | null>(null);
     const customNotesDebounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const [verboseLogging, setVerboseLogging] = useState(false);
     const [showVerboseToast, setShowVerboseToast] = useState(false);
@@ -1317,30 +1329,76 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
     };
 
     const updateQuickAction = (
-        id: QuickActionId,
-        patch: Partial<Pick<QuickActionSettings[QuickActionId], 'label' | 'instruction'>>
+        id: string,
+        patch: Partial<Pick<QuickActionConfig, 'label' | 'instruction'>>
     ) => {
-        setQuickActionsSaved(false);
-        setQuickActionSettings(prev => ({
-            ...prev,
-            [id]: {
-                ...prev[id],
-                ...patch,
-                label: patch.label !== undefined
-                    ? patch.label.slice(0, QUICK_ACTION_LABEL_LIMIT)
-                    : prev[id].label,
-                instruction: patch.instruction !== undefined
-                    ? patch.instruction.slice(0, QUICK_ACTION_INSTRUCTION_LIMIT)
-                    : prev[id].instruction,
-            },
-        }));
+        setSavedQuickActionId(current => (current === id ? null : current));
+        if (DEFAULT_QUICK_ACTIONS.some((action) => action.id === id)) {
+            const quickActionId = id as QuickActionId;
+            setQuickActionSettings(prev => ({
+                ...prev,
+                [quickActionId]: {
+                    ...prev[quickActionId],
+                    ...patch,
+                    label: patch.label !== undefined
+                        ? patch.label.slice(0, QUICK_ACTION_LABEL_LIMIT)
+                        : prev[quickActionId].label,
+                    instruction: patch.instruction !== undefined
+                        ? patch.instruction.slice(0, QUICK_ACTION_INSTRUCTION_LIMIT)
+                        : prev[quickActionId].instruction,
+                },
+            }));
+            return;
+        }
+
+        setCustomQuickActions(prev => prev.map((action) => (
+            action.id === id
+                ? {
+                    ...action,
+                    ...patch,
+                    label: patch.label !== undefined
+                        ? patch.label.slice(0, QUICK_ACTION_LABEL_LIMIT)
+                        : action.label,
+                    instruction: patch.instruction !== undefined
+                        ? patch.instruction.slice(0, QUICK_ACTION_INSTRUCTION_LIMIT)
+                        : action.instruction,
+                }
+                : action
+        )));
     };
 
-    const handleSaveQuickActions = () => {
+    const handleSaveQuickAction = (id: string) => {
         saveQuickActionSettings(quickActionSettings);
+        saveCustomQuickActions(customQuickActions);
         setEditingQuickActionId(null);
-        setQuickActionsSaved(true);
-        setTimeout(() => setQuickActionsSaved(false), 1600);
+        setSavedQuickActionId(id);
+        setTimeout(() => {
+            setSavedQuickActionId(current => (current === id ? null : current));
+        }, 1600);
+    };
+
+    const handleAddCustomQuickAction = () => {
+        const newAction = createEmptyCustomQuickAction();
+        setCustomQuickActions(prev => [...prev, newAction]);
+        setEditingQuickActionId(newAction.id);
+        setSavedQuickActionId(null);
+    };
+
+    const handleDeleteQuickAction = (action: QuickActionConfig) => {
+        setSavedQuickActionId(null);
+        setEditingQuickActionId(current => (current === action.id ? null : current));
+
+        if (action.isCustom) {
+            const nextCustomActions = customQuickActions.filter((item) => item.id !== action.id);
+            setCustomQuickActions(nextCustomActions);
+            saveCustomQuickActions(nextCustomActions);
+            return;
+        }
+
+        const actionId = action.id as QuickActionId;
+        const nextRemoved = Array.from(new Set([...removedDefaultQuickActionIds, actionId]));
+        setRemovedDefaultQuickActionIds(nextRemoved);
+        saveRemovedDefaultQuickActionIds(nextRemoved);
     };
 
     return (
@@ -2117,39 +2175,80 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                     The Mic button stays fixed for voice input and is not editable.
                                                 </p>
                                             </div>
-                                            <button
-                                                onClick={handleSaveQuickActions}
-                                                className={`px-4 py-2 rounded-full text-xs font-semibold transition-all shrink-0 ${quickActionsSaved ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/25' : 'bg-slate-950 text-white hover:bg-slate-800 shadow-sm'}`}
-                                            >
-                                                {quickActionsSaved ? 'Saved' : 'Save buttons'}
-                                            </button>
+                                            <div className="flex shrink-0 items-center gap-3">
+                                                <button
+                                                    onClick={handleAddCustomQuickAction}
+                                                    className="inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800"
+                                                >
+                                                    <span className="text-sm leading-none">+</span>
+                                                    Add
+                                                </button>
+                                                <div className="flex items-center gap-3 rounded-full border border-border-subtle bg-bg-input px-3 py-2">
+                                                    <p className="text-[11px] text-text-secondary">{showQuickActionButtons ? 'On' : 'Off'}</p>
+                                                    <button
+                                                        onClick={() => {
+                                                            const nextValue = !showQuickActionButtons;
+                                                            setShowQuickActionButtons(nextValue);
+                                                            saveQuickActionVisibility(nextValue);
+                                                        }}
+                                                        className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${showQuickActionButtons ? 'bg-emerald-500/80' : 'bg-bg-item-active'}`}
+                                                        aria-pressed={showQuickActionButtons}
+                                                        title="Toggle quick action buttons in the app"
+                                                    >
+                                                        <span
+                                                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform ${showQuickActionButtons ? 'translate-x-6' : 'translate-x-1'}`}
+                                                        />
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div className="p-5 space-y-3">
-                                            {DEFAULT_QUICK_ACTIONS.map((action) => {
-                                                const current = quickActionSettings[action.id];
+                                            {[...getVisibleDefaultQuickActions().map((action) => quickActionSettings[action.id as QuickActionId]), ...customQuickActions].map((action) => {
+                                                const current = action.isCustom ? null : quickActionSettings[action.id as QuickActionId];
                                                 const isEditing = editingQuickActionId === action.id;
+                                                const isSaved = savedQuickActionId === action.id;
+                                                const item = action.isCustom ? action : (current || action);
 
                                                 return (
                                                     <div key={action.id} className="rounded-xl border border-border-subtle bg-bg-input p-4">
                                                         <div className="flex items-center justify-between gap-3">
                                                             <div className="min-w-0">
                                                                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-text-secondary">
-                                                                    Default: {action.label}
+                                                                    {action.isCustom ? 'Custom Button' : `Default: ${action.label}`}
                                                                 </p>
                                                                 {!isEditing && (
                                                                     <p className="mt-1 truncate text-sm font-semibold text-text-primary">
-                                                                        {current.label}
+                                                                        {item.label}
                                                                     </p>
                                                                 )}
                                                             </div>
-                                                            <button
-                                                                onClick={() => setEditingQuickActionId(isEditing ? null : action.id)}
-                                                                className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-item-surface px-3 py-1.5 text-xs font-medium text-text-secondary transition hover:text-text-primary"
-                                                            >
-                                                                <Edit3 size={12} />
-                                                                {isEditing ? 'Close' : 'Edit'}
-                                                            </button>
+                                                            <div className="flex shrink-0 flex-col items-end gap-2">
+                                                                <div className="flex items-center gap-2">
+                                                                    <button
+                                                                        onClick={() => setEditingQuickActionId(isEditing ? null : action.id)}
+                                                                        className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-item-surface px-3 py-1.5 text-xs font-medium text-text-secondary transition hover:text-text-primary"
+                                                                    >
+                                                                        <Edit3 size={12} />
+                                                                        {isEditing ? 'Close' : 'Edit'}
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleDeleteQuickAction(action)}
+                                                                        className="inline-flex items-center justify-center rounded-full border border-red-500/20 bg-red-500/10 px-2.5 py-1.5 text-red-400 transition hover:bg-red-500/15 hover:text-red-300"
+                                                                        title="Delete quick action button"
+                                                                    >
+                                                                        <Trash2 size={12} />
+                                                                    </button>
+                                                                </div>
+                                                                {isEditing && (
+                                                                    <button
+                                                                        onClick={() => handleSaveQuickAction(action.id)}
+                                                                        className={`inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${isSaved ? 'border border-emerald-500/25 bg-emerald-500/15 text-emerald-500' : 'bg-slate-950 text-white shadow-sm hover:bg-slate-800'}`}
+                                                                    >
+                                                                        {isSaved ? 'Saved' : 'Save'}
+                                                                    </button>
+                                                                )}
+                                                            </div>
                                                         </div>
 
                                                         {isEditing ? (
@@ -2157,10 +2256,10 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                                 <div>
                                                                     <div className="mb-1.5 flex items-center justify-between">
                                                                         <label className="text-[10px] font-bold uppercase tracking-[0.14em] text-text-tertiary">Button text</label>
-                                                                        <span className="text-[10px] text-text-tertiary">{current.label.length}/{QUICK_ACTION_LABEL_LIMIT}</span>
+                                                                        <span className="text-[10px] text-text-tertiary">{item.label.length}/{QUICK_ACTION_LABEL_LIMIT}</span>
                                                                     </div>
                                                                     <input
-                                                                        value={current.label}
+                                                                        value={item.label}
                                                                         onChange={(event) => updateQuickAction(action.id, { label: event.target.value })}
                                                                         onKeyDown={(event) => event.stopPropagation()}
                                                                         onKeyUp={(event) => event.stopPropagation()}
@@ -2170,10 +2269,10 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                                 <div>
                                                                     <div className="mb-1.5 flex items-center justify-between">
                                                                         <label className="text-[10px] font-bold uppercase tracking-[0.14em] text-text-tertiary">LLM behavior for this button</label>
-                                                                        <span className="text-[10px] text-text-tertiary">{current.instruction.length}/{QUICK_ACTION_INSTRUCTION_LIMIT}</span>
+                                                                        <span className="text-[10px] text-text-tertiary">{item.instruction.length}/{QUICK_ACTION_INSTRUCTION_LIMIT}</span>
                                                                     </div>
                                                                     <textarea
-                                                                        value={current.instruction}
+                                                                        value={item.instruction}
                                                                         onChange={(event) => updateQuickAction(action.id, { instruction: event.target.value })}
                                                                         onKeyDown={(event) => event.stopPropagation()}
                                                                         onKeyUp={(event) => event.stopPropagation()}
@@ -2184,7 +2283,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                             </div>
                                                         ) : (
                                                             <p className="mt-2 text-xs leading-relaxed text-text-secondary">
-                                                                {current.instruction}
+                                                                {item.instruction}
                                                             </p>
                                                         )}
                                                     </div>
