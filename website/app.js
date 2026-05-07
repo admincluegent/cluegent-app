@@ -1,6 +1,6 @@
 const root = document.documentElement;
 const menuToggle = document.querySelector(".menu-toggle");
-const navLinks = document.querySelectorAll(".nav a");
+const navLinks = document.querySelectorAll(".site-nav a");
 const revealItems = document.querySelectorAll(".reveal");
 
 if (menuToggle) {

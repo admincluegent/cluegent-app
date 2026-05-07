@@ -3,44 +3,39 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cluegent | Real-Time Meeting Intelligence</title>
+    <title>Cluegent - Live AI Meeting Assistant</title>
     <meta
       name="description"
-      content="Cluegent is a real-time meeting copilot for interviews, sales calls, and high-stakes conversations. Live transcript, private overlay, instant answers."
+      content="Cluegent is a live AI meeting assistant for real-time meeting notes, rolling transcription, screenshot-aware answers, and private desktop guidance."
     />
+    <meta name="author" content="Cluegent" />
     <meta
       name="keywords"
-      content="Cluegent, AI meeting assistant, live transcript, interview copilot, sales copilot, meeting intelligence"
+      content="Cluegent, AI meeting assistant, live transcription, meeting copilot, interview assistant, screenshot answers, desktop AI assistant"
     />
-    <meta property="og:title" content="Cluegent | Real-Time Meeting Intelligence" />
+    <meta property="og:title" content="Cluegent - Live AI Meeting Assistant" />
     <meta
       property="og:description"
-      content="Private meeting intelligence for fast answers, live transcript, and decisive follow-ups."
+      content="Clean meeting notes, real-time answers, and a private desktop overlay for calls, interviews, and technical conversations."
     />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/assets/dashboard-preview.png" />
-    <meta name="theme-color" content="#050816" />
+    <meta name="theme-color" content="#ffffff" />
     <link rel="icon" type="image/png" href="/assets/icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500;600&family=Geist:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/styles.css?v=20260503-cluegent-format" />
   </head>
   <body>
-    <div class="site-shell">
-      <div class="noise"></div>
-      <header class="topbar">
+    <div class="page-shell">
+      <header class="site-header">
         <a class="brand" href="#hero" aria-label="Cluegent home">
-          <span class="brand-mark">
-            <img src="/assets/icon.png" alt="Cluegent logo" />
-          </span>
-          <span class="brand-copy">
-            <strong>Cluegent</strong>
-            <small>Meeting intelligence</small>
-          </span>
+          <span class="brand-icon"><img src="/assets/icon.png" alt="Cluegent logo" /></span>
+          <span>Cluegent</span>
         </a>
 
         <button
@@ -54,305 +49,395 @@
           <span></span>
         </button>
 
-        <nav class="nav" id="site-nav">
-          <a href="#product">Product</a>
-          <a href="#use-cases">Use cases</a>
-          <a href="#stack">Stack</a>
+        <nav class="site-nav" id="site-nav">
+          <a href="#preview">Preview</a>
+          <a href="#features">Features</a>
+          <a href="#pricing">Pro</a>
           <a href="#faq">FAQ</a>
-          <a class="nav-cta" href="mailto:admincluegent@gmail.com?subject=Cluegent%20Early%20Access">
-            <span>Get early access</span>
-            <i>↗</i>
+          <a class="nav-button" href="mailto:admincluegent@gmail.com?subject=Cluegent%20Desktop%20Access">
+            Download
           </a>
         </nav>
       </header>
 
       <main>
-        <section class="hero section" id="hero">
+        <section class="hero-section" id="hero">
+          <div class="hero-bg" aria-hidden="true">
+            <div class="hero-orb hero-orb--blue"></div>
+            <div class="hero-orb hero-orb--gold"></div>
+            <div class="hero-grid"></div>
+          </div>
+
           <div class="hero-copy reveal">
-            <div class="eyebrow">
-              <span>Private desktop overlay</span>
-              <span>Live answers during the call</span>
-            </div>
+            <p class="trust-line">Trusted by early Cluegent testers</p>
             <h1>
-              Real-time meeting intelligence for people who cannot afford to miss the moment.
+              <span>#1 Intelligent</span>
+              <span>AI for Meetings</span>
             </h1>
-            <p class="lede">
-              Cluegent listens to the conversation, builds rolling context, and gives you usable
-              answers before the meeting moves on. Built for interviews, demos, negotiations, and
-              high-pressure conversations.
+            <p class="hero-subtitle">
+              Cluegent takes clean meeting notes and gives real-time answers,
+              <span>all while staying inside your private desktop overlay.</span>
             </p>
-            <div class="hero-actions">
-              <a class="button button-primary" href="mailto:admincluegent@gmail.com?subject=Cluegent%20Launch%20List">
-                <span>Join the launch list</span>
-                <i>↗</i>
-              </a>
-              <a class="button button-secondary" href="#product">
-                <span>See the product</span>
-                <i>↓</i>
-              </a>
-            </div>
-            <ul class="hero-metrics">
-              <li>
-                <strong>Live STT</strong>
-                <span>AssemblyAI streaming transcript for system audio and mic</span>
-              </li>
-              <li>
-                <strong>Hybrid LLM</strong>
-                <span>DeepSeek primary, Gemini for screenshots, Groq fallback</span>
-              </li>
-              <li>
-                <strong>Firebase backend</strong>
-                <span>Hosted auth, functions, usage control, secrets management</span>
-              </li>
-            </ul>
+            <a class="primary-download" href="mailto:admincluegent@gmail.com?subject=Cluegent%20Windows%20Access">
+              <span class="windows-glyph"></span>
+              <span>Get for Windows</span>
+            </a>
           </div>
 
-          <div class="hero-visual reveal">
-            <div class="shell-card visual-stage">
-              <div class="shell-card__inner visual-stage__inner">
-                <div class="status-pill">
-                  <span class="status-dot"></span>
-                  <span>Live session active</span>
+          <div class="hero-preview reveal" id="preview">
+            <div class="preview-glow"></div>
+            <div class="desktop-preview">
+              <div class="desktop-topbar">
+                <span class="tiny-logo"><img src="/assets/icon.png" alt="" /></span>
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+
+              <div class="desktop-scene">
+                <div class="meeting-window">
+                  <div class="meeting-speaker"></div>
+                  <div class="meeting-lines">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
                 </div>
-                <img
-                  class="dashboard-image"
-                  src="/assets/dashboard-preview.png"
-                  alt="Cluegent desktop product preview"
-                />
-                <div class="floating-note floating-note--top">
-                  <small>Rolling transcript</small>
-                  <strong>“Use the customer objection, then close with the next step.”</strong>
+
+                <div class="cluegent-overlay">
+                  <div class="overlay-pill">
+                    <span><img src="/assets/icon.png" alt="" /></span>
+                    <button>Hide</button>
+                    <i></i>
+                  </div>
+                  <div class="overlay-panel">
+                    <div class="user-bubble">What should I answer?</div>
+                    <p>
+                      Start with the customer problem, then explain the implementation path in one
+                      concrete step.
+                    </p>
+                    <div class="quick-actions">
+                      <button>Ask next question</button>
+                      <button>Give example</button>
+                      <button>Answer shortly</button>
+                    </div>
+                    <div class="prompt-bar">
+                      Ask anything...
+                      <kbd>Ctrl</kbd>
+                      <kbd>Enter</kbd>
+                    </div>
+                  </div>
                 </div>
-                <div class="floating-note floating-note--bottom">
-                  <small>Instant answer</small>
-                  <strong>Answer generated in-context with the current conversation.</strong>
+
+                <div class="screen-card">
+                  <strong>Google Meet</strong>
+                  <span>Live conversation detected</span>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section class="proof-grid section">
-          <article class="shell-card reveal">
-            <div class="shell-card__inner stat-card">
-              <span class="stat-label">Built for speed</span>
-              <h2>Get the answer while the other person is still talking.</h2>
-              <p>
-                Live rolling transcript, screenshot-aware answering, and low-latency backend routing
-                are designed to reduce hesitation, not create more tabs.
-              </p>
-            </div>
-          </article>
+        <section class="section features-section" id="features">
+          <div class="section-heading reveal">
+            <h2>Four ways to make your meetings better</h2>
+            <p>Fast answers, clear notes, and context that follows the conversation.</p>
+          </div>
 
-          <article class="shell-card reveal">
-            <div class="shell-card__inner stat-card stat-card--accent">
-              <span class="stat-label">Built for launch</span>
-              <h2>Firebase-managed backend with real provider failover.</h2>
+          <div class="feature-grid">
+            <article class="feature-card feature-card--answer reveal">
+              <span class="card-number">01</span>
+              <h3>AI answers questions in real time</h3>
               <p>
-                Auth, usage checks, secrets, STT token creation, and LLM orchestration already run
-                through production-style cloud functions.
+                Ask from the rolling transcript, type a prompt, or attach a screenshot. Cluegent
+                responds with practical guidance instead of generic filler.
               </p>
-            </div>
-          </article>
+              <div class="mini-answer">
+                <span>Cluegent response</span>
+                <p>Use the safer rollout first, then expand once the billing state is verified.</p>
+              </div>
+            </article>
+
+            <article class="feature-card feature-card--models reveal">
+              <span class="card-number">02</span>
+              <h3>One interface for every AI workflow</h3>
+              <p>
+                Text prompts, screenshots, quick actions, and meeting transcript context all land in
+                the same focused desktop assistant.
+              </p>
+              <div class="model-stack">
+                <span>DeepSeek text</span>
+                <span>Gemini screenshots</span>
+                <span>AssemblyAI STT</span>
+              </div>
+            </article>
+
+            <article class="feature-card feature-card--identity reveal">
+              <span class="card-number">03</span>
+              <h3>Customize how the AI should answer</h3>
+              <p>
+                Set default behavior for rolling transcript, typed prompts, and screenshots so the
+                assistant speaks in the style you want.
+              </p>
+              <div class="context-chip">Concise, technical, example-first</div>
+            </article>
+
+            <article class="feature-card feature-card--notes reveal">
+              <span class="card-number">04</span>
+              <h3>Beautiful local meeting history</h3>
+              <p>
+                Recent meetings are stored locally, with transcript snippets, prompts, screenshots,
+                and Cluegent responses available whenever you need them.
+              </p>
+              <div class="notes-list">
+                <span>React Native architecture review</span>
+                <span>Firebase billing hardening</span>
+                <span>Razorpay subscription test</span>
+              </div>
+            </article>
+          </div>
         </section>
 
-        <section class="product section" id="product">
+        <section class="section modes-section">
           <div class="section-heading reveal">
-            <div class="eyebrow">
-              <span>Inside Cluegent</span>
-              <span>Product surfaces</span>
-            </div>
-            <h2>The website is separate. The product stays desktop-first.</h2>
+            <span class="eyebrow">Choose your mode</span>
+            <h2>Simple when you need speed. Deeper when you need context.</h2>
+          </div>
+
+          <div class="modes-grid">
+            <article class="mode-card reveal">
+              <span>01</span>
+              <h3>Rolling transcript</h3>
+              <p>Start listening only when you need it, track the timer, and keep STT usage under control.</p>
+            </article>
+            <article class="mode-card reveal">
+              <span>02</span>
+              <h3>Typed prompt</h3>
+              <p>Ask direct questions with recent conversation context and quick custom actions.</p>
+            </article>
+            <article class="mode-card reveal">
+              <span>03</span>
+              <h3>Screenshot answer</h3>
+              <p>Attach a screen, let Cluegent analyze what is happening, and get a useful answer fast.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section steps-section">
+          <div class="section-heading reveal">
+            <h2>Meeting notes in 3 steps</h2>
+            <p>The simplest path from live conversation to useful memory.</p>
+          </div>
+
+          <div class="steps-grid">
+            <article class="step-card reveal">
+              <div class="step-icon">1</div>
+              <h3>Launch Cluegent</h3>
+              <p>Open the desktop app before your meeting and keep it ready as a private overlay.</p>
+            </article>
+            <article class="step-card reveal">
+              <div class="step-icon">2</div>
+              <h3>Start listening</h3>
+              <p>Enable listening only when you want transcript capture and usage tracking to begin.</p>
+            </article>
+            <article class="step-card reveal">
+              <div class="step-icon">3</div>
+              <h3>Save the outcome</h3>
+              <p>Review prompts, transcript moments, and AI responses later in Recent Meetings.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section comparison-section">
+          <div class="comparison-label reveal">Works with every meeting platform</div>
+          <div class="section-heading reveal">
+            <h2>No meeting bots. Private desktop overlay.</h2>
+            <p>Cluegent stays on your machine instead of joining calls as a visible participant.</p>
+          </div>
+
+          <div class="comparison-grid">
+            <article class="comparison-card reveal">
+              <h3>Other meeting assistants</h3>
+              <div class="participant-list">
+                <span>AI Note Taker joined</span>
+                <span>Recording notification</span>
+                <span>Bot visible to guests</span>
+              </div>
+            </article>
+            <article class="comparison-card comparison-card--cluegent reveal">
+              <h3>Cluegent</h3>
+              <div class="private-overlay">
+                <strong>Visible only to you</strong>
+                <p>Answers, transcript, and screenshots stay inside your local desktop workflow.</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section pricing-section" id="pricing">
+          <div class="pricing-copy reveal">
+            <span class="eyebrow">Upgrade with Pro</span>
+            <h2>Built for serious meetings and interviews.</h2>
             <p>
-              Cluegent.com should sell the product clearly. The app should stay focused on speed,
-              privacy, and execution. This site now acts as the front door, while the Electron app
-              remains the operator console.
+              Start free, then upgrade when you need more prompts, screenshot analysis, and live
+              STT minutes. Billing is connected to your signed-in Firebase account.
             </p>
           </div>
 
-          <div class="product-grid">
-            <article class="shell-card reveal product-panel product-panel--wide">
-              <div class="shell-card__inner product-panel__inner">
-                <div class="panel-copy">
-                  <span class="panel-kicker">Launcher</span>
-                  <h3>Start the session, check status, move fast.</h3>
-                  <p>
-                    The launcher keeps setup lightweight: start meeting capture, manage state, and
-                    open the overlay only when you need it.
-                  </p>
-                </div>
-                <img src="/assets/mainui.png" alt="Cluegent launcher view" />
-              </div>
+          <div class="pricing-grid">
+            <article class="price-card reveal">
+              <h3>Free</h3>
+              <strong>₹0</strong>
+              <p>Try Cluegent with limited LLM and STT usage.</p>
+              <ul>
+                <li>3 AI responses</li>
+                <li>1 minute STT</li>
+                <li>Local customization</li>
+              </ul>
+              <a href="mailto:admincluegent@gmail.com?subject=Cluegent%20Free%20Access">Get started</a>
             </article>
 
-            <article class="shell-card reveal product-panel">
-              <div class="shell-card__inner product-panel__inner product-panel__inner--stacked">
-                <div class="panel-copy">
-                  <span class="panel-kicker">Calendar context</span>
-                  <h3>Pull the next meeting into view before the call starts.</h3>
-                  <p>
-                    Connect your calendar so the app begins the conversation with the right context,
-                    not a blank screen.
-                  </p>
-                </div>
-                <img src="/assets/calendar-card.png" alt="Calendar preview" />
-              </div>
+            <article class="price-card price-card--pro reveal">
+              <h3>Pro</h3>
+              <strong>₹1,000 <span>/ month</span></strong>
+              <p>For users who need Cluegent during real work sessions.</p>
+              <ul>
+                <li>500 AI prompts</li>
+                <li>200 screenshots</li>
+                <li>15 hours STT</li>
+              </ul>
+              <a href="mailto:admincluegent@gmail.com?subject=Cluegent%20Pro%20Access">Unlock Pro</a>
             </article>
           </div>
         </section>
 
-        <section class="use-cases section" id="use-cases">
+        <section class="section transcription-section">
+          <div class="transcript-visual reveal">
+            <div class="live-pill">Live transcription</div>
+            <p>“Can you explain how Razorpay subscriptions map back to Firebase users?”</p>
+            <p>“Yes. The backend creates the subscription and stores the provider IDs.”</p>
+            <p>“Then the webhook updates entitlement and usage limits server-side.”</p>
+          </div>
+
+          <div class="transcript-copy reveal">
+            <h2>Realtime transcription that only runs when you need it.</h2>
+            <div class="stat-line">
+              <strong>3</strong>
+              <span>Input modes: transcript, typed prompt, screenshot</span>
+            </div>
+            <div class="stat-line">
+              <strong>15h</strong>
+              <span>STT usage available on the Pro plan</span>
+            </div>
+            <div class="stat-line">
+              <strong>Local</strong>
+              <span>Recent meeting history stays on the user’s machine</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="section faq-section" id="faq">
           <div class="section-heading reveal">
-            <div class="eyebrow">
-              <span>Where it fits</span>
-              <span>High pressure only</span>
-            </div>
-            <h2>Built for conversations where hesitation costs momentum.</h2>
+            <h2>Frequently asked questions</h2>
           </div>
 
-          <div class="use-case-grid">
-            <article class="shell-card reveal">
-              <div class="shell-card__inner use-case">
-                <span class="use-case-index">01</span>
-                <h3>Interviews</h3>
-                <p>Clarify questions, recover when you blank, and turn rough thoughts into clean answers.</p>
-              </div>
-            </article>
-
-            <article class="shell-card reveal">
-              <div class="shell-card__inner use-case">
-                <span class="use-case-index">02</span>
-                <h3>Sales calls</h3>
-                <p>Handle objections, tighten follow-ups, and stay sharp when the conversation turns fast.</p>
-              </div>
-            </article>
-
-            <article class="shell-card reveal">
-              <div class="shell-card__inner use-case">
-                <span class="use-case-index">03</span>
-                <h3>Negotiation</h3>
-                <p>Use tactical scripts in the moment instead of remembering them ten minutes later.</p>
-              </div>
-            </article>
-
-            <article class="shell-card reveal">
-              <div class="shell-card__inner use-case">
-                <span class="use-case-index">04</span>
-                <h3>Support and demos</h3>
-                <p>Answer with context from the conversation and the screen the second it matters.</p>
-              </div>
-            </article>
-          </div>
-        </section>
-
-        <section class="stack section" id="stack">
-          <div class="section-heading reveal">
-            <div class="eyebrow">
-              <span>Current stack</span>
-              <span>Already live</span>
-            </div>
-            <h2>Production direction, not a prototype fantasy.</h2>
-          </div>
-
-          <div class="stack-layout">
-            <article class="shell-card reveal">
-              <div class="shell-card__inner stack-card">
-                <span class="stack-label">Speech to text</span>
-                <h3>AssemblyAI streaming</h3>
-                <p>Realtime transcript for the live rolling bar with Firebase-issued temporary access tokens.</p>
-              </div>
-            </article>
-            <article class="shell-card reveal">
-              <div class="shell-card__inner stack-card">
-                <span class="stack-label">Text answers</span>
-                <h3>DeepSeek primary</h3>
-                <p>Text-only answer path uses DeepSeek first, with Groq ready as a fallback route.</p>
-              </div>
-            </article>
-            <article class="shell-card reveal">
-              <div class="shell-card__inner stack-card">
-                <span class="stack-label">Screenshot answers</span>
-                <h3>Gemini 2.5 Flash-Lite primary</h3>
-                <p>Image-backed prompts route to Gemini first, then fall back to Llama 4 Scout on Groq.</p>
-              </div>
-            </article>
-            <article class="shell-card reveal">
-              <div class="shell-card__inner stack-card">
-                <span class="stack-label">Backend</span>
-                <h3>Firebase Functions + Firestore</h3>
-                <p>Auth, usage limits, secrets, provider selection, and tracking are already cloud-managed.</p>
-              </div>
-            </article>
-          </div>
-        </section>
-
-        <section class="cta-band section">
-          <div class="shell-card reveal cta-card">
-            <div class="shell-card__inner cta-card__inner">
-              <div>
-                <span class="eyebrow eyebrow--single">Cluegent launch</span>
-                <h2>Want the desktop app, pricing updates, and early access?</h2>
-                <p>
-                  We’re turning the current build into a proper SaaS launch flow. Join the list and
-                  we’ll share private access, roadmap updates, and launch notes.
-                </p>
-              </div>
-              <a class="button button-primary" href="mailto:admincluegent@gmail.com?subject=Cluegent%20Access">
-                <span>Email for access</span>
-                <i>↗</i>
-              </a>
-            </div>
-          </div>
-        </section>
-
-        <section class="faq section" id="faq">
-          <div class="section-heading reveal">
-            <div class="eyebrow">
-              <span>FAQ</span>
-              <span>Current state</span>
-            </div>
-            <h2>What’s live right now?</h2>
-          </div>
-
-          <div class="faq-list">
-            <details class="faq-item reveal" open>
-              <summary>Is this a real website now?</summary>
+          <div class="faq-list reveal">
+            <details open>
+              <summary>What is Cluegent?</summary>
               <p>
-                Yes. This Firebase Hosting deployment is now a dedicated static marketing site,
-                separate from the Electron desktop renderer.
+                Cluegent is a desktop AI meeting assistant that listens when you ask it to, keeps
+                rolling context, and gives real-time answers through a private overlay.
               </p>
             </details>
-            <details class="faq-item reveal">
-              <summary>Is the app itself already working?</summary>
+            <details>
+              <summary>Does Cluegent join my meeting?</summary>
               <p>
-                Yes. The desktop app already has Firebase auth, live STT, screenshot-aware answers,
-                and provider fallback logic wired up.
+                No. Cluegent runs as a desktop app. It does not appear as a meeting participant or
+                install a browser extension into the call.
               </p>
             </details>
-            <details class="faq-item reveal">
-              <summary>Are payments live yet?</summary>
+            <details>
+              <summary>Which platforms does it work with?</summary>
               <p>
-                Not yet. The current focus is product polish, website readiness, and production
-                backend stability before payments are added.
+                It is designed for desktop calls and screen workflows, including Google Meet, Zoom,
+                Microsoft Teams, Slack Huddles, browser tabs, coding editors, and documents.
               </p>
             </details>
+            <details>
+              <summary>How is usage tracked?</summary>
+              <p>
+                LLM prompts, screenshot requests, and STT seconds are checked by Firebase backend
+                functions against the user’s current subscription limits.
+              </p>
+            </details>
+            <details>
+              <summary>Is Recent Meetings cloud synced?</summary>
+              <p>
+                Not right now. Recent Meetings are stored locally on the user’s device so they can
+                delete them without affecting backend billing usage records.
+              </p>
+            </details>
+          </div>
+        </section>
+
+        <section class="cta-section">
+          <div class="cta-card reveal">
+            <span class="brand-icon"><img src="/assets/icon.png" alt="" /></span>
+            <h2>AI for meetings that helps during the call, not after.</h2>
+            <p>Try Cluegent on your next meeting and keep the answer one shortcut away.</p>
+            <a class="primary-download" href="mailto:admincluegent@gmail.com?subject=Cluegent%20Access">
+              <span class="windows-glyph"></span>
+              <span>Get Cluegent</span>
+            </a>
           </div>
         </section>
       </main>
 
-      <footer class="footer">
-        <div>
+      <footer class="site-footer">
+        <div class="footer-brand">
+          <span class="brand-icon"><img src="/assets/icon.png" alt="" /></span>
           <strong>Cluegent</strong>
-          <span>Real-time meeting intelligence</span>
+          <p>Live AI meeting assistance for real-time notes, answers, and private desktop context.</p>
         </div>
-        <div class="footer-links">
-          <a href="mailto:admincluegent@gmail.com">Contact</a>
-          <a href="#product">Product</a>
-          <a href="#faq">FAQ</a>
+
+        <div class="footer-grid">
+          <div>
+            <h3>Product</h3>
+            <a href="#features">Features</a>
+            <a href="#preview">Preview</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#faq">FAQ</a>
+          </div>
+          <div>
+            <h3>Resources</h3>
+            <a href="mailto:admincluegent@gmail.com">Support</a>
+            <a href="mailto:admincluegent@gmail.com?subject=Cluegent%20Bug%20Report">Report bug</a>
+            <a href="mailto:admincluegent@gmail.com?subject=Cluegent%20Feedback">Feedback</a>
+            <a href="https://github.com/" target="_blank" rel="noreferrer">Source code</a>
+          </div>
+          <div>
+            <h3>Legal</h3>
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
+            <a href="#">Security</a>
+            <a href="#">License</a>
+          </div>
+          <div>
+            <h3>Company</h3>
+            <a href="mailto:admincluegent@gmail.com">Contact</a>
+            <a href="#pricing">Pro</a>
+            <a href="#">Changelog</a>
+            <a href="#">Donate</a>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <span>© 2026 Cluegent. All rights reserved.</span>
+          <span>Built for Windows and macOS desktop workflows.</span>
         </div>
       </footer>
     </div>
 
-    <script src="/app.js"></script>
+    <script src="/app.js?v=20260503-cluegent-format"></script>
   </body>
 </html>

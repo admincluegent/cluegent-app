@@ -37,5 +37,6 @@ export const DEFAULT_GEMINI_MODEL = GEMINI_MODELS[DEFAULT_GEMINI_MODEL_ID];
 export function getGeminiGenerateContentUrl(
   modelId = DEFAULT_GEMINI_MODEL.id
 ) {
-  return `https://generativelanguage.googleapis.com/${DEFAULT_GEMINI_MODEL.apiVersion}/models/${modelId}:generateContent`;
+  const model = GEMINI_MODELS[modelId as GeminiModelId] || DEFAULT_GEMINI_MODEL;
+  return `https://generativelanguage.googleapis.com/${model.apiVersion}/models/${model.id}:generateContent`;
 }

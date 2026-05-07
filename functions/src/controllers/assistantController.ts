@@ -10,6 +10,7 @@ import { ensureUsageDocuments } from "./usageController.js";
 import {
   buildPlanStatus,
   getUserRefs,
+  isFreeTrialExhausted,
   materializeSubscription,
   materializeUsage,
 } from "../utils/usage.js";
@@ -277,6 +278,13 @@ export async function processAssistantReplyController(
     );
     const planStatus = buildPlanStatus(subscription, usage);
 
+    if (isFreeTrialExhausted(planStatus)) {
+      return assistantFailure(
+        "PROMPT_LIMIT_EXCEEDED",
+        "Free trial limit reached. Subscribe to continue using Cluegent."
+      );
+    }
+
     if (planStatus.remaining.prompts <= 0) {
       return assistantFailure(
         "PROMPT_LIMIT_EXCEEDED",
@@ -434,6 +442,10 @@ export async function processAssistantReplyController(
       );
       const latestPlanStatus = buildPlanStatus(latestSubscription, latestUsage);
 
+      if (isFreeTrialExhausted(latestPlanStatus)) {
+        throw new Error("FREE_TRIAL_LIMIT_EXCEEDED");
+      }
+
       if (latestPlanStatus.remaining.prompts <= 0) {
         throw new Error("PROMPT_LIMIT_EXCEEDED");
       }
@@ -488,6 +500,13 @@ export async function processAssistantReplyController(
       return assistantFailure(
         "PROMPT_LIMIT_EXCEEDED",
         "Monthly prompt limit exceeded for the current plan."
+      );
+    }
+
+    if (error instanceof Error && error.message === "FREE_TRIAL_LIMIT_EXCEEDED") {
+      return assistantFailure(
+        "PROMPT_LIMIT_EXCEEDED",
+        "Free trial limit reached. Subscribe to continue using Cluegent."
       );
     }
 
@@ -594,6 +613,16 @@ export async function processAssistantReplyStreamController(
     );
     const planStatus = buildPlanStatus(subscription, usage);
 
+    if (isFreeTrialExhausted(planStatus)) {
+      sendAssistantHttpFailure(
+        response,
+        429,
+        "PROMPT_LIMIT_EXCEEDED",
+        "Free trial limit reached. Subscribe to continue using Cluegent."
+      );
+      return;
+    }
+
     if (planStatus.remaining.prompts <= 0) {
       sendAssistantHttpFailure(
         response,
@@ -664,6 +693,10 @@ export async function processAssistantReplyStreamController(
       );
       const latestPlanStatus = buildPlanStatus(latestSubscription, latestUsage);
 
+      if (isFreeTrialExhausted(latestPlanStatus)) {
+        throw new Error("FREE_TRIAL_LIMIT_EXCEEDED");
+      }
+
       if (latestPlanStatus.remaining.prompts <= 0) {
         throw new Error("PROMPT_LIMIT_EXCEEDED");
       }
@@ -719,6 +752,16 @@ export async function processAssistantReplyStreamController(
       return;
     }
 
+    if (error instanceof Error && error.message === "FREE_TRIAL_LIMIT_EXCEEDED") {
+      sendAssistantHttpFailure(
+        response,
+        429,
+        "PROMPT_LIMIT_EXCEEDED",
+        "Free trial limit reached. Subscribe to continue using Cluegent."
+      );
+      return;
+    }
+
     if (error instanceof DeepSeekServiceError) {
       sendAssistantHttpFailure(
         response,
@@ -767,6 +810,13 @@ export async function trackSttUsageForAuthenticatedUser(
     );
     const planStatus = buildPlanStatus(subscription, usage);
 
+    if (isFreeTrialExhausted(planStatus)) {
+      return trackUsageFailure(
+        "STT_LIMIT_EXCEEDED",
+        "Free trial limit reached. Subscribe to continue using Cluegent."
+      );
+    }
+
     if (planStatus.remaining.sttSeconds <= 0) {
       return trackUsageFailure(
         "STT_LIMIT_EXCEEDED",
@@ -792,6 +842,10 @@ export async function trackSttUsageForAuthenticatedUser(
         monthKey
       );
       const latestPlanStatus = buildPlanStatus(latestSubscription, latestUsage);
+
+      if (isFreeTrialExhausted(latestPlanStatus)) {
+        throw new Error("FREE_TRIAL_LIMIT_EXCEEDED");
+      }
 
       if (latestPlanStatus.remaining.sttSeconds <= 0) {
         throw new Error("STT_LIMIT_EXCEEDED");
@@ -836,6 +890,13 @@ export async function trackSttUsageForAuthenticatedUser(
       );
     }
 
+    if (error instanceof Error && error.message === "FREE_TRIAL_LIMIT_EXCEEDED") {
+      return trackUsageFailure(
+        "STT_LIMIT_EXCEEDED",
+        "Free trial limit reached. Subscribe to continue using Cluegent."
+      );
+    }
+
     throw error;
   }
 }
@@ -870,6 +931,13 @@ export async function createDeepgramTokenForAuthenticatedUser(
       authUser
     );
     const planStatus = buildPlanStatus(subscription, usage);
+
+    if (isFreeTrialExhausted(planStatus)) {
+      return createTokenFailure(
+        "STT_LIMIT_EXCEEDED",
+        "Free trial limit reached. Subscribe to continue using Cluegent."
+      );
+    }
 
     if (planStatus.remaining.sttSeconds <= 0) {
       return createTokenFailure(

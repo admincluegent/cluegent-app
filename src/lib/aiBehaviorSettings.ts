@@ -3,6 +3,7 @@ export type AiBehaviorMode = 'default' | 'custom';
 
 export interface AiBehaviorScenarioSetting {
     mode: AiBehaviorMode;
+    defaultPrompt?: string;
     customPrompt: string;
 }
 
@@ -22,7 +23,7 @@ export const AI_BEHAVIOR_CUSTOM_LIMIT = 600;
 export const AI_BEHAVIOR_SCENARIOS: AiBehaviorScenarioMeta[] = [
     {
         id: 'rolling',
-        title: 'Rolling STT response',
+        title: 'Listening Response',
         description: 'Used when you ask Cluegent to answer from live transcript audio.',
         defaultBullets: [
             'Answer the latest clear question from the rolling transcript.',
@@ -47,18 +48,18 @@ export const AI_BEHAVIOR_SCENARIOS: AiBehaviorScenarioMeta[] = [
         title: 'Screenshot response',
         description: 'Used when a screenshot is attached to the request.',
         defaultBullets: [
-            'Describe what is on screen and infer what the user is trying to do.',
-            'If there is a code error, name the error, cause, and exact fix.',
-            'For coding screens, questions, or debugging, provide the solution first, then brief reasoning.',
+            'Answer visible questions directly.',
+            'Solve visible coding tasks or errors with reasoning, code/fix, and complexity when useful.',
+            'Use rolling transcript as the prompt or method for the screenshot. If unrelated, answer both.',
         ],
-        placeholder: 'Example: Start with the likely issue, then give the fix. Keep visual descriptions brief unless needed.',
+        placeholder: 'Example: If the screen asks "what is React Native?", answer it directly. If transcript adds a method, use that method in the solution.',
     },
 ];
 
 export const createDefaultAiBehaviorSettings = (): AiBehaviorSettings => ({
-    rolling: { mode: 'default', customPrompt: '' },
-    typed: { mode: 'default', customPrompt: '' },
-    screenshot: { mode: 'default', customPrompt: '' },
+    rolling: { mode: 'default', defaultPrompt: '', customPrompt: '' },
+    typed: { mode: 'default', defaultPrompt: '', customPrompt: '' },
+    screenshot: { mode: 'default', defaultPrompt: '', customPrompt: '' },
 });
 
 export const compactAiBehaviorText = (value: string): string => {
@@ -82,6 +83,7 @@ export const getAiBehaviorSettings = (): AiBehaviorSettings => {
             const item = parsed[scenario.id];
             acc[scenario.id] = {
                 mode: item?.mode === 'custom' ? 'custom' : 'default',
+                defaultPrompt: compactAiBehaviorText(item?.defaultPrompt ?? ''),
                 customPrompt: compactAiBehaviorText(item?.customPrompt ?? ''),
             };
             return acc;
@@ -105,9 +107,10 @@ export const buildAiBehaviorInstruction = (scenario: AiBehaviorScenario): string
     const settings = getAiBehaviorSettings();
     const selected = settings[scenario];
     const customPrompt = compactAiBehaviorText(selected?.customPrompt ?? '');
+    const defaultPrompt = compactAiBehaviorText(selected?.defaultPrompt ?? '');
     const behavior = selected?.mode === 'custom' && customPrompt
         ? customPrompt
-        : getDefaultBehaviorPrompt(scenario);
+        : defaultPrompt || getDefaultBehaviorPrompt(scenario);
 
     return `AI behavior for this request: ${behavior}`;
 };

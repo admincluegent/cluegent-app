@@ -364,9 +364,16 @@ export class WindowHelper {
         if (this.overlayWindow?.isVisible()) {
           e.preventDefault();
           if (this.appState.getIsMeetingActive()) {
-            // Meeting running — just hide the overlay; user can resume from the
-            // launcher's "Meeting ongoing" button which calls setWindowMode('overlay').
-            this.hideOverlay();
+            // Closing the overlay is an explicit end action. Keep Hide as the
+            // lightweight collapse/resume path, but make close match the stop button
+            // so the launcher does not remain stuck on "Meeting ongoing".
+            void this.appState.endMeeting()
+              .catch((error) => {
+                console.error("[WindowHelper] Failed to end meeting from overlay close:", error);
+              })
+              .finally(() => {
+                this.switchToLauncher();
+              });
           } else {
             this.switchToLauncher();
           }

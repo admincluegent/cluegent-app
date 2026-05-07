@@ -20,10 +20,18 @@ import { promisify } from 'util';
 import axios from 'axios';
 import { createProviderRateLimiters, RateLimiter } from './services/RateLimiter';
 const execAsync = promisify(exec);
+const FIREBASE_FUNCTIONS_BASE_URL =
+  process.env.FIREBASE_FUNCTIONS_BASE_URL ||
+  "https://us-central1-cluegent-2514d.cloudfunctions.net";
 const FIREBASE_PROCESS_ASSISTANT_REPLY_ENDPOINT =
-  "https://us-central1-cluegent-2514d.cloudfunctions.net/processAssistantReply";
+  process.env.FIREBASE_PROCESS_ASSISTANT_REPLY_ENDPOINT ||
+  `${FIREBASE_FUNCTIONS_BASE_URL}/processAssistantReply`;
 const FIREBASE_PROCESS_ASSISTANT_REPLY_STREAM_ENDPOINT =
-  "https://us-central1-cluegent-2514d.cloudfunctions.net/processAssistantReplyStream";
+  process.env.FIREBASE_PROCESS_ASSISTANT_REPLY_STREAM_ENDPOINT ||
+  `${FIREBASE_FUNCTIONS_BASE_URL}/processAssistantReplyStream`;
+const FIREBASE_SCREENSHOT_RAW_LIMIT_BYTES = 4 * 1024 * 1024;
+const FIREBASE_SCREENSHOT_MAX_DIMENSION = 2400;
+const FIREBASE_SCREENSHOT_JPEG_QUALITY = 92;
 
 interface OllamaResponse {
   response: string
@@ -263,9 +271,67 @@ export class LLMHelper {
     }
   }
 
+  private getMimeTypeFromImageFormat(format?: string): string {
+    switch (format) {
+      case "jpeg":
+      case "jpg":
+        return "image/jpeg";
+      case "webp":
+        return "image/webp";
+      case "png":
+      default:
+        return "image/png";
+    }
+  }
+
   private async encodeImageForFirebase(imagePath: string): Promise<string> {
     const imageData = await fs.promises.readFile(imagePath);
-    return imageData.toString("base64");
+
+    try {
+      const image = sharp(imageData, { failOn: "none" });
+      const metadata = await image.metadata();
+      const width = metadata.width || 0;
+      const height = metadata.height || 0;
+      const maxDimension = Math.max(width, height);
+      const mimeType = this.getMimeTypeFromImageFormat(metadata.format);
+      const canSendRaw =
+        imageData.length <= FIREBASE_SCREENSHOT_RAW_LIMIT_BYTES &&
+        maxDimension <= FIREBASE_SCREENSHOT_MAX_DIMENSION;
+
+      if (canSendRaw) {
+        return `data:${mimeType};base64,${imageData.toString("base64")}`;
+      }
+
+      const optimized = await sharp(imageData, { failOn: "none" })
+        .resize({
+          width: FIREBASE_SCREENSHOT_MAX_DIMENSION,
+          height: FIREBASE_SCREENSHOT_MAX_DIMENSION,
+          fit: "inside",
+          withoutEnlargement: true,
+        })
+        .jpeg({
+          quality: FIREBASE_SCREENSHOT_JPEG_QUALITY,
+          chromaSubsampling: "4:4:4",
+          mozjpeg: true,
+        })
+        .toBuffer();
+
+      console.log("[LLMHelper] Optimized screenshot for Firebase Gemini request", {
+        originalBytes: imageData.length,
+        optimizedBytes: optimized.length,
+        originalSize: width && height ? `${width}x${height}` : "unknown",
+        maxDimension: FIREBASE_SCREENSHOT_MAX_DIMENSION,
+        quality: FIREBASE_SCREENSHOT_JPEG_QUALITY,
+      });
+
+      return `data:image/jpeg;base64,${optimized.toString("base64")}`;
+    } catch (error: any) {
+      console.warn(
+        "[LLMHelper] Screenshot optimization failed, sending original image:",
+        error?.message || error
+      );
+      return `data:image/png;base64,${imageData.toString("base64")}`;
+    }
   }
 
   private async generateWithFirebaseGeminiRequest(

@@ -90,7 +90,7 @@ interface NativelyInterfaceProps {
 
 const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, overlayOpacity = OVERLAY_OPACITY_DEFAULT }) => {
     const isLightTheme = useResolvedTheme() === 'light';
-    const { planStatus } = useAuth();
+    const { planStatus, refreshProfile, isSyncing } = useAuth();
     const [isExpanded, setIsExpanded] = useState(true);
     const [inputValue, setInputValue] = useState('');
     const { shortcuts, isShortcutPressed } = useShortcuts();
@@ -124,6 +124,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     const localMeetingIdRef = useRef<string | null>(getCurrentLocalMeetingId());
     const isFreePlanExhausted = planStatus?.plan === 'free' && (
         (planStatus.remaining.prompts ?? 0) <= 0 ||
+        (planStatus.remaining.screenshots ?? 0) <= 0 ||
         (planStatus.remaining.sttSeconds ?? 0) <= 0
     );
     const listeningDuration = `${Math.floor(listeningSeconds / 60).toString().padStart(2, '0')}:${(listeningSeconds % 60).toString().padStart(2, '0')}`;
@@ -140,8 +141,13 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         return () => window.removeEventListener('storage', handleStorage);
     }, []);
 
+    useEffect(() => {
+        void refreshProfile();
+    }, [refreshProfile]);
+
     const [rollingTranscript, setRollingTranscript] = useState('');  // For interviewer rolling text bar
     const [isInterviewerSpeaking, setIsInterviewerSpeaking] = useState(false);  // Track if actively speaking
+    const rollingTranscriptRef = useRef('');
     const finalizedRollingTranscriptRef = useRef('');  // Stores only committed interviewer turns
     const [voiceInput, setVoiceInput] = useState('');  // Accumulated user voice input
     const voiceInputRef = useRef<string>('');  // Ref for capturing in async handlers
@@ -379,6 +385,10 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
     // Build conversation context from messages
     useEffect(() => {
+        rollingTranscriptRef.current = rollingTranscript;
+    }, [rollingTranscript]);
+
+    useEffect(() => {
         const context = messages
             .filter(m => m.role !== 'user' || !m.hasScreenshot)
             .map(m => `${m.role === 'interviewer' ? 'Interviewer' : m.role === 'user' ? 'User' : 'Assistant'}: ${m.text}`)
@@ -389,7 +399,12 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
     const buildLiveCopilotContext = (extraInstructions?: string) => {
         const contextBlocks: string[] = [];
-        const liveTranscript = rollingTranscript.trim().slice(-2500);
+        const liveTranscript = (
+            rollingTranscriptRef.current
+            || rollingTranscript
+            || finalizedRollingTranscriptRef.current
+            || ''
+        ).trim().slice(-2500);
         const chatContext = conversationContext.trim();
 
         if (liveTranscript) {
@@ -415,6 +430,62 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             .map(instruction => instruction?.trim())
             .filter(Boolean)
             .join('\n');
+
+    type AiSubmitFlow = 'typed' | 'rolling-stt' | 'screenshot' | 'rolling-stt+screenshot';
+
+    const getLatestRollingTranscript = () => (
+        rollingTranscriptRef.current
+        || rollingTranscript
+        || finalizedRollingTranscriptRef.current
+        || ''
+    ).trim();
+
+    const getAiSubmitFlow = (hasScreenshot: boolean, hasTypedPrompt: boolean, hasRollingTranscript: boolean): AiSubmitFlow => {
+        if (hasScreenshot && hasRollingTranscript) return 'rolling-stt+screenshot';
+        if (hasScreenshot) return 'screenshot';
+        if (hasRollingTranscript && !hasTypedPrompt) return 'rolling-stt';
+        return 'typed';
+    };
+
+    const previewDebugText = (text: string, limit = 220) => {
+        const compact = text.replace(/\s+/g, ' ').trim();
+        return compact.length > limit ? `${compact.slice(0, limit)}...` : compact;
+    };
+
+    const debugAiSubmitFlow = (
+        flow: AiSubmitFlow,
+        details: {
+            typedPrompt?: string;
+            rollingTranscript?: string;
+            effectivePrompt?: string;
+            attachmentCount?: number;
+            context?: string;
+            modelRoute?: string;
+        }
+    ) => {
+        const enabled = import.meta.env.DEV || localStorage.getItem('cluegent_ai_debug') === 'true';
+        if (!enabled) return;
+
+        console.groupCollapsed(`[Cluegent AI] ${flow}`);
+        console.info({
+            modelRoute: details.modelRoute,
+            attachmentCount: details.attachmentCount ?? 0,
+            hasTypedPrompt: Boolean(details.typedPrompt?.trim()),
+            hasRollingTranscript: Boolean(details.rollingTranscript?.trim()),
+            effectivePromptLength: details.effectivePrompt?.length ?? 0,
+            contextLength: details.context?.length ?? 0,
+        });
+        if (details.typedPrompt?.trim()) {
+            console.info('typedPrompt:', previewDebugText(details.typedPrompt));
+        }
+        if (details.rollingTranscript?.trim()) {
+            console.info('rollingTranscript:', previewDebugText(details.rollingTranscript));
+        }
+        if (details.effectivePrompt?.trim()) {
+            console.info('effectivePrompt:', previewDebugText(details.effectivePrompt, 500));
+        }
+        console.groupEnd();
+    };
 
     // Listen for settings window visibility changes
     useEffect(() => {
@@ -572,7 +643,14 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                     ? `${committed}  ·  ${nextText}`
                     : nextText;
                 finalizedRollingTranscriptRef.current = nextTranscript;
+                rollingTranscriptRef.current = nextTranscript;
                 setRollingTranscript(nextTranscript);
+                const normalizedTranscript = committed
+                    ? `${committed}  |  ${nextText}`
+                    : nextText;
+                finalizedRollingTranscriptRef.current = normalizedTranscript;
+                rollingTranscriptRef.current = normalizedTranscript;
+                setRollingTranscript(normalizedTranscript);
                 try {
                     appendLocalMeetingEvent({
                         type: 'transcript',
@@ -588,11 +666,21 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                 return;
             }
 
+            const liveTranscript = committed && nextText
+                ? `${committed}  |  ${nextText}`
+                : nextText || committed;
+            rollingTranscriptRef.current = liveTranscript;
+            setRollingTranscript(liveTranscript);
+            return;
+
             setRollingTranscript(
                 committed && nextText
                     ? `${committed}  ·  ${nextText}`
                     : nextText || committed
             );
+            rollingTranscriptRef.current = committed && nextText
+                ? `${committed}  Â·  ${nextText}`
+                : nextText || committed;
             return;
 
             if (transcript.final) {
@@ -970,14 +1058,40 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         }
 
         try {
+            const screenshotInstruction = currentAttachments.length > 0
+                ? [
+                    'The screenshot is not just visual context. Read any visible text, question, instruction, code, or error first.',
+                    'If a question is visible in the screenshot, answer it directly. Do not describe the editor/window unless that helps the answer.',
+                    'If the screenshot shows a coding problem, partial code, or error, solve/debug it directly with reasoning, code/fix, and complexity when relevant.',
+                    'If rolling transcript text is provided, answering it is required. If it relates to the screenshot, combine them; if it is unrelated, answer both separately.',
+                ].join('\n')
+                : '';
+            const liveTranscriptForScreenshot = getLatestRollingTranscript() || undefined;
+            const flow = getAiSubmitFlow(
+                currentAttachments.length > 0,
+                false,
+                Boolean(liveTranscriptForScreenshot)
+            );
+            const whatToSayInstructions = combineInstructions(
+                buildAiBehaviorInstruction(currentAttachments.length > 0 ? 'screenshot' : 'rolling'),
+                screenshotInstruction,
+                buildQuickActionInstruction('whatToAnswer')
+            );
+            debugAiSubmitFlow(flow, {
+                rollingTranscript: liveTranscriptForScreenshot,
+                effectivePrompt: liveTranscriptForScreenshot || 'What should I answer?',
+                attachmentCount: currentAttachments.length,
+                context: whatToSayInstructions,
+                modelRoute: currentAttachments.length > 0
+                    ? 'Gemini gemini-2.5-flash-lite via Firebase screenshot route'
+                    : 'DeepSeek deepseek-v4-flash via Firebase text route',
+            });
+
             // Pass imagePath if attached
             await window.electronAPI.generateWhatToSay(
-                undefined,
+                currentAttachments.length > 0 ? liveTranscriptForScreenshot : undefined,
                 currentAttachments.length > 0 ? currentAttachments.map(s => s.path) : undefined,
-                combineInstructions(
-                    buildAiBehaviorInstruction(currentAttachments.length > 0 ? 'screenshot' : 'rolling'),
-                    buildQuickActionInstruction('whatToAnswer')
-                )
+                whatToSayInstructions
             );
         } catch (err) {
             setMessages(prev => [...prev, {
@@ -1047,14 +1161,29 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                 extraBehavior ? `Additional quick-action behavior: ${extraBehavior}` : '',
                 'Answer using the most recent relevant context from the rolling transcript and chat history.',
                 'If this is a follow-up like "give example", "explain more", or "make it shorter", apply it to the latest user question and assistant answer.',
-                currentAttachments.length > 0 ? 'Use the attached screenshot as visual context.' : '',
+                currentAttachments.length > 0 ? 'Read visible screenshot text first. If it contains a question, instruction, coding problem, code task, or error, answer/solve/debug it directly. Combine related rolling transcript context with the screenshot; if unrelated, answer both. Do not say no errors are visible unless asked.' : '',
             ].filter(Boolean).join('\n');
 
             requestStartTimeRef.current = Date.now();
+            const rollingPrompt = getLatestRollingTranscript();
+            const requestContext = buildLiveCopilotContext(combineInstructions(scenarioBehavior, quickActionPrompt));
+            debugAiSubmitFlow(
+                getAiSubmitFlow(currentAttachments.length > 0, true, Boolean(rollingPrompt)),
+                {
+                    typedPrompt: promptText,
+                    rollingTranscript: rollingPrompt,
+                    effectivePrompt: promptText,
+                    attachmentCount: currentAttachments.length,
+                    context: requestContext,
+                    modelRoute: currentAttachments.length > 0
+                        ? 'Gemini gemini-2.5-flash-lite via Firebase screenshot route'
+                        : 'DeepSeek deepseek-v4-flash via Firebase text route',
+                }
+            );
             await window.electronAPI.streamGeminiChat(
                 promptText,
                 currentAttachments.length > 0 ? currentAttachments.map(s => s.path) : undefined,
-                buildLiveCopilotContext(combineInstructions(scenarioBehavior, quickActionPrompt)),
+                requestContext,
                 { skipSystemPrompt: true, ignoreKnowledgeMode: true }
             );
         } catch (err) {
@@ -1564,13 +1693,17 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
                 if (currentAttachments.length > 0) {
                     // Image + Voice Context
-                    prompt = `You are a helper. The user has provided a screenshot and a spoken question/command.
+                    prompt = `You are a technical copilot. The user has provided a screenshot and a spoken question/command.
 User said: "${question}"
 
 Instructions:
-1. Analyze the screenshot in the context of what the user said.
-2. Provide a direct, helpful answer.
-3. Be concise but complete.
+1. If the screenshot contains a visible question or prompt, answer that question directly.
+2. If the screenshot shows a coding problem, algorithm prompt, LeetCode-style task, compiler/runtime error, or partially written code, solve/debug it directly.
+3. For coding problems: give the approach, working code in the detected language, and time/space complexity.
+4. Combine the screenshot with live audio context when both are present. If the transcript suggests a method/constraint, use it in the solution.
+5. If screenshot and live audio are unrelated, answer both separately.
+6. Never say "there are no errors/issues visible" unless the user specifically asks for debugging or error checking.
+7. Only describe the screen when there is no visible question, task, code problem, or error to answer.
 
 ${buildLiveCopilotContext(scenarioBehavior)}`;
                 } else {
@@ -1649,10 +1782,44 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
     };
 
     const handleManualSubmit = async () => {
-        if (!inputValue.trim() && attachedContext.length === 0) return;
+        const rollingPrompt = getLatestRollingTranscript();
+        const pending = pendingCaptureRef.current;
+        let currentAttachments = attachedContext;
+        if (pending && !currentAttachments.some(s => s.path === pending.path)) {
+            currentAttachments = [...currentAttachments, pending].slice(-5);
+        }
+        if (!inputValue.trim() && currentAttachments.length === 0 && !rollingPrompt) return;
 
-        const userText = inputValue;
-        const currentAttachments = attachedContext;
+        const userText = inputValue.trim();
+        const hasScreenshot = currentAttachments.length > 0;
+        const effectivePrompt = hasScreenshot
+            ? [
+                'You are answering one combined screenshot request.',
+                rollingPrompt
+                    ? [
+                        'MANDATORY OUTPUT FORMAT:',
+                        '1. Rolling Transcript Answer',
+                        '2. Screenshot Answer',
+                        'If both are about the same topic, still include both sections and connect them into one useful answer.',
+                        'If they are different topics, answer both separately. Do not skip the rolling transcript.',
+                        'The answer is incomplete if it only answers the screenshot.',
+                    ].join('\n')
+                    : [
+                        'MANDATORY OUTPUT FORMAT:',
+                        'Screenshot Answer',
+                    ].join('\n'),
+                userText ? `Typed prompt from user:\n${userText}` : '',
+                rollingPrompt ? `Rolling transcript to answer:\n${rollingPrompt}` : '',
+                [
+                    'Screenshot to answer:',
+                    'Read the attached screenshot. If it contains a visible question, answer it directly.',
+                    'If it shows a coding problem, partial code, or error, solve/debug it with reasoning and code when useful.',
+                ].join('\n'),
+            ].filter(Boolean).join('\n\n')
+            : (userText || rollingPrompt);
+        const visiblePromptText = userText
+            || rollingPrompt
+            || (currentAttachments.length > 0 ? '' : effectivePrompt);
 
         // Clear inputs immediately
         setInputValue('');
@@ -1660,13 +1827,13 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
 
         appendLocalMeetingEvent({
             type: 'prompt',
-            text: userText || (currentAttachments.length > 0 ? 'Screenshot attached' : ''),
+            text: effectivePrompt || (currentAttachments.length > 0 ? 'Screenshot attached' : ''),
             hasScreenshot: currentAttachments.length > 0,
         }, localMeetingIdRef.current);
         setMessages(prev => [...prev, {
             id: Date.now().toString(),
             role: 'user',
-            text: userText,
+            text: visiblePromptText,
             hasScreenshot: currentAttachments.length > 0,
             screenshotPreview: currentAttachments[0]?.preview
         }]);
@@ -1690,8 +1857,8 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
 
         try {
             // JIT RAG pre-flight: try to use indexed meeting context first
-            if (currentAttachments.length === 0 && shouldQueryLiveRag(userText || '')) {
-                const ragResult = await window.electronAPI.ragQueryLive?.(userText || '');
+            if (currentAttachments.length === 0 && shouldQueryLiveRag(effectivePrompt)) {
+                const ragResult = await window.electronAPI.ragQueryLive?.(effectivePrompt);
                 if (ragResult?.success) {
                     // JIT RAG handled it — response streamed via rag:stream-chunk events
                     return;
@@ -1700,14 +1867,35 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
 
             // Pass imagePath if attached, AND conversation context
             requestStartTimeRef.current = Date.now();
-            const scenarioBehavior = buildAiBehaviorInstruction(currentAttachments.length > 0 ? 'screenshot' : 'typed');
-            const screenshotInstruction = currentAttachments.length > 0
-                ? 'Use the attached screenshot with the latest user request.'
+            const scenarioBehavior = buildAiBehaviorInstruction(hasScreenshot ? 'screenshot' : 'typed');
+            const screenshotInstruction = hasScreenshot
+                ? [
+                    'Follow the mandatory output format from the user message.',
+                    'When a rolling transcript is included, answer it even if the screenshot has a separate question.',
+                    'Use the screenshot model vision for image understanding, but treat the rolling transcript as an equal request.',
+                    'For coding problems, include approach, working code, and time/space complexity when enough details are visible.',
+                ].join('\n')
                 : '';
+            const requestContext = hasScreenshot
+                ? [scenarioBehavior, screenshotInstruction].filter(Boolean).join('\n')
+                : buildLiveCopilotContext([scenarioBehavior, screenshotInstruction].filter(Boolean).join('\n'));
+            debugAiSubmitFlow(
+                getAiSubmitFlow(hasScreenshot, Boolean(userText), Boolean(rollingPrompt)),
+                {
+                    typedPrompt: userText,
+                    rollingTranscript: rollingPrompt,
+                    effectivePrompt,
+                    attachmentCount: currentAttachments.length,
+                    context: requestContext,
+                    modelRoute: hasScreenshot
+                        ? 'Gemini gemini-2.5-flash-lite via Firebase screenshot route'
+                        : 'DeepSeek deepseek-v4-flash via Firebase text route',
+                }
+            );
             await window.electronAPI.streamGeminiChat(
-                userText || 'Analyze this screenshot',
-                currentAttachments.length > 0 ? currentAttachments.map(s => s.path) : undefined,
-                buildLiveCopilotContext([scenarioBehavior, screenshotInstruction].filter(Boolean).join('\n')),
+                effectivePrompt,
+                hasScreenshot ? currentAttachments.map(s => s.path) : undefined,
+                requestContext,
                 { skipSystemPrompt: true, ignoreKnowledgeMode: true }
             );
         } catch (err) {
@@ -2426,6 +2614,11 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                 return;
             }
 
+            if (isFreePlanExhausted || (planStatus?.remaining.sttSeconds ?? 0) <= 0) {
+                await window.electronAPI?.openSettingsTab?.('natively-api');
+                return;
+            }
+
             clearRollingTranscript();
             setIsListening(true);
             isListeningRef.current = true;
@@ -2455,6 +2648,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
     const clearRollingTranscript = () => {
         setRollingTranscript('');
         setIsInterviewerSpeaking(false);
+        rollingTranscriptRef.current = '';
         finalizedRollingTranscriptRef.current = '';
     };
 
@@ -2672,7 +2866,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                 </div>
                             )}
 
-                            {isFreePlanExhausted && (
+                            {isFreePlanExhausted && !isSyncing && (
                                 <div className="mx-4 mb-2 rounded-[16px] border border-violet-500/20 bg-violet-500/10 px-4 py-3 no-drag">
                                     <div className="flex items-center justify-between gap-3">
                                         <div>
@@ -2680,7 +2874,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                                 Free Plan Limit Reached
                                             </p>
                                             <p className="mt-1 text-[12px] leading-5 text-violet-100/85">
-                                                Your free plan includes 3 LLM responses and 1 minute of STT. Subscribe to Pro to keep using Cluegent.
+                                                Your free trial includes 30 min listening, 200 AI requests, and 20 screenshot analyses. Subscribe to Pro to keep using Cluegent.
                                             </p>
                                         </div>
                                         <button

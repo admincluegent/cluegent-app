@@ -4,11 +4,13 @@ import type { BillingInterval } from "../utils/usage.js";
 
 const RAZORPAY_API_BASE_URL = "https://api.razorpay.com/v1";
 
-export type PaidPlanId = Extract<PlanId, "pro">;
+export type PaidPlanId = Extract<PlanId, "pro" | "power">;
 
 export interface RazorpayTestPlanConfig {
   proMonthly: string;
   proYearly: string;
+  powerMonthly: string;
+  powerYearly: string;
 }
 
 export interface CreateRazorpaySubscriptionInput {
@@ -56,7 +58,19 @@ export function resolveRazorpayPlanId(
     return plans.proMonthly;
   }
 
-  return plans.proYearly;
+  if (planId === "pro" && interval === "year") {
+    return plans.proYearly;
+  }
+
+  if (planId === "power" && interval === "month") {
+    return plans.powerMonthly;
+  }
+
+  if (planId === "power" && interval === "year") {
+    return plans.powerYearly;
+  }
+
+  return "";
 }
 
 export function resolvePlanFromRazorpayPlanId(
@@ -69,6 +83,14 @@ export function resolvePlanFromRazorpayPlanId(
 
   if (planId === plans.proYearly) {
     return { planId: "pro", interval: "year" };
+  }
+
+  if (planId === plans.powerMonthly) {
+    return { planId: "power", interval: "month" };
+  }
+
+  if (planId === plans.powerYearly) {
+    return { planId: "power", interval: "year" };
   }
 
   return null;
@@ -140,6 +162,43 @@ export async function fetchRazorpayTestSubscription(input: {
   if (!response.ok) {
     throw new Error(
       `Razorpay test subscription fetch failed with status ${response.status}: ${
+        payload.error?.description ?? JSON.stringify(payload)
+      }`
+    );
+  }
+
+  return payload;
+}
+
+export async function cancelRazorpayTestSubscription(input: {
+  keyId: string;
+  keySecret: string;
+  subscriptionId: string;
+  cancelAtCycleEnd?: boolean;
+}) {
+  const response = await fetch(
+    `${RAZORPAY_API_BASE_URL}/subscriptions/${encodeURIComponent(
+      input.subscriptionId
+    )}/cancel`,
+    {
+      method: "POST",
+      headers: {
+        authorization: buildBasicAuthHeader(input.keyId, input.keySecret),
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        cancel_at_cycle_end: input.cancelAtCycleEnd ?? false,
+      }),
+    }
+  );
+
+  const payload = (await response.json().catch(() => ({}))) as RazorpaySubscriptionEntity & {
+    error?: { description?: string };
+  };
+
+  if (!response.ok) {
+    throw new Error(
+      `Razorpay test subscription cancellation failed with status ${response.status}: ${
         payload.error?.description ?? JSON.stringify(payload)
       }`
     );

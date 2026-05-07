@@ -20,23 +20,23 @@ export const PLAN_CONFIGS: Record<PlanId, PlanConfig> = {
   free: {
     id: "free",
     label: "Free",
-    sttSecondsLimit: 60,
-    promptLimit: 3,
-    screenshotLimit: 3,
+    sttSecondsLimit: 1800,
+    promptLimit: 200,
+    screenshotLimit: 20,
   },
   pro: {
     id: "pro",
     label: "Pro",
-    sttSecondsLimit: 54000,
-    promptLimit: 500,
-    screenshotLimit: 200,
+    sttSecondsLimit: 72000,
+    promptLimit: 5000,
+    screenshotLimit: 500,
   },
   power: {
     id: "power",
     label: "Power",
     sttSecondsLimit: 144000,
-    promptLimit: 1500,
-    screenshotLimit: 600,
+    promptLimit: 10000,
+    screenshotLimit: 1000,
   },
 };
 

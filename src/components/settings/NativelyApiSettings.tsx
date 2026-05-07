@@ -2,14 +2,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   CheckCircle2,
-  ExternalLink,
+  Check,
   Loader2,
-  RotateCcw,
   Sparkles,
 } from "lucide-react";
 import {
   createRazorpayTestSubscription,
-  resetTestSubscription,
   verifyRazorpayTestPayment,
 } from "@/services/backendApi";
 import { useAuth } from "@/contexts/auth.context";
@@ -58,6 +56,9 @@ type CheckoutCard = {
   name: string;
   accent: "sky" | "violet";
   eyebrow: string;
+  price: string;
+  priceSuffix: string;
+  savings?: string;
   tagline: string;
   sttSecondsLimit: number;
   promptLimit: number;
@@ -71,15 +72,20 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
     interval: "month",
     name: "Pro",
     accent: "sky",
-    eyebrow: "Recommended",
-    tagline: "For regular interview prep, active practice, and weekly sessions.",
-    sttSecondsLimit: 54000,
-    promptLimit: 500,
-    screenshotLimit: 200,
+    eyebrow: "Pro",
+    price: "$39",
+    priceSuffix: "/month",
+    tagline: "For regular meetings, coding interviews, and real-time assistant support.",
+    sttSecondsLimit: 72000,
+    promptLimit: 5000,
+    screenshotLimit: 500,
     highlights: [
-      "Good fit for repeat personal use",
-      "Keeps the same core assistant flow unlocked",
-      "Monthly sandbox subscription path",
+      "Undetectability - Cluegent stays invisible during screen sharing",
+      "20 hours listening",
+      "5,000 AI requests",
+      "500 screenshot analyses",
+      "Real-time assistant",
+      "Coding + meeting support",
     ],
   },
   {
@@ -87,15 +93,21 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
     interval: "year",
     name: "Pro",
     accent: "sky",
-    eyebrow: "Recommended",
-    tagline: "Same Cluegent Pro quota with a yearly billing test path.",
-    sttSecondsLimit: 54000,
-    promptLimit: 500,
-    screenshotLimit: 200,
+    eyebrow: "Pro",
+    price: "$349",
+    priceSuffix: "/year",
+    savings: "Save $119",
+    tagline: "Annual Pro access with the same core assistant limits at a lower yearly price.",
+    sttSecondsLimit: 72000,
+    promptLimit: 5000,
+    screenshotLimit: 500,
     highlights: [
-      "Same quota as monthly Pro",
-      "Useful for annual entitlement testing",
-      "Yearly sandbox subscription path",
+      "Undetectability - Cluegent stays invisible during screen sharing",
+      "20 hours/month listening",
+      "5,000 AI requests/month",
+      "500 screenshot analyses/month",
+      "Real-time assistant",
+      "Coding + meeting support",
     ],
   },
   {
@@ -103,15 +115,20 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
     interval: "month",
     name: "Power",
     accent: "violet",
-    eyebrow: "Heavy usage",
-    tagline: "For longer sessions, more prompts, and heavier transcript volume.",
+    eyebrow: "Most Popular",
+    price: "$69",
+    priceSuffix: "/month",
+    tagline: "For heavy users who need more assistant capacity and faster responses.",
     sttSecondsLimit: 144000,
-    promptLimit: 1500,
-    screenshotLimit: 600,
+    promptLimit: 10000,
+    screenshotLimit: 1000,
     highlights: [
-      "Best for frequent daily usage",
-      "Higher prompt and screenshot room",
-      "Monthly sandbox subscription path",
+      "Undetectability - Cluegent stays invisible during screen sharing",
+      "40 hours listening",
+      "10,000 AI requests",
+      "1,000 screenshot analyses",
+      "Faster responses",
+      "Priority processing",
     ],
   },
   {
@@ -119,15 +136,21 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
     interval: "year",
     name: "Power",
     accent: "violet",
-    eyebrow: "Heavy usage",
-    tagline: "Highest quota path with yearly billing for internal launch testing.",
+    eyebrow: "Most Popular",
+    price: "$649",
+    priceSuffix: "/year",
+    savings: "Save $179",
+    tagline: "Annual Power access for high-volume meetings, coding support, and screenshots.",
     sttSecondsLimit: 144000,
-    promptLimit: 1500,
-    screenshotLimit: 600,
+    promptLimit: 10000,
+    screenshotLimit: 1000,
     highlights: [
-      "Same quota as monthly Power",
-      "Useful for annual billing coverage",
-      "Yearly sandbox subscription path",
+      "Undetectability - Cluegent stays invisible during screen sharing",
+      "40 hours/month listening",
+      "10,000 AI requests/month",
+      "1,000 screenshot analyses/month",
+      "Faster responses",
+      "Priority processing",
     ],
   },
 ];
@@ -135,15 +158,16 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
 const FREE_PLAN_CARD = {
   id: "free" as const,
   name: "Free",
-  eyebrow: "Try the product",
-  tagline: "A small trial to prove the flow before the user upgrades.",
-  sttSecondsLimit: 60,
-  promptLimit: 3,
-  screenshotLimit: 3,
+  eyebrow: "Free Trial",
+  tagline: "Limited usage.",
+  sttSecondsLimit: 1800,
+  promptLimit: 200,
+  screenshotLimit: 20,
   highlights: [
-    "Three LLM responses",
-    "One minute of rolling STT",
-    "Enough to test the core Cluegent loop",
+    "30 min listening",
+    "200 AI requests",
+    "20 screenshot analyses",
+    "Limited usage",
   ],
 };
 
@@ -173,22 +197,24 @@ function getAccentClasses(accent: CheckoutCard["accent"]) {
     return {
       border: "border-sky-400/30",
       badge:
-        "border-sky-400/25 bg-sky-400/[0.12] text-sky-200 shadow-[0_18px_55px_-35px_rgba(56,189,248,0.9)]",
+        "border-white/25 bg-white/[0.18] text-white shadow-[0_18px_55px_-35px_rgba(255,255,255,0.9)]",
       button:
-        "border border-sky-400/20 bg-sky-400 text-slate-950 shadow-[0_18px_45px_-24px_rgba(56,189,248,0.9)] hover:bg-sky-300",
-      glow: "from-sky-400/[0.14] via-sky-400/[0.05] to-transparent",
-      bullet: "bg-sky-300",
+        "border border-white/25 bg-white text-slate-950 shadow-[0_18px_45px_-24px_rgba(255,255,255,0.9)] hover:bg-white/90",
+      card: "bg-gradient-to-br from-amber-300 via-orange-500 to-red-600",
+      glow: "from-white/[0.24] via-white/[0.08] to-transparent",
+      bullet: "text-emerald-300",
     };
   }
 
   return {
     border: "border-violet-400/30",
     badge:
-      "border-violet-400/25 bg-violet-400/[0.12] text-violet-200 shadow-[0_18px_55px_-35px_rgba(167,139,250,0.9)]",
+      "border-white/25 bg-white/[0.18] text-white shadow-[0_18px_55px_-35px_rgba(255,255,255,0.9)]",
     button:
-      "border border-violet-400/20 bg-violet-500 text-white shadow-[0_18px_45px_-24px_rgba(139,92,246,0.9)] hover:bg-violet-400",
-    glow: "from-violet-400/[0.14] via-violet-400/[0.05] to-transparent",
-    bullet: "bg-violet-300",
+      "border border-white/25 bg-white text-slate-950 shadow-[0_18px_45px_-24px_rgba(255,255,255,0.9)] hover:bg-white/90",
+    card: "bg-gradient-to-br from-slate-800 via-slate-700 to-zinc-600",
+    glow: "from-white/[0.24] via-white/[0.08] to-transparent",
+    bullet: "text-emerald-300",
   };
 }
 
@@ -286,7 +312,7 @@ export const NativelyApiSettings: React.FC = () => {
     };
   }, [checkoutStartedAt, pendingCheckoutKey, refreshProfile]);
 
-  const handleOpenRazorpayCheckout = async (planId: "pro", interval: BillingInterval) => {
+  const handleOpenRazorpayCheckout = async (planId: "pro" | "power", interval: BillingInterval) => {
     const requestKey = `${planId}-${interval}`;
     setBusyKey(requestKey);
     setMessage(null);
@@ -359,34 +385,10 @@ export const NativelyApiSettings: React.FC = () => {
     }
   };
 
-  const handleResetToFree = async () => {
-    setBusyKey("reset");
-    setMessage(null);
-    setError(null);
-
-    try {
-      await resetTestSubscription();
-      await refreshProfile();
-      setMessage("Reset the current user back to the free entitlement.");
-    } catch (resetError) {
-      setError(
-        resetError instanceof Error
-          ? resetError.message
-          : "Failed to reset the free entitlement."
-      );
-    } finally {
-      setBusyKey(null);
-    }
-  };
-
-  const isSandboxEntitlement =
-    subscription?.providerMode === "test" || subscription?.isTestEntitlement === true;
-
   const visiblePaidCards = useMemo(
     () =>
       CHECKOUT_CARDS.filter(
-        (plan): plan is CheckoutCard & { id: "pro" } =>
-          plan.id === "pro" && plan.interval === selectedInterval
+        (plan) => plan.interval === selectedInterval && (plan.id === "pro" || plan.id === "power")
       ),
     [selectedInterval]
   );
@@ -410,10 +412,19 @@ export const NativelyApiSettings: React.FC = () => {
   }, [pendingCheckoutKey, subscription]);
 
   return (
-    <div className="space-y-6 animated fadeIn">
+    <div className="-m-6 min-h-full bg-white p-6 text-slate-950 animated fadeIn">
       <section className="space-y-5">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="inline-flex rounded-2xl border border-white/10 bg-bg-card p-1 shadow-[0_18px_60px_-40px_rgba(15,23,42,0.85)]">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div>
+            <h2 className="text-[2.75rem] font-semibold leading-none tracking-[-0.06em] text-slate-950">
+              Choose your plan
+            </h2>
+            <p className="mt-3 text-base font-medium text-slate-500">
+              Choose a plan to unlock Cluegent
+            </p>
+          </div>
+
+          <div className="inline-flex rounded-2xl border border-slate-200 bg-slate-100 p-1 shadow-[0_18px_60px_-45px_rgba(15,23,42,0.35)]">
             {(["month", "year"] as BillingInterval[]).map((interval) => {
               const isSelected = selectedInterval === interval;
 
@@ -426,20 +437,18 @@ export const NativelyApiSettings: React.FC = () => {
                   }}
                   className={`min-w-[124px] rounded-xl px-5 py-2.5 text-sm font-semibold transition ${
                     isSelected
-                      ? "bg-violet-500 text-white shadow-[0_14px_30px_-18px_rgba(139,92,246,0.95)]"
-                      : "text-text-secondary hover:text-white"
+                      ? interval === "month"
+                        ? "bg-gradient-to-r from-amber-300 via-orange-500 to-red-600 text-white shadow-[0_14px_30px_-18px_rgba(249,115,22,0.65)]"
+                        : "bg-gradient-to-r from-slate-800 via-slate-700 to-zinc-600 text-white shadow-[0_14px_30px_-18px_rgba(24,24,27,0.65)]"
+                      : "text-slate-500 hover:text-slate-950"
                   }`}
                 >
-                  {interval === "month" ? "Monthly" : "Yearly"}
+                  {interval === "month" ? "Monthly" : "Yearly (Save 20%)"}
                 </button>
               );
             })}
           </div>
 
-          <p className="max-w-[74ch] text-sm leading-6 text-text-secondary">
-            Choose a plan to unlock Cluegent. Checkout opens in Razorpay test mode and the app
-            updates automatically after Firebase verifies the payment and receives webhooks.
-          </p>
         </div>
 
         <div className="space-y-4">
@@ -454,48 +463,43 @@ export const NativelyApiSettings: React.FC = () => {
               return (
                 <article
                   key={cardKey}
-                  className={`relative flex min-h-[520px] flex-col overflow-hidden rounded-[28px] border bg-bg-card p-6 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.85)] ${accent.border}`}
+                  className={`relative flex min-h-[520px] flex-col overflow-hidden rounded-[28px] border p-6 text-white shadow-[0_28px_90px_-45px_rgba(15,23,42,0.95)] ${accent.card} ${accent.border}`}
                 >
                   <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accent.glow}`} />
 
                   <div className="relative">
-                    <div
-                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] ${accent.badge}`}
-                    >
-                      <Sparkles size={12} />
-                      {plan.eyebrow}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h4 className="text-[2.25rem] font-semibold leading-none tracking-[-0.05em] text-white">
+                        {plan.name}
+                      </h4>
+                      {plan.id === "power" && (
+                        <span className="rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white">
+                          Popular
+                        </span>
+                      )}
                     </div>
-
-                    <h4 className="mt-4 text-[2.65rem] font-semibold leading-none tracking-[-0.05em] text-text-primary">
-                      {plan.name}
-                    </h4>
-                    <p className="mt-2 text-sm font-medium uppercase tracking-[0.16em] text-text-tertiary">
-                      {selectedInterval === "month" ? "Billed monthly" : "Billed yearly"}
-                    </p>
-                    <p className="mt-4 max-w-[28ch] text-sm leading-6 text-text-secondary">
-                      {plan.tagline}
-                    </p>
+                    <div className="mt-4 flex flex-wrap items-end gap-2">
+                      <span className="text-[2.65rem] font-semibold leading-none tracking-[-0.06em] text-white">
+                        {plan.price}
+                      </span>
+                      <span className="pb-1 text-base font-medium text-white/85">
+                        {plan.priceSuffix}
+                      </span>
+                      {plan.savings && (
+                        <span className="mb-1 rounded-full border border-white/25 bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
+                          {plan.savings}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="relative mt-6 space-y-3 text-sm text-text-primary">
                     {plan.highlights.map((item) => (
                       <div key={item} className="flex items-start gap-3">
-                        <span className={`mt-[7px] h-1.5 w-1.5 rounded-full ${accent.bullet}`} />
-                        <span>{item}</span>
+                        <Check size={16} className={`mt-0.5 shrink-0 ${accent.bullet}`} />
+                        <span className="text-slate-100">{item}</span>
                       </div>
                     ))}
-                  </div>
-
-                  <div className="relative mt-6 flex flex-wrap gap-2 text-xs text-text-secondary">
-                    <span className="rounded-full border border-border-subtle px-3 py-1.5">
-                      {formatDuration(plan.sttSecondsLimit)} STT
-                    </span>
-                    <span className="rounded-full border border-border-subtle px-3 py-1.5">
-                      {plan.promptLimit} prompts
-                    </span>
-                    <span className="rounded-full border border-border-subtle px-3 py-1.5">
-                      {plan.screenshotLimit} screenshots
-                    </span>
                   </div>
 
                   <div className="relative mt-auto pt-8">
@@ -507,7 +511,7 @@ export const NativelyApiSettings: React.FC = () => {
                       disabled={isBusy || isActive}
                       className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
                         isActive
-                          ? "border border-emerald-500/30 bg-emerald-500/12 text-emerald-300"
+                          ? "border border-white/80 bg-white/10 text-white"
                           : accent.button
                       } ${isBusy ? "opacity-70" : ""}`}
                     >
@@ -519,10 +523,7 @@ export const NativelyApiSettings: React.FC = () => {
                       ) : isActive ? (
                         "Current Plan"
                       ) : (
-                        <>
-                          Upgrade
-                          <ExternalLink size={15} />
-                        </>
+                        "Upgrade"
                       )}
                     </button>
                   </div>
@@ -531,84 +532,35 @@ export const NativelyApiSettings: React.FC = () => {
             })}
           </div>
 
-          <article className="mx-auto flex min-h-[420px] w-full max-w-[980px] flex-col rounded-[28px] border border-border-subtle bg-bg-card p-6 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.85)]">
-            <div>
-              <p className="text-sm font-semibold text-text-secondary">{FREE_PLAN_CARD.eyebrow}</p>
-              <h4 className="mt-3 text-[2.85rem] font-semibold leading-none tracking-[-0.05em] text-text-primary">
-                {FREE_PLAN_CARD.name}
-              </h4>
-              <p className="mt-4 max-w-[42ch] text-sm leading-6 text-text-secondary">
-                {FREE_PLAN_CARD.tagline}
-              </p>
-            </div>
+          <article className="mx-auto flex w-full max-w-[980px] flex-col rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_24px_80px_-58px_rgba(15,23,42,0.45)]">
+            <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+              <div className="max-w-[280px]">
+                <p className="text-sm font-semibold text-slate-500">{FREE_PLAN_CARD.eyebrow}</p>
+                <h4 className="mt-2 text-[2.85rem] font-semibold leading-none tracking-[-0.05em] text-slate-950">
+                  {FREE_PLAN_CARD.name}
+                </h4>
+                <p className="mt-3 text-sm leading-6 text-slate-500">{FREE_PLAN_CARD.tagline}</p>
+                <div
+                  className={`mt-4 inline-flex w-full items-center justify-center rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                    subscription?.plan === "free"
+                      ? "border border-emerald-500/30 bg-emerald-500/12 text-emerald-300"
+                      : "border border-border-subtle bg-black/25 text-text-secondary"
+                  }`}
+                >
+                  {subscription?.plan === "free" ? "Current Plan" : "Trial Access"}
+                </div>
+              </div>
 
-            <div className="mt-6 grid gap-6 md:grid-cols-[1fr_auto] md:items-start">
-              <div className="space-y-3 text-sm text-text-primary">
+              <div className="mt-2 grid max-w-[440px] grid-cols-1 gap-x-8 gap-y-3 text-sm text-slate-800 sm:grid-cols-2 md:mt-6">
                 {FREE_PLAN_CARD.highlights.map((item) => (
-                  <div key={item} className="flex items-start gap-3">
-                    <span className="mt-[7px] h-1.5 w-1.5 rounded-full bg-text-secondary" />
+                  <div key={item} className="flex items-start gap-3 font-medium">
+                    <Check size={16} className="mt-0.5 shrink-0 text-emerald-500" />
                     <span>{item}</span>
                   </div>
                 ))}
               </div>
-
-              <div className="flex flex-wrap gap-2 text-xs text-text-secondary md:justify-end">
-                <span className="rounded-full border border-border-subtle px-3 py-1.5">
-                  {formatDuration(FREE_PLAN_CARD.sttSecondsLimit)} STT
-                </span>
-                <span className="rounded-full border border-border-subtle px-3 py-1.5">
-                  {FREE_PLAN_CARD.promptLimit} prompts
-                </span>
-                <span className="rounded-full border border-border-subtle px-3 py-1.5">
-                  {FREE_PLAN_CARD.screenshotLimit} screenshots
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-auto pt-8">
-              <div
-                className={`inline-flex w-full items-center justify-center rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                  subscription?.plan === "free"
-                    ? "border border-emerald-500/30 bg-emerald-500/12 text-emerald-300"
-                    : "border border-border-subtle bg-black/25 text-text-secondary"
-                }`}
-              >
-                {subscription?.plan === "free" ? "Current Plan" : "Trial Access"}
-              </div>
             </div>
           </article>
-        </div>
-
-        <div className="grid gap-4 xl:grid-cols-[1fr,auto] xl:items-center">
-          <div className="rounded-[24px] border border-border-subtle bg-bg-card p-4 text-sm leading-6 text-text-secondary">
-            <span className="font-medium text-text-primary">Test billing flow:</span> Google
-            sign-in identifies the user, Razorpay subscription checkout is created from Firebase,
-            payment signatures are verified server-side, webhooks are deduplicated, and LLM/STT
-            usage unlocks from Firestore billing state.
-          </div>
-
-          {isSandboxEntitlement && (
-            <button
-              type="button"
-              onClick={() => {
-                void handleResetToFree();
-              }}
-              disabled={busyKey === "reset"}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-4 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-500/15 disabled:opacity-70"
-            >
-              {busyKey === "reset" ? (
-                <>
-                  <Loader2 size={15} className="animate-spin" />
-                  Resetting
-                </>
-              ) : (
-                <>
-                  <RotateCcw size={15} />
-                  Reset to free
-                </>
-              )}
-            </button>
-          )}
         </div>
 
         {message && (

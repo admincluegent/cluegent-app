@@ -2026,18 +2026,9 @@ export class AppState {
       this.screenshotHelper.getExtraScreenshotQueue().length
     )
     
-    const mode = this.windowHelper.getCurrentWindowMode();
-    
-    if (mode === 'launcher') {
-      // In launcher mode, just physically hide/show the window
-      this.windowHelper.toggleMainWindow();
-    } else {
-      // In overlay mode, send toggle-expand IPC to expand/collapse the UI
-      const targetWindow = this.windowHelper.getOverlayWindow();
-      if (targetWindow && !targetWindow.isDestroyed()) {
-        targetWindow.webContents.send('toggle-expand');
-      }
-    }
+    // Global visibility shortcuts should hide/show the entire active window.
+    // The top pill Hide button owns the lower-overlay expand/collapse behavior.
+    this.windowHelper.toggleMainWindow();
   }
 
   public setWindowDimensions(width: number, height: number): void {

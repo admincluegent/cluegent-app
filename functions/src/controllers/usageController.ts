@@ -1,3 +1,4 @@
+import { FieldValue } from "firebase-admin/firestore";
 import { type CallableRequest, HttpsError } from "firebase-functions/v2/https";
 import { PLAN_CONFIGS, type PlanId } from "../config/plans.js";
 import { db, requireAuth } from "../utils/auth.js";
@@ -57,6 +58,25 @@ export async function ensureUsageDocuments(
 
     if (!subscriptionSnap.exists) {
       transaction.set(subscriptionRef, buildSubscriptionDoc());
+    } else {
+      const subscriptionData = subscriptionSnap.data();
+      if (
+        subscriptionData?.plan === "free" &&
+        (subscriptionData.promptLimit !== PLAN_CONFIGS.free.promptLimit ||
+          subscriptionData.screenshotLimit !== PLAN_CONFIGS.free.screenshotLimit ||
+          subscriptionData.sttSecondsLimit !== PLAN_CONFIGS.free.sttSecondsLimit)
+      ) {
+        transaction.set(
+          subscriptionRef,
+          {
+            promptLimit: PLAN_CONFIGS.free.promptLimit,
+            screenshotLimit: PLAN_CONFIGS.free.screenshotLimit,
+            sttSecondsLimit: PLAN_CONFIGS.free.sttSecondsLimit,
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
     }
 
     if (!usageSnap.exists) {

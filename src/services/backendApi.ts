@@ -3,6 +3,7 @@ import { functions } from "@/firebase";
 import type {
   ActivatePlanResponse,
   BackendEnvelope,
+  CancelRazorpayTestSubscriptionResponse,
   CreateRazorpayTestSubscriptionResponse,
   GetOrCreateUserProfileResponse,
   GetPlanStatusResponse,
@@ -39,11 +40,11 @@ export async function activatePlan(planId: UserPlan) {
 }
 
 export async function createRazorpayTestSubscription(
-  planId: Extract<UserPlan, "pro">,
+  planId: Extract<UserPlan, "pro" | "power">,
   interval: BillingInterval
 ) {
   const callable = httpsCallable<
-    { planId: Extract<UserPlan, "pro">; interval: BillingInterval },
+    { planId: Extract<UserPlan, "pro" | "power">; interval: BillingInterval },
     BackendEnvelope<CreateRazorpayTestSubscriptionResponse>
   >(functions, "createRazorpayTestSubscription");
   const result = await callable({ planId, interval });
@@ -60,6 +61,15 @@ export async function verifyRazorpayTestPayment(input: {
     BackendEnvelope<VerifyRazorpayTestPaymentResponse>
   >(functions, "verifyRazorpayTestPayment");
   const result = await callable(input);
+  return result.data.data;
+}
+
+export async function cancelRazorpayTestSubscription() {
+  const callable = httpsCallable<
+    Record<string, never>,
+    BackendEnvelope<CancelRazorpayTestSubscriptionResponse>
+  >(functions, "cancelRazorpayTestSubscription");
+  const result = await callable({});
   return result.data.data;
 }
 

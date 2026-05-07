@@ -3,6 +3,7 @@ import { type Request, type Response } from "express";
 import { type CallableRequest, HttpsError } from "firebase-functions/v2/https";
 import { DEFAULT_PLAN_ID, PLAN_CONFIGS, type PlanId } from "../config/plans.js";
 import {
+  cancelRazorpayTestSubscription,
   createRazorpayTestSubscription,
   parseAllowedEmails,
   resolvePlanFromRazorpayPlanId,
@@ -62,10 +63,14 @@ export async function createRazorpayTestSubscriptionController(
   const planId = request.data?.planId;
   const interval = request.data?.interval;
 
-  if (planId !== "pro" || (interval !== "month" && interval !== "year")) {
+  const isSupportedPlan =
+    (planId === "pro" && (interval === "month" || interval === "year")) ||
+    (planId === "power" && (interval === "month" || interval === "year"));
+
+  if (!isSupportedPlan) {
     throw new HttpsError(
       "invalid-argument",
-      "Razorpay test checkout currently supports Pro monthly and Pro yearly."
+      "Razorpay test checkout currently supports Pro and Power monthly/yearly plans."
     );
   }
 
@@ -169,7 +174,7 @@ export async function verifyRazorpayTestPaymentController(
     interval: subscriptionData.billingInterval as BillingInterval,
   };
 
-  if (mappedPlan.planId !== "pro" || !["month", "year"].includes(mappedPlan.interval)) {
+  if (!isSupportedPaidPlan(mappedPlan.planId, mappedPlan.interval)) {
     throw new HttpsError("failed-precondition", "Unknown pending Razorpay plan.");
   }
 
@@ -194,6 +199,98 @@ export async function verifyRazorpayTestPaymentController(
       verified: true,
       subscriptionId,
       paymentId,
+    },
+  };
+}
+
+export async function cancelRazorpayTestSubscriptionController(
+  request: CallableRequest<unknown>,
+  env: Pick<RazorpayTestEnv, "keyId" | "keySecret">
+) {
+  const authUser = requireAuth(request);
+  const refs = getUserRefs(authUser.uid);
+  const userSubscriptionRef = db.doc(refs.subscriptionPath);
+  const currentSubscriptionSnap = await userSubscriptionRef.get();
+  const currentSubscription = currentSubscriptionSnap.data();
+  const subscriptionId = readString(currentSubscription?.subscriptionId);
+  const provider = readString(currentSubscription?.provider);
+  const providerMode = readString(currentSubscription?.providerMode);
+  const currentPlan = readString(currentSubscription?.plan);
+  const billingInterval = readString(currentSubscription?.billingInterval);
+
+  if (
+    provider !== "razorpay" ||
+    providerMode !== "test" ||
+    currentPlan === DEFAULT_PLAN_ID ||
+    !subscriptionId
+  ) {
+    throw new HttpsError(
+      "failed-precondition",
+      "There is no active Razorpay test subscription to cancel."
+    );
+  }
+
+  const mappedPlan = {
+    planId: currentPlan as PaidPlanId,
+    interval: billingInterval as BillingInterval,
+  };
+
+  if (!isSupportedPaidPlan(mappedPlan.planId, mappedPlan.interval)) {
+    throw new HttpsError("failed-precondition", "Unknown Razorpay subscription plan.");
+  }
+
+  const cancelledSubscription = await cancelRazorpayTestSubscription({
+    keyId: env.keyId,
+    keySecret: env.keySecret,
+    subscriptionId,
+    cancelAtCycleEnd: false,
+  });
+
+  const eventId = `manual_cancel:${subscriptionId}`;
+
+  await applyRazorpayEntitlement({
+    uid: authUser.uid,
+    email: authUser.email,
+    eventId,
+    eventType: "subscription.cancelled",
+    subscriptionId,
+    customerId:
+      readString(cancelledSubscription.customer_id) ??
+      readString(currentSubscription?.customerId),
+    mappedPlan,
+    razorpayStatus: cancelledSubscription.status ?? "cancelled",
+    effectivePlan: DEFAULT_PLAN_ID,
+    localStatus: "canceled",
+    providerPayload: cancelledSubscription,
+  });
+
+  await db.collection(TEST_EVENTS_COLLECTION).doc(eventId).set(
+    {
+      eventId,
+      eventType: "subscription.cancelled",
+      source: "manual_app_cancel",
+      uid: authUser.uid,
+      subscriptionId,
+      customerId:
+        readString(cancelledSubscription.customer_id) ??
+        readString(currentSubscription?.customerId),
+      mappedPlanId: mappedPlan.planId,
+      mappedInterval: mappedPlan.interval,
+      effectivePlanId: DEFAULT_PLAN_ID,
+      processed: true,
+      processedAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  return {
+    success: true,
+    data: {
+      cancelled: true,
+      subscriptionId,
+      planId: DEFAULT_PLAN_ID,
     },
   };
 }
@@ -479,6 +576,11 @@ async function applyRazorpayEntitlement(input: {
     .collection(TEST_SUBSCRIPTIONS_COLLECTION)
     .doc(input.subscriptionId);
   const payload = input.providerPayload;
+  const startedAt = timestampSecondsToIso(
+    readNumber(payload.current_start ?? payload.start_at)
+  );
+  const renewsAt = timestampSecondsToIso(readNumber(payload.current_end ?? payload.charge_at));
+  const expiresAt = timestampSecondsToIso(readNumber(payload.end_at ?? payload.ended_at));
 
   await db.runTransaction(async (transaction) => {
     transaction.set(
@@ -509,9 +611,10 @@ async function applyRazorpayEntitlement(input: {
         subscriptionId: input.subscriptionId,
         customerId: input.customerId,
         cancelAtPeriodEnd: false,
-        startedAt: timestampSecondsToIso(readNumber(payload.current_start ?? payload.start_at)),
-        renewsAt: timestampSecondsToIso(readNumber(payload.current_end ?? payload.charge_at)),
-        expiresAt: timestampSecondsToIso(readNumber(payload.end_at ?? payload.ended_at)),
+        startedAt,
+        renewsAt,
+        expiresAt,
+        testEntitlementExpiresAt: null,
         lastWebhookEventId: input.eventId,
         payload,
         updatedAt: FieldValue.serverTimestamp(),
@@ -533,9 +636,9 @@ async function applyRazorpayEntitlement(input: {
         billingInterval: input.mappedPlan.interval,
         customerId: input.customerId,
         subscriptionId: input.subscriptionId,
-        startedAt: timestampSecondsToIso(readNumber(payload.current_start ?? payload.start_at)),
-        renewsAt: timestampSecondsToIso(readNumber(payload.current_end ?? payload.charge_at)),
-        expiresAt: timestampSecondsToIso(readNumber(payload.end_at ?? payload.ended_at)),
+        startedAt,
+        renewsAt,
+        expiresAt,
         cancelAtPeriodEnd: false,
         lastWebhookEventId: input.eventId,
         isTestEntitlement: true,
@@ -570,6 +673,13 @@ function assertConfiguredPlanId(
       `Missing Razorpay test plan id for ${planId}_${interval}.`
     );
   }
+}
+
+function isSupportedPaidPlan(planId: PaidPlanId, interval: BillingInterval) {
+  return (
+    (planId === "pro" && (interval === "month" || interval === "year")) ||
+    (planId === "power" && (interval === "month" || interval === "year"))
+  );
 }
 
 function getRawRequestBody(request: Request) {
@@ -619,6 +729,8 @@ function mapRazorpayStatusToLocalStatus(status: unknown, effectivePlanId: PlanId
     case "created":
       return "pending" as const;
     case "completed":
+      return "expired" as const;
+    case "expired":
       return "expired" as const;
     default:
       return "active" as const;

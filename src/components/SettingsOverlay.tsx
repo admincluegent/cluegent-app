@@ -4,9 +4,9 @@ import {
     X, Mic, Speaker, Monitor, Keyboard, User, LifeBuoy, LogOut, Upload,
     ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
     Camera, RotateCcw, Eye, Layout, MessageSquare, Crop,
-    ChevronDown, ChevronUp, Check, BadgeCheck, Power, Palette, Calendar, Clock, Ghost, Sun, Moon, RefreshCw, Info, Globe, FlaskConical, Terminal, Settings, Activity, ExternalLink, Trash2,
+    ChevronDown, ChevronUp, Check, BadgeCheck, Power, Palette, Clock, Ghost, Sun, Moon, RefreshCw, Info, Globe, Terminal, Settings, Activity, ExternalLink, Trash2,
     Sparkles, Pencil, Edit3, Briefcase, Building2, Search, MapPin, CheckCircle, HelpCircle, Zap, SlidersHorizontal, PointerOff,
-    Star, AlertCircle, Gift
+    Star, AlertCircle, Gift, Loader2
 } from 'lucide-react';
 import { analytics } from '../lib/analytics/analytics.service';
 import { AboutSection } from './AboutSection';
@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { useResolvedTheme } from '../hooks/useResolvedTheme';
 import { useAuth } from '../contexts/auth.context';
+import { cancelRazorpayTestSubscription } from '../services/backendApi';
 import {
     clampOverlayOpacity,
     getOverlayAppearance,
@@ -33,6 +34,7 @@ import {
     AiBehaviorScenario,
     AiBehaviorSettings,
     compactAiBehaviorText,
+    getDefaultBehaviorPrompt,
     getAiBehaviorSettings,
     saveAiBehaviorSettings,
 } from '../lib/aiBehaviorSettings';
@@ -402,12 +404,37 @@ interface SettingsOverlayProps {
 }
 
 const normalizeSettingsTab = (tab: string) =>
-    tab === 'ai-providers' ? 'natively-api' : tab;
+    tab === 'ai-providers'
+        ? 'natively-api'
+        : tab === 'calendar'
+            ? 'general'
+            : tab;
+
+const formatAccountDate = (value?: string | null) => {
+    if (!value) {
+        return 'Not scheduled';
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+        return value;
+    }
+
+    return parsed.toLocaleDateString(undefined, {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+    });
+};
 
 const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, initialTab = 'general', isTrialActive = false }) => {
     const isLight = useResolvedTheme() === 'light';
     const [activeTab, setActiveTab] = useState(normalizeSettingsTab(initialTab));
-    const { profile, subscription, logoutUser } = useAuth();
+    const { profile, subscription, logoutUser, refreshProfile } = useAuth();
+    const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+    const [isCancellingSubscription, setIsCancellingSubscription] = useState(false);
+    const [cancelMessage, setCancelMessage] = useState<string | null>(null);
+    const [cancelError, setCancelError] = useState<string | null>(null);
     
     // Sync active tab when modal opens
     useEffect(() => {
@@ -415,8 +442,29 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
             setActiveTab(normalizeSettingsTab(initialTab));
         }
     }, [isOpen, initialTab]);
+
+    const handleCancelSubscription = async () => {
+        setIsCancellingSubscription(true);
+        setCancelMessage(null);
+        setCancelError(null);
+
+        try {
+            await cancelRazorpayTestSubscription();
+            await refreshProfile();
+            setCancelMessage('Subscription cancelled immediately. Your account is now on the free plan.');
+            setIsCancelConfirmOpen(false);
+        } catch (error) {
+            setCancelError(
+                error instanceof Error
+                    ? error.message
+                    : 'Failed to cancel the subscription.'
+            );
+        } finally {
+            setIsCancellingSubscription(false);
+        }
+    };
     
-    const { shortcuts, updateShortcut, resetShortcuts } = useShortcuts();
+    const { shortcuts, updateShortcut } = useShortcuts();
     const [isUndetectable, setIsUndetectable] = useState(false);
     const [isMousePassthrough, setIsMousePassthrough] = useState(false);
     const [disguiseMode, setDisguiseMode] = useState<'terminal' | 'settings' | 'activity' | 'none'>('none');
@@ -459,6 +507,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
     const [customNotes, setCustomNotes] = useState('');
     const [customNotesSaved, setCustomNotesSaved] = useState(false);
     const [aiBehaviorSettings, setAiBehaviorSettings] = useState<AiBehaviorSettings>(() => getAiBehaviorSettings());
+    const [savedAiBehaviorSettingsSnapshot, setSavedAiBehaviorSettingsSnapshot] = useState<AiBehaviorSettings>(() => getAiBehaviorSettings());
     const [savedBehaviorScenario, setSavedBehaviorScenario] = useState<AiBehaviorScenario | null>(null);
     const [quickActionSettings, setQuickActionSettings] = useState<QuickActionSettings>(() => getQuickActionSettings());
     const [customQuickActions, setCustomQuickActions] = useState<QuickActionConfig[]>(() => getCustomQuickActions());
@@ -467,10 +516,6 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
     const [editingQuickActionId, setEditingQuickActionId] = useState<string | null>(null);
     const [savedQuickActionId, setSavedQuickActionId] = useState<string | null>(null);
     const customNotesDebounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-    const [verboseLogging, setVerboseLogging] = useState(false);
-    const [showVerboseToast, setShowVerboseToast] = useState(false);
-    const verboseToastTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
     // Close dropdown when clicking outside
     // Sync with global state changes
     useEffect(() => {
@@ -488,17 +533,8 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
             window.electronAPI?.getUndetectable?.().then(setIsUndetectable).catch(() => { });
             window.electronAPI?.getOverlayMousePassthrough?.().then(setIsMousePassthrough).catch(() => { });
             window.electronAPI?.getDisguise?.().then(setDisguiseMode).catch(() => { });
-            window.electronAPI?.getVerboseLogging?.().then(setVerboseLogging).catch(() => { });
         }
     }, [isOpen]);
-
-    useEffect(() => {
-        if (!showVerboseToast) return;
-        verboseToastTimerRef.current = setTimeout(() => setShowVerboseToast(false), 5200);
-        return () => {
-            if (verboseToastTimerRef.current) clearTimeout(verboseToastTimerRef.current);
-        };
-    }, [showVerboseToast]);
 
     useEffect(() => {
         if (window.electronAPI?.onLicenseStatusChanged) {
@@ -884,7 +920,6 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
     const [selectedInput, setSelectedInput] = useState('');
     const [selectedOutput, setSelectedOutput] = useState('');
     const [micLevel, setMicLevel] = useState(0);
-    const [useExperimentalSck, setUseExperimentalSck] = useState(false);
 
     // STT Provider settings
     const [sttProvider, setSttProvider] = useState<'none' | 'google' | 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox' | 'natively' | 'firebase'>('none');
@@ -1163,10 +1198,6 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
     };
 
 
-    const [calendarStatus, setCalendarStatus] = useState<{ connected: boolean; email?: string }>({ connected: false });
-    const [isCalendarsLoading, setIsCalendarsLoading] = useState(false);
-
-
     // Load stored credentials on mount
 
 
@@ -1267,14 +1298,6 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
             };
             loadDevices();
 
-            // Load Experimental SCK pref
-            const savedSck = localStorage.getItem('useExperimentalSckBackend') === 'true';
-            setUseExperimentalSck(savedSck);
-
-            // Load Calendar Status
-            if (window.electronAPI?.getCalendarStatus) {
-                window.electronAPI.getCalendarStatus().then(setCalendarStatus);
-            }
         }
     }, [isOpen, selectedInput, selectedOutput]); // Re-run if isOpen changes, or if selected devices are cleared
 
@@ -1324,8 +1347,18 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
 
     const handleSaveAiBehaviorScenario = (scenario: AiBehaviorScenario) => {
         saveAiBehaviorSettings(aiBehaviorSettings);
+        setSavedAiBehaviorSettingsSnapshot(aiBehaviorSettings);
         setSavedBehaviorScenario(scenario);
         setTimeout(() => setSavedBehaviorScenario(null), 1600);
+    };
+
+    const hasUnsavedAiBehaviorScenarioChanges = (scenario: AiBehaviorScenario) => {
+        const current = aiBehaviorSettings[scenario];
+        const saved = savedAiBehaviorSettingsSnapshot[scenario];
+
+        return current.mode !== saved.mode
+            || (current.defaultPrompt ?? '') !== (saved.defaultPrompt ?? '')
+            || current.customPrompt !== saved.customPrompt;
     };
 
     const updateQuickAction = (
@@ -1401,6 +1434,19 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
         saveRemovedDefaultQuickActionIds(nextRemoved);
     };
 
+    const isPaidSubscription =
+        subscription?.provider === 'razorpay' &&
+        subscription?.plan !== 'free' &&
+        subscription?.status === 'active';
+    const planRenewalLabel = subscription?.renewsAt
+        ? `Your plan auto-renews on ${formatAccountDate(subscription.renewsAt)}`
+        : subscription?.expiresAt
+            ? `Your plan ends on ${formatAccountDate(subscription.expiresAt)}`
+            : 'Renewal date is not available yet.';
+    const currentPlanLabel = subscription?.plan
+        ? subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)
+        : 'Free';
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -1475,12 +1521,6 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                         <Clock size={16} /> Recent Meetings
                                     </button>
                                     <button
-                                        onClick={() => setActiveTab('calendar')}
-                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${activeTab === 'calendar' ? 'bg-bg-item-active text-text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-bg-item-active/50'}`}
-                                    >
-                                        <Calendar size={16} /> Calendar
-                                    </button>
-                                    <button
                                         onClick={() => setActiveTab('audio')}
                                         className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${activeTab === 'audio' ? 'bg-bg-item-active text-text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-bg-item-active/50'}`}
                                     >
@@ -1536,55 +1576,148 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                             {activeTab === 'account' && (
                                 <div className="space-y-6 animated fadeIn">
                                     <div>
-                                        <h3 className="text-lg font-bold text-text-primary mb-1">Profile</h3>
+                                        <h3 className="text-lg font-bold text-text-primary mb-1">Account</h3>
                                         <p className="text-xs text-text-secondary">
-                                            Your signed-in account and current Cluegent plan.
+                                            Your signed-in account, plan status, and billing controls.
                                         </p>
                                     </div>
 
                                     <div className="rounded-2xl border border-border-subtle bg-bg-card p-6">
-                                        <div className="flex items-center gap-4">
-                                            {profile?.photoURL ? (
-                                                <img
-                                                    src={profile.photoURL}
-                                                    alt={profile.displayName}
-                                                    className="h-16 w-16 rounded-full object-cover border border-border-subtle"
-                                                />
-                                            ) : (
-                                                <div className="flex h-16 w-16 items-center justify-center rounded-full border border-border-subtle bg-bg-item-surface text-xl font-semibold text-text-primary">
-                                                    {(profile?.displayName || profile?.email || 'U').slice(0, 1).toUpperCase()}
+                                        <div className="divide-y divide-border-subtle">
+                                            <div className="flex items-center justify-between gap-5 py-4 first:pt-0">
+                                                <p className="text-sm font-semibold text-text-primary">Name</p>
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    {profile?.photoURL ? (
+                                                        <img
+                                                            src={profile.photoURL}
+                                                            alt={profile.displayName}
+                                                            className="h-10 w-10 rounded-full object-cover border border-border-subtle"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border-subtle bg-bg-item-surface text-sm font-semibold text-text-primary">
+                                                            {(profile?.displayName || profile?.email || 'U').slice(0, 1).toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                    <p className="truncate text-sm font-medium text-text-primary">
+                                                        {profile?.displayName || 'Signed-in user'}
+                                                    </p>
                                                 </div>
-                                            )}
-
-                                            <div className="min-w-0">
-                                                <p className="text-lg font-semibold text-text-primary">
-                                                    {profile?.displayName || 'Signed-in user'}
-                                                </p>
-                                                <p className="mt-1 text-sm text-text-secondary break-all">
-                                                    {profile?.email || 'No email available'}
-                                                </p>
                                             </div>
-                                        </div>
 
-                                        <div className="mt-6 grid gap-3 md:grid-cols-2">
-                                            <div className="rounded-xl border border-border-subtle bg-bg-item-surface p-4">
-                                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-tertiary">
-                                                    Email address
-                                                </p>
-                                                <p className="mt-2 text-sm font-medium text-text-primary break-all">
+                                            <div className="flex items-center justify-between gap-5 py-4">
+                                                <p className="text-sm font-semibold text-text-primary">Email</p>
+                                                <p className="min-w-0 truncate text-right text-sm font-medium text-text-secondary">
                                                     {profile?.email || 'No email available'}
                                                 </p>
                                             </div>
 
-                                            <div className="rounded-xl border border-border-subtle bg-bg-item-surface p-4">
-                                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-tertiary">
-                                                    Current plan
-                                                </p>
-                                                <p className="mt-2 text-sm font-medium capitalize text-text-primary">
-                                                    {subscription?.plan || 'free'}
-                                                </p>
+                                            <div className="py-5">
+                                                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-text-primary">
+                                                            Cluegent {currentPlanLabel}
+                                                            {subscription?.providerMode === 'test' ? (
+                                                                <span className="ml-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-300">
+                                                                    Test
+                                                                </span>
+                                                            ) : null}
+                                                        </p>
+                                                        <p className="mt-1 text-sm text-text-secondary">
+                                                            {subscription?.plan === 'free' ? 'Free plan is active.' : planRenewalLabel}
+                                                        </p>
+                                                    </div>
+
+                                                    {isPaidSubscription && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setIsCancelConfirmOpen(true);
+                                                                setCancelMessage(null);
+                                                                setCancelError(null);
+                                                            }}
+                                                            disabled={isCancellingSubscription}
+                                                            className="inline-flex items-center justify-center rounded-full border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/15 disabled:opacity-60"
+                                                        >
+                                                            Cancel Subscription
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {isCancelConfirmOpen && (
+                                                    <div className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
+                                                        <p className="text-sm font-semibold text-red-200">
+                                                            Cancel this subscription immediately?
+                                                        </p>
+                                                        <p className="mt-1 text-xs leading-5 text-red-100/75">
+                                                            This will cancel the Razorpay subscription now and move this account back to the free plan.
+                                                        </p>
+                                                        <div className="mt-3 flex flex-wrap gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    void handleCancelSubscription();
+                                                                }}
+                                                                disabled={isCancellingSubscription}
+                                                                className="inline-flex items-center gap-2 rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-400 disabled:opacity-60"
+                                                            >
+                                                                {isCancellingSubscription ? (
+                                                                    <>
+                                                                        <Loader2 size={14} className="animate-spin" />
+                                                                        Cancelling
+                                                                    </>
+                                                                ) : (
+                                                                    'Yes, cancel now'
+                                                                )}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setIsCancelConfirmOpen(false)}
+                                                                disabled={isCancellingSubscription}
+                                                                className="rounded-full border border-border-subtle bg-bg-item-surface px-4 py-2 text-sm font-semibold text-text-primary transition hover:bg-bg-item-active disabled:opacity-60"
+                                                            >
+                                                                No, keep plan
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {cancelMessage && (
+                                                    <div className="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+                                                        {cancelMessage}
+                                                    </div>
+                                                )}
+
+                                                {cancelError && (
+                                                    <div className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                                                        {cancelError}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
+
+                                        {subscription?.plan !== 'free' && (
+                                            <div className="mt-6 rounded-2xl border border-border-subtle bg-bg-item-surface p-5">
+                                                <p className="text-sm font-semibold text-text-primary">
+                                                    Thanks for subscribing to Cluegent {currentPlanLabel}. Your plan includes:
+                                                </p>
+                                                <div className="mt-4 grid gap-3 text-sm text-text-secondary md:grid-cols-3">
+                                                    <div className="rounded-xl border border-border-subtle bg-bg-card p-3">
+                                                        <Sparkles size={16} className="mb-2 text-sky-300" />
+                                                        {subscription?.promptLimit ?? 0} AI requests
+                                                    </div>
+                                                    <div className="rounded-xl border border-border-subtle bg-bg-card p-3">
+                                                        <Mic size={16} className="mb-2 text-emerald-300" />
+                                                        {(subscription?.sttSecondsLimit ?? 0) >= 3600
+                                                            ? `${Math.round((subscription?.sttSecondsLimit ?? 0) / 3600)}h listening`
+                                                            : `${Math.round((subscription?.sttSecondsLimit ?? 0) / 60)} min listening`}
+                                                    </div>
+                                                    <div className="rounded-xl border border-border-subtle bg-bg-card p-3">
+                                                        <Camera size={16} className="mb-2 text-violet-300" />
+                                                        {subscription?.screenshotLimit ?? 0} screenshot analyses
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -1686,67 +1819,6 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                     </div>
                                                 </div>
 
-                                                {/* Debug Logging */}
-                                                <div className="flex items-center justify-between px-4 py-3">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className={`w-10 h-10 bg-bg-item-surface rounded-lg border flex items-center justify-center transition-colors ${verboseLogging ? 'border-amber-500/40 text-amber-400' : 'border-border-subtle text-text-tertiary'}`}>
-                                                            <Terminal size={20} />
-                                                        </div>
-                                                        <div>
-                                                            <h3 className="text-sm font-bold text-text-primary">Verbose debug logging</h3>
-                                                            <p className="text-xs text-text-secondary mt-0.5">Print detailed audio, STT, and pipeline diagnostics</p>
-                                                        </div>
-                                                    </div>
-                                                    <div
-                                                        onClick={() => {
-                                                            const newState = !verboseLogging;
-                                                            setVerboseLogging(newState);
-                                                            window.electronAPI?.setVerboseLogging?.(newState);
-                                                            if (newState) {
-                                                                setShowVerboseToast(true);
-                                                            }
-                                                        }}
-                                                        className={`w-11 h-6 rounded-full relative transition-colors cursor-pointer ${verboseLogging ? 'bg-amber-500' : 'bg-bg-toggle-switch border border-border-muted'}`}
-                                                    >
-                                                        <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${verboseLogging ? 'translate-x-5' : 'translate-x-0'}`} />
-                                                    </div>
-                                                </div>
-
-                                                {/* Verbose logging toast */}
-                                                <AnimatePresence>
-                                                    {showVerboseToast && (
-                                                        <motion.div
-                                                            key="verbose-toast"
-                                                            initial={{ opacity: 0, y: -6, height: 0 }}
-                                                            animate={{ opacity: 1, y: 0, height: 'auto' }}
-                                                            exit={{ opacity: 0, y: -4, height: 0 }}
-                                                            transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}
-                                                            className="mx-4 mb-1 overflow-hidden"
-                                                        >
-                                                            <div className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                                                                <div className="flex items-center gap-2.5 min-w-0">
-                                                                    <Terminal size={14} className="text-amber-400 shrink-0" />
-                                                                    <p className="text-xs text-amber-200/80 leading-snug truncate">
-                                                                        Logs → <span className="font-mono text-amber-300">~/Documents/natively_debug.log</span>
-                                                                    </p>
-                                                                </div>
-                                                                <button
-                                                                    onClick={() => window.electronAPI?.openLogFile?.()}
-                                                                    className="shrink-0 text-[11px] font-medium text-amber-400 hover:text-amber-300 transition-colors px-2 py-0.5 rounded-md bg-amber-500/15 hover:bg-amber-500/25"
-                                                                >
-                                                                    Open
-                                                                </button>
-                                                            </div>
-                                                            {/* 5-second drain bar */}
-                                                            <motion.div
-                                                                className="h-[2px] bg-amber-500/40 rounded-b-xl"
-                                                                initial={{ scaleX: 1, originX: 0 }}
-                                                                animate={{ scaleX: 0 }}
-                                                                transition={{ duration: 5, ease: 'linear', delay: 0.2 }}
-                                                            />
-                                                        </motion.div>
-                                                    )}
-                                                </AnimatePresence>
 
                                                 {/* Interviewer Transcript */}
                                                 <div className="flex items-center justify-between px-4 py-3">
@@ -2052,24 +2124,19 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                 <div className="space-y-5 animated fadeIn pb-6">
                                     <div className="flex items-start justify-between gap-4">
                                         <div>
-                                            <div className="inline-flex items-center gap-2 rounded-full bg-accent-primary/10 border border-accent-primary/20 px-3 py-1 mb-3">
-                                                <Sparkles size={13} className="text-accent-primary" />
-                                                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-accent-primary">Customize</span>
-                                            </div>
-                                            <h3 className="text-xl font-bold text-text-primary tracking-tight">AI behavior</h3>
+                                            <h3 className="text-xl font-bold text-text-primary tracking-tight">Customize AI behavior</h3>
                                             <p className="text-sm text-text-secondary mt-1 max-w-2xl leading-relaxed">
                                                 Choose how Cluegent should answer in each mode. Custom instructions are kept short on purpose so responses stay fast and the model has less prompt noise.
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="rounded-2xl border border-border-subtle bg-bg-item-surface p-5">
+                                    <div className="hidden rounded-2xl border border-border-subtle bg-bg-item-surface p-5">
                                         <div className="flex items-start gap-4">
                                             <div className="w-10 h-10 rounded-xl bg-bg-input border border-border-subtle flex items-center justify-center text-accent-primary shrink-0">
                                                 <Pencil size={18} />
                                             </div>
-                                            <div className="min-w-0">
-                                                <h4 className="text-sm font-bold text-text-primary">Custom Context</h4>
+                                            <div className="min-w-0 pt-0.5">
                                                 <p className="text-xs text-text-secondary mt-1 leading-relaxed">
                                                     Add response style context like “keep it short”, “explain step by step”, or “always include code examples”.
                                                     Cluegent stores only a compact instruction per mode, then injects the selected behavior into the LLM request.
@@ -2086,6 +2153,8 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                             const setting = aiBehaviorSettings[scenario.id];
                                             const isCustom = setting.mode === 'custom';
                                             const isSaved = savedBehaviorScenario === scenario.id;
+                                            const hasUnsavedChanges = hasUnsavedAiBehaviorScenarioChanges(scenario.id);
+                                            const defaultPrompt = setting.defaultPrompt || getDefaultBehaviorPrompt(scenario.id);
 
                                             return (
                                                 <div key={scenario.id} className="rounded-2xl border border-border-subtle bg-bg-item-surface overflow-hidden">
@@ -2110,14 +2179,16 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                                 </span>
                                                                 <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-text-secondary">Default behavior</span>
                                                             </button>
-                                                            <ul className="space-y-2">
-                                                                {scenario.defaultBullets.map((bullet) => (
-                                                                    <li key={bullet} className="flex items-start gap-2 text-xs text-text-secondary leading-relaxed">
-                                                                        <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-accent-primary/70 shrink-0" />
-                                                                        <span>{bullet}</span>
-                                                                    </li>
-                                                                ))}
-                                                            </ul>
+                                                            <textarea
+                                                                value={defaultPrompt}
+                                                                onChange={(event) => updateAiBehaviorScenario(scenario.id, {
+                                                                    defaultPrompt: event.target.value,
+                                                                })}
+                                                                onKeyDown={(event) => event.stopPropagation()}
+                                                                onKeyUp={(event) => event.stopPropagation()}
+                                                                rows={3}
+                                                                className="w-full bg-bg-input border border-border-subtle rounded-xl px-3 py-2.5 text-xs text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent-primary/50 focus:ring-1 focus:ring-accent-primary/20 transition-all resize-none leading-relaxed"
+                                                            />
                                                         </div>
 
                                                         <div className={`rounded-xl border p-4 transition-all ${isCustom ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-bg-input border-border-subtle'}`}>
@@ -2153,12 +2224,19 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                             <p className="text-[11px] text-text-tertiary">
                                                                 Active mode: <span className="ml-1 inline-flex rounded-full bg-emerald-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white">{isCustom ? 'Custom' : 'Default'}</span>
                                                             </p>
-                                                            <button
-                                                                onClick={() => handleSaveAiBehaviorScenario(scenario.id)}
-                                                                className={`px-4 py-2 rounded-full text-xs font-semibold transition-all ${isSaved ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/25' : 'bg-slate-950 text-white hover:bg-slate-800 shadow-sm'}`}
-                                                            >
-                                                                {isSaved ? 'Saved' : 'Save behavior'}
-                                                            </button>
+                                                            {hasUnsavedChanges ? (
+                                                                <button
+                                                                    onClick={() => handleSaveAiBehaviorScenario(scenario.id)}
+                                                                    className="px-4 py-2 rounded-full text-xs font-semibold transition-all bg-slate-950 text-white hover:bg-slate-800 shadow-sm"
+                                                                >
+                                                                    Save behavior
+                                                                </button>
+                                                            ) : isSaved ? (
+                                                                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/15 px-3 py-2 text-[11px] font-semibold text-emerald-500">
+                                                                    <Check size={12} />
+                                                                    Saved
+                                                                </span>
+                                                            ) : null}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -2172,7 +2250,6 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                 <h4 className="text-base font-bold text-text-primary">Quick Action Buttons</h4>
                                                 <p className="text-xs text-text-secondary mt-1 max-w-2xl leading-relaxed">
                                                     Rename the prompt buttons and tune what each button asks the LLM to do.
-                                                    The Mic button stays fixed for voice input and is not editable.
                                                 </p>
                                             </div>
                                             <div className="flex shrink-0 items-center gap-3">
@@ -3237,18 +3314,11 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                             )}
                             {activeTab === 'keybinds' && (
                                 <div className="space-y-5 animated fadeIn select-text pb-4">
-                                    <div className="flex items-start justify-between">
+                                    <div>
                                         <div>
                                             <h3 className="text-lg font-bold text-text-primary mb-1">Keyboard shortcuts</h3>
                                         <p className="text-xs text-text-secondary">Cluegent works with these easy to remember commands.</p>
                                         </div>
-                                        <button
-                                            onClick={resetShortcuts}
-                                            className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-border-subtle bg-bg-subtle/30 hover:bg-bg-subtle hover:border-green-500/30 transition-all duration-200 text-xs font-medium text-text-secondary hover:text-green-500 active:scale-95 mt-1"
-                                        >
-                                            <RotateCcw size={13} strokeWidth={2.5} />
-                                            Restore Default
-                                        </button>
                                     </div>
 
                                     <div className="grid gap-6">
@@ -3336,16 +3406,8 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                             </div>
                                             <div className="space-y-1">
                                                 {[
-                                                    { id: 'whatToAnswer', label: 'What to Answer', icon: <Sparkles size={14} /> },
-                                                    { id: 'clarify', label: 'Clarify', icon: <MessageSquare size={14} /> },
-                                                    { id: 'followUp', label: 'Follow Up', icon: <MessageSquare size={14} /> },
-                                                    { id: 'dynamicAction4', label: 'Recap / Brainstorm', icon: <RefreshCw size={14} /> },
                                                     { id: 'answer', label: 'Mic / Record', icon: <Mic size={14} /> },
                                                     { id: 'clearTranscript', label: 'Clear Transcript', icon: <Trash2 size={14} /> },
-                                                    { id: 'codeHint', label: 'Get Code Hint', icon: <Zap size={14} /> },
-                                                    { id: 'brainstorm', label: 'Brainstorm Approaches', icon: <Zap size={14} /> },
-                                                    { id: 'scrollUp', label: 'Scroll Up', icon: <ArrowUp size={14} /> },
-                                                    { id: 'scrollDown', label: 'Scroll Down', icon: <ArrowDown size={14} /> },
                                                 ].map((item, i) => (
                                                     <div key={i} className="flex items-center justify-between py-1.5 group">
                                                         <div className="flex items-center gap-3">
@@ -3390,34 +3452,6 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
 
                             {activeTab === 'audio' && (
                                 <div className="space-y-6 animated fadeIn">
-                                    {/* ── Speech Provider Section ── */}
-                                    <div>
-                                        <h3 className="text-lg font-bold text-text-primary mb-1">Speech Provider</h3>
-                                        <p className="text-xs text-text-secondary mb-5">Choose the engine that transcribes audio to text.</p>
-
-                                        <div className="space-y-4">
-                                            <div className="bg-bg-card rounded-xl border border-border-subtle p-4 space-y-3">
-                                                <label className="text-xs font-medium text-text-secondary block">Speech Provider</label>
-                                                <div className="relative">
-                                                    <ProviderSelect
-                                                        value={sttProvider}
-                                                        onChange={(val) => handleSttProviderChange(val as any)}
-                                                        options={[
-                                                            { id: 'firebase', label: 'Firebase Managed', badge: 'Backend' as const, recommended: true, desc: 'Live STT via your Firebase plan and server-side AssemblyAI key', color: 'blue', icon: <Mic size={14} /> },
-                                                            ...(hasNativelyKey ? [{ id: 'natively', label: 'Natively API', badge: 'Saved' as const, recommended: true, desc: 'Managed transcription via Natively backend', color: 'blue', icon: <Mic size={14} /> }] : []),
-                                                            { id: 'google', label: 'Google Cloud', badge: googleServiceAccountPath ? 'Saved' : null, recommended: true, desc: 'gRPC streaming via Service Account', color: 'blue', icon: <Mic size={14} /> },
-                                                            { id: 'groq', label: 'Groq Whisper', badge: hasStoredSttGroqKey ? 'Saved' : null, recommended: true, desc: 'Ultra-fast REST transcription', color: 'orange', icon: <Mic size={14} /> },
-                                                            { id: 'openai', label: 'OpenAI Whisper', badge: hasStoredSttOpenaiKey ? 'Saved' : null, desc: 'OpenAI-compatible Whisper API', color: 'green', icon: <Mic size={14} /> },
-                                                            { id: 'deepgram', label: 'Deepgram Nova-3', badge: hasStoredDeepgramKey ? 'Saved' : null, recommended: true, desc: 'High-accuracy REST transcription', color: 'purple', icon: <Mic size={14} /> },
-                                                            { id: 'elevenlabs', label: 'ElevenLabs Scribe', badge: hasStoredElevenLabsKey ? 'Saved' : null, desc: 'Scribe v2 Realtime API', color: 'teal', icon: <Mic size={14} /> },
-                                                            { id: 'azure', label: 'Azure Speech', badge: hasStoredAzureKey ? 'Saved' : null, desc: 'Microsoft Cognitive Services STT', color: 'cyan', icon: <Mic size={14} /> },
-                                                            { id: 'ibmwatson', label: 'IBM Watson', badge: hasStoredIbmWatsonKey ? 'Saved' : null, desc: 'IBM Watson cloud STT service', color: 'indigo', icon: <Mic size={14} /> },
-                                                            { id: 'soniox', label: 'Soniox', badge: hasStoredSonioxKey ? 'Saved' : null, recommended: true, desc: '60+ languages, multilingual, domain context', color: 'cyan', icon: <Mic size={14} /> },
-                                                        ]}
-                                                    />
-                                                </div>
-                                            </div>
-
                                             {/* Groq Model Selector */}
                                             {sttProvider === 'groq' && (
                                                 <div className="bg-bg-card rounded-xl border border-border-subtle p-4">
@@ -3646,17 +3680,99 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                 </div>
                                             )}
 
-                                            {sttProvider === 'firebase' && (
-                                                <div className="bg-bg-card rounded-xl border border-border-subtle p-4">
-                                                    <label className="text-xs font-medium text-text-secondary block mb-2">Firebase Managed STT</label>
-                                                    <p className="text-sm text-text-primary leading-relaxed">
-                                                        Live audio streams from the desktop app to AssemblyAI using temporary tokens minted by your Firebase backend. The AssemblyAI key never leaves Firebase Functions.
-                                                    </p>
-                                                    <p className="text-[11px] text-text-tertiary mt-3">
-                                                        Sign in with Google, open the Billing tab, then complete a checkout or reset to free before starting the meeting.
-                                                    </p>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-text-primary mb-1">Audio Configuration</h3>
+                                                <p className="text-xs text-text-secondary mb-5">Manage input and output devices.</p>
+
+                                                <div className="space-y-4">
+                                                    <CustomSelect
+                                                        label="Input Device"
+                                                        icon={<Mic size={16} />}
+                                                        value={selectedInput}
+                                                        options={inputDevices}
+                                                        onChange={(id) => {
+                                                            setSelectedInput(id);
+                                                            localStorage.setItem('preferredInputDeviceId', id);
+                                                        }}
+                                                        placeholder="Default Microphone"
+                                                    />
+
+                                                    <div>
+                                                        <div className="flex justify-between text-xs text-text-secondary mb-2 px-1">
+                                                            <span>Input Level</span>
+                                                        </div>
+                                                        <div className="h-1.5 bg-bg-input rounded-full overflow-hidden">
+                                                            <div
+                                                                className="h-full bg-green-500 transition-all duration-100 ease-out"
+                                                                style={{ width: `${micLevel}%` }}
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="h-px bg-border-subtle my-2" />
+
+                                                    <CustomSelect
+                                                        label="Output Device"
+                                                        icon={<Speaker size={16} />}
+                                                        value={selectedOutput}
+                                                        options={outputDevices}
+                                                        onChange={(id) => {
+                                                            setSelectedOutput(id);
+                                                            localStorage.setItem('preferredOutputDeviceId', id);
+                                                        }}
+                                                        placeholder="Default Speakers"
+                                                    />
+
+                                                    <div className="flex justify-end">
+                                                        <button
+                                                            onClick={async () => {
+                                                                try {
+                                                                    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+                                                                    if (!AudioContext) {
+                                                                        console.error("Web Audio API not supported");
+                                                                        return;
+                                                                    }
+
+                                                                    const ctx = new AudioContext();
+
+                                                                    if (ctx.state === 'suspended') {
+                                                                        await ctx.resume();
+                                                                    }
+
+                                                                    const oscillator = ctx.createOscillator();
+                                                                    const gainNode = ctx.createGain();
+
+                                                                    oscillator.connect(gainNode);
+                                                                    gainNode.connect(ctx.destination);
+
+                                                                    oscillator.type = 'sine';
+                                                                    oscillator.frequency.setValueAtTime(523.25, ctx.currentTime);
+                                                                    gainNode.gain.setValueAtTime(0.5, ctx.currentTime);
+                                                                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.0);
+
+                                                                    if (selectedOutput && (ctx as any).setSinkId) {
+                                                                        try {
+                                                                            await (ctx as any).setSinkId(selectedOutput);
+                                                                        } catch (e) {
+                                                                            console.warn("Error setting sink for AudioContext", e);
+                                                                        }
+                                                                    }
+
+                                                                    oscillator.start();
+                                                                    oscillator.stop(ctx.currentTime + 1.0);
+                                                                } catch (e) {
+                                                                    console.error("Error playing test sound", e);
+                                                                }
+                                                            }}
+                                                            className="text-xs bg-bg-input hover:bg-bg-elevated text-text-primary px-3 py-1.5 rounded-md transition-colors flex items-center gap-2"
+                                                        >
+                                                            <Speaker size={12} /> Test Sound
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                            )}
+                                            </div>
+
+                                            <div className="h-px bg-border-subtle" />
 
                                             {/* Recognition Language Family */}
                                             <CustomSelect
@@ -3704,220 +3820,11 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                     }
                                                 </p>
                                             </div>
-                                        </div>
-                                    </div>
 
-                                    <div className="h-px bg-border-subtle" />
 
                                     {/* ── Audio Configuration Section ── */}
-                                    <div>
-                                        <h3 className="text-lg font-bold text-text-primary mb-1">Audio Configuration</h3>
-                                        <p className="text-xs text-text-secondary mb-5">Manage input and output devices.</p>
-
-                                        <div className="space-y-4">
-                                            <CustomSelect
-                                                label="Input Device"
-                                                icon={<Mic size={16} />}
-                                                value={selectedInput}
-                                                options={inputDevices}
-                                                onChange={(id) => {
-                                                    setSelectedInput(id);
-                                                    localStorage.setItem('preferredInputDeviceId', id);
-                                                }}
-                                                placeholder="Default Microphone"
-                                            />
-
-                                            <div>
-                                                <div className="flex justify-between text-xs text-text-secondary mb-2 px-1">
-                                                    <span>Input Level</span>
-                                                </div>
-                                                <div className="h-1.5 bg-bg-input rounded-full overflow-hidden">
-                                                    <div
-                                                        className="h-full bg-green-500 transition-all duration-100 ease-out"
-                                                        style={{ width: `${micLevel}%` }}
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="h-px bg-border-subtle my-2" />
-
-                                            <CustomSelect
-                                                label="Output Device"
-                                                icon={<Speaker size={16} />}
-                                                value={selectedOutput}
-                                                options={outputDevices}
-                                                onChange={(id) => {
-                                                    setSelectedOutput(id);
-                                                    localStorage.setItem('preferredOutputDeviceId', id);
-                                                }}
-                                                placeholder="Default Speakers"
-                                            />
-
-                                            <div className="flex justify-end">
-                                                <button
-                                                    onClick={async () => {
-                                                        try {
-                                                            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-                                                            if (!AudioContext) {
-                                                                console.error("Web Audio API not supported");
-                                                                return;
-                                                            }
-
-                                                            const ctx = new AudioContext();
-
-                                                            if (ctx.state === 'suspended') {
-                                                                await ctx.resume();
-                                                            }
-
-                                                            const oscillator = ctx.createOscillator();
-                                                            const gainNode = ctx.createGain();
-
-                                                            oscillator.connect(gainNode);
-                                                            gainNode.connect(ctx.destination);
-
-                                                            oscillator.type = 'sine';
-                                                            oscillator.frequency.setValueAtTime(523.25, ctx.currentTime);
-                                                            gainNode.gain.setValueAtTime(0.5, ctx.currentTime);
-                                                            gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.0);
-
-                                                            if (selectedOutput && (ctx as any).setSinkId) {
-                                                                try {
-                                                                    await (ctx as any).setSinkId(selectedOutput);
-                                                                } catch (e) {
-                                                                    console.warn("Error setting sink for AudioContext", e);
-                                                                }
-                                                            }
-
-                                                            oscillator.start();
-                                                            oscillator.stop(ctx.currentTime + 1.0);
-                                                        } catch (e) {
-                                                            console.error("Error playing test sound", e);
-                                                        }
-                                                    }}
-                                                    className="text-xs bg-bg-input hover:bg-bg-elevated text-text-primary px-3 py-1.5 rounded-md transition-colors flex items-center gap-2"
-                                                >
-                                                    <Speaker size={12} /> Test Sound
-                                                </button>
-                                            </div>
-
-                                            <div className="h-px bg-border-subtle my-2" />
-
-                                            {/* SCK Backend Toggle */}
-                                            <div className="bg-amber-500/5 rounded-xl border border-amber-500/20 p-4">
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-start gap-3">
-                                                        <div className="mt-0.5 p-1.5 rounded-lg bg-amber-500/10 text-amber-500">
-                                                            <FlaskConical size={18} />
-                                                        </div>
-                                                        <div>
-                                                            <div className="flex items-center gap-2 mb-0.5">
-                                                                <h3 className="text-sm font-bold text-text-primary">SCK Backend</h3>
-                                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-400 uppercase tracking-wide">Alternative</span>
-                                                            </div>
-                                                            <p className="text-xs text-text-secondary leading-relaxed max-w-[300px]">
-                                                                Use the ScreenCaptureKit backend. An optimized alternative to CoreAudio if you experience any capture issues.
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    <div
-                                                        onClick={() => {
-                                                            const newState = !useExperimentalSck;
-                                                            setUseExperimentalSck(newState);
-                                                            window.localStorage.setItem('useExperimentalSckBackend', newState ? 'true' : 'false');
-                                                        }}
-                                                        className={`w-11 h-6 rounded-full relative transition-colors shrink-0 ${useExperimentalSck ? 'bg-amber-500' : 'bg-bg-toggle-switch border border-border-muted'}`}
-                                                    >
-                                                        <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${useExperimentalSck ? 'translate-x-5' : 'translate-x-0'}`} />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
                             )}
-
-
-                            {activeTab === 'calendar' && (
-                                <div className="space-y-6 animated fadeIn h-full">
-                                    <div>
-                                        <h3 className="text-lg font-bold text-text-primary mb-2">Visible Calendars</h3>
-                                        <p className="text-xs text-text-secondary mb-4">Upcoming meetings are synchronized from these calendars</p>
-                                    </div>
-
-                                    <div className="bg-bg-card rounded-xl p-6 border border-border-subtle flex flex-col items-start gap-4">
-                                        {calendarStatus.connected ? (
-                                            <div className="w-full flex items-center justify-between">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
-                                                        <Calendar size={20} />
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="text-sm font-medium text-text-primary">Google Calendar</h4>
-                                                        <p className="text-xs text-text-secondary">Connected as {calendarStatus.email || 'User'}</p>
-                                                    </div>
-                                                </div>
-
-                                                <button
-                                                    onClick={async () => {
-                                                        setIsCalendarsLoading(true);
-                                                        try {
-                                                            await window.electronAPI.calendarDisconnect();
-                                                            const status = await window.electronAPI.getCalendarStatus();
-                                                            setCalendarStatus(status);
-                                                        } catch (e) {
-                                                            console.error(e);
-                                                        } finally {
-                                                            setIsCalendarsLoading(false);
-                                                        }
-                                                    }}
-                                                    disabled={isCalendarsLoading}
-                                                    className="px-3 py-1.5 bg-bg-input hover:bg-bg-elevated border border-border-subtle text-text-primary rounded-md text-xs font-medium transition-colors"
-                                                >
-                                                    {isCalendarsLoading ? 'Disconnecting...' : 'Disconnect'}
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <div className="w-full py-4">
-                                                <div className="mb-4">
-                                                    <Calendar size={24} className="text-text-tertiary mb-3" />
-                                                    <h4 className="text-sm font-bold text-text-primary mb-1">No calendars</h4>
-                                                    <p className="text-xs text-text-secondary">Get started by connecting a Google account.</p>
-                                                </div>
-
-                                                <button
-                                                    onClick={async () => {
-                                                        setIsCalendarsLoading(true);
-                                                        try {
-                                                            const res = await window.electronAPI.calendarConnect();
-                                                            if (res.success) {
-                                                                const status = await window.electronAPI.getCalendarStatus();
-                                                                setCalendarStatus(status);
-                                                            }
-                                                        } catch (e) {
-                                                            console.error(e);
-                                                        } finally {
-                                                            setIsCalendarsLoading(false);
-                                                        }
-                                                    }}
-                                                    disabled={isCalendarsLoading}
-                                                    className={`px-4 py-2 rounded-lg text-xs font-medium transition-all flex items-center gap-2.5 ${isLight ? 'bg-bg-component hover:bg-bg-item-surface text-text-primary border border-border-subtle' : 'bg-[#303033] hover:bg-[#3A3A3D] text-white'}`}
-                                                >
-                                                    <svg viewBox="0 0 24 24" width="14" height="14" xmlns="http://www.w3.org/2000/svg">
-                                                        <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
-                                                            <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z" />
-                                                            <path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z" />
-                                                            <path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.734 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z" />
-                                                            <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z" />
-                                                        </g>
-                                                    </svg>
-                                                    {isCalendarsLoading ? 'Connecting...' : 'Connect Google'}
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
                             {activeTab === 'help' && (
                                 <HelpSettings onNavigate={setActiveTab} />
                             )}

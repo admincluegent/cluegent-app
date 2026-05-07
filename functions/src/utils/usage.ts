@@ -314,10 +314,26 @@ export function buildPlanStatus(
   };
 }
 
+export function isFreeTrialExhausted(status: ReturnType<typeof buildPlanStatus>) {
+  return (
+    status.plan === "free" &&
+    (status.remaining.prompts <= 0 ||
+      status.remaining.screenshots <= 0 ||
+      status.remaining.sttSeconds <= 0)
+  );
+}
+
 export function assertUsageAvailable(
   actionType: UsageActionType,
   status: ReturnType<typeof buildPlanStatus>
 ) {
+  if (isFreeTrialExhausted(status)) {
+    throw new HttpsError(
+      "resource-exhausted",
+      "Free trial limit reached. Subscribe to continue using Cluegent."
+    );
+  }
+
   if (actionType === "prompt" && status.remaining.prompts <= 0) {
     throw new HttpsError(
       "resource-exhausted",

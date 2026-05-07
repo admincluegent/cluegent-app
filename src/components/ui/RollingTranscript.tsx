@@ -111,7 +111,7 @@ const RollingTranscript: React.FC<RollingTranscriptProps> = ({
                         {anyReconnecting && !anyFailed && (
                             <span className="flex items-center justify-center w-full text-[12px] leading-7 stt-state-enter">
                                 <span className="text-amber-400/70 font-medium tracking-wide">
-                                    Reconnecting
+                                    Connecting...
                                 </span>
                             </span>
                         )}

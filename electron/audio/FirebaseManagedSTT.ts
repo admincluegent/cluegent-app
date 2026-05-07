@@ -3,17 +3,20 @@ import WebSocket from "ws";
 import { RECOGNITION_LANGUAGES } from "../config/languages";
 import { FirebaseSessionManager } from "../services/FirebaseSessionManager";
 
+const FIREBASE_FUNCTIONS_BASE_URL =
+  process.env.FIREBASE_FUNCTIONS_BASE_URL ||
+  "https://us-central1-cluegent-2514d.cloudfunctions.net";
 const TOKEN_ENDPOINT =
-  "https://us-central1-cluegent-2514d.cloudfunctions.net/createDeepgramStreamToken";
+  `${FIREBASE_FUNCTIONS_BASE_URL}/createDeepgramStreamToken`;
 const TRACK_USAGE_ENDPOINT =
-  "https://us-central1-cluegent-2514d.cloudfunctions.net/trackSttUsage";
+  `${FIREBASE_FUNCTIONS_BASE_URL}/trackSttUsage`;
 const ASSEMBLY_STREAMING_BASE_URL = "wss://streaming.assemblyai.com/v3/ws";
 
 const TOKEN_TTL_SECONDS = 60;
 const RECONNECT_BASE_DELAY_MS = 1000;
 const RECONNECT_MAX_DELAY_MS = 30000;
 const RECONNECT_MAX_ATTEMPTS = 10;
-const REPORT_USAGE_INTERVAL_SECONDS = 15;
+const REPORT_USAGE_INTERVAL_SECONDS = 10;
 const ASSEMBLY_MIN_AUDIO_MS = 50;
 const ASSEMBLY_TARGET_AUDIO_MS = 60;
 const ASSEMBLY_MAX_AUDIO_MS = 1000;

@@ -51,6 +51,12 @@ export interface VerifyRazorpayTestPaymentResponse {
   paymentId: string;
 }
 
+export interface CancelRazorpayTestSubscriptionResponse {
+  cancelled: boolean;
+  subscriptionId: string;
+  planId: UserPlan;
+}
+
 export interface ResetTestSubscriptionResponse {
   reset: boolean;
   planId: UserPlan;
