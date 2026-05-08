@@ -99,10 +99,36 @@ web_modules/
 
 # dotenv environment variable files
 .env
+.env.*
+!.env.example
 .env.development.local
 .env.test.local
 .env.production.local
 .env.local
+functions/.env
+functions/.env.*
+!functions/.env.example
+
+# Firebase local/runtime files and deploy cache
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+functions/.runtimeconfig.json
+
+# Service accounts and private credentials
+*service-account*.json
+*firebase-admin*.json
+*google-application-credentials*.json
+credentials.json
+credentials.enc
+*.pem
+*.key
+*.p12
+*.p8
+
+# Firebase Functions generated output
+functions/lib/
 
 evinresume.pdf
 TPA Campus JD - SalesCode.pdf

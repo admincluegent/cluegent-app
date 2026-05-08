@@ -48,9 +48,9 @@ const guideSteps = {
         { label: 'Submit with Ctrl + Enter', x: 516, y: 218 }
     ],
     screenshot: [
-        { label: 'Capture screenshot with Ctrl + [', x: 488, y: 218 },
-        { label: 'Screenshot attached', x: 436, y: 116 },
-        { label: 'Gemini analyzes the screen', x: 128, y: 154 }
+        { label: 'Capture screenshot with Ctrl + [', x: 520, y: 226 },
+        { label: 'Screenshot attached', x: 452, y: 112 },
+        { label: 'AI analyzes the same overlay', x: 138, y: 164 }
     ]
 };
 
@@ -152,7 +152,7 @@ const MockPermissionsWalkthrough = () => {
     );
 };
 
-const MockInterfaceWalkthrough = () => {
+export const MockInterfaceWalkthrough = () => {
     const [step, setStep] = useState(0);
     const [collapsed, setCollapsed] = useState(false);
     const activeStep = guideSteps.interface[step];
@@ -264,13 +264,18 @@ const MockInterfaceWalkthrough = () => {
     );
 };
 
-const MockScreenshotWalkthrough = () => {
+export const MockScreenshotWalkthrough = () => {
     const [step, setStep] = useState(0);
+    const [answerReady, setAnswerReady] = useState(false);
     const activeStep = guideSteps.screenshot[step];
 
     useEffect(() => {
         const timer = window.setInterval(() => {
-            setStep((current) => (current + 1) % guideSteps.screenshot.length);
+            setStep((current) => {
+                const next = (current + 1) % guideSteps.screenshot.length;
+                setAnswerReady(next === 2);
+                return next;
+            });
         }, 1900);
 
         return () => window.clearInterval(timer);
@@ -278,65 +283,84 @@ const MockScreenshotWalkthrough = () => {
 
     return (
         <div className="relative mt-4 overflow-hidden rounded-2xl border border-border-subtle bg-bg-input p-4 shadow-inner">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_25%,rgba(245,158,11,0.12),transparent_30%),radial-gradient(circle_at_88%_70%,rgba(59,130,246,0.12),transparent_34%)]" />
-            <div className="relative mx-auto h-[310px] max-w-[640px]">
-                <div className="absolute left-0 right-0 top-0 rounded-[26px] border border-border-subtle bg-bg-card p-4 shadow-2xl">
-                    <div className="mb-3 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
-                                <img src={CluegentIcon} alt="Cluegent" className="h-5 w-5 object-contain" />
-                            </div>
-                            <div className="text-xs font-bold text-text-primary">Screenshot answer flow</div>
-                        </div>
-                        <motion.div
-                            animate={{ opacity: step >= 1 ? 1 : 0.35, scale: step >= 1 ? 1 : 0.96 }}
-                            className="flex items-center gap-2 rounded-2xl border border-blue-500/25 bg-blue-500/10 px-4 py-3 text-xs font-bold text-blue-500"
+            <div className="relative mx-auto h-[290px] max-w-[640px]">
+                <div className="absolute left-1/2 top-0 flex -translate-x-1/2 items-center gap-2 rounded-full border border-border-subtle bg-bg-card px-2 py-1.5 shadow-xl">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white">
+                        <img src={CluegentIcon} alt="Cluegent" className="h-6 w-6 object-contain" />
+                    </div>
+                    <motion.button
+                        animate={{
+                            backgroundColor: step === 0 ? 'rgba(245,158,11,0.18)' : 'var(--bg-item-surface)'
+                        }}
+                        className="flex items-center gap-2 rounded-full border border-border-subtle px-4 py-2 text-xs font-bold text-text-primary"
+                    >
+                        <Camera className="h-3.5 w-3.5 text-amber-500" />
+                        Ctrl + [
+                    </motion.button>
+                    <button className="flex items-center gap-2 rounded-full bg-bg-item-active px-4 py-2 text-xs font-bold text-text-primary">
+                        <EyeOff className="h-3.5 w-3.5" /> Hide
+                    </button>
+                    <button className="flex h-9 w-9 items-center justify-center rounded-full bg-bg-item-active text-text-primary">
+                        <SlidersHorizontal className="h-4 w-4" />
+                    </button>
+                    <button className="flex h-9 w-9 items-center justify-center rounded-full bg-bg-item-active text-text-primary">
+                        <span className="h-3.5 w-3.5 rounded-[3px] bg-current" />
+                    </button>
+                </div>
+
+                <motion.div
+                    animate={{ opacity: answerReady ? 1 : 0.94, y: answerReady ? 0 : 8 }}
+                    transition={{ type: 'spring', stiffness: 130, damping: 18 }}
+                    className="absolute left-0 right-0 top-[70px] rounded-[26px] border border-border-subtle bg-bg-card p-4 shadow-2xl"
+                >
+                    <div className="mb-3 overflow-hidden whitespace-nowrap text-right text-[13px] italic text-text-secondary">
+                        <motion.span
+                            animate={{ x: [-18, 0, -18] }}
+                            transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
+                            className="inline-block"
                         >
-                            <Camera className="h-3.5 w-3.5" />
-                            Screenshot attached
+                            ...transcript hint: explain the visible React hook question clearly
+                        </motion.span>
+                    </div>
+
+                    <div className="mb-3 flex items-center gap-2 overflow-hidden">
+                        {['Ask next question', 'Give Example', 'Brainstorm', 'Mic'].map((label) => (
+                            <button
+                                key={label}
+                                className="shrink-0 rounded-full border border-border-subtle bg-bg-item-active px-4 py-2 text-xs font-bold text-text-primary"
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="mb-3 flex justify-end">
+                        <motion.div
+                            animate={{ opacity: step >= 1 ? 1 : 0.4, scale: step >= 1 ? 1 : 0.96 }}
+                            className="rounded-[20px] rounded-tr-[6px] border border-blue-500/25 bg-blue-500/10 px-4 py-3 text-xs font-bold text-blue-500 shadow-sm"
+                        >
+                            <div className="flex items-center gap-2">
+                                <Camera className="h-3.5 w-3.5" />
+                                Screenshot attached
+                            </div>
+                            <div className="mt-2 h-px w-full bg-blue-500/20" />
                         </motion.div>
                     </div>
 
-                    <div className="grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
-                        <div className="rounded-2xl border border-border-subtle bg-bg-input p-4">
-                            <div className="mb-3 flex items-center gap-2 border-b border-border-subtle pb-3">
-                                <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
-                                <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-                                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                                <span className="ml-2 text-[11px] font-semibold text-text-tertiary">Captured screen</span>
-                            </div>
-                            <div className="space-y-2 font-mono text-[11px] leading-relaxed text-text-secondary">
-                                <motion.div animate={{ backgroundColor: step === 2 ? 'rgba(16,185,129,0.12)' : 'transparent' }} className="rounded px-2 py-1">
-                                    Question: What is useEffect?
-                                </motion.div>
-                                <div className="rounded bg-bg-card px-2 py-1 text-text-tertiary">
-                                    const [count, setCount] = useState(0)
-                                </div>
-                                <div className="rounded bg-bg-card px-2 py-1 text-text-tertiary">
-                                    useEffect(() =&gt; fetchData(), [])
-                                </div>
-                                <motion.div animate={{ opacity: [0.45, 1, 0.45] }} transition={{ duration: 1.5, repeat: Infinity }} className="rounded border border-amber-500/20 bg-amber-500/10 px-2 py-1 text-amber-500">
-                                    Visible task detected
-                                </motion.div>
-                            </div>
-                        </div>
-
-                        <div className="rounded-2xl border border-border-subtle bg-bg-input p-4">
-                            <div className="mb-2 text-[11px] font-black uppercase tracking-[0.2em] text-text-tertiary">Cluegent response</div>
-                            <motion.div
-                                key={step}
-                                initial={{ opacity: 0, y: 6 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="text-sm leading-relaxed text-text-primary"
-                            >
-                                {step === 0 && 'Press Ctrl + [ to attach what is on screen.'}
-                                {step === 1 && 'The screenshot is attached silently; no default text is shown to the user.'}
-                                {step === 2 && 'Cluegent answers the visible question directly, with code reasoning when needed.'}
-                            </motion.div>
-                        </div>
+                    <div className="mb-3 rounded-2xl border border-border-subtle bg-bg-input p-4 text-sm leading-relaxed text-text-primary">
+                        <div className="mb-2 text-[11px] font-black uppercase tracking-[0.2em] text-text-tertiary">Cluegent response</div>
+                        <motion.div
+                            key={step}
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                        >
+                            {step === 0 && 'Press Ctrl + [ to attach the current screen from inside the same overlay.'}
+                            {step === 1 && 'Screenshot attached. Cluegent keeps the UI quiet and sends the image with your behavior rules.'}
+                            {step === 2 && 'AI reads the screenshot, combines any rolling transcript context, and answers the visible question directly.'}
+                        </motion.div>
                     </div>
 
-                    <div className="mt-3 flex items-center gap-3">
+                    <div className="flex items-center gap-3">
                         <div className="flex-1 rounded-2xl border border-border-subtle bg-bg-input px-4 py-3 text-sm text-text-secondary">
                             Ask anything... <span className="mx-2 text-text-tertiary">Ctrl + [</span> for screenshot
                         </div>
@@ -347,7 +371,7 @@ const MockScreenshotWalkthrough = () => {
                             <Camera className="h-4 w-4" />
                         </motion.button>
                     </div>
-                </div>
+                </motion.div>
 
                 <motion.div
                     key={activeStep.label}

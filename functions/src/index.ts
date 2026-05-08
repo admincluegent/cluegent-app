@@ -1,6 +1,9 @@
 import { onCall, onRequest, type HttpsError } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
-import { getOrCreateUserProfileController } from "./controllers/userController.js";
+import {
+  deleteAccountController,
+  getOrCreateUserProfileController,
+} from "./controllers/userController.js";
 import {
   activatePlanController,
   checkUsageBeforeActionController,
@@ -41,12 +44,24 @@ const razorpayTestWebhookSecret = defineSecret("RAZORPAY_TEST_WEBHOOK_SECRET");
 const razorpayTestAllowedEmails = defineSecret("RAZORPAY_TEST_ALLOWED_EMAILS");
 const razorpayTestPlanProMonthly = defineSecret("RAZORPAY_TEST_PLAN_PRO_MONTHLY");
 const razorpayTestPlanProYearly = defineSecret("RAZORPAY_TEST_PLAN_PRO_YEARLY");
-const razorpayTestPlanPowerMonthly = "plan_SlfSMSH3mI6BD4";
-const razorpayTestPlanPowerYearly = "plan_SmQQK0JQZcmwEd";
+const razorpayTestPlanPowerMonthly = defineSecret("RAZORPAY_TEST_PLAN_POWER_MONTHLY");
+const razorpayTestPlanPowerYearly = defineSecret("RAZORPAY_TEST_PLAN_POWER_YEARLY");
 
 export const getOrCreateUserProfile = onCall(
   callableOptions,
   getOrCreateUserProfileController
+);
+
+export const deleteAccount = onCall(
+  {
+    ...callableOptions,
+    secrets: [razorpayTestKeyId, razorpayTestKeySecret],
+  },
+  (request) =>
+    deleteAccountController(request, {
+      razorpayTestKeyId: razorpayTestKeyId.value(),
+      razorpayTestKeySecret: razorpayTestKeySecret.value(),
+    })
 );
 
 export const getPlanStatus = onCall(
@@ -68,6 +83,8 @@ export const createRazorpayTestSubscription = onCall(
       razorpayTestAllowedEmails,
       razorpayTestPlanProMonthly,
       razorpayTestPlanProYearly,
+      razorpayTestPlanPowerMonthly,
+      razorpayTestPlanPowerYearly,
     ],
   },
   (request) =>
@@ -78,8 +95,8 @@ export const createRazorpayTestSubscription = onCall(
       plans: {
         proMonthly: razorpayTestPlanProMonthly.value(),
         proYearly: razorpayTestPlanProYearly.value(),
-        powerMonthly: razorpayTestPlanPowerMonthly,
-        powerYearly: razorpayTestPlanPowerYearly,
+        powerMonthly: razorpayTestPlanPowerMonthly.value(),
+        powerYearly: razorpayTestPlanPowerYearly.value(),
       },
     })
 );
@@ -166,6 +183,8 @@ export const razorpayTestWebhook = onRequest(
       razorpayTestWebhookSecret,
       razorpayTestPlanProMonthly,
       razorpayTestPlanProYearly,
+      razorpayTestPlanPowerMonthly,
+      razorpayTestPlanPowerYearly,
     ],
   },
   async (request, response) =>
@@ -174,8 +193,8 @@ export const razorpayTestWebhook = onRequest(
       plans: {
         proMonthly: razorpayTestPlanProMonthly.value(),
         proYearly: razorpayTestPlanProYearly.value(),
-        powerMonthly: razorpayTestPlanPowerMonthly,
-        powerYearly: razorpayTestPlanPowerYearly,
+        powerMonthly: razorpayTestPlanPowerMonthly.value(),
+        powerYearly: razorpayTestPlanPowerYearly.value(),
       },
     })
 );

@@ -20,6 +20,12 @@ export interface GetOrCreateUserProfileResponse {
   planStatus: PlanStatus;
 }
 
+export interface DeleteAccountResponse {
+  deleted: boolean;
+  uid: string;
+  cancelledSubscriptionId: string | null;
+}
+
 export interface GetPlanStatusResponse {
   monthKey: string;
   planStatus: PlanStatus;

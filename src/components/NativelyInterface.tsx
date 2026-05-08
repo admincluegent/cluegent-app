@@ -389,11 +389,25 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     }, [rollingTranscript]);
 
     useEffect(() => {
+        const trimContextLine = (value: string, maxLength = 700) => {
+            const clean = value.replace(/\s+/g, ' ').trim();
+            return clean.length > maxLength ? `${clean.slice(0, maxLength)}...` : clean;
+        };
+
         const context = messages
             .filter(m => m.role !== 'user' || !m.hasScreenshot)
-            .map(m => `${m.role === 'interviewer' ? 'Interviewer' : m.role === 'user' ? 'User' : 'Assistant'}: ${m.text}`)
-            .slice(-8)
-            .join('\n');
+            .map(m => {
+                const label = m.role === 'interviewer'
+                    ? 'Interviewer'
+                    : m.role === 'user'
+                        ? 'User'
+                        : 'Assistant';
+                return `${label}: ${trimContextLine(m.text)}`;
+            })
+            .filter(Boolean)
+            .slice(-6)
+            .join('\n')
+            .slice(-3200);
         setConversationContext(context);
     }, [messages]);
 

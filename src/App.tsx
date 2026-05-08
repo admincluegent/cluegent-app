@@ -16,6 +16,7 @@ import { FreeTrialModal }       from "./components/trial/FreeTrialModal"
 import { TrialPromoToaster }    from "./components/trial/TrialPromoToaster"
 import { PermissionsToaster }   from "./components/onboarding/PermissionsToaster"
 import { AlertCircle } from "lucide-react"
+import { ConsentNotice } from "./components/ConsentNotice"
 import { clampOverlayOpacity, OVERLAY_OPACITY_DEFAULT, getDefaultOverlayOpacity } from "./lib/overlayAppearance"
 import {
   JDAwarenessToaster,
@@ -91,6 +92,9 @@ const App: React.FC = () => {
 
   // State
   const [showStartup, setShowStartup] = useState(true);
+  const [hasAcceptedConsent, setHasAcceptedConsent] = useState(() => {
+    return localStorage.getItem('cluegent_consent_v1') === 'accepted';
+  });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState('general');
   const [isModesOpen, setIsModesOpen] = useState(false);
@@ -543,6 +547,17 @@ const App: React.FC = () => {
                   initialTab={settingsInitialTab}
                   isTrialActive={!!activeTrial}
                 />
+                <AnimatePresence>
+                  {(isLauncherWindow || isDefault) && !hasAcceptedConsent && (
+                    <ConsentNotice
+                      onAccept={() => {
+                        localStorage.setItem('cluegent_consent_v1', 'accepted');
+                        localStorage.setItem('cluegent_consent_accepted_at', new Date().toISOString());
+                        setHasAcceptedConsent(true);
+                      }}
+                    />
+                  )}
+                </AnimatePresence>
                 <AnimatePresence>
                   {isModesOpen && (
                     <motion.div

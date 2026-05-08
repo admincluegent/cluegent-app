@@ -8,15 +8,23 @@ import {
 import { getFirestore } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
 
-export const firestoreDatabaseId = "cluegent";
+const requiredEnv = (key: string) => {
+  const value = import.meta.env[key];
+  if (!value) {
+    throw new Error(`Missing Firebase environment variable: ${key}`);
+  }
+  return value;
+};
+
+export const firestoreDatabaseId = import.meta.env.VITE_FIREBASE_DATABASE_ID || "cluegent";
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyD9BdMzNt3f2GM_VY50p1rgQ9NE3ki5gDQ",
-  authDomain: "cluegent-2514d.firebaseapp.com",
-  projectId: "cluegent-2514d",
-  storageBucket: "cluegent-2514d.firebasestorage.app",
-  messagingSenderId: "668074615998",
-  appId: "1:668074615998:web:e3bdf7a3ea47e536d7aaef",
+  apiKey: requiredEnv("VITE_FIREBASE_API_KEY"),
+  authDomain: requiredEnv("VITE_FIREBASE_AUTH_DOMAIN"),
+  projectId: requiredEnv("VITE_FIREBASE_PROJECT_ID"),
+  storageBucket: requiredEnv("VITE_FIREBASE_STORAGE_BUCKET"),
+  messagingSenderId: requiredEnv("VITE_FIREBASE_MESSAGING_SENDER_ID"),
+  appId: requiredEnv("VITE_FIREBASE_APP_ID"),
 };
 
 export const app = initializeApp(firebaseConfig);

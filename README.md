@@ -1,3 +1,33 @@
+## Cluegent Source, License, and Modifications
+
+Cluegent is a modified AGPL-3.0 application based on the Natively open-source project. Our public source code is available at [admincluegent/cluegent-app](https://github.com/admincluegent/cluegent-app), and the license is available at [LICENSE](LICENSE).
+
+Cluegent modifications include product branding, Firebase authentication and backend Functions, server-managed STT and LLM integrations, Razorpay subscription billing, Firestore entitlement and usage tracking, website/legal pages, local meeting history, customizable AI behavior, quick actions, and production-focused UI updates.
+
+See [ATTRIBUTION.md](ATTRIBUTION.md) for upstream attribution, license notes, and a concise summary of included Cluegent changes.
+
+## Deploying Your Own Cluegent Instance
+
+This repository contains source code only. It does not include production API keys, Firebase service accounts, Razorpay secrets, webhook secrets, or private environment files.
+
+To deploy your own instance, create your own Firebase project and provider accounts, then configure the required secrets yourself. Use [.env.example](.env.example) as the placeholder template, and set Firebase Functions secrets with `firebase functions:secrets:set SECRET_NAME`.
+
+Required backend secrets for the current Cluegent flow:
+
+- `DEEPSEEK_AI_API_KEY` for text-only LLM responses.
+- `GEMINI_API_KEY` for screenshot-attached responses.
+- `ASSEMBLY_AI_API_KEY` for realtime speech-to-text tokens.
+- `RAZORPAY_TEST_KEY_ID`, `RAZORPAY_TEST_KEY_SECRET`, and `RAZORPAY_TEST_WEBHOOK_SECRET` for Razorpay test billing.
+- `RAZORPAY_TEST_ALLOWED_EMAILS` to restrict test billing access.
+- `RAZORPAY_TEST_PLAN_PRO_MONTHLY`, `RAZORPAY_TEST_PLAN_PRO_YEARLY`, `RAZORPAY_TEST_PLAN_POWER_MONTHLY`, and `RAZORPAY_TEST_PLAN_POWER_YEARLY` for subscription plan mapping.
+
+Security notes:
+
+- Never commit `.env`, service-account JSON files, Firebase admin credentials, private keys, API keys, or webhook secrets.
+- Keep provider keys in Firebase Secrets or your deployment platform's secret manager.
+- Public client Firebase config values may be present in app builds, but Firestore/Functions security must rely on Firebase Auth, backend checks, and server-side secrets.
+- Generated outputs such as `dist/`, `dist-electron/`, `functions/lib/`, `.firebase/`, and `node_modules/` should not be used as the source-of-truth for AGPL source availability.
+
 # [Sponsored by Recall AI - API for desktop recording](https://docs.recall.ai/docs/desktop-sdk?utm_source=github&utm_medium=sponsorship&utm_campaign=evinjohnn-natively-ai-assistant)
 
 If you’re looking for a hosted desktop recording API, consider checking out [Recall.ai](https://docs.recall.ai/docs/desktop-sdk?utm_source=github&utm_medium=sponsorship&utm_campaign=evinjohnn-natively-ai-assistant), an API that records Zoom, Google Meet, Microsoft Teams, in-person meetings, and more.

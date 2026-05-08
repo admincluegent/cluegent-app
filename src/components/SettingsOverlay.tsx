@@ -17,7 +17,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { useResolvedTheme } from '../hooks/useResolvedTheme';
 import { useAuth } from '../contexts/auth.context';
-import { cancelRazorpayTestSubscription } from '../services/backendApi';
+import { cancelRazorpayTestSubscription, deleteAccount } from '../services/backendApi';
 import {
     clampOverlayOpacity,
     getOverlayAppearance,
@@ -435,6 +435,9 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
     const [isCancellingSubscription, setIsCancellingSubscription] = useState(false);
     const [cancelMessage, setCancelMessage] = useState<string | null>(null);
     const [cancelError, setCancelError] = useState<string | null>(null);
+    const [isDeleteAccountConfirmOpen, setIsDeleteAccountConfirmOpen] = useState(false);
+    const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+    const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null);
     
     // Sync active tab when modal opens
     useEffect(() => {
@@ -461,6 +464,27 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
             );
         } finally {
             setIsCancellingSubscription(false);
+        }
+    };
+
+    const handleDeleteAccountAndQuit = async () => {
+        setIsDeletingAccount(true);
+        setDeleteAccountError(null);
+
+        try {
+            await deleteAccount();
+            localStorage.clear();
+            await logoutUser().catch(() => undefined);
+            await window.electronAPI?.setFirebaseAuthToken?.(null).catch(() => undefined);
+            await window.electronAPI.quitApp();
+        } catch (error) {
+            setDeleteAccountError(
+                error instanceof Error
+                    ? error.message
+                    : 'Failed to delete your account.'
+            );
+        } finally {
+            setIsDeletingAccount(false);
         }
     };
     
@@ -1537,7 +1561,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                         onClick={() => setActiveTab('help')}
                                         className={`w-full text-left px-3 py-2 rounded-lg text-[13px] font-medium transition-colors flex items-center gap-3 ${activeTab === 'help' ? 'bg-bg-item-active text-text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-bg-item-active/50'}`}
                                     >
-                                        <HelpCircle size={16} /> Setup & Help
+                                        <HelpCircle size={16} /> Guide & Help
                                     </button>
 
                                     <button
@@ -1560,7 +1584,14 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
 
                             <div className="shrink-0 p-4 border-t border-border-subtle">
                                 <button
-                                    onClick={() => window.electronAPI.quitApp()}
+                                    onClick={() => {
+                                        if (!profile) {
+                                            void window.electronAPI.quitApp();
+                                            return;
+                                        }
+                                        setDeleteAccountError(null);
+                                        setIsDeleteAccountConfirmOpen(true);
+                                    }}
                                     className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-3"
                                 >
                                     <LogOut size={16} /> Quit Cluegent
@@ -2249,7 +2280,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                             <div>
                                                 <h4 className="text-base font-bold text-text-primary">Quick Action Buttons</h4>
                                                 <p className="text-xs text-text-secondary mt-1 max-w-2xl leading-relaxed">
-                                                    Rename the prompt buttons and tune what each button asks the LLM to do.
+                                                    Rename the prompt buttons and tune what each button asks the AI to do.
                                                 </p>
                                             </div>
                                             <div className="flex shrink-0 items-center gap-3">
@@ -3853,6 +3884,77 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                     setProfileStatus(prev => ({ ...prev, profileMode: false }));
                 }}
             />
+
+            <AnimatePresence>
+                {isDeleteAccountConfirmOpen && (
+                    <motion.div
+                        className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, y: 16, scale: 0.97 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                            transition={{ duration: 0.2, ease: [0.19, 1, 0.22, 1] }}
+                            className="w-full max-w-[520px] rounded-[28px] border border-red-500/20 bg-[#111827] p-6 shadow-2xl"
+                        >
+                            <div className="flex items-start gap-4">
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-red-500/12 text-red-300">
+                                    <Trash2 size={22} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-black uppercase tracking-[0.18em] text-red-300">
+                                        Delete account
+                                    </p>
+                                    <h3 className="mt-2 text-2xl font-black tracking-tight text-white">
+                                        Do you want to delete your account?
+                                    </h3>
+                                    <p className="mt-3 text-sm leading-6 text-slate-300">
+                                        This deletes your Cluegent account data, removes local app data on this device,
+                                        cancels any active Razorpay test subscription immediately, signs you out, and quits the app.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {deleteAccountError && (
+                                <div className="mt-5 rounded-2xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                                    {deleteAccountError}
+                                </div>
+                            )}
+
+                            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsDeleteAccountConfirmOpen(false)}
+                                    disabled={isDeletingAccount}
+                                    className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/10 disabled:opacity-60"
+                                >
+                                    No, keep account
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        void handleDeleteAccountAndQuit();
+                                    }}
+                                    disabled={isDeletingAccount}
+                                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-500 px-5 py-3 text-sm font-black text-white transition hover:bg-red-400 disabled:opacity-60"
+                                >
+                                    {isDeletingAccount ? (
+                                        <>
+                                            <Loader2 size={16} className="animate-spin" />
+                                            Deleting
+                                        </>
+                                    ) : (
+                                        'Yes, delete account'
+                                    )}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* ------------------------------------------------------------------ */}
             {/* Live Preview — mockup sits below the z-50 modal                    */}

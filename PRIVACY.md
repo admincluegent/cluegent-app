@@ -1,68 +1,136 @@
-# Privacy Policy
+# Cluegent Privacy Policy
 
-## Overview
+Effective date: May 8, 2026
 
-This privacy policy describes how this open-source application ("Natively") handles your data. Our philosophy is privacy-first: we believe your meeting data belongs to you. We do not operate a central server to store your personal meeting recordings or transcripts.
+Cluegent is a desktop AI assistant for meetings, interviews, coding conversations, rolling transcription, typed prompts, and screenshot-based answers. This policy explains what data Cluegent processes, why it is processed, and the choices you have.
 
-## Data Collection
+This policy is written for the current Cluegent desktop app and website. If a future release adds new cloud sync, analytics, team features, or live billing changes, this policy should be updated before those features are launched.
 
-**We do not collect, store, or transmit your personal data to our own servers.**
+## Information We Collect or Process
 
-The application functions as a local tool on your device.
-*   **Audio & Video:** The application captures audio and screen content only when you explicitly start a recording or session.
-*   **Transcripts & Notes:** All generated transcripts, summaries, and meeting notes are stored locally on your device.
-*   **Telemetry:** This application does not include third-party analytics or tracking SDKs (such as Google Analytics or Mixpanel).
+### Account information
 
-## Local Processing
+When you sign in with Google, Cluegent receives account information needed to identify your account, such as your user ID, email address, display name, profile image, and email verification status.
 
-The majority of the application's logic runs locally on your machine.
-*   **Database:** Meeting history and notes are stored in a local SQLite database file on your computer.
-*   **Settings:** Configuration preferences are stored locally using `electron-store`.
+We use this information to:
 
-## Network Communication
+- authenticate you;
+- connect your subscription and usage limits to your account;
+- show account and plan information in the app;
+- protect paid features from unauthorized use.
 
-The application communicates over the internet only for specific, user-initiated features:
+### Billing and subscription information
 
-### 1. Artificial Intelligence Services
-To generate summaries and action items, the application sends text (transcripts) to the AI provider you have configured (e.g., OpenAI, Anthropic, Google Gemini, Groq).
-*   **Data Transmitted:** Anonymized text transcripts and prompts.
-*   **Privacy:** This data is subject to the privacy policy of the respective AI provider you have chosen. We encourage using providers that do not train on API data.
-*   **Keys:** Your API keys are stored locally on your device and are never sent to us.
+Cluegent uses Razorpay for subscription checkout and billing management. We store subscription metadata such as plan, billing interval, subscription status, provider mode, customer ID, subscription ID, cancellation state, and webhook event IDs.
 
-### 2. Software Updates
-The application periodically checks GitHub's servers to see if a new version of the software is available.
-*   **Data Transmitted:** Basic application version information and your operating system type (e.g., macOS, Windows).
+We do not store full payment card numbers, CVV values, or bank credentials. Payment details are handled by Razorpay.
 
-## Permissions
+### Usage and quota information
 
-To function correctly, the application requires the following permissions on your device:
-*   **Microphone:** Required to record meeting audio for transcription.
-*   **Screen Recording / Accessibility:** Required to capture screen content or system audio if enabled.
-*   **Notifications:** Used to alert you when a summary is ready.
+Cluegent tracks usage needed to enforce plan limits and operate the service, including:
 
-You may revoke these permissions at any time through your operating system settings, though this will limit the application's functionality.
+- AI request count;
+- screenshot analysis count;
+- listening / speech-to-text seconds used;
+- approximate input and output token counts;
+- estimated provider cost;
+- monthly usage period.
+
+This data is used for quota enforcement, abuse prevention, billing support, and service operations.
+
+### Audio, transcript, prompt, and screenshot content
+
+Cluegent processes content only when you choose to use the related feature:
+
+- listening starts only when you press Start Listening;
+- screenshots are processed only when you attach or capture a screenshot;
+- typed prompts are processed only when you submit them;
+- quick actions are processed only when you activate them.
+
+To provide AI responses, Cluegent may send relevant audio chunks, transcripts, prompts, screenshot images, and contextual instructions to backend services and AI/STT providers.
+
+### Local-only meeting history and customization
+
+Recent meeting history, saved local conversation snippets, quick action customization, and AI behavior customization are stored locally on your device. You can delete local meeting records from the app.
+
+### Device and diagnostic information
+
+Cluegent may process technical information needed to run the desktop app, such as operating system permissions, audio connection state, errors, and local app settings. Diagnostic logs may appear locally in development or troubleshooting environments.
+
+## How We Use Information
+
+We use information to:
+
+- provide real-time transcription, AI answers, screenshot analysis, and meeting assistance;
+- authenticate users and protect accounts;
+- enforce free trial and paid subscription limits;
+- process subscription events and cancellations;
+- maintain app security and prevent abuse;
+- respond to support requests;
+- improve reliability and troubleshoot issues.
 
 ## Third-Party Services
 
-This project allows integration with third-party Large Language Model (LLM) providers. We do not control how these third parties handle your data once it is sent to them explicitly by the application.
-*   OpenAI
-*   Anthropic
-*   Google (Gemini)
-*   Groq
+Cluegent currently uses or may use the following third-party services:
 
-**This project does not use third-party tracking or marketing cookies.**
+- Google Firebase / Google Cloud for authentication, backend functions, database, secrets, and hosting;
+- Razorpay for payment processing and subscription management;
+- AssemblyAI for realtime speech-to-text processing;
+- DeepSeek for text-only LLM responses;
+- Google Gemini for screenshot-attached responses;
+- GitHub for source code availability and open-source license access.
+
+These providers process data according to their own terms and privacy policies. Cluegent sends only the information needed for the feature being used.
+
+## Analytics
+
+Cluegent currently disables Google Analytics / GA4 tracking in the desktop app. The app does not inject GA4 scripts or send GA4 analytics events.
+
+If analytics are added in the future, this policy should be updated and users should be given appropriate notice and controls.
 
 ## Data Retention
 
-Since data is stored locally:
-*   **You are in control:** You can delete meeting logs, transcripts, and the application database at any time from your local file system.
-*   **No Remote Retention:** We cannot delete your data for you because we do not have access to it.
+Account, subscription, usage, and billing event data may be retained as long as needed to operate Cluegent, enforce limits, maintain billing records, comply with legal obligations, resolve disputes, and prevent abuse.
 
-## Open Source Transparency
+Local meeting history and customization data remain on your device unless you delete them or uninstall/clear the app data.
 
-This project is open-source. The full source code is available for inspection on our GitHub repository. You can verify the claims in this policy by auditing the code directly.
+Payment records are retained by Razorpay according to Razorpay's policies and applicable law.
+
+## Your Choices
+
+You can:
+
+- stop listening at any time;
+- choose when to attach screenshots;
+- delete local meeting history in the app;
+- sign out of the app;
+- cancel your subscription;
+- contact support to request account or data deletion.
+
+Some backend records may need to be retained where required for billing, security, fraud prevention, or legal compliance.
+
+## User Responsibility and Consent
+
+You are responsible for using Cluegent lawfully. Before recording, transcribing, screenshotting, or using AI assistance in a meeting, interview, class, workplace, or online platform, make sure you have any required permission and that your use complies with applicable laws, platform rules, employer policies, and meeting expectations.
+
+## Security
+
+Cluegent keeps provider API keys on the backend and does not expose them in the desktop app. Backend requests use authenticated Firebase sessions where required. No system is perfectly secure, but Cluegent is designed to reduce unnecessary exposure of secrets and user data.
+
+## Children's Privacy
+
+Cluegent is not intended for children under 13, and we do not knowingly collect personal information from children under 13.
+
+## Open Source
+
+Cluegent is distributed under AGPL-3.0. The license is available at:
+
+https://github.com/admincluegent/cluegent-app/blob/development/LICENSE
 
 ## Contact
 
-If you have any questions or concerns about this privacy policy, please contact us at:
-**natively.contact@gmail.com**
+For privacy questions, support, or deletion requests, contact:
+
+admincluegent@gmail.com
+
+https://www.cluegent.com

@@ -9,11 +9,13 @@ import {
 import { ensureUsageDocuments } from "./usageController.js";
 import {
   buildPlanStatus,
+  getMonthlyDeepSeekProPromptAllowance,
   getUserRefs,
   isFreeTrialExhausted,
   materializeSubscription,
   materializeUsage,
 } from "../utils/usage.js";
+import type { DeepSeekChatModelId } from "../config/deepseek.js";
 import {
   DeepSeekServiceError,
   generateDeepSeekReply,
@@ -119,6 +121,13 @@ interface AssistantFailureResponse {
 interface AssistantSuccessResponse {
   success: true;
   reply: string;
+  modelRoute?: {
+    provider: "gemini" | "deepseek";
+    model: string;
+    premiumApplied?: boolean;
+    premiumAllowance?: number;
+    premiumUsedBefore?: number;
+  };
   usage: {
     inputTokens: number;
     outputTokens: number;
@@ -128,6 +137,30 @@ interface AssistantSuccessResponse {
   remaining: {
     promptsRemaining: number;
     screenshotsRemaining: number;
+  };
+}
+
+function selectDeepSeekModelForMonthlyUsage(input: {
+  subscription: ReturnType<typeof materializeSubscription>;
+  usage: ReturnType<typeof materializeUsage>;
+}): {
+  modelId: DeepSeekChatModelId;
+  premiumApplied: boolean;
+  premiumAllowance: number;
+  premiumUsedBefore: number;
+} {
+  const premiumAllowance = getMonthlyDeepSeekProPromptAllowance({
+    plan: input.subscription.plan,
+    billingInterval: input.subscription.billingInterval,
+  });
+  const premiumUsedBefore = input.usage.deepseekProPromptCount;
+  const premiumApplied = premiumUsedBefore < premiumAllowance;
+
+  return {
+    modelId: premiumApplied ? "deepseek-v4-pro" : "deepseek-v4-flash",
+    premiumApplied,
+    premiumAllowance,
+    premiumUsedBefore,
   };
 }
 
@@ -315,6 +348,10 @@ export async function processAssistantReplyController(
     } | null = null;
     let lastLlmError: Error | null = null;
     let resolvedProvider: "gemini" | "deepseek" | null = null;
+    const deepseekModelRoute = selectDeepSeekModelForMonthlyUsage({
+      subscription,
+      usage,
+    });
 
     const tryGemini = async () => {
       if (!geminiApiKey || replyText) {
@@ -362,6 +399,7 @@ export async function processAssistantReplyController(
           prompt,
           systemPrompt: request.data?.systemPrompt,
           history: request.data?.history,
+          modelId: deepseekModelRoute.modelId,
         });
 
         replyText = deepseekResult.reply;
@@ -416,7 +454,10 @@ export async function processAssistantReplyController(
       uid: authUser.uid,
       hasScreenshot,
       provider: resolvedProvider,
-      model: hasScreenshot ? "gemini-2.5-flash-lite" : "deepseek-v4-flash",
+      model: hasScreenshot ? "gemini-2.5-flash-lite" : deepseekModelRoute.modelId,
+      premiumApplied: hasScreenshot ? false : deepseekModelRoute.premiumApplied,
+      premiumAllowance: hasScreenshot ? 0 : deepseekModelRoute.premiumAllowance,
+      premiumUsedBefore: hasScreenshot ? 0 : deepseekModelRoute.premiumUsedBefore,
     });
 
     const finalCostEstimate = costEstimate as {
@@ -454,12 +495,26 @@ export async function processAssistantReplyController(
         throw new Error("SCREENSHOT_LIMIT_EXCEEDED");
       }
 
+      if (!hasScreenshot && deepseekModelRoute.premiumApplied) {
+        const latestRoute = selectDeepSeekModelForMonthlyUsage({
+          subscription: latestSubscription,
+          usage: latestUsage,
+        });
+
+        if (!latestRoute.premiumApplied) {
+          throw new Error("DEEPSEEK_PRO_ALLOWANCE_EXCEEDED");
+        }
+      }
+
       transaction.set(
         usageRef,
         {
           monthKey,
           promptCount: FieldValue.increment(1),
           screenshotCount: FieldValue.increment(hasScreenshot ? 1 : 0),
+          deepseekProPromptCount: FieldValue.increment(
+            !hasScreenshot && deepseekModelRoute.premiumApplied ? 1 : 0
+          ),
           inputTokens: FieldValue.increment(finalCostEstimate.inputTokens),
           outputTokens: FieldValue.increment(finalCostEstimate.outputTokens),
           estimatedCostUsd: FieldValue.increment(finalCostEstimate.estimatedCostUsd),
@@ -480,6 +535,13 @@ export async function processAssistantReplyController(
     return {
       success: true,
       reply: replyText,
+      modelRoute: {
+        provider: resolvedProvider ?? (hasScreenshot ? "gemini" : "deepseek"),
+        model: hasScreenshot ? "gemini-2.5-flash-lite" : deepseekModelRoute.modelId,
+        premiumApplied: hasScreenshot ? false : deepseekModelRoute.premiumApplied,
+        premiumAllowance: hasScreenshot ? 0 : deepseekModelRoute.premiumAllowance,
+        premiumUsedBefore: hasScreenshot ? 0 : deepseekModelRoute.premiumUsedBefore,
+      },
       usage: {
         inputTokens: finalCostEstimate.inputTokens,
         outputTokens: finalCostEstimate.outputTokens,
@@ -507,6 +569,16 @@ export async function processAssistantReplyController(
       return assistantFailure(
         "PROMPT_LIMIT_EXCEEDED",
         "Free trial limit reached. Subscribe to continue using Cluegent."
+      );
+    }
+
+    if (
+      error instanceof Error &&
+      error.message === "DEEPSEEK_PRO_ALLOWANCE_EXCEEDED"
+    ) {
+      return assistantFailure(
+        "GROQ_REQUEST_FAILED",
+        "Premium model allowance was just exhausted. Please retry once to continue on DeepSeek V4 Flash."
       );
     }
 
@@ -633,6 +705,11 @@ export async function processAssistantReplyStreamController(
       return;
     }
 
+    const deepseekModelRoute = selectDeepSeekModelForMonthlyUsage({
+      subscription,
+      usage,
+    });
+
     response.setHeader("Content-Type", "text/event-stream; charset=utf-8");
     response.setHeader("Cache-Control", "no-cache, no-transform");
     response.setHeader("Connection", "keep-alive");
@@ -642,7 +719,10 @@ export async function processAssistantReplyStreamController(
     writeSse(response, {
       meta: {
         provider: "deepseek",
-        model: "deepseek-v4-flash",
+        model: deepseekModelRoute.modelId,
+        premiumApplied: deepseekModelRoute.premiumApplied,
+        premiumAllowance: deepseekModelRoute.premiumAllowance,
+        premiumUsedBefore: deepseekModelRoute.premiumUsedBefore,
       },
     });
 
@@ -660,6 +740,7 @@ export async function processAssistantReplyStreamController(
         prompt,
         systemPrompt: data.systemPrompt,
         history: data.history,
+        modelId: deepseekModelRoute.modelId,
       },
       (delta) => {
         if (!response.writableEnded) {
@@ -701,11 +782,25 @@ export async function processAssistantReplyStreamController(
         throw new Error("PROMPT_LIMIT_EXCEEDED");
       }
 
+      if (deepseekModelRoute.premiumApplied) {
+        const latestRoute = selectDeepSeekModelForMonthlyUsage({
+          subscription: latestSubscription,
+          usage: latestUsage,
+        });
+
+        if (!latestRoute.premiumApplied) {
+          throw new Error("DEEPSEEK_PRO_ALLOWANCE_EXCEEDED");
+        }
+      }
+
       transaction.set(
         usageRef,
         {
           monthKey,
           promptCount: FieldValue.increment(1),
+          deepseekProPromptCount: FieldValue.increment(
+            deepseekModelRoute.premiumApplied ? 1 : 0
+          ),
           inputTokens: FieldValue.increment(costEstimate.inputTokens),
           outputTokens: FieldValue.increment(costEstimate.outputTokens),
           estimatedCostUsd: FieldValue.increment(costEstimate.estimatedCostUsd),
@@ -758,6 +853,19 @@ export async function processAssistantReplyStreamController(
         429,
         "PROMPT_LIMIT_EXCEEDED",
         "Free trial limit reached. Subscribe to continue using Cluegent."
+      );
+      return;
+    }
+
+    if (
+      error instanceof Error &&
+      error.message === "DEEPSEEK_PRO_ALLOWANCE_EXCEEDED"
+    ) {
+      sendAssistantHttpFailure(
+        response,
+        409,
+        "GROQ_REQUEST_FAILED",
+        "Premium model allowance was just exhausted. Please retry once to continue on DeepSeek V4 Flash."
       );
       return;
     }

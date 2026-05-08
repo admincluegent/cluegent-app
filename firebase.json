@@ -14,7 +14,14 @@
         ".git",
         "firebase-debug.log",
         "firebase-debug.*.log",
-        "*.local"
+        "*.local",
+        ".env",
+        ".env.*",
+        "*.pem",
+        "*.key",
+        "*service-account*.json",
+        "*firebase-admin*.json",
+        "*google-application-credentials*.json"
       ]
     }
   ],

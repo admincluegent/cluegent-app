@@ -1,6 +1,7 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
 import {
+  DEFAULT_PLAN_ID,
   DEFAULT_PLAN,
   PLAN_CONFIGS,
   type PlanConfig,
@@ -52,6 +53,7 @@ export interface UsageDoc {
   promptCount: number;
   screenshotCount: number;
   sttSecondsUsed: number;
+  deepseekProPromptCount: number;
   inputTokens: number;
   outputTokens: number;
   estimatedCostUsd: number;
@@ -85,6 +87,7 @@ export interface MaterializedUsage {
   promptCount: number;
   screenshotCount: number;
   sttSecondsUsed: number;
+  deepseekProPromptCount: number;
   inputTokens: number;
   outputTokens: number;
   estimatedCostUsd: number;
@@ -175,6 +178,7 @@ export function buildUsageDoc(monthKey = getMonthKey()): UsageDoc {
     promptCount: 0,
     screenshotCount: 0,
     sttSecondsUsed: 0,
+    deepseekProPromptCount: 0,
     inputTokens: 0,
     outputTokens: 0,
     estimatedCostUsd: 0,
@@ -219,12 +223,32 @@ export function materializeUsage(
     promptCount: raw?.promptCount ?? 0,
     screenshotCount: raw?.screenshotCount ?? 0,
     sttSecondsUsed: raw?.sttSecondsUsed ?? 0,
+    deepseekProPromptCount: raw?.deepseekProPromptCount ?? 0,
     inputTokens: raw?.inputTokens ?? 0,
     outputTokens: raw?.outputTokens ?? 0,
     estimatedCostUsd: raw?.estimatedCostUsd ?? 0,
     createdAt: raw?.createdAt,
     updatedAt: raw?.updatedAt,
   };
+}
+
+export function getMonthlyDeepSeekProPromptAllowance(input: {
+  plan: PlanId;
+  billingInterval?: BillingInterval | null;
+}) {
+  if (input.plan === DEFAULT_PLAN_ID) {
+    return 200;
+  }
+
+  if (input.plan === "pro") {
+    return 200;
+  }
+
+  if (input.plan === "power") {
+    return 500;
+  }
+
+  return 0;
 }
 
 export function serializeForClient<T>(value: T): T {

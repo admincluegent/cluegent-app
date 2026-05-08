@@ -34,8 +34,32 @@ export async function ensureUsageDocuments(
   const subscriptionRef = db.doc(refs.subscriptionPath);
   const usageRef = db.doc(refs.usagePath);
 
+  const [subscriptionSnap, usageSnap] = await Promise.all([
+    subscriptionRef.get(),
+    usageRef.get(),
+  ]);
+  const subscriptionData = subscriptionSnap.data();
+  const freeLimitsNeedRefresh =
+    subscriptionData?.plan === "free" &&
+    (subscriptionData.promptLimit !== PLAN_CONFIGS.free.promptLimit ||
+      subscriptionData.screenshotLimit !== PLAN_CONFIGS.free.screenshotLimit ||
+      subscriptionData.sttSecondsLimit !== PLAN_CONFIGS.free.sttSecondsLimit);
+
+  if (subscriptionSnap.exists && usageSnap.exists && !freeLimitsNeedRefresh) {
+    return {
+      monthKey,
+      subscription: materializeSubscription(
+        subscriptionData as ReturnType<typeof materializeSubscription>
+      ),
+      usage: materializeUsage(
+        usageSnap.data() as ReturnType<typeof materializeUsage>,
+        monthKey
+      ),
+    };
+  }
+
   await db.runTransaction(async (transaction) => {
-    const [userSnap, subscriptionSnap, usageSnap] = await Promise.all([
+    const [userSnap, latestSubscriptionSnap, latestUsageSnap] = await Promise.all([
       transaction.get(userRef),
       transaction.get(subscriptionRef),
       transaction.get(usageRef),
@@ -56,16 +80,11 @@ export async function ensureUsageDocuments(
       );
     }
 
-    if (!subscriptionSnap.exists) {
+    if (!latestSubscriptionSnap.exists) {
       transaction.set(subscriptionRef, buildSubscriptionDoc());
     } else {
-      const subscriptionData = subscriptionSnap.data();
-      if (
-        subscriptionData?.plan === "free" &&
-        (subscriptionData.promptLimit !== PLAN_CONFIGS.free.promptLimit ||
-          subscriptionData.screenshotLimit !== PLAN_CONFIGS.free.screenshotLimit ||
-          subscriptionData.sttSecondsLimit !== PLAN_CONFIGS.free.sttSecondsLimit)
-      ) {
+      const latestSubscriptionData = latestSubscriptionSnap.data();
+      if (latestSubscriptionData?.plan === "free" && freeLimitsNeedRefresh) {
         transaction.set(
           subscriptionRef,
           {
@@ -79,12 +98,12 @@ export async function ensureUsageDocuments(
       }
     }
 
-    if (!usageSnap.exists) {
+    if (!latestUsageSnap.exists) {
       transaction.set(usageRef, buildUsageDoc(monthKey));
     }
   });
 
-  const [subscriptionSnap, usageSnap] = await Promise.all([
+  const [finalSubscriptionSnap, finalUsageSnap] = await Promise.all([
     subscriptionRef.get(),
     usageRef.get(),
   ]);
@@ -92,10 +111,10 @@ export async function ensureUsageDocuments(
   return {
     monthKey,
     subscription: materializeSubscription(
-      subscriptionSnap.data() as ReturnType<typeof materializeSubscription>
+      finalSubscriptionSnap.data() as ReturnType<typeof materializeSubscription>
     ),
     usage: materializeUsage(
-      usageSnap.data() as ReturnType<typeof materializeUsage>,
+      finalUsageSnap.data() as ReturnType<typeof materializeUsage>,
       monthKey
     ),
   };

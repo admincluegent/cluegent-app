@@ -5,6 +5,7 @@ import type {
   BackendEnvelope,
   CancelRazorpayTestSubscriptionResponse,
   CreateRazorpayTestSubscriptionResponse,
+  DeleteAccountResponse,
   GetOrCreateUserProfileResponse,
   GetPlanStatusResponse,
   ResetTestSubscriptionResponse,
@@ -17,6 +18,15 @@ export async function getOrCreateUserProfile() {
     Record<string, never>,
     BackendEnvelope<GetOrCreateUserProfileResponse>
   >(functions, "getOrCreateUserProfile");
+  const result = await callable({});
+  return result.data.data;
+}
+
+export async function deleteAccount() {
+  const callable = httpsCallable<
+    Record<string, never>,
+    BackendEnvelope<DeleteAccountResponse>
+  >(functions, "deleteAccount");
   const result = await callable({});
   return result.data.data;
 }

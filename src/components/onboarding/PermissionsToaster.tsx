@@ -210,7 +210,7 @@ export const PermissionsToaster: React.FC<Props> = ({ isOpen, onDismiss }) => {
                 <motion.div variants={ITEM} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <PermRow
                     icon={Monitor}
-                    label="Screen Recording"
+                    label="Screen Capture"
                     description={platform === 'darwin' ? 'Required to capture meeting content' : 'Required to capture meeting content'}
                     status={scrStatus}
                     platform={platform}
