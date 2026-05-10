@@ -259,7 +259,36 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         return () => window.clearInterval(timer);
     }, [isListening]);
 
-    const codeTheme = {};
+    const codeTheme = {
+        'code[class*="language-"]': {
+            color: '#ffffff',
+            background: 'transparent',
+            textShadow: 'none',
+            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+        },
+        'pre[class*="language-"]': {
+            color: '#ffffff',
+            background: 'transparent',
+            textShadow: 'none',
+            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+        },
+        comment: {
+            color: '#22c55e',
+            fontStyle: 'italic',
+        },
+        prolog: {
+            color: '#22c55e',
+            fontStyle: 'italic',
+        },
+        doctype: {
+            color: '#22c55e',
+            fontStyle: 'italic',
+        },
+        cdata: {
+            color: '#22c55e',
+            fontStyle: 'italic',
+        },
+    };
     const codeLineNumberColor = 'rgba(255,255,255,0.5)';
     const appearance = useMemo(
         () => getOverlayAppearance(overlayOpacity, isLightTheme ? 'light' : 'dark'),
@@ -2888,7 +2917,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                                 Free Plan Limit Reached
                                             </p>
                                             <p className="mt-1 text-[12px] leading-5 text-violet-100/85">
-                                                Your free trial includes 30 min listening, 200 AI requests, and 20 screenshot analyses. Subscribe to Pro to keep using Cluegent.
+                                                    Your free trial includes 30 min listening, 50 AI requests, and 20 screenshot analyses. Subscribe to Pro to keep using Cluegent.
                                             </p>
                                         </div>
                                         <button

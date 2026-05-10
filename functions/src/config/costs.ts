@@ -29,12 +29,6 @@ export const COST_CONFIG = {
     },
   } satisfies Record<GroqChatModelId, ChatModelPricing>,
   deepseek: {
-    // Premium onboarding model. Keep a separate entry so usage/cost reporting
-    // can distinguish it even while public v4-pro pricing is not finalized here.
-    "deepseek-v4-pro": {
-      inputUsdPerMillionTokens: 0.28,
-      outputUsdPerMillionTokens: 0.42,
-    },
     // DeepSeek's current docs confirm `deepseek-v4-flash` is available,
     // but the pricing page has not published v4-flash-specific rates yet.
     // Reuse the published non-thinking chat rate until DeepSeek ships

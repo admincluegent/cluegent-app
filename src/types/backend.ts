@@ -31,11 +31,6 @@ export interface GetPlanStatusResponse {
   planStatus: PlanStatus;
 }
 
-export interface ActivatePlanResponse {
-  monthKey: string;
-  planStatus: PlanStatus;
-}
-
 export interface CreateRazorpayTestSubscriptionResponse {
   providerMode: "test";
   keyId: string;
@@ -60,10 +55,5 @@ export interface VerifyRazorpayTestPaymentResponse {
 export interface CancelRazorpayTestSubscriptionResponse {
   cancelled: boolean;
   subscriptionId: string;
-  planId: UserPlan;
-}
-
-export interface ResetTestSubscriptionResponse {
-  reset: boolean;
   planId: UserPlan;
 }

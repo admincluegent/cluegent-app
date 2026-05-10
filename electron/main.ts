@@ -166,9 +166,7 @@ import { OpenAIStreamingSTT } from "./audio/OpenAIStreamingSTT"
 import { NativelyProSTT } from "./audio/NativelyProSTT"
 import { FirebaseManagedSTT } from "./audio/FirebaseManagedSTT"
 import { ThemeManager } from "./ThemeManager"
-import { RAGManager } from "./rag/RAGManager"
 import { DatabaseManager } from "./db/DatabaseManager"
-import { warmupIntentClassifier } from "./llm"
 
 /** Unified type for all STT providers with optional extended capabilities */
 type STTProvider = (GoogleSTT | RestSTT | DeepgramStreamingSTT | SonioxStreamingSTT | ElevenLabsStreamingSTT | OpenAIStreamingSTT | NativelyProSTT | FirebaseManagedSTT) & {
@@ -228,7 +226,7 @@ export class AppState {
 
   private intelligenceManager: IntelligenceManager
   private themeManager: ThemeManager
-  private ragManager: RAGManager | null = null
+  private ragManager: any = null
   private knowledgeOrchestrator: any = null
   private tray: Tray | null = null
   private updateAvailable: boolean = false
@@ -473,8 +471,8 @@ export class AppState {
 
     this.setupIntelligenceEvents()
 
-    // Pre-warm the zero-shot intent classifier in background
-    warmupIntentClassifier();
+    // Legacy local model warmup is disabled; current intent routing uses
+    // lightweight regex/context heuristics without loading local ML packages.
 
     // Setup Ollama IPC
     this.setupOllamaIpcHandlers()
@@ -552,99 +550,9 @@ export class AppState {
   }
 
   private initializeRAGManager(): void {
-    if (!DatabaseManager.isLegacySqliteEnabled()) {
-      return;
-    }
-
-    try {
-      const db = DatabaseManager.getInstance();
-      const sqliteDb = db.getDb();
-
-      if (sqliteDb) {
-        const { CredentialsManager } = require('./services/CredentialsManager');
-        const cm = CredentialsManager.getInstance();
-        const openaiKey = cm.getOpenaiApiKey() || process.env.OPENAI_API_KEY;
-        const geminiKey = cm.getGeminiApiKey() || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
-        
-        this.ragManager = new RAGManager({ 
-            db: sqliteDb, 
-            dbPath: db.getDbPath(),
-            extPath: db.getExtPath(),
-            openaiKey,
-            geminiKey,
-            ollamaUrl: process.env.OLLAMA_URL || 'http://localhost:11434'
-        });
-        this.ragManager.setLLMHelper(this.processingHelper.getLLMHelper());
-        console.log('[AppState] RAGManager initialized');
-      }
-    } catch (error) {
-      console.error('[AppState] Failed to initialize RAGManager:', error);
-    }
-
-    // Initialize Knowledge Orchestrator
-    try {
-      const db = DatabaseManager.getInstance();
-      const sqliteDb = db.getDb();
-
-      if (sqliteDb && KnowledgeDatabaseManagerClass && KnowledgeOrchestratorClass) {
-        const knowledgeDb = new KnowledgeDatabaseManagerClass(sqliteDb);
-        this.knowledgeOrchestrator = new KnowledgeOrchestratorClass(knowledgeDb);
-
-        // Wire up LLM functions
-        const llmHelper = this.processingHelper.getLLMHelper();
-
-        // generateContent function for LLM calls
-        this.knowledgeOrchestrator.setGenerateContentFn(async (contents: any[]) => {
-          return await llmHelper.generateContentStructured(
-            contents[0]?.text || ''
-          );
-        });
-
-        // Embedding function — lazily delegate to the cascaded EmbeddingPipeline
-        // (OpenAI → Gemini → Ollama → Local bundled model).
-        // We await waitForReady() so uploads during boot wait for the pipeline
-        // instead of immediately throwing 'not ready'.
-        const self = this;
-        this.knowledgeOrchestrator.setEmbedFn(async (text: string) => {
-          const pipeline = self.ragManager?.getEmbeddingPipeline();
-          if (!pipeline) throw new Error('RAG pipeline not available');
-          await pipeline.waitForReady();
-          return await pipeline.getEmbedding(text);
-        });
-        if (typeof this.knowledgeOrchestrator.setEmbedQueryFn === 'function') {
-          this.knowledgeOrchestrator.setEmbedQueryFn(async (text: string) => {
-            const pipeline = self.ragManager?.getEmbeddingPipeline();
-            if (!pipeline) throw new Error('RAG pipeline not available');
-            await pipeline.waitForReady();
-            return await pipeline.getEmbeddingForQuery(text);
-          });
-        }
-
-        // Attach KnowledgeOrchestrator to LLMHelper
-        llmHelper.setKnowledgeOrchestrator(this.knowledgeOrchestrator);
-
-        // Restore persisted toggle states so UI reflects what the user left them as.
-        // NOTE: groqFastTextMode is now restored unconditionally in the AppState constructor
-        // so it is not repeated here.
-        const sm = SettingsManager.getInstance();
-        if (sm.get('knowledgeMode')) {
-          this.knowledgeOrchestrator.setKnowledgeMode(true);
-          console.log('[AppState] Knowledge mode restored from settings');
-        }
-
-        // Restore custom notes so orchestrator has them from first request
-        const savedNotes = DatabaseManager.getInstance().getCustomNotes();
-        if (savedNotes) {
-          this.knowledgeOrchestrator.setCustomNotes(savedNotes);
-          llmHelper.setCustomNotes(savedNotes);
-          console.log('[AppState] Custom notes restored');
-        }
-
-        console.log('[AppState] KnowledgeOrchestrator initialized');
-      }
-    } catch (error) {
-      console.error('[AppState] Failed to initialize KnowledgeOrchestrator:', error);
-    }
+    this.ragManager = null;
+    this.knowledgeOrchestrator = null;
+    console.log('[AppState] Legacy SQLite/RAG/knowledge stack is disabled in Cluegent production builds.');
   }
 
   private setupAutoUpdater(): void {
@@ -1938,7 +1846,7 @@ export class AppState {
     return this.themeManager
   }
 
-  public getRAGManager(): RAGManager | null {
+  public getRAGManager(): any {
     return this.ragManager;
   }
 
@@ -2738,11 +2646,6 @@ async function initializeApp() {
 
   // NOTE: CredentialsManager.init() and loadStoredCredentials() are already called
   // above before this block — do NOT call them again here to avoid double key-load.
-
-  // Anonymous install ping - one-time, non-blocking
-  // See electron/services/InstallPingManager.ts for privacy details
-  const { sendAnonymousInstallPing } = require('./services/InstallPingManager');
-  sendAnonymousInstallPing();
 
   // Load stored Google Service Account path (for Speech-to-Text)
   // Fall back to GOOGLE_APPLICATION_CREDENTIALS env var (set in terminal but not Spotlight)

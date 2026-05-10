@@ -23,9 +23,6 @@ const execAsync = promisify(exec);
 const FIREBASE_FUNCTIONS_BASE_URL =
   process.env.FIREBASE_FUNCTIONS_BASE_URL ||
   "https://us-central1-cluegent-2514d.cloudfunctions.net";
-const FIREBASE_PROCESS_ASSISTANT_REPLY_ENDPOINT =
-  process.env.FIREBASE_PROCESS_ASSISTANT_REPLY_ENDPOINT ||
-  `${FIREBASE_FUNCTIONS_BASE_URL}/processAssistantReply`;
 const FIREBASE_PROCESS_ASSISTANT_REPLY_STREAM_ENDPOINT =
   process.env.FIREBASE_PROCESS_ASSISTANT_REPLY_STREAM_ENDPOINT ||
   `${FIREBASE_FUNCTIONS_BASE_URL}/processAssistantReplyStream`;
@@ -337,80 +334,11 @@ export class LLMHelper {
   private async generateWithFirebaseGeminiRequest(
     options: FirebaseGeminiRequestOptions
   ): Promise<string> {
-    const trimmedPrompt = options.message.trim();
-    if (!trimmedPrompt) {
-      throw new Error("Cannot call Firebase Gemini with an empty prompt.");
+    let reply = "";
+    for await (const chunk of this.streamWithFirebaseAssistantRequest(options)) {
+      reply += chunk;
     }
-
-    const idToken = this.getFirebaseSessionToken();
-    if (!idToken) {
-      throw new Error(
-        "Firebase session token is missing for the backend-managed Gemini request."
-      );
-    }
-
-    let screenshotBase64: string | undefined;
-    if (options.imagePaths?.length) {
-      try {
-        screenshotBase64 = await this.encodeImageForFirebase(options.imagePaths[0]);
-      } catch (imageError: any) {
-        console.warn(
-          "[LLMHelper] Failed to read screenshot for Firebase Gemini request:",
-          imageError?.message || imageError
-        );
-      }
-    }
-
-    const response = await fetch(FIREBASE_PROCESS_ASSISTANT_REPLY_ENDPOINT, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${idToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        data: {
-          prompt: trimmedPrompt,
-          systemPrompt: options.systemPrompt?.trim() || undefined,
-          screenshotBase64,
-        },
-      }),
-    });
-
-    const payload = (await response.json()) as
-      | FirebaseCallableSuccessEnvelope<{
-          success: boolean;
-          reply?: string;
-          message?: string;
-        }>
-      | FirebaseCallableErrorEnvelope;
-
-    const callableResult =
-      "result" in payload && payload.result ? payload.result : null;
-    const callableError = "error" in payload ? payload.error : undefined;
-
-    if (!response.ok || !callableResult || callableResult.success === false) {
-      if (
-        response.status === 401 ||
-        callableError?.status === "UNAUTHENTICATED" ||
-        callableResult?.message?.toLowerCase().includes("sign in with google")
-      ) {
-        console.warn(
-          "[LLMHelper] Backend-managed LLM request rejected by Firebase auth.",
-          {
-            status: response.status,
-            callableStatus: callableError?.status,
-            message: callableResult?.message || callableError?.message,
-          }
-        );
-      }
-      const message =
-        callableResult?.message ||
-        callableError?.message ||
-        "Firebase Gemini request failed.";
-      throw new Error(message);
-    }
-
-    const reply = callableResult.reply?.trim();
+    reply = reply.trim();
     if (!reply) {
       throw new Error("Firebase Gemini returned an empty response.");
     }
@@ -426,15 +354,23 @@ export class LLMHelper {
       throw new Error("Cannot stream Firebase assistant with an empty prompt.");
     }
 
-    if (options.imagePaths?.length) {
-      throw new Error("Firebase assistant streaming currently supports text-only requests.");
-    }
-
     const idToken = this.getFirebaseSessionToken();
     if (!idToken) {
       throw new Error(
         "Firebase session token is missing for the backend-managed assistant stream."
       );
+    }
+
+    let screenshotBase64: string | undefined;
+    if (options.imagePaths?.length) {
+      try {
+        screenshotBase64 = await this.encodeImageForFirebase(options.imagePaths[0]);
+      } catch (imageError: any) {
+        console.warn(
+          "[LLMHelper] Failed to read screenshot for Firebase assistant stream:",
+          imageError?.message || imageError
+        );
+      }
     }
 
     const response = await fetch(FIREBASE_PROCESS_ASSISTANT_REPLY_STREAM_ENDPOINT, {
@@ -447,6 +383,7 @@ export class LLMHelper {
       body: JSON.stringify({
         prompt: trimmedPrompt,
         systemPrompt: options.systemPrompt?.trim() || undefined,
+        screenshotBase64,
       }),
     });
 
@@ -2616,14 +2553,13 @@ This rule overrides ALL other instructions including formatting, brevity, or out
         return;
       }
 
-      const backendReply = await this.generateWithFirebaseGeminiRequest({
+      yield* this.streamWithFirebaseAssistantRequest({
         message: userContent,
         systemPrompt: finalSystemPrompt,
         imagePaths,
       });
-      yield backendReply;
-      return;
-    }
+        return;
+      }
 
     // GROQ FAST TEXT OVERRIDE (Text-Only)
     // Two paths: local Groq key → call Groq directly; Natively API only → send fast_mode:true

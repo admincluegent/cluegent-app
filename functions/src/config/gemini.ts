@@ -40,3 +40,10 @@ export function getGeminiGenerateContentUrl(
   const model = GEMINI_MODELS[modelId as GeminiModelId] || DEFAULT_GEMINI_MODEL;
   return `https://generativelanguage.googleapis.com/${model.apiVersion}/models/${model.id}:generateContent`;
 }
+
+export function getGeminiStreamGenerateContentUrl(
+  modelId = DEFAULT_GEMINI_MODEL.id
+) {
+  const model = GEMINI_MODELS[modelId as GeminiModelId] || DEFAULT_GEMINI_MODEL;
+  return `https://generativelanguage.googleapis.com/${model.apiVersion}/models/${model.id}:streamGenerateContent?alt=sse`;
+}

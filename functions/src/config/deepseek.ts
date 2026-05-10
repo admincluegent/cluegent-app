@@ -5,11 +5,6 @@ export interface DeepSeekChatModelConfig {
 }
 
 export const DEEPSEEK_CHAT_MODELS = {
-  "deepseek-v4-pro": {
-    id: "deepseek-v4-pro",
-    maxCompletionTokens: 2048,
-    temperature: 0.35,
-  },
   "deepseek-v4-flash": {
     id: "deepseek-v4-flash",
     maxCompletionTokens: 2048,

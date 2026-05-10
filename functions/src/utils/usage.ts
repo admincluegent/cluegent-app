@@ -190,14 +190,16 @@ export function buildUsageDoc(monthKey = getMonthKey()): UsageDoc {
 export function materializeSubscription(
   raw?: Partial<MaterializedSubscription>
 ): MaterializedSubscription {
-  const fallbackPlan: PlanConfig = PLAN_CONFIGS[raw?.plan ?? DEFAULT_PLAN.id];
+  const planId =
+    raw?.plan && raw.plan in PLAN_CONFIGS ? raw.plan : DEFAULT_PLAN.id;
+  const fallbackPlan: PlanConfig = PLAN_CONFIGS[planId];
 
   return {
-    plan: raw?.plan ?? fallbackPlan.id,
+    plan: fallbackPlan.id,
     status: raw?.status ?? "active",
-    promptLimit: raw?.promptLimit ?? fallbackPlan.promptLimit,
-    screenshotLimit: raw?.screenshotLimit ?? fallbackPlan.screenshotLimit,
-    sttSecondsLimit: raw?.sttSecondsLimit ?? fallbackPlan.sttSecondsLimit,
+    promptLimit: fallbackPlan.promptLimit,
+    screenshotLimit: fallbackPlan.screenshotLimit,
+    sttSecondsLimit: fallbackPlan.sttSecondsLimit,
     provider: raw?.provider ?? null,
     providerMode: raw?.providerMode ?? null,
     billingInterval: raw?.billingInterval ?? null,

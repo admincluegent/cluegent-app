@@ -1,11 +1,12 @@
 
-import Database from 'better-sqlite3';
 import path from 'path';
 import { app } from 'electron';
 import fs from 'fs';
-import * as sqliteVec from 'sqlite-vec';
 
-const LEGACY_SQLITE_ENABLED = process.env.CLUEGENT_ENABLE_LEGACY_SQLITE === 'true';
+// Cluegent stores recent meetings/customization in renderer localStorage.
+// The old SQLite/RAG database code remains as a non-production compatibility shell,
+// but it is intentionally disabled so native SQLite packages are not required.
+const LEGACY_SQLITE_ENABLED = false;
 
 // Interfaces for our data objects
 export interface Meeting {
@@ -41,7 +42,7 @@ export interface Meeting {
 
 export class DatabaseManager {
     private static instance: DatabaseManager;
-    private db: Database.Database | null = null;
+    private db: any = null;
     private dbPath: string;
     private resolvedExtPath: string = '';
 
@@ -91,7 +92,8 @@ export class DatabaseManager {
                 }
             }
 
-            this.db = new Database(this.dbPath);
+            const BetterSqlite3 = require('better-sqlite3');
+            this.db = new BetterSqlite3(this.dbPath);
             this.db.pragma('journal_mode = WAL');
 
             // Load sqlite-vec extension for native vector search
@@ -102,6 +104,7 @@ export class DatabaseManager {
                 //    electron-builder's asarUnpack puts them in app.asar.unpacked instead.
                 // 2. better-sqlite3's loadExtension() auto-appends the platform extension
                 //    (.dylib/.so/.dll), so we strip it to avoid vec0.dylib.dylib.
+                const sqliteVec = require('sqlite-vec');
                 let extPath = sqliteVec.getLoadablePath();
                 extPath = extPath.replace('app.asar', 'app.asar.unpacked');
                 extPath = extPath.replace(/\.(dylib|so|dll)$/, '');
@@ -955,7 +958,7 @@ export class DatabaseManager {
     /**
      * Expose the raw database instance for external managers (e.g. ProfileDatabaseManager).
      */
-    public getDb(): Database.Database | null {
+    public getDb(): any {
         return this.db;
     }
 

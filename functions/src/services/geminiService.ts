@@ -2,6 +2,7 @@ import {
   DEFAULT_GEMINI_MODEL,
   GEMINI_MODELS,
   getGeminiGenerateContentUrl,
+  getGeminiStreamGenerateContentUrl,
   type GeminiModelId,
 } from "../config/gemini.js";
 
@@ -52,6 +53,8 @@ interface GeminiResponse {
     message?: string;
   };
 }
+
+type GeminiStreamChunk = GeminiResponse;
 
 export class GeminiServiceError extends Error {
   constructor(message: string) {
@@ -166,9 +169,7 @@ async function resolveScreenshot(
   return null;
 }
 
-export async function generateGeminiReply(
-  input: GenerateGeminiReplyInput
-): Promise<GenerateGeminiReplyResult> {
+async function buildGeminiRequest(input: GenerateGeminiReplyInput) {
   const model = resolveModel(input.modelId?.trim());
   const modelId = model.id;
   const screenshot = await resolveScreenshot(
@@ -207,6 +208,17 @@ export async function generateGeminiReply(
       maxOutputTokens: model.maxOutputTokens,
     },
   };
+
+  return {
+    modelId,
+    body,
+  };
+}
+
+export async function generateGeminiReply(
+  input: GenerateGeminiReplyInput
+): Promise<GenerateGeminiReplyResult> {
+  const { modelId, body } = await buildGeminiRequest(input);
 
   let response: Response;
 
@@ -255,6 +267,131 @@ export async function generateGeminiReply(
       inputTokens: parseNumericValue(json.usageMetadata?.promptTokenCount),
       outputTokens: parseNumericValue(json.usageMetadata?.candidatesTokenCount),
       totalTokens: parseNumericValue(json.usageMetadata?.totalTokenCount),
+    },
+  };
+}
+
+export async function streamGeminiReply(
+  input: GenerateGeminiReplyInput,
+  onDelta: (delta: string) => void | Promise<void>
+): Promise<GenerateGeminiReplyResult> {
+  const { modelId, body } = await buildGeminiRequest(input);
+
+  let response: Response;
+
+  try {
+    response = await fetch(getGeminiStreamGenerateContentUrl(modelId), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": input.apiKey,
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (error) {
+    throw new GeminiServiceError(
+      `Failed to reach Gemini: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
+  }
+
+  if (!response.ok) {
+    const errorPayload = (await response.json().catch(() => null)) as
+      | GeminiResponse
+      | null;
+    throw new GeminiServiceError(
+      errorPayload?.error?.message ||
+        `Gemini request failed with status ${response.status}.`
+    );
+  }
+
+  if (!response.body) {
+    throw new GeminiServiceError("Gemini returned an empty stream.");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let reply = "";
+  let inputTokens: number | undefined;
+  let outputTokens: number | undefined;
+  let totalTokens: number | undefined;
+
+  try {
+    outer: while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("data:")) {
+          continue;
+        }
+
+        const payload = trimmed.slice("data:".length).trim();
+        if (!payload) {
+          continue;
+        }
+
+        let chunk: GeminiStreamChunk;
+        try {
+          chunk = JSON.parse(payload) as GeminiStreamChunk;
+        } catch {
+          continue;
+        }
+
+        if (chunk.error?.message) {
+          throw new GeminiServiceError(chunk.error.message);
+        }
+
+        const text = chunk.candidates
+          ?.flatMap((candidate) => candidate.content?.parts ?? [])
+          .map((part) => part.text ?? "")
+          .join("");
+
+        if (text) {
+          reply += text;
+          await onDelta(text);
+        }
+
+        inputTokens =
+          parseNumericValue(chunk.usageMetadata?.promptTokenCount) ??
+          inputTokens;
+        outputTokens =
+          parseNumericValue(chunk.usageMetadata?.candidatesTokenCount) ??
+          outputTokens;
+        totalTokens =
+          parseNumericValue(chunk.usageMetadata?.totalTokenCount) ??
+          totalTokens;
+      }
+    }
+  } finally {
+    try {
+      reader.cancel();
+    } catch {
+      // Ignore cleanup failures after completion.
+    }
+  }
+
+  const trimmedReply = reply.trim();
+  if (!trimmedReply) {
+    throw new GeminiServiceError("Gemini returned an empty response.");
+  }
+
+  return {
+    reply: trimmedReply,
+    modelId,
+    usage: {
+      inputTokens,
+      outputTokens,
+      totalTokens,
     },
   };
 }

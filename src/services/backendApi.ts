@@ -1,14 +1,12 @@
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/firebase";
 import type {
-  ActivatePlanResponse,
   BackendEnvelope,
   CancelRazorpayTestSubscriptionResponse,
   CreateRazorpayTestSubscriptionResponse,
   DeleteAccountResponse,
   GetOrCreateUserProfileResponse,
   GetPlanStatusResponse,
-  ResetTestSubscriptionResponse,
   VerifyRazorpayTestPaymentResponse,
 } from "@/types/backend";
 import type { BillingInterval, UserPlan } from "@/types/firebase";
@@ -37,15 +35,6 @@ export async function getPlanStatus() {
     BackendEnvelope<GetPlanStatusResponse>
   >(functions, "getPlanStatus");
   const result = await callable({});
-  return result.data.data;
-}
-
-export async function activatePlan(planId: UserPlan) {
-  const callable = httpsCallable<
-    { planId: UserPlan },
-    BackendEnvelope<ActivatePlanResponse>
-  >(functions, "activatePlan");
-  const result = await callable({ planId });
   return result.data.data;
 }
 
@@ -79,15 +68,6 @@ export async function cancelRazorpayTestSubscription() {
     Record<string, never>,
     BackendEnvelope<CancelRazorpayTestSubscriptionResponse>
   >(functions, "cancelRazorpayTestSubscription");
-  const result = await callable({});
-  return result.data.data;
-}
-
-export async function resetTestSubscription() {
-  const callable = httpsCallable<
-    Record<string, never>,
-    BackendEnvelope<ResetTestSubscriptionResponse>
-  >(functions, "resetTestSubscription");
   const result = await callable({});
   return result.data.data;
 }

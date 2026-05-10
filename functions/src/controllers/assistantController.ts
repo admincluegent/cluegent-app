@@ -9,13 +9,15 @@ import {
 import { ensureUsageDocuments } from "./usageController.js";
 import {
   buildPlanStatus,
-  getMonthlyDeepSeekProPromptAllowance,
   getUserRefs,
   isFreeTrialExhausted,
   materializeSubscription,
   materializeUsage,
 } from "../utils/usage.js";
-import type { DeepSeekChatModelId } from "../config/deepseek.js";
+import {
+  DEFAULT_DEEPSEEK_CHAT_MODEL_ID,
+  type DeepSeekChatModelId,
+} from "../config/deepseek.js";
 import {
   DeepSeekServiceError,
   generateDeepSeekReply,
@@ -28,6 +30,7 @@ import {
 import {
   GeminiServiceError,
   generateGeminiReply,
+  streamGeminiReply,
 } from "../services/geminiService.js";
 import { estimateDeepSeekRequestCost } from "../utils/deepseekCost.js";
 import { estimateGeminiRequestCost } from "../utils/geminiCost.js";
@@ -149,18 +152,11 @@ function selectDeepSeekModelForMonthlyUsage(input: {
   premiumAllowance: number;
   premiumUsedBefore: number;
 } {
-  const premiumAllowance = getMonthlyDeepSeekProPromptAllowance({
-    plan: input.subscription.plan,
-    billingInterval: input.subscription.billingInterval,
-  });
-  const premiumUsedBefore = input.usage.deepseekProPromptCount;
-  const premiumApplied = premiumUsedBefore < premiumAllowance;
-
   return {
-    modelId: premiumApplied ? "deepseek-v4-pro" : "deepseek-v4-flash",
-    premiumApplied,
-    premiumAllowance,
-    premiumUsedBefore,
+    modelId: DEFAULT_DEEPSEEK_CHAT_MODEL_ID,
+    premiumApplied: false,
+    premiumAllowance: 0,
+    premiumUsedBefore: input.usage.deepseekProPromptCount,
   };
 }
 
@@ -495,26 +491,12 @@ export async function processAssistantReplyController(
         throw new Error("SCREENSHOT_LIMIT_EXCEEDED");
       }
 
-      if (!hasScreenshot && deepseekModelRoute.premiumApplied) {
-        const latestRoute = selectDeepSeekModelForMonthlyUsage({
-          subscription: latestSubscription,
-          usage: latestUsage,
-        });
-
-        if (!latestRoute.premiumApplied) {
-          throw new Error("DEEPSEEK_PRO_ALLOWANCE_EXCEEDED");
-        }
-      }
-
       transaction.set(
         usageRef,
         {
           monthKey,
           promptCount: FieldValue.increment(1),
           screenshotCount: FieldValue.increment(hasScreenshot ? 1 : 0),
-          deepseekProPromptCount: FieldValue.increment(
-            !hasScreenshot && deepseekModelRoute.premiumApplied ? 1 : 0
-          ),
           inputTokens: FieldValue.increment(finalCostEstimate.inputTokens),
           outputTokens: FieldValue.increment(finalCostEstimate.outputTokens),
           estimatedCostUsd: FieldValue.increment(finalCostEstimate.estimatedCostUsd),
@@ -574,16 +556,6 @@ export async function processAssistantReplyController(
 
     if (
       error instanceof Error &&
-      error.message === "DEEPSEEK_PRO_ALLOWANCE_EXCEEDED"
-    ) {
-      return assistantFailure(
-        "GROQ_REQUEST_FAILED",
-        "Premium model allowance was just exhausted. Please retry once to continue on DeepSeek V4 Flash."
-      );
-    }
-
-    if (
-      error instanceof Error &&
       error.message === "SCREENSHOT_LIMIT_EXCEEDED"
     ) {
       return assistantFailure(
@@ -620,6 +592,7 @@ export async function processAssistantReplyStreamController(
     flushHeaders?: () => void;
   },
   input: {
+    geminiApiKey: string;
     deepseekApiKey: string;
   }
 ) {
@@ -647,6 +620,7 @@ export async function processAssistantReplyStreamController(
     const hasScreenshot = Boolean(
       data.screenshotBase64?.trim() || data.screenshotUrl?.trim()
     );
+    const geminiApiKey = input.geminiApiKey.trim();
     const deepseekApiKey = input.deepseekApiKey.trim();
 
     if (!prompt) {
@@ -659,17 +633,17 @@ export async function processAssistantReplyStreamController(
       return;
     }
 
-    if (hasScreenshot) {
+    if (hasScreenshot && !geminiApiKey) {
       sendAssistantHttpFailure(
         response,
-        400,
+        500,
         "GROQ_REQUEST_FAILED",
-        "Streaming is currently enabled for text-only DeepSeek requests."
+        "GEMINI_API_KEY is required for screenshot-attached requests."
       );
       return;
     }
 
-    if (!deepseekApiKey) {
+    if (!hasScreenshot && !deepseekApiKey) {
       sendAssistantHttpFailure(
         response,
         500,
@@ -705,6 +679,16 @@ export async function processAssistantReplyStreamController(
       return;
     }
 
+    if (hasScreenshot && planStatus.remaining.screenshots <= 0) {
+      sendAssistantHttpFailure(
+        response,
+        429,
+        "SCREENSHOT_LIMIT_EXCEEDED",
+        "Monthly screenshot limit exceeded for the current plan."
+      );
+      return;
+    }
+
     const deepseekModelRoute = selectDeepSeekModelForMonthlyUsage({
       subscription,
       usage,
@@ -718,8 +702,8 @@ export async function processAssistantReplyStreamController(
 
     writeSse(response, {
       meta: {
-        provider: "deepseek",
-        model: deepseekModelRoute.modelId,
+        provider: hasScreenshot ? "gemini" : "deepseek",
+        model: hasScreenshot ? "gemini-2.5-flash-lite" : deepseekModelRoute.modelId,
         premiumApplied: deepseekModelRoute.premiumApplied,
         premiumAllowance: deepseekModelRoute.premiumAllowance,
         premiumUsedBefore: deepseekModelRoute.premiumUsedBefore,
@@ -734,28 +718,52 @@ export async function processAssistantReplyStreamController(
       .filter(Boolean)
       .join("\n");
 
-    const deepseekResult = await streamDeepSeekReply(
-      {
-        apiKey: deepseekApiKey,
-        prompt,
-        systemPrompt: data.systemPrompt,
-        history: data.history,
-        modelId: deepseekModelRoute.modelId,
-      },
-      (delta) => {
-        if (!response.writableEnded) {
-          writeSse(response, { delta });
-        }
+    const streamDelta = (delta: string) => {
+      if (!response.writableEnded) {
+        writeSse(response, { delta });
       }
-    );
+    };
 
-    const costEstimate = estimateDeepSeekRequestCost({
-      modelId: deepseekResult.modelId,
-      inputTokens: deepseekResult.usage.inputTokens,
-      outputTokens: deepseekResult.usage.outputTokens,
-      fallbackInputText,
-      fallbackOutputText: deepseekResult.reply,
-    });
+    const assistantResult = hasScreenshot
+      ? await streamGeminiReply(
+          {
+            apiKey: geminiApiKey,
+            prompt,
+            screenshotBase64: data.screenshotBase64,
+            screenshotUrl: data.screenshotUrl,
+            systemPrompt: data.systemPrompt,
+            history: data.history,
+            modelId: "gemini-2.5-flash-lite",
+          },
+          streamDelta
+        )
+      : await streamDeepSeekReply(
+          {
+            apiKey: deepseekApiKey,
+            prompt,
+            systemPrompt: data.systemPrompt,
+            history: data.history,
+            modelId: deepseekModelRoute.modelId,
+          },
+          streamDelta
+        );
+
+    const costEstimate = hasScreenshot
+      ? estimateGeminiRequestCost({
+          modelId: assistantResult.modelId,
+          inputTokens: assistantResult.usage.inputTokens,
+          outputTokens: assistantResult.usage.outputTokens,
+          screenshotCount: 1,
+          fallbackInputText,
+          fallbackOutputText: assistantResult.reply,
+        })
+      : estimateDeepSeekRequestCost({
+          modelId: assistantResult.modelId,
+          inputTokens: assistantResult.usage.inputTokens,
+          outputTokens: assistantResult.usage.outputTokens,
+          fallbackInputText,
+          fallbackOutputText: assistantResult.reply,
+        });
 
     const refs = getUserRefs(authUser.uid, monthKey);
     const subscriptionRef = db.doc(refs.subscriptionPath);
@@ -782,15 +790,8 @@ export async function processAssistantReplyStreamController(
         throw new Error("PROMPT_LIMIT_EXCEEDED");
       }
 
-      if (deepseekModelRoute.premiumApplied) {
-        const latestRoute = selectDeepSeekModelForMonthlyUsage({
-          subscription: latestSubscription,
-          usage: latestUsage,
-        });
-
-        if (!latestRoute.premiumApplied) {
-          throw new Error("DEEPSEEK_PRO_ALLOWANCE_EXCEEDED");
-        }
+      if (hasScreenshot && latestPlanStatus.remaining.screenshots <= 0) {
+        throw new Error("SCREENSHOT_LIMIT_EXCEEDED");
       }
 
       transaction.set(
@@ -798,9 +799,7 @@ export async function processAssistantReplyStreamController(
         {
           monthKey,
           promptCount: FieldValue.increment(1),
-          deepseekProPromptCount: FieldValue.increment(
-            deepseekModelRoute.premiumApplied ? 1 : 0
-          ),
+          screenshotCount: FieldValue.increment(hasScreenshot ? 1 : 0),
           inputTokens: FieldValue.increment(costEstimate.inputTokens),
           outputTokens: FieldValue.increment(costEstimate.outputTokens),
           estimatedCostUsd: FieldValue.increment(costEstimate.estimatedCostUsd),
@@ -811,7 +810,10 @@ export async function processAssistantReplyStreamController(
 
       return {
         promptsRemaining: Math.max(latestPlanStatus.remaining.prompts - 1, 0),
-        screenshotsRemaining: latestPlanStatus.remaining.screenshots,
+        screenshotsRemaining: Math.max(
+          latestPlanStatus.remaining.screenshots - (hasScreenshot ? 1 : 0),
+          0
+        ),
       };
     });
 
@@ -820,7 +822,7 @@ export async function processAssistantReplyStreamController(
       usage: {
         inputTokens: costEstimate.inputTokens,
         outputTokens: costEstimate.outputTokens,
-        screenshotCountAdded: 0,
+        screenshotCountAdded: hasScreenshot ? 1 : 0,
         estimatedCostUsdAdded: costEstimate.estimatedCostUsd,
       },
       remaining: updatedRemaining,
@@ -857,25 +859,35 @@ export async function processAssistantReplyStreamController(
       return;
     }
 
-    if (
-      error instanceof Error &&
-      error.message === "DEEPSEEK_PRO_ALLOWANCE_EXCEEDED"
-    ) {
-      sendAssistantHttpFailure(
-        response,
-        409,
-        "GROQ_REQUEST_FAILED",
-        "Premium model allowance was just exhausted. Please retry once to continue on DeepSeek V4 Flash."
-      );
-      return;
-    }
-
     if (error instanceof DeepSeekServiceError) {
       sendAssistantHttpFailure(
         response,
         502,
         "GROQ_REQUEST_FAILED",
         error.message
+      );
+      return;
+    }
+
+    if (error instanceof GeminiServiceError) {
+      sendAssistantHttpFailure(
+        response,
+        502,
+        "GROQ_REQUEST_FAILED",
+        error.message
+      );
+      return;
+    }
+
+    if (
+      error instanceof Error &&
+      error.message === "SCREENSHOT_LIMIT_EXCEEDED"
+    ) {
+      sendAssistantHttpFailure(
+        response,
+        429,
+        "SCREENSHOT_LIMIT_EXCEEDED",
+        "Monthly screenshot limit exceeded for the current plan."
       );
       return;
     }

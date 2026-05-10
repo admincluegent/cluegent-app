@@ -2,9 +2,9 @@
 // Lightweight intent classification for "What should I say?"
 // Micro step that runs before answer generation
 //
-// Two-tier classification:
+// Production classification intentionally stays lightweight:
 //   1. Regex fast-path (< 1ms) for common patterns
-//   2. Local SLM fallback (zero-shot, ~10-50ms) for messy/ambiguous speech
+//   2. Context fallback for ambiguous speech
 
 import path from 'path';
 import { app } from 'electron';
@@ -277,13 +277,9 @@ export async function classifyIntent(
             return patternResult;
         }
 
-        // Tier 2: Try zero-shot SLM (if regex didn't match)
-        if (lastInterviewerTurn.trim().length > 5) {
-            const slmResult = await ZeroShotClassifier.getInstance().classify(lastInterviewerTurn);
-            if (slmResult) {
-                return slmResult;
-            }
-        }
+        // The old local SLM classifier was removed from production builds to avoid
+        // shipping a large/risky native ML dependency. Ambiguous text falls through
+        // to the context heuristic below.
     }
 
     // Tier 3: Fall back to context-based heuristic
@@ -302,5 +298,5 @@ export function getAnswerShapeGuidance(intent: ConversationIntent): string {
  * Call this during app initialization to avoid cold-start on first classification.
  */
 export function warmupIntentClassifier(): void {
-    ZeroShotClassifier.getInstance().warmup();
+    // No-op: local model warmup is disabled in Cluegent production builds.
 }
