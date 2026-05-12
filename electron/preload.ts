@@ -72,19 +72,8 @@ interface ElectronAPI {
   onModesActiveCleared: (cb: () => void) => () => void
 
   // STT Provider Management
-  setSttProvider: (provider: 'none' | 'google' | 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox' | 'natively' | 'firebase') => Promise<{ success: boolean; error?: string }>
+  setSttProvider: (provider?: string) => Promise<{ success: boolean; error?: string }>
   getSttProvider: () => Promise<string>
-  setGroqSttApiKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>
-  setOpenAiSttApiKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>
-  setDeepgramApiKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>
-  setElevenLabsApiKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>
-  setAzureApiKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>
-  setAzureRegion: (region: string) => Promise<{ success: boolean; error?: string }>
-  setIbmWatsonApiKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>
-  setGroqSttModel: (model: string) => Promise<{ success: boolean; error?: string }>
-  setSonioxApiKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>
-  setIbmWatsonRegion: (region: string) => Promise<{ success: boolean; error?: string }>
-  testSttConnection: (provider: 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox', apiKey: string, region?: string) => Promise<{ success: boolean; error?: string }>
 
   // STT Config Events
   onSttConfigChanged: (callback: (data: { configured: boolean; provider: string }) => void) => () => void
@@ -216,8 +205,6 @@ interface ElectronAPI {
   onModelChanged: (callback: (modelId: string) => void) => () => void
 
   // Ollama
-  onOllamaPullProgress: (callback: (data: { status: string; percent: number }) => void) => () => void
-  onOllamaPullComplete: (callback: () => void) => () => void
 
   // Theme API
   getThemeMode: () => Promise<{ mode: 'system' | 'light' | 'dark', resolved: 'light' | 'dark' }>
@@ -263,11 +250,6 @@ interface ElectronAPI {
 
   // Global shortcut events (stealth: fired even when window is not focused)
   onGlobalShortcut: (callback: (data: { action: string }) => void) => () => void
-
-  // Donation API
-  getDonationStatus: () => Promise<{ shouldShow: boolean; hasDonated: boolean; lifetimeShows: number }>;
-  markDonationToastShown: () => Promise<{ success: boolean }>;
-  setDonationComplete: () => Promise<{ success: boolean }>;
 
   // Profile Engine API
   profileUploadResume: (filePath: string) => Promise<{ success: boolean; error?: string }>;
@@ -584,19 +566,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
 
   // STT Provider Management
-  setSttProvider: (provider: 'none' | 'google' | 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox' | 'natively' | 'firebase') => ipcRenderer.invoke("set-stt-provider", provider),
+  setSttProvider: () => ipcRenderer.invoke("set-stt-provider"),
   getSttProvider: () => ipcRenderer.invoke("get-stt-provider"),
-  setGroqSttApiKey: (apiKey: string) => ipcRenderer.invoke("set-groq-stt-api-key", apiKey),
-  setOpenAiSttApiKey: (apiKey: string) => ipcRenderer.invoke("set-openai-stt-api-key", apiKey),
-  setDeepgramApiKey: (apiKey: string) => ipcRenderer.invoke("set-deepgram-api-key", apiKey),
-  setElevenLabsApiKey: (apiKey: string) => ipcRenderer.invoke("set-elevenlabs-api-key", apiKey),
-  setAzureApiKey: (apiKey: string) => ipcRenderer.invoke("set-azure-api-key", apiKey),
-  setAzureRegion: (region: string) => ipcRenderer.invoke("set-azure-region", region),
-  setIbmWatsonApiKey: (apiKey: string) => ipcRenderer.invoke("set-ibmwatson-api-key", apiKey),
-  setGroqSttModel: (model: string) => ipcRenderer.invoke("set-groq-stt-model", model),
-  setSonioxApiKey: (apiKey: string) => ipcRenderer.invoke("set-soniox-api-key", apiKey),
-  setIbmWatsonRegion: (region: string) => ipcRenderer.invoke("set-ibmwatson-region", region),
-  testSttConnection: (provider: 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox', apiKey: string, region?: string) => ipcRenderer.invoke("test-stt-connection", provider, apiKey, region),
 
   // STT Config Events (Adapted from public PR #173 — verify premium interaction)
   onSttConfigChanged: (callback: (data: { configured: boolean; provider: string }) => void) => {
@@ -968,22 +939,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
     }
   },
 
-  onOllamaPullProgress: (callback: (data: { status: string; percent: number }) => void) => {
-    const subscription = (_: any, data: any) => callback(data)
-    ipcRenderer.on('ollama:pull-progress', subscription)
-    return () => {
-      ipcRenderer.removeListener('ollama:pull-progress', subscription)
-    }
-  },
-
-  onOllamaPullComplete: (callback: () => void) => {
-    const subscription = () => callback()
-    ipcRenderer.on('ollama:pull-complete', subscription)
-    return () => {
-      ipcRenderer.removeListener('ollama:pull-complete', subscription)
-    }
-  },
-
   // Theme API
   getThemeMode: () => ipcRenderer.invoke('theme:get-mode'),
   setThemeMode: (mode: 'system' | 'light' | 'dark') => ipcRenderer.invoke('theme:set-mode', mode),
@@ -1117,11 +1072,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.removeListener('global-shortcut', subscription)
     }
   },
-
-  // Donation API
-  getDonationStatus: () => ipcRenderer.invoke("get-donation-status"),
-  markDonationToastShown: () => ipcRenderer.invoke("mark-donation-toast-shown"),
-  setDonationComplete: () => ipcRenderer.invoke('set-donation-complete'),
 
   // Profile Engine API
   profileUploadResume: (filePath: string) => ipcRenderer.invoke('profile:upload-resume', filePath),

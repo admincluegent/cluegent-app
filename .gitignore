@@ -205,6 +205,8 @@ native-audio-service/Sources/CopilotAudioService/Protos/
 
 # Electron release builds
 release/
+release-*/
+website/downloads/*.exe
 
 # Rust
 target/

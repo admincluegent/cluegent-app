@@ -88,8 +88,8 @@ const UpdateBanner: React.FC = () => {
                 const isArm = arch === 'arm64';
                 const dmgSuffix = isArm ? 'arm64' : 'x64';
                 setInstructionsArch(dmgSuffix);
-                const version = updateInfo?.version ? updateInfo.version.replace('v', '') : '2.0.8';
-  const url = `https://github.com/Natively-AI-assistant/natively-cluely-ai-assistant/releases/download/v${version}/Cluegent-${version}-${dmgSuffix}.dmg`;
+                const version = updateInfo?.version ? updateInfo.version.replace('v', '') : '1.0.0';
+                const url = `https://github.com/admincluegent/cluegent-app/releases/download/v${version}/Cluegent-${version}-${dmgSuffix}.dmg`;
                 window.electronAPI.openExternal(url);
                 setStatus('instructions');
             } catch (err) {

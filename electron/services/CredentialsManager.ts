@@ -127,17 +127,14 @@ export class CredentialsManager {
     }
 
     public getSttProvider(): 'none' | 'google' | 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox' | 'natively' | 'firebase' {
-        const provider = this.credentials.sttProvider || 'none';
-        // Self-heal: if provider is 'none' but a Natively key exists, the user is in a
-        // broken state (key cleared then re-entered via a path that skipped auto-promote,
-        // or credentials restored from backup). Silently restore to 'natively' so STT works.
-        if (provider === 'none' && this.credentials.nativelyApiKey) {
-            this.credentials.sttProvider = 'natively';
+        const provider = this.credentials.sttProvider || 'firebase';
+        if (provider !== 'firebase') {
+            this.credentials.sttProvider = 'firebase';
             this.saveCredentials();
-            console.log('[CredentialsManager] Self-healed sttProvider: none→natively (Natively key present)');
-            return 'natively';
+            console.log(`[CredentialsManager] Self-healed STT provider: ${provider} -> firebase`);
+            return 'firebase';
         }
-        return provider;
+        return 'firebase';
     }
 
     public getDeepgramApiKey(): string | undefined {
@@ -243,9 +240,9 @@ export class CredentialsManager {
     }
 
     public setSttProvider(provider: 'none' | 'google' | 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox' | 'natively' | 'firebase'): void {
-        this.credentials.sttProvider = provider;
+        this.credentials.sttProvider = 'firebase';
         this.saveCredentials();
-        console.log(`[CredentialsManager] STT Provider set to: ${provider}`);
+        console.log(`[CredentialsManager] STT Provider forced to firebase (requested: ${provider})`);
     }
 
     public setDeepgramApiKey(key: string): void {

@@ -103,19 +103,8 @@ export interface ElectronAPI {
   onTrialEnded:   (cb: (data: { choice: string }) => void) => () => void
 
   // STT Provider Management
-  setSttProvider: (provider: 'none' | 'google' | 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox' | 'natively' | 'firebase') => Promise<{ success: boolean; error?: string }>
+  setSttProvider: (provider?: string) => Promise<{ success: boolean; error?: string }>
   getSttProvider: () => Promise<string>
-  setGroqSttApiKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>
-  setOpenAiSttApiKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>
-  setDeepgramApiKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>
-  setElevenLabsApiKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>
-  setAzureApiKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>
-  setAzureRegion: (region: string) => Promise<{ success: boolean; error?: string }>
-  setIbmWatsonApiKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>
-  setGroqSttModel: (model: string) => Promise<{ success: boolean; error?: string }>
-  setSonioxApiKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>
-  setIbmWatsonRegion: (region: string) => Promise<{ success: boolean; error?: string }>
-  testSttConnection: (provider: 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox', apiKey: string, region?: string) => Promise<{ success: boolean; error?: string }>
 
   // STT Config Events (fired when STT provider/key changes during a meeting)
   onSttConfigChanged: (callback: (data: { configured: boolean; provider: string }) => void) => () => void
@@ -262,9 +251,6 @@ export interface ElectronAPI {
   onGroqFastTextChanged: (callback: (enabled: boolean) => void) => () => void;
   onModelChanged: (callback: (modelId: string) => void) => () => void;
 
-  onOllamaPullProgress: (callback: (data: { status: string; percent: number }) => void) => () => void;
-  onOllamaPullComplete: (callback: () => void) => () => void;
-
   onMeetingsUpdated: (callback: () => void) => () => void
 
   // Provider Compatibility
@@ -306,11 +292,6 @@ export interface ElectronAPI {
   onRAGStreamChunk: (callback: (data: { meetingId?: string; global?: boolean; chunk: string }) => void) => () => void
   onRAGStreamComplete: (callback: (data: { meetingId?: string; global?: boolean }) => void) => () => void
   onRAGStreamError: (callback: (data: { meetingId?: string; global?: boolean; error: string }) => void) => () => void
-
-  // Donation API
-  getDonationStatus: () => Promise<{ shouldShow: boolean; hasDonated: boolean; lifetimeShows: number }>;
-  markDonationToastShown: () => Promise<{ success: boolean }>;
-  setDonationComplete: () => Promise<{ success: boolean }>;
 
   // Keybind Management
   getKeybinds: () => Promise<Array<{ id: string; label: string; accelerator: string; isGlobal: boolean; defaultAccelerator: string }>>

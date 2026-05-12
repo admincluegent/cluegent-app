@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
-import { MessageSquare, Link, Camera, Zap, Heart, User } from 'lucide-react';
+import { MessageSquare, Camera, Zap, User } from 'lucide-react';
 import { useShortcuts } from '../hooks/useShortcuts';
 
 const SettingsPopup = () => {
@@ -360,23 +360,6 @@ const SettingsPopup = () => {
                                 {key}
                             </div>
                         ))}
-                    </div>
-                </div>
-
-                <div className={`h-px my-0.5 mx-2 ${dividerClass}`} />
-
-                {/* Donate */}
-                <div
-                    // @ts-ignore
-                    onClick={() => window.electronAPI.openExternal('https://buymeacoffee.com/evinjohnn')}
-                    className="flex items-center justify-between px-3 py-2 hover:bg-pink-500/10 rounded-lg transition-colors duration-200 group interaction-base interaction-press"
-                >
-                    <div className="flex items-center gap-3">
-                        <Heart className="w-3.5 h-3.5 text-white group-hover:fill-white transition-all duration-300" />
-                        <span className="text-[12px] transition-colors text-white group-hover:text-white">Donate</span>
-                    </div>
-                    <div className="opacity-60 group-hover:opacity-100 transition-opacity">
-                        <Link className="w-3 h-3 text-white group-hover:text-white" />
                     </div>
                 </div>
 

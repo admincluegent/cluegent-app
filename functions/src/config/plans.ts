@@ -27,14 +27,14 @@ export const PLAN_CONFIGS: Record<PlanId, PlanConfig> = {
   pro: {
     id: "pro",
     label: "Pro",
-    sttSecondsLimit: 72000,
+    sttSecondsLimit: 108000,
     promptLimit: 5000,
     screenshotLimit: 2500,
   },
   power: {
     id: "power",
     label: "Power",
-    sttSecondsLimit: 144000,
+    sttSecondsLimit: 180000,
     promptLimit: 10000,
     screenshotLimit: 5000,
   },

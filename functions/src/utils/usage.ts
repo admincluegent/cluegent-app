@@ -377,7 +377,7 @@ export function assertUsageAvailable(
   if (actionType === "stt" && status.remaining.sttSeconds <= 0) {
     throw new HttpsError(
       "resource-exhausted",
-      "Monthly STT limit exceeded for the current plan."
+      "You have reached your monthly listening limit. Limits will reset every month."
     );
   }
 

@@ -112,15 +112,20 @@ export class CropperWindowHelper {
                 return;
             }
 
+            const screenBounds = this.toScreenBounds(bounds);
+
             // Validate input data for security
-            if (!this.validateBounds(bounds)) {
-                console.error('[CropperWindowHelper] Invalid bounds received:', bounds);
+            if (!this.validateBounds(screenBounds)) {
+                console.error('[CropperWindowHelper] Invalid bounds received:', {
+                    rendererBounds: bounds,
+                    screenBounds,
+                });
                 this.rejectCurrentSelection(null);
                 this.hideOrClose();
                 return;
             }
 
-            this.resolveCurrentSelection(bounds);
+            this.resolveCurrentSelection(screenBounds);
             this.hideOrClose();
         };
 
@@ -143,6 +148,27 @@ export class CropperWindowHelper {
             }
         };
         app.on('before-quit', this.beforeQuitHandler);
+    }
+
+    /**
+     * Renderer mouse coordinates are local to the cropper BrowserWindow. Screenshot
+     * capture APIs expect absolute virtual-screen coordinates, which may be
+     * negative on multi-monitor setups. Convert once in the trusted main process
+     * so the selected rectangle matches exactly what the user dragged.
+     */
+    private toScreenBounds(bounds: Electron.Rectangle): Electron.Rectangle {
+        const windowBounds = this.cropperWindow?.getBounds();
+
+        if (!windowBounds) {
+            return bounds;
+        }
+
+        return {
+            x: Math.round(windowBounds.x + bounds.x),
+            y: Math.round(windowBounds.y + bounds.y),
+            width: Math.round(bounds.width),
+            height: Math.round(bounds.height),
+        };
     }
 
     /**
@@ -332,8 +358,14 @@ export class CropperWindowHelper {
                 console.log(`[CropperWindowHelper] Cursor at ${JSON.stringify(cursorPosition)}, display bounds: ${targetDisplay ? JSON.stringify(targetDisplay.bounds) : 'unknown'}`);
                 console.log(`[CropperWindowHelper] HUD position: ${JSON.stringify(hudPosition)}`);
                 
-                // Send reset with HUD position
-                this.cropperWindow.webContents.send('reset-cropper', { hudPosition });
+                const windowBounds = this.cropperWindow.getBounds();
+                const localHudPosition = {
+                    x: hudPosition.x - windowBounds.x,
+                    y: hudPosition.y - windowBounds.y,
+                };
+
+                // Send reset with HUD position local to the cropper window.
+                this.cropperWindow.webContents.send('reset-cropper', { hudPosition: localHudPosition });
                 this.applyOpacityShield();
             } else {
                 // Window doesn't exist yet — createWindow will call applyOpacityShield

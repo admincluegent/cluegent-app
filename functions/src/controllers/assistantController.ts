@@ -940,7 +940,7 @@ export async function trackSttUsageForAuthenticatedUser(
     if (planStatus.remaining.sttSeconds <= 0) {
       return trackUsageFailure(
         "STT_LIMIT_EXCEEDED",
-        "Monthly STT limit exceeded for the current plan."
+        "You have reached your monthly listening limit. Limits will reset every month."
       );
     }
 
@@ -972,6 +972,10 @@ export async function trackSttUsageForAuthenticatedUser(
       }
 
       if (durationSeconds > latestPlanStatus.remaining.sttSeconds) {
+        if (latestPlanStatus.plan === "free") {
+          throw new Error("FREE_TRIAL_LIMIT_EXCEEDED");
+        }
+
         throw new Error("STT_LIMIT_EXCEEDED");
       }
 
@@ -1006,7 +1010,7 @@ export async function trackSttUsageForAuthenticatedUser(
     if (error instanceof Error && error.message === "STT_LIMIT_EXCEEDED") {
       return trackUsageFailure(
         "STT_LIMIT_EXCEEDED",
-        "Monthly STT limit exceeded for the current plan."
+        "You have reached your monthly listening limit. Limits will reset every month."
       );
     }
 
@@ -1062,7 +1066,7 @@ export async function createDeepgramTokenForAuthenticatedUser(
     if (planStatus.remaining.sttSeconds <= 0) {
       return createTokenFailure(
         "STT_LIMIT_EXCEEDED",
-        "Monthly STT limit exceeded for the current plan."
+        "You have reached your monthly listening limit. Limits will reset every month."
       );
     }
 

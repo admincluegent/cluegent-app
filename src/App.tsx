@@ -9,7 +9,6 @@ import SettingsOverlay from "./components/SettingsOverlay"
 import StartupSequence from "./components/StartupSequence"
 import { AnimatePresence, motion } from "framer-motion"
 import UpdateBanner from "./components/UpdateBanner"
-import { SupportToaster } from "./components/SupportToaster"
 import { NativelyQuotaBanner } from "./components/NativelyQuotaBanner"
 import { FreeTrialBanner }      from "./components/trial/FreeTrialBanner"
 import { FreeTrialModal }       from "./components/trial/FreeTrialModal"
@@ -32,12 +31,10 @@ import { analytics } from "./lib/analytics/analytics.service"
 import { beginLocalMeeting, finishCurrentLocalMeeting } from "./lib/localMeetingStorage"
 import { ErrorBoundary } from "./components/ErrorBoundary"
 import ModesSettings from "./components/settings/ModesSettings"
-import { useAuth } from "./contexts/auth.context"
 
 const queryClient = new QueryClient()
 
 const App: React.FC = () => {
-  const { profile } = useAuth();
   const isSettingsWindow = new URLSearchParams(window.location.search).get('window') === 'settings';
   const isLauncherWindow = new URLSearchParams(window.location.search).get('window') === 'launcher';
   const isOverlayWindow = new URLSearchParams(window.location.search).get('window') === 'overlay';
@@ -122,11 +119,6 @@ const App: React.FC = () => {
   const [lastMeetingEndTime, setLastMeetingEndTime] = useState<number | null>(null);
   const [isProcessingMeeting, setIsProcessingMeeting] = useState<boolean>(false);
   
-  // Ollama Auto-Pull State
-  const [ollamaPullStatus, setOllamaPullStatus] = useState<'idle' | 'downloading' | 'complete' | 'failed'>('idle');
-  const [ollamaPullPercent, setOllamaPullPercent] = useState<number>(0);
-  const [ollamaPullMessage, setOllamaPullMessage] = useState<string>('');
-
   // Re-index State
   const [incompatibleWarning, setIncompatibleWarning] = useState<{count: number; oldProvider: string; newProvider: string} | null>(null);
   
@@ -279,24 +271,6 @@ const App: React.FC = () => {
       setLastMeetingEndTime(Date.now());
     });
 
-    // Listen for Ollama Auto-Pull Progress
-    let removeProgress: (() => void) | undefined;
-    let removeComplete: (() => void) | undefined;
-    if (window.electronAPI?.onOllamaPullProgress && window.electronAPI?.onOllamaPullComplete) {
-      removeProgress = window.electronAPI.onOllamaPullProgress((data) => {
-        setOllamaPullStatus('downloading');
-        setOllamaPullPercent(data.percent || 0);
-        setOllamaPullMessage(data.status || 'Downloading...');
-      });
-
-      removeComplete = window.electronAPI.onOllamaPullComplete(() => {
-        setOllamaPullStatus('complete');
-        setOllamaPullMessage('Local AI memory ready');
-        setOllamaPullPercent(100);
-        setTimeout(() => setOllamaPullStatus('idle'), 3000);
-      });
-    }
-
     let removeWarning: (() => void) | undefined;
     if (window.electronAPI?.onIncompatibleProviderWarning) {
       removeWarning = window.electronAPI.onIncompatibleProviderWarning((data) => {
@@ -313,8 +287,6 @@ const App: React.FC = () => {
 
     return () => {
       if (removeMeetingsListener) removeMeetingsListener();
-      if (removeProgress) removeProgress();
-      if (removeComplete) removeComplete();
       if (removeWarning) removeWarning();
       if (removeLicenseListener) removeLicenseListener();
       if (trialPollId) clearInterval(trialPollId);
@@ -480,28 +452,6 @@ const App: React.FC = () => {
   return (
     <ErrorBoundary context="Launcher">
     <div className="h-full min-h-0 w-full relative bg-[#000000]">
-      {(isLauncherWindow || isDefault) && profile && (
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-50 flex justify-end p-5">
-          <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-white/10 bg-black/55 px-3 py-2 shadow-2xl backdrop-blur-xl">
-            {profile.photoURL ? (
-              <img
-                src={profile.photoURL}
-                alt={profile.displayName}
-                className="h-9 w-9 rounded-full object-cover"
-              />
-            ) : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-400/15 text-sm font-semibold text-emerald-200">
-                {profile.displayName.slice(0, 1).toUpperCase()}
-              </div>
-            )}
-            <div className="min-w-0 pr-2">
-              <p className="max-w-[220px] truncate text-sm font-medium text-white">
-                {profile.email}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
       <AnimatePresence>
         {showStartup ? (
           <motion.div
@@ -534,9 +484,6 @@ const App: React.FC = () => {
                     }}
                     onOpenModes={() => setIsModesOpen(true)}
                     onPageChange={setIsLauncherMainView}
-                    ollamaPullStatus={ollamaPullStatus}
-                    ollamaPullPercent={ollamaPullPercent}
-                    ollamaPullMessage={ollamaPullMessage}
                   />
                 </div>
                 <SettingsOverlay
@@ -627,7 +574,6 @@ const App: React.FC = () => {
       </AnimatePresence>
 
       <UpdateBanner />
-      <SupportToaster />
       <NativelyQuotaBanner />
 
 

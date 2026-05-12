@@ -63,13 +63,26 @@ export function categorizeSttError(rawError: string): SttErrorCategory {
     }
 
     // 3. Quota exceeded
+    if (lower.includes('free trial limit reached')) {
+        return {
+            title: 'Free Trial Limit Reached',
+            body: 'Your free trial limit is reached. Subscribe to continue using Cluegent.',
+            category: 'quota',
+        };
+    }
+
     if (
         lower.includes('transcription_quota_exceeded')
         || lower.includes('quota')
+        || lower.includes('stt_limit_exceeded')
+        || lower.includes('stt limit exceeded')
+        || lower.includes('monthly stt limit')
+        || lower.includes('monthly listening limit')
+        || lower.includes('listening limit')
     ) {
         return {
-            title: 'Transcription Limit Reached',
-            body: "You've exceeded your transcription quota for this period.",
+            title: 'Listening Limit Reached',
+            body: 'You have reached your plan limit. Limits will reset every month.',
             category: 'quota',
         };
     }

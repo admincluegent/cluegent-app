@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { ToggleLeft, ToggleRight, Search, Zap, Calendar, ArrowRight, ArrowLeft, MoreHorizontal, Globe, Clock, ChevronRight, Settings, LayoutGrid, RefreshCw, Eye, EyeOff, Ghost, Plus, Mail, Link as LinkIcon, ChevronDown, Trash2, Bell, Check, Download, DownloadCloud, CheckCircle, AlertCircle } from 'lucide-react';
+import packageJson from '../../package.json';
+import { ToggleLeft, ToggleRight, Search, Zap, Calendar, ArrowRight, ArrowLeft, MoreHorizontal, Globe, Clock, ChevronRight, Settings, LayoutGrid, RefreshCw, Eye, EyeOff, Ghost, Plus, Mail, Link as LinkIcon, ChevronDown, Trash2, Bell, Check, Download, DownloadCloud, CheckCircle, AlertCircle, User } from 'lucide-react';
 import { generateMeetingPDF } from '../utils/pdfGenerator';
 import icon from "./icon.png";
 import mainui from "../UI_comp/mainui.png";
-import calender from "../UI_comp/calender.png";
-import ConnectCalendarButton from './ui/ConnectCalendarButton';
 import MeetingDetails from './MeetingDetails';
 import TopSearchPill from './TopSearchPill';
 import GlobalChatOverlay from './GlobalChatOverlay';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FeatureSpotlight } from './FeatureSpotlight';
 import { analytics } from '../lib/analytics/analytics.service'; // Added analytics import
+import { useAuth } from '../contexts/auth.context';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { useResolvedTheme } from '../hooks/useResolvedTheme';
 import { isMac } from '../utils/platformUtils';
@@ -110,9 +110,6 @@ interface LauncherProps {
     onOpenSettings: (tab?: string) => void;
     onOpenModes?: () => void;
     onPageChange?: (isMain: boolean) => void;
-    ollamaPullStatus?: 'idle' | 'downloading' | 'complete' | 'failed';
-    ollamaPullPercent?: number;
-    ollamaPullMessage?: string;
 }
 
 // Helper to format date groups
@@ -140,7 +137,8 @@ const formatTime = (dateStr: string) => {
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
 };
 
-const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onPageChange, ollamaPullStatus = 'idle', ollamaPullPercent = 0, ollamaPullMessage = '' }) => {
+const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onPageChange }) => {
+    const { profile } = useAuth();
     const [meetings, setMeetings] = useState<Meeting[]>([]);
     const [isDetectable, setIsDetectable] = useState(false);
     const [isMeetingActive, setIsMeetingActive] = useState(false);
@@ -148,9 +146,10 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
     const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
     const [isPrepared, setIsPrepared] = useState(false);
     const [preparedEvent, setPreparedEvent] = useState<any>(null);
-    const [isCalendarConnected, setIsCalendarConnected] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [showNotification, setShowNotification] = useState(false);
+    const [showProfileCard, setShowProfileCard] = useState(false);
+    const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'uptodate' | 'error'>('idle');
 
     // Global search state (for AI chat overlay)
     const [isGlobalChatOpen, setIsGlobalChatOpen] = useState(false);
@@ -252,6 +251,20 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
             fetchMeetings();
         });
         const removeLocalMeetingsListener = subscribeLocalMeetings(fetchMeetings);
+        const updateUnsubscribers = [
+            window.electronAPI?.onUpdateChecking?.(() => {
+                setUpdateStatus('checking');
+            }),
+            window.electronAPI?.onUpdateAvailable?.(() => {
+                setUpdateStatus('available');
+            }),
+            window.electronAPI?.onUpdateNotAvailable?.(() => {
+                setUpdateStatus('uptodate');
+            }),
+            window.electronAPI?.onUpdateError?.(() => {
+                setUpdateStatus('error');
+            }),
+        ].filter(Boolean) as Array<() => void>;
 
         // Simple polling for events every minute
         const interval = setInterval(fetchEvents, 60000);
@@ -260,6 +273,7 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
             mounted = false;
             if (removeMeetingsListener) removeMeetingsListener();
             removeLocalMeetingsListener();
+            updateUnsubscribers.forEach(unsub => unsub());
             if (removeUndetectableListener) removeUndetectableListener();
             if (removeMeetingStateListener) removeMeetingStateListener();
             clearInterval(interval);
@@ -371,6 +385,12 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
         return () => window.removeEventListener('click', handleClickOutside);
     }, []);
 
+    useEffect(() => {
+        const handleClickOutside = () => setShowProfileCard(false);
+        window.addEventListener('click', handleClickOutside);
+        return () => window.removeEventListener('click', handleClickOutside);
+    }, []);
+
     // Notify parent if we are on the main launcher list view
     useEffect(() => {
         if (onPageChange) {
@@ -420,6 +440,25 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
         if (forwardMeeting) {
             setSelectedMeeting(forwardMeeting);
             setForwardMeeting(null);
+        }
+    };
+
+    const handleLauncherUpdateAction = async () => {
+        if (updateStatus === 'available') {
+            onOpenSettings('general');
+            return;
+        }
+
+        if (updateStatus === 'checking') {
+            return;
+        }
+
+        try {
+            setUpdateStatus('checking');
+            await window.electronAPI?.checkForUpdates?.();
+        } catch (error) {
+            console.error('[Launcher] Failed to check for updates:', error);
+            setUpdateStatus('error');
         }
     };
 
@@ -508,7 +547,57 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                 />
 
                 {/* Right: Actions */}
-                <div className={`flex items-center gap-1 no-drag shrink-0 ${isMac ? 'mr-1' : ''}`}>
+                <div className={`relative flex items-center gap-1 no-drag shrink-0 ${isMac ? 'mr-1' : ''}`}>
+                    {profile && (
+                        <div className="relative">
+                            <button
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    setShowProfileCard(current => !current);
+                                }}
+                                title="Account"
+                                className={`flex items-center justify-center rounded-full border border-border-subtle bg-bg-item-surface p-1.5 text-text-secondary transition-all duration-300 hover:text-text-primary ${isLight ? 'hover:drop-shadow-[0_0_6px_rgba(0,0,0,0.2)]' : 'hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.35)]'}`}
+                            >
+                                {profile.photoURL ? (
+                                    <img
+                                        src={profile.photoURL}
+                                        alt={profile.displayName}
+                                        className="h-7 w-7 rounded-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-400/15 text-xs font-semibold text-amber-500">
+                                        {(profile.displayName || profile.email || 'U').slice(0, 1).toUpperCase()}
+                                    </div>
+                                )}
+                            </button>
+
+                            <AnimatePresence>
+                                {showProfileCard && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                                        transition={{ duration: 0.16, ease: 'easeOut' }}
+                                        className="absolute right-0 top-[calc(100%+8px)] z-50 min-w-[220px] rounded-2xl border border-border-subtle bg-bg-elevated/95 px-4 py-3 shadow-2xl backdrop-blur-xl"
+                                        onClick={(event) => event.stopPropagation()}
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-bg-item-surface text-text-secondary">
+                                                <User size={16} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-tertiary">Signed in</p>
+                                                <p className="mt-1 break-all text-sm font-medium text-text-primary">
+                                                    {profile.email}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    )}
+
                     <button
                         onClick={() => {
                             onOpenSettings();
@@ -542,7 +631,7 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                     ) : (
                         <motion.div
                             key="launcher"
-                            className="flex-1 flex flex-col overflow-hidden"
+                            className="flex-1 overflow-y-auto custom-scrollbar"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
@@ -597,42 +686,9 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                                             </div>
                                         </div>
 
-                                        {/* Center: Ollama Pull Status Pill (flex-1 to center evenly) */}
-                                        <div className="flex-1 flex justify-center mx-4">
-                                            <AnimatePresence>
-                                                {ollamaPullStatus !== 'idle' && (
-                                                    <motion.div
-                                                        initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                                                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                                                        exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                                                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                                                        className={`flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-xl ${isLight ? 'bg-bg-elevated border border-border-muted shadow-[0_4px_16px_rgba(0,0,0,0.1)]' : 'bg-bg-elevated/80 border border-white/10 shadow-[0_4px_16px_rgba(0,0,0,0.3)]'}`}
-                                                    >
-                                                        {ollamaPullStatus === 'downloading' ? (
-                                                            <DownloadCloud size={14} className="text-blue-400 animate-pulse shrink-0" />
-                                                        ) : ollamaPullStatus === 'complete' ? (
-                                                            <CheckCircle size={14} className="text-emerald-400 shrink-0" />
-                                                        ) : (
-                                                            <AlertCircle size={14} className="text-red-400 shrink-0" />
-                                                        )}
-                                                        <div className="flex flex-col">
-                                                            <span className="text-[11px] font-medium text-text-secondary whitespace-nowrap">
-                                                                {ollamaPullStatus === 'downloading' ? `Setting up AI memory... ${ollamaPullPercent}%` : ollamaPullMessage}
-                                                            </span>
-                                                            {ollamaPullStatus === 'downloading' && (
-                                                                <div className="w-full h-[3px] bg-white/10 rounded-full mt-1 overflow-hidden">
-                                                                    <div
-                                                                        className="h-full bg-blue-500 rounded-full transition-all duration-300"
-                                                                        style={{ width: `${ollamaPullPercent}%` }}
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
-                                        </div>
+                                        <div className="flex-1" />
 
+                                        <div className="flex shrink-0 flex-col items-end gap-3">
                                         {/* Unified CTA pill — same jelly shape, morphs between idle and active-meeting state */}
                                         <motion.button
                                             onClick={() => {
@@ -711,6 +767,52 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                                                 </AnimatePresence>
                                             </div>
                                         </motion.button>
+                                            <button
+                                                onClick={handleLauncherUpdateAction}
+                                                disabled={updateStatus === 'checking'}
+                                                className={`inline-flex min-w-[210px] items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
+                                                    updateStatus === 'checking'
+                                                        ? 'cursor-wait border-border-subtle bg-bg-item-surface text-text-secondary'
+                                                        : updateStatus === 'available'
+                                                            ? 'border-blue-500/30 bg-blue-500 text-white hover:bg-blue-600'
+                                                            : updateStatus === 'uptodate'
+                                                                ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/15'
+                                                                : updateStatus === 'error'
+                                                                    ? 'border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/15'
+                                                                    : 'border-border-subtle bg-bg-elevated text-text-primary hover:bg-bg-item-active'
+                                                }`}
+                                            >
+                                                {updateStatus === 'checking' ? (
+                                                    <>
+                                                        <RefreshCw size={14} className="animate-spin" />
+                                                        Checking for updates
+                                                    </>
+                                                ) : updateStatus === 'available' ? (
+                                                    <>
+                                                        <Download size={14} />
+                                                        Update available
+                                                    </>
+                                                ) : updateStatus === 'uptodate' ? (
+                                                    <>
+                                                        <Check size={14} />
+                                                        Already up to date
+                                                    </>
+                                                ) : updateStatus === 'error' ? (
+                                                    <>
+                                                        <AlertCircle size={14} />
+                                                        Update check failed
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <RefreshCw size={14} />
+                                                        Check for updates
+                                                    </>
+                                                )}
+                                            </button>
+                                            <p className="pr-2 text-xs text-text-tertiary">
+                                                Version {packageJson.version}
+                                            </p>
+                                        </div>
                                     </div>
 
                                     {/* 2. Hero Section Cards */}
@@ -809,45 +911,13 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                                                 </div>
                                             )
                                         )}
-
-
-
-                                        {/* Right Secondary Card */}
-                                        <div className="md:col-span-1 rounded-xl overflow-hidden bg-bg-elevated relative group flex flex-col items-center pt-6 text-center">
-                                            {/* Backdrop Image */}
-                                            <div className="absolute inset-0">
-                                                <img src={calender} alt="" className="w-full h-full object-cover opacity-100 transition-opacity duration-500 translate-x--1 translate-y-[1px] scale-105" />
-                                            </div>
-
-                                            {/* Content Layer */}
-                                            <div className="relative z-10 w-full flex flex-col items-center h-full">
-                                                <h3 className="text-[19px] leading-tight mb-4">
-                                                    {isCalendarConnected ? (
-                                                        <>
-                                                            <span className="block font-semibold text-white">Calendar linked</span>
-                                                            <span className="block font-medium text-white/60 text-[0.95em]">Events synced</span>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <span className="block font-semibold text-white">Link your calendar to</span>
-                                                            <span className="block font-medium text-white/60 text-[0.95em]">see upcoming events</span>
-                                                        </>
-                                                    )}
-                                                </h3>
-
-                                                <ConnectCalendarButton
-                                                    className="-translate-x-0.5"
-                                                    onConnect={() => setIsCalendarConnected(true)}
-                                                />
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </section>
 
-                            {/* BOTTOM SECTION: Black Background (Scrollable content) */}
-                            <main className="flex-1 overflow-y-auto custom-scrollbar bg-bg-primary">
-                                <section className="px-8 py-8 min-h-full">
+                            {/* BOTTOM SECTION */}
+                            <main className="bg-bg-primary">
+                                <section className="px-8 py-8">
                                     <div className="max-w-4xl mx-auto space-y-8">
 
                                         {/* Iterating Date Groups */}

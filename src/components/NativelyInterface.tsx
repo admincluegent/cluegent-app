@@ -127,6 +127,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         (planStatus.remaining.screenshots ?? 0) <= 0 ||
         (planStatus.remaining.sttSeconds ?? 0) <= 0
     );
+    const isPaidListeningExhausted = !!planStatus && planStatus.plan !== 'free' && (planStatus.remaining.sttSeconds ?? 0) <= 0;
     const listeningDuration = `${Math.floor(listeningSeconds / 60).toString().padStart(2, '0')}:${(listeningSeconds % 60).toString().padStart(2, '0')}`;
 
     // Sync transcript setting
@@ -607,6 +608,12 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     // If registered inside the [isExpanded] effect, events are dropped during cleanup.
     useEffect(() => {
         return window.electronAPI.onSttStatusChanged((data) => {
+            const lowerError = data.error?.toLowerCase() ?? '';
+            const isLimitError =
+                lowerError.includes('quota') ||
+                lowerError.includes('limit') ||
+                lowerError.includes('resource_exhausted');
+
             if (data.channel === 'user') {
                 setSttUserStatus(data.state);
                 setSttUserProvider(data.provider);
@@ -618,8 +625,12 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                 if (data.error) setSttInterviewerError(data.error);
                 if (data.state === 'connected') setSttInterviewerError('');
             }
+
+            if (data.state === 'failed' && isLimitError) {
+                void refreshProfile();
+            }
         });
-    }, []);
+    }, [refreshProfile]);
 
     // Connect to Native Audio Backend
     useEffect(() => {
@@ -2657,8 +2668,14 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                 return;
             }
 
-            if (isFreePlanExhausted || (planStatus?.remaining.sttSeconds ?? 0) <= 0) {
+            if (isFreePlanExhausted) {
                 await window.electronAPI?.openSettingsTab?.('natively-api');
+                return;
+            }
+
+            if (isPaidListeningExhausted) {
+                setSttInterviewerStatus('failed');
+                setSttInterviewerError('You have reached your plan limit. Limits will reset every month.');
                 return;
             }
 
@@ -2926,6 +2943,27 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                         >
                                             Subscribe to Pro
                                             <ArrowRight className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {isPaidListeningExhausted && !isSyncing && (
+                                <div className="mx-4 mb-2 rounded-[16px] border border-amber-400/25 bg-amber-400/10 px-4 py-3 no-drag">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div>
+                                            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-amber-200">
+                                                Listening Limit Reached
+                                            </p>
+                                            <p className="mt-1 text-[12px] leading-5 text-white/85">
+                                                You have reached your plan limit. Limits will reset every month. You can still use AI requests and screenshot analyses.
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => void window.electronAPI?.openSettingsTab?.('natively-api')}
+                                            className="inline-flex shrink-0 items-center gap-2 rounded-full bg-amber-300 px-4 py-2 text-[12px] font-semibold text-black transition hover:bg-amber-200"
+                                        >
+                                            View Plan
                                         </button>
                                     </div>
                                 </div>

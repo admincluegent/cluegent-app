@@ -3,7 +3,7 @@ import { ExternalLink, Github, Globe, Info, LockKeyhole, Scale, ShieldCheck, Spa
 import CluegentIcon from './icon.png';
 
 export const AboutSection: React.FC = () => {
-    const appVersion = import.meta.env.VITE_APP_VERSION || '2.5.0';
+  const appVersion = import.meta.env.VITE_APP_VERSION || '1.0.0';
 
     const handleOpenLink = (e: React.MouseEvent<HTMLAnchorElement>, url: string) => {
         e.preventDefault();
