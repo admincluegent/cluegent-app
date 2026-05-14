@@ -76,8 +76,8 @@ export const FeatureSpotlight: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="absolute inset-x-2 top-12 bottom-0 overflow-hidden">
-                                    <div className="w-[112%] origin-top-left scale-[0.9]">
+                                <div className="absolute inset-x-2 top-20 bottom-8 overflow-visible">
+                                    <div className="w-[118%] origin-top-left scale-[0.84]">
                                         {item.content}
                                     </div>
                                 </div>

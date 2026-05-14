@@ -19,10 +19,11 @@ type HelpSettingsProps = {
 type HelpCardProps = {
     icon: React.ReactNode;
     title: string;
+    description: string;
     children: React.ReactNode;
 };
 
-const HelpCard = ({ icon, title, children }: HelpCardProps) => (
+const HelpCard = ({ icon, title, description, children }: HelpCardProps) => (
     <section className="rounded-xl border border-border-subtle bg-bg-card p-5 shadow-sm">
         <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-bg-item-active text-accent-primary">
@@ -30,6 +31,7 @@ const HelpCard = ({ icon, title, children }: HelpCardProps) => (
             </div>
             <div className="min-w-0 flex-1">
                 <h4 className="text-sm font-bold text-text-primary">{title}</h4>
+                <p className="mt-1 text-xs leading-relaxed text-text-secondary">{description}</p>
                 <div className="mt-3 text-sm leading-relaxed text-text-secondary">{children}</div>
             </div>
         </div>
@@ -400,15 +402,27 @@ export const HelpSettings: React.FC<HelpSettingsProps> = () => {
             </div>
 
             <div className="grid gap-4">
-                <HelpCard icon={<Monitor size={18} />} title="App Permissions Setup">
+                <HelpCard
+                    icon={<Monitor size={18} />}
+                    title="App Permissions Setup"
+                    description="Allow screen and microphone permissions so Cluegent can capture screenshots and listen only when you start a session."
+                >
                     <MockPermissionsWalkthrough />
                 </HelpCard>
 
-                <HelpCard icon={<Monitor size={18} />} title="Cluegent Interface Operations">
+                <HelpCard
+                    icon={<Monitor size={18} />}
+                    title="Cluegent Interface Operations"
+                    description="Use Start listening for rolling transcript, quick actions for reusable prompts, and Ctrl + Enter when you want an answer."
+                >
                     <MockInterfaceWalkthrough />
                 </HelpCard>
 
-                <HelpCard icon={<Camera size={18} />} title="Screenshot Response">
+                <HelpCard
+                    icon={<Camera size={18} />}
+                    title="Screenshot Response"
+                    description="Press Ctrl + [ to attach a screenshot, then submit so Cluegent can answer visible questions, code, errors, and transcript context."
+                >
                     <MockScreenshotWalkthrough />
                 </HelpCard>
             </div>

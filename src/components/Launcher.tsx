@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import packageJson from '../../package.json';
-import { ToggleLeft, ToggleRight, Search, Zap, Calendar, ArrowRight, ArrowLeft, MoreHorizontal, Globe, Clock, ChevronRight, Settings, LayoutGrid, RefreshCw, Eye, EyeOff, Ghost, Plus, Mail, Link as LinkIcon, ChevronDown, Trash2, Bell, Check, Download, DownloadCloud, CheckCircle, AlertCircle, User } from 'lucide-react';
+import { ToggleLeft, ToggleRight, Zap, Calendar, ArrowRight, ArrowLeft, MoreHorizontal, Clock, Settings, RefreshCw, Ghost, Link as LinkIcon, ChevronDown, Trash2, Check, Download, AlertCircle, User } from 'lucide-react';
 import { generateMeetingPDF } from '../utils/pdfGenerator';
 import icon from "./icon.png";
-import mainui from "../UI_comp/mainui.png";
 import MeetingDetails from './MeetingDetails';
-import TopSearchPill from './TopSearchPill';
-import GlobalChatOverlay from './GlobalChatOverlay';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FeatureSpotlight } from './FeatureSpotlight';
 import { analytics } from '../lib/analytics/analytics.service'; // Added analytics import
@@ -151,9 +148,8 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
     const [showProfileCard, setShowProfileCard] = useState(false);
     const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'uptodate' | 'error'>('idle');
 
-    // Global search state (for AI chat overlay)
-    const [isGlobalChatOpen, setIsGlobalChatOpen] = useState(false);
-    const [submittedGlobalQuery, setSubmittedGlobalQuery] = useState('');
+    const [isGuideSectionOpen, setIsGuideSectionOpen] = useState(true);
+    const [isRecentMeetingsOpen, setIsRecentMeetingsOpen] = useState(true);
 
     const fetchMeetings = () => {
         const localMeetings = getLocalMeetings().map(localMeetingToMeeting);
@@ -394,9 +390,9 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
     // Notify parent if we are on the main launcher list view
     useEffect(() => {
         if (onPageChange) {
-            onPageChange(!selectedMeeting && !isGlobalChatOpen);
+            onPageChange(!selectedMeeting);
         }
-    }, [selectedMeeting, isGlobalChatOpen, onPageChange]);
+    }, [selectedMeeting, onPageChange]);
 
     const handleOpenMeeting = async (meeting: Meeting) => {
         setForwardMeeting(null); // Clear forward history on new navigation
@@ -521,30 +517,7 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                     </button>
                 </div>
 
-
-                {/* Center: Spotlight-style Search Pill */}
-                <TopSearchPill
-                    meetings={meetings}
-                    onAIQuery={(query) => {
-                        analytics.trackCommandExecuted('ai_query_search');
-                        setSubmittedGlobalQuery(query);
-                        setIsGlobalChatOpen(true);
-                    }}
-                    onLiteralSearch={(query) => {
-                        // For now, also use AI query for literal search
-                        // Could be enhanced to do fuzzy filtering in the UI
-                        analytics.trackCommandExecuted('literal_search');
-                        setSubmittedGlobalQuery(query);
-                        setIsGlobalChatOpen(true);
-                    }}
-                    onOpenMeeting={(meetingId) => {
-                        const meeting = meetings.find(m => m.id === meetingId);
-                        if (meeting) {
-                            handleOpenMeeting(meeting);
-                            analytics.trackCommandExecuted('open_meeting_from_search');
-                        }
-                    }}
-                />
+                <div className="flex-1" />
 
                 {/* Right: Actions */}
                 <div className={`relative flex items-center gap-1 no-drag shrink-0 ${isMac ? 'mr-1' : ''}`}>
@@ -645,45 +618,90 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                             <section className={`${isLight ? 'bg-bg-primary' : 'bg-bg-elevated'} px-8 pt-6 pb-8 border-b border-border-subtle shrink-0`}>
                                 <div className="max-w-4xl mx-auto space-y-6">
                                     {/* 1.5. Hero Header (Title + Controls + CTA) */}
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-4">
-                                            <h1 className="text-3xl font-celeb-light font-medium text-text-primary tracking-wide drop-shadow-sm">My Cluegent</h1>
+                                    <div className="flex items-start justify-between gap-6">
+                                        <div className="flex flex-col items-start gap-3">
+                                            <div className="flex items-center gap-4">
+                                                <h1 className="text-3xl font-celeb-light font-medium text-text-primary tracking-wide drop-shadow-sm">My Cluegent</h1>
 
-                                            {/* Detectable Toggle Pill */}
-                                            <div className={`flex items-center gap-3 border rounded-full px-3 py-1.5 min-w-[140px] transition-colors ${isLight ? 'bg-bg-elevated border-border-muted shadow-sm' : 'bg-[#101011] border-border-muted'}`}>
-                                                {isDetectable ? (
-                                                    <Ghost
-                                                        size={14}
-                                                        strokeWidth={2}
-                                                        className="text-text-secondary transition-colors"
-                                                    />
-                                                ) : (
-                                                    <svg
-                                                        width="14"
-                                                        height="14"
-                                                        viewBox="0 0 24 24"
-                                                        fill="none"
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        className="transition-colors"
-                                                    >
-                                                        <path
-                                                            d="M12 2C7.58172 2 4 5.58172 4 10V22L7 19L9.5 21.5L12 19L14.5 21.5L17 19L20 22V10C20 5.58172 16.4183 2 12 2Z"
-                                                            fill={isLight ? '#48484A' : 'white'}
+                                                {/* Detectable Toggle Pill */}
+                                                <div className={`flex items-center gap-3 border rounded-full px-3 py-1.5 min-w-[140px] transition-colors ${isLight ? 'bg-bg-elevated border-border-muted shadow-sm' : 'bg-[#101011] border-border-muted'}`}>
+                                                    {isDetectable ? (
+                                                        <Ghost
+                                                            size={14}
+                                                            strokeWidth={2}
+                                                            className="text-text-secondary transition-colors"
                                                         />
-                                                        <circle cx="9" cy="10" r="1.5" fill={isLight ? 'white' : 'black'} />
-                                                        <circle cx="15" cy="10" r="1.5" fill={isLight ? 'white' : 'black'} />
-                                                    </svg>
-                                                )}
-                                                <span className="text-xs font-medium flex-1 transition-colors text-text-secondary">
-                                                    {isDetectable ? "Detectable" : "Undetectable"}
-                                                </span>
-                                                <div
-                                                    className={`w-8 h-4 rounded-full relative transition-colors cursor-pointer ${!isDetectable ? 'bg-accent-primary' : 'bg-bg-toggle-switch'}`}
-                                                    onClick={toggleDetectable}
-                                                >
-                                                    <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-all ${!isDetectable ? 'left-[18px]' : 'left-0.5'}`} />
+                                                    ) : (
+                                                        <svg
+                                                            width="14"
+                                                            height="14"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            className="transition-colors"
+                                                        >
+                                                            <path
+                                                                d="M12 2C7.58172 2 4 5.58172 4 10V22L7 19L9.5 21.5L12 19L14.5 21.5L17 19L20 22V10C20 5.58172 16.4183 2 12 2Z"
+                                                                fill={isLight ? '#48484A' : 'white'}
+                                                            />
+                                                            <circle cx="9" cy="10" r="1.5" fill={isLight ? 'white' : 'black'} />
+                                                            <circle cx="15" cy="10" r="1.5" fill={isLight ? 'white' : 'black'} />
+                                                        </svg>
+                                                    )}
+                                                    <span className="text-xs font-medium flex-1 transition-colors text-text-secondary">
+                                                        {isDetectable ? "Detectable" : "Undetectable"}
+                                                    </span>
+                                                    <div
+                                                        className={`w-8 h-4 rounded-full relative transition-colors cursor-pointer ${!isDetectable ? 'bg-accent-primary' : 'bg-bg-toggle-switch'}`}
+                                                        onClick={toggleDetectable}
+                                                    >
+                                                        <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-all ${!isDetectable ? 'left-[18px]' : 'left-0.5'}`} />
+                                                    </div>
                                                 </div>
                                             </div>
+
+                                            <button
+                                                onClick={handleLauncherUpdateAction}
+                                                disabled={updateStatus === 'checking'}
+                                                className={`inline-flex min-w-[210px] items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
+                                                    updateStatus === 'checking'
+                                                        ? 'cursor-wait border-border-subtle bg-bg-item-surface text-text-secondary'
+                                                        : updateStatus === 'available'
+                                                            ? 'border-blue-500/30 bg-blue-500 text-white hover:bg-blue-600'
+                                                            : updateStatus === 'uptodate'
+                                                                ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/15'
+                                                                : updateStatus === 'error'
+                                                                    ? 'border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/15'
+                                                                    : 'border-border-subtle bg-bg-elevated text-text-primary hover:bg-bg-item-active'
+                                                }`}
+                                            >
+                                                {updateStatus === 'checking' ? (
+                                                    <>
+                                                        <RefreshCw size={14} className="animate-spin" />
+                                                        Checking for updates
+                                                    </>
+                                                ) : updateStatus === 'available' ? (
+                                                    <>
+                                                        <Download size={14} />
+                                                        Update available
+                                                    </>
+                                                ) : updateStatus === 'uptodate' ? (
+                                                    <>
+                                                        <Check size={14} />
+                                                        Already up to date
+                                                    </>
+                                                ) : updateStatus === 'error' ? (
+                                                    <>
+                                                        <AlertCircle size={14} />
+                                                        Update check failed
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <RefreshCw size={14} />
+                                                        Check for updates
+                                                    </>
+                                                )}
+                                            </button>
                                         </div>
 
                                         <div className="flex-1" />
@@ -767,56 +785,39 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                                                 </AnimatePresence>
                                             </div>
                                         </motion.button>
-                                            <button
-                                                onClick={handleLauncherUpdateAction}
-                                                disabled={updateStatus === 'checking'}
-                                                className={`inline-flex min-w-[210px] items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
-                                                    updateStatus === 'checking'
-                                                        ? 'cursor-wait border-border-subtle bg-bg-item-surface text-text-secondary'
-                                                        : updateStatus === 'available'
-                                                            ? 'border-blue-500/30 bg-blue-500 text-white hover:bg-blue-600'
-                                                            : updateStatus === 'uptodate'
-                                                                ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/15'
-                                                                : updateStatus === 'error'
-                                                                    ? 'border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/15'
-                                                                    : 'border-border-subtle bg-bg-elevated text-text-primary hover:bg-bg-item-active'
-                                                }`}
-                                            >
-                                                {updateStatus === 'checking' ? (
-                                                    <>
-                                                        <RefreshCw size={14} className="animate-spin" />
-                                                        Checking for updates
-                                                    </>
-                                                ) : updateStatus === 'available' ? (
-                                                    <>
-                                                        <Download size={14} />
-                                                        Update available
-                                                    </>
-                                                ) : updateStatus === 'uptodate' ? (
-                                                    <>
-                                                        <Check size={14} />
-                                                        Already up to date
-                                                    </>
-                                                ) : updateStatus === 'error' ? (
-                                                    <>
-                                                        <AlertCircle size={14} />
-                                                        Update check failed
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <RefreshCw size={14} />
-                                                        Check for updates
-                                                    </>
-                                                )}
-                                            </button>
-                                            <p className="pr-2 text-xs text-text-tertiary">
-                                                Version {packageJson.version}
-                                            </p>
                                         </div>
                                     </div>
 
                                     {/* 2. Hero Section Cards */}
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 h-[360px]">
+                                    <section className="rounded-2xl border border-border-subtle bg-bg-card shadow-sm">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsGuideSectionOpen(current => !current)}
+                                            className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-bg-item-surface"
+                                            aria-expanded={isGuideSectionOpen}
+                                        >
+                                            <div>
+                                                <h2 className="text-sm font-bold text-text-primary">Guide animations</h2>
+                                                <p className="mt-1 text-xs text-text-secondary">
+                                                    Quick walkthroughs for listening, quick actions, and screenshot answers.
+                                                </p>
+                                            </div>
+                                            <ChevronDown
+                                                size={18}
+                                                className={`shrink-0 text-text-secondary transition-transform ${isGuideSectionOpen ? 'rotate-180' : ''}`}
+                                            />
+                                        </button>
+
+                                        <AnimatePresence initial={false}>
+                                            {isGuideSectionOpen && (
+                                                <motion.div
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: 'auto', opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                                                    className="overflow-hidden"
+                                                >
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 h-[430px] px-4 pb-4">
                                         {/* PREPARED STATE CARD */}
                                         {isPrepared && preparedEvent ? (
                                             <div className={`md:col-span-3 relative group rounded-xl overflow-hidden border border-emerald-500/30 ${isLight ? 'bg-bg-elevated' : 'bg-bg-secondary'} flex flex-col items-center justify-center p-6 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-900/40 ${isLight ? 'via-bg-elevated to-bg-elevated' : 'via-bg-secondary to-bg-secondary'}`}>
@@ -911,14 +912,56 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                                                 </div>
                                             )
                                         )}
-                                    </div>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </section>
                                 </div>
                             </section>
 
                             {/* BOTTOM SECTION */}
                             <main className="bg-bg-primary">
                                 <section className="px-8 py-8">
-                                    <div className="max-w-4xl mx-auto space-y-8">
+                                    <div className="max-w-4xl mx-auto rounded-2xl border border-border-subtle bg-bg-card shadow-sm">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsRecentMeetingsOpen(current => !current)}
+                                            className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-bg-item-surface"
+                                            aria-expanded={isRecentMeetingsOpen}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-bg-item-active text-accent-primary">
+                                                    <Clock size={16} />
+                                                </div>
+                                                <div>
+                                                    <h2 className="text-sm font-bold text-text-primary">Recent meetings</h2>
+                                                    <p className="mt-1 text-xs text-text-secondary">
+                                                        Local-only history of transcripts, prompts, screenshots, and Cluegent answers.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <span className="rounded-full bg-bg-elevated px-3 py-1 text-xs font-semibold text-text-secondary">
+                                                    {meetings.length} saved
+                                                </span>
+                                                <ChevronDown
+                                                    size={18}
+                                                    className={`shrink-0 text-text-secondary transition-transform ${isRecentMeetingsOpen ? 'rotate-180' : ''}`}
+                                                />
+                                            </div>
+                                        </button>
+
+                                        <AnimatePresence initial={false}>
+                                            {isRecentMeetingsOpen && (
+                                                <motion.div
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: 'auto', opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                                                    className="overflow-hidden border-t border-border-subtle"
+                                                >
+                                                    <div className="space-y-8 p-5">
 
                                         {/* Iterating Date Groups */}
                                         {sortedGroups.map((label) => (
@@ -1048,6 +1091,10 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                                             <div className="p-4 text-text-tertiary text-sm">No recent meetings.</div>
                                         )}
 
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
                                     </div>
                                 </section>
                             </main>
@@ -1086,15 +1133,6 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                 )}
             </AnimatePresence>
 
-            {/* Global Chat Overlay */}
-            <GlobalChatOverlay
-                isOpen={isGlobalChatOpen}
-                onClose={() => {
-                    setIsGlobalChatOpen(false);
-                    setSubmittedGlobalQuery('');
-                }}
-                initialQuery={submittedGlobalQuery}
-            />
         </div >
     );
 };
