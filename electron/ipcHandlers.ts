@@ -11,6 +11,7 @@ import * as fs from "fs";
 import { AudioDevices } from "./audio/AudioDevices";
 import { startFirebaseGoogleSignIn } from "./services/FirebaseAuthManager";
 import { FirebaseSessionManager } from "./services/FirebaseSessionManager";
+import { LocalProfileManager } from "./services/LocalProfileManager";
 
 
 import { RECOGNITION_LANGUAGES, AI_RESPONSE_LANGUAGES } from "./config/languages"
@@ -22,28 +23,16 @@ export function initializeIpcHandlers(appState: AppState): void {
   };
 
   /**
-   * Returns true if the user has an active premium license OR an unexpired free trial.
-   * Used to gate profile intelligence features (resume upload, JD upload, company research, etc.).
+   * Legacy premium feature gate. Cluegent billing is enforced through Firebase
+   * entitlements; this only keeps optional bundled premium modules from opening
+   * when a build does not include them.
    */
   const isProOrTrialActive = (): boolean => {
-    // 1. Full premium license (Dodo / Gumroad / Natively API subscription)
     try {
       const { LicenseManager } = require('../premium/electron/services/LicenseManager');
       if (LicenseManager.getInstance().isPremium()) return true;
     } catch { /* premium module not available */ }
-
-    // 2. Active free trial (token present and not expired)
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      const cm = CredentialsManager.getInstance();
-      const token = cm.getTrialToken();
-      if (!token) return false;
-      const expiresAt = cm.getTrialExpiresAt();
-      if (!expiresAt) return false;
-      return new Date(expiresAt).getTime() > Date.now();
-    } catch {
-      return false;
-    }
+    return false;
   };
 
   // Clears the active mode when the pro license is lost so non-general mode prompts
@@ -58,6 +47,17 @@ export function initializeIpcHandlers(appState: AppState): void {
       });
       console.log('[IPC] Active mode cleared due to license loss');
     } catch (e) { /* non-fatal */ }
+  };
+
+  const broadcastProfileStatus = (): void => {
+    try {
+      const status = LocalProfileManager.getInstance().getStatus();
+      BrowserWindow.getAllWindows().forEach(win => {
+        if (!win.isDestroyed()) win.webContents.send('profile-status-changed', status);
+      });
+    } catch (e) {
+      console.warn('[IPC] Failed to broadcast profile status:', e);
+    }
   };
 
   // --- NEW Test Helper ---
@@ -102,7 +102,7 @@ export function initializeIpcHandlers(appState: AppState): void {
     } catch (err: any) {
       // Only show generic message if the premium module itself is missing.
       // activateLicense() returns {success:false, error} for all expected failures
-      // (bad key, network error, etc.) — it should never throw in normal operation.
+      // (bad key, network error, etc.) â€” it should never throw in normal operation.
       console.error('[IPC] license:activate unexpected error:', err);
       return { success: false, error: 'Premium features not available in this build.' };
     }
@@ -138,7 +138,7 @@ export function initializeIpcHandlers(appState: AppState): void {
   safeHandle("license:deactivate", async () => {
     try {
       const { LicenseManager } = require('../premium/electron/services/LicenseManager');
-      // deactivate() is async — it calls the Dodo server to free the activation slot
+      // deactivate() is async â€” it calls the Dodo server to free the activation slot
       // before removing the local license file. Must be awaited.
       await LicenseManager.getInstance().deactivate();
       // Auto-disable knowledge mode when license is removed
@@ -235,7 +235,7 @@ export function initializeIpcHandlers(appState: AppState): void {
       ) {
         // EC-05 fix: launcher window resize events were previously silently ignored.
         // Log them so that if the launcher ever sends this IPC it's visible in logs.
-        console.log(`[IPC] update-content-dimensions: launcher window resize request ${width}x${height} (ignored — launcher has fixed dimensions)`);
+        console.log(`[IPC] update-content-dimensions: launcher window resize request ${width}x${height} (ignored â€” launcher has fixed dimensions)`);
       }
     }
   )
@@ -428,7 +428,7 @@ export function initializeIpcHandlers(appState: AppState): void {
       console.log("[IPC] gemini-chat-stream started using LLMHelper.streamChat");
       const llmHelper = appState.processingHelper.getLLMHelper();
 
-      // Claim a new stream ID — any prior stream will detect this and stop emitting.
+      // Claim a new stream ID â€” any prior stream will detect this and stop emitting.
       const myStreamId = ++_chatStreamId;
 
       // Update IntelligenceManager with USER message immediately
@@ -455,6 +455,22 @@ export function initializeIpcHandlers(appState: AppState): void {
         } catch (ctxErr) {
           console.warn("[IPC] Failed to auto-inject context:", ctxErr);
         }
+      }
+
+      try {
+        const profileContext = LocalProfileManager.getInstance().buildContextForRequest({
+          message,
+          context,
+          hasImages: Boolean(imagePaths?.length),
+        });
+        if (profileContext.shouldInject && profileContext.contextBlock) {
+          context = context
+            ? `${profileContext.contextBlock}\n\n${context}`
+            : profileContext.contextBlock;
+          console.log(`[IPC] Local resume context injected (${profileContext.reason})`);
+        }
+      } catch (profileErr: any) {
+        console.warn("[IPC] Local resume context skipped:", profileErr?.message || profileErr);
       }
 
       try {
@@ -618,7 +634,7 @@ export function initializeIpcHandlers(appState: AppState): void {
     return appState.getUndetectable()
   })
 
-  // Adapted from public PR #113 — verify premium interaction
+  // Adapted from public PR #113 â€” verify premium interaction
   safeHandle("set-overlay-mouse-passthrough", async (_, enabled: boolean) => {
     appState.setOverlayMousePassthrough(enabled)
     return { success: true }
@@ -788,567 +804,6 @@ export function initializeIpcHandlers(appState: AppState): void {
     }
   });
 
-  safeHandle("set-groq-api-key", async (_, apiKey: string) => {
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      CredentialsManager.getInstance().setGroqApiKey(apiKey);
-
-      // Also update the LLMHelper immediately
-      const llmHelper = appState.processingHelper.getLLMHelper();
-      llmHelper.setGroqApiKey(apiKey);
-
-      // CQ-06 fix: cancel in-flight stream before re-init (engine only, not session)
-      appState.getIntelligenceManager().resetEngine();
-      // Re-init IntelligenceManager
-      appState.getIntelligenceManager().initializeLLMs();
-
-      return { success: true };
-    } catch (error: any) {
-      console.error("Error saving Groq API key:", error);
-      return { success: false, error: error.message };
-    }
-  });
-
-  safeHandle("set-openai-api-key", async (_, apiKey: string) => {
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      CredentialsManager.getInstance().setOpenaiApiKey(apiKey);
-
-      // Also update the LLMHelper immediately
-      const llmHelper = appState.processingHelper.getLLMHelper();
-      llmHelper.setOpenaiApiKey(apiKey);
-
-      // CQ-06 fix: cancel in-flight stream before re-init (engine only, not session)
-      appState.getIntelligenceManager().resetEngine();
-      // Re-init IntelligenceManager
-      appState.getIntelligenceManager().initializeLLMs();
-
-      return { success: true };
-    } catch (error: any) {
-      console.error("Error saving OpenAI API key:", error);
-      return { success: false, error: error.message };
-    }
-  });
-
-  safeHandle("set-claude-api-key", async (_, apiKey: string) => {
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      CredentialsManager.getInstance().setClaudeApiKey(apiKey);
-
-      // Also update the LLMHelper immediately
-      const llmHelper = appState.processingHelper.getLLMHelper();
-      llmHelper.setClaudeApiKey(apiKey);
-
-      // CQ-06 fix: cancel in-flight stream before re-init (engine only, not session)
-      appState.getIntelligenceManager().resetEngine();
-      // Re-init IntelligenceManager
-      appState.getIntelligenceManager().initializeLLMs();
-
-      return { success: true };
-    } catch (error: any) {
-      console.error("Error saving Claude API key:", error);
-      return { success: false, error: error.message };
-    }
-  });
-
-  // ── Usage cache (60-second TTL, keyed by API key) ──────────────────────────
-  const _usageCache = new Map<string, { data: any; ts: number }>();
-  const USAGE_CACHE_TTL_MS = 60_000;
-
-  safeHandle("set-natively-api-key", async (_, apiKey: string) => {
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      const cm = CredentialsManager.getInstance();
-      const prevSttProvider = cm.getSttProvider();
-      cm.setNativelyApiKey(apiKey);
-
-      // Update LLMHelper immediately (same pattern as other provider keys)
-      const llmHelper = appState.processingHelper.getLLMHelper();
-      llmHelper.setNativelyKey(apiKey || null);
-
-      // Sync the model into LLMHelper and notify the UI whenever the effective default changed
-      const defaultModel = cm.getDefaultModel();
-      const providers = [...(cm.getCurlProviders() || []), ...(cm.getCustomProviders() || [])];
-      llmHelper.setModel(defaultModel, providers);
-      BrowserWindow.getAllWindows().forEach(win => {
-        if (!win.isDestroyed()) win.webContents.send('model-changed', defaultModel);
-      });
-
-      // If setNativelyApiKey auto-promoted the STT provider to 'natively', reconfigure
-      // the audio pipeline immediately — without this, the in-memory pipeline still uses
-      // the old STT provider (e.g. Google) until the app restarts.
-      const newSttProvider = cm.getSttProvider();
-      if (newSttProvider !== prevSttProvider) {
-        console.log(`[IPC] set-natively-api-key: STT provider changed ${prevSttProvider} → ${newSttProvider}, reconfiguring pipeline`);
-        await appState.reconfigureSttProvider();
-      }
-
-      // Auto-activate Natively Pro for pro/max/ultra API plans.
-      // Skips silently if the user already has a Gumroad/Dodo lifetime license.
-      if (apiKey) {
-        try {
-          const { LicenseManager } = require('../premium/electron/services/LicenseManager');
-          const result = await LicenseManager.getInstance().activateWithApiKey(apiKey);
-          if (result.success) {
-            console.log('[IPC] set-natively-api-key: Pro auto-activated via API plan.');
-            // Notify all windows so the license UI refreshes immediately
-            BrowserWindow.getAllWindows().forEach(win => {
-              if (!win.isDestroyed()) win.webContents.send('license-status-changed', { isPremium: true });
-            });
-          } else if (result.skipped) {
-            console.log('[IPC] set-natively-api-key: existing Gumroad/Dodo license preserved — Pro not overwritten.');
-          } else {
-            console.log('[IPC] set-natively-api-key: Pro not activated —', result.error);
-          }
-        } catch (e: any) {
-          // LicenseManager not available in this build — non-fatal
-          console.warn('[IPC] set-natively-api-key: LicenseManager unavailable for Pro auto-activation:', e?.message);
-        }
-      } else {
-        // API key was cleared — deactivate any natively_api Pro license so premium is revoked.
-        try {
-          const { LicenseManager } = require('../premium/electron/services/LicenseManager');
-          const lm = LicenseManager.getInstance();
-          // Only deactivate if the stored license is from a natively_api subscription.
-          // Never touch Gumroad/Dodo lifetime licenses here.
-          const details = lm.getLicenseDetails();
-          if (details.isPremium && details.provider === 'natively_api') {
-            await lm.deactivate();
-            console.log('[IPC] set-natively-api-key: key cleared — natively_api Pro license deactivated.');
-            clearActiveModeOnLicenseLoss();
-            BrowserWindow.getAllWindows().forEach(win => {
-              if (!win.isDestroyed()) win.webContents.send('license-status-changed', { isPremium: false });
-            });
-          }
-        } catch (e: any) {
-          console.warn('[IPC] set-natively-api-key: LicenseManager unavailable for Pro deactivation on key clear:', e?.message);
-        }
-      }
-
-      return { success: true };
-    } catch (error: any) {
-      console.error("Error saving Natively API key:", error);
-      return { success: false, error: error.message };
-    } finally {
-      // Always bust the cache when the key changes so the next usage fetch is fresh
-      _usageCache?.clear();
-    }
-  });
-
-
-  safeHandle("get-natively-usage", async () => {
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      const key = CredentialsManager.getInstance().getNativelyApiKey();
-      if (!key) return { ok: false, error: 'no_key' };
-
-      // Return cached value if it's still fresh
-      const cached = _usageCache.get(key);
-      if (cached && Date.now() - cached.ts < USAGE_CACHE_TTL_MS) {
-        return cached.data;
-      }
-
-      const res = await fetch('https://api.natively.software/v1/usage', {
-        headers: { 'x-natively-key': key },
-        signal: AbortSignal.timeout(8000),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as any;
-        return { ok: false, error: body.error || 'request_failed', status: res.status };
-      }
-      const data = await res.json() as any;
-      const result = { ok: true, ...data };
-
-      // Cache the successful response
-      _usageCache.set(key, { data: result, ts: Date.now() });
-      return result;
-    } catch (error: any) {
-      return { ok: false, error: error.message || 'network_error' };
-    }
-  });
-
-  // Allow other handlers to force-invalidate the usage cache (e.g. after key change)
-  safeHandle("invalidate-natively-usage-cache", () => {
-    _usageCache.clear();
-    return { ok: true };
-  });
-
-  // ── Free Trial IPC ───────────────────────────────────────────────────────────
-
-  // Start or resume a free trial. Fetches HWID, calls server, persists token locally.
-  safeHandle("trial:start", async () => {
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      const cm = CredentialsManager.getInstance();
-
-      // Get hardware ID for HWID-binding
-      let hwid = 'unavailable';
-      try {
-        const { LicenseManager } = require('../premium/electron/services/LicenseManager');
-        hwid = LicenseManager.getInstance().getHardwareId() || 'unavailable';
-      } catch { /* LicenseManager not available — fall back */ }
-
-      const res = await fetch('https://api.natively.software/v1/trial/start', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ hwid }),
-        signal:  AbortSignal.timeout(10_000),
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as any;
-        return { ok: false, error: body.error || 'request_failed', status: res.status };
-      }
-
-      const data = await res.json() as any;
-
-      if (data.ok && data.trial_token && !data.expired) {
-        cm.setTrialToken(data.trial_token, data.expires_at, data.started_at);
-
-        // Auto-configure natively as the model + STT provider during trial
-        const prevSttProvider = cm.getSttProvider();
-        cm.setNativelyApiKey('__trial__');   // sentinel — activates natively model routing
-        const newSttProvider = cm.getSttProvider();
-        if (newSttProvider !== prevSttProvider) {
-          await appState.reconfigureSttProvider();
-        }
-        const llmHelper = appState.processingHelper?.getLLMHelper?.();
-        if (llmHelper) llmHelper.setNativelyKey('__trial__');
-      }
-
-      return { ok: true, ...data };
-    } catch (error: any) {
-      console.error('[IPC] trial:start failed:', error);
-      return { ok: false, error: error.message || 'network_error' };
-    }
-  });
-
-  // Poll the server for live trial status (remaining time + usage counters).
-  safeHandle("trial:status", async () => {
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      const token = CredentialsManager.getInstance().getTrialToken();
-      if (!token) return { ok: false, error: 'no_trial_token' };
-
-      const res = await fetch('https://api.natively.software/v1/trial/status', {
-        headers: { 'x-trial-token': token },
-        signal:  AbortSignal.timeout(8_000),
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as any;
-        return { ok: false, error: body.error || 'request_failed', status: res.status };
-      }
-
-      return await res.json();
-    } catch (error: any) {
-      return { ok: false, error: error.message || 'network_error' };
-    }
-  });
-
-  // Return local trial state from credentials (no network call — safe for startup check).
-  safeHandle("trial:get-local", async () => {
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      const cm    = CredentialsManager.getInstance();
-      const token = cm.getTrialToken();
-      if (!token) return { hasToken: false, trialClaimed: cm.getTrialClaimed() };
-      return {
-        hasToken:     true,
-        trialClaimed: true,
-        trialToken:   token,
-        expiresAt:    cm.getTrialExpiresAt(),
-        startedAt:    cm.getTrialStartedAt(),
-        expired:      cm.getTrialExpiresAt()
-                        ? new Date(cm.getTrialExpiresAt()!).getTime() < Date.now()
-                        : false,
-      };
-    } catch {
-      return { hasToken: false, trialClaimed: false };
-    }
-  });
-
-  // Record the user's post-trial choice in analytics and clean up local state.
-  safeHandle("trial:convert", async (_, choice: string) => {
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      const token = CredentialsManager.getInstance().getTrialToken();
-      if (!token) return { ok: true };  // no token to report
-
-      await fetch('https://api.natively.software/v1/trial/convert', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json', 'x-trial-token': token },
-        body:    JSON.stringify({ choice }),
-        signal:  AbortSignal.timeout(5_000),
-      }).catch(() => {});  // fire-and-forget — don't block local cleanup on network failure
-
-      return { ok: true };
-    } catch {
-      return { ok: true };
-    }
-  });
-
-  // End trial via BYOK path: wipe Pro-ingested data, clear trial token + natively key.
-  safeHandle("trial:end-byok", async () => {
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      const cm = CredentialsManager.getInstance();
-
-      // 1. Fire-and-forget analytics (non-blocking)
-      const token = cm.getTrialToken();
-      if (token) {
-        fetch('https://api.natively.software/v1/trial/convert', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json', 'x-trial-token': token },
-          body:    JSON.stringify({ choice: 'byok' }),
-          signal:  AbortSignal.timeout(4_000),
-        }).catch(() => {});
-      }
-
-      // 2. Clear trial token
-      cm.clearTrialToken();
-
-      // 3. Clear the trial sentinel key + revert model / STT to open defaults
-      cm.setNativelyApiKey('');
-      const llmHelper = appState.processingHelper?.getLLMHelper?.();
-      if (llmHelper) llmHelper.setNativelyKey(null);
-      await appState.reconfigureSttProvider();
-
-      // 4. Deactivate Pro license (removes license.enc)
-      try {
-        const { LicenseManager } = require('../premium/electron/services/LicenseManager');
-        await LicenseManager.getInstance().deactivate();
-      } catch { /* LicenseManager not available in this build */ }
-
-      // 5. Disable knowledge mode + wipe orchestrator in-memory caches for resume/JD
-      try {
-        const orchestrator = appState.getKnowledgeOrchestrator();
-        if (orchestrator) {
-          orchestrator.setKnowledgeMode(false);
-          const { DocType } = require('../premium/electron/knowledge/types');
-          orchestrator.deleteDocumentsByType(DocType.RESUME);
-          orchestrator.deleteDocumentsByType(DocType.JD);
-        }
-      } catch { /* ignore */ }
-
-      // 6. Wipe Pro-specific cached data from local SQLite
-      //    Targets: company dossiers, knowledge docs (+ cascades), resume nodes, user profile
-      //    NOT wiped: meetings, transcripts, chunks (user's own recordings)
-      try {
-        const sqliteDb = DatabaseManager.getInstance().getDb();
-        if (sqliteDb) {
-          sqliteDb.exec(`
-            DELETE FROM company_dossiers;
-            DELETE FROM knowledge_documents;
-            DELETE FROM resume_nodes;
-            DELETE FROM user_profile;
-          `);
-          console.log('[IPC] trial:end-byok: Pro data wiped from SQLite');
-        }
-      } catch (dbErr: any) {
-        console.warn('[IPC] trial:end-byok: SQLite wipe partial error:', dbErr.message);
-      }
-
-      // 7. Notify all windows to refresh license + model state
-      clearActiveModeOnLicenseLoss();
-      BrowserWindow.getAllWindows().forEach(win => {
-        if (!win.isDestroyed()) {
-          win.webContents.send('license-status-changed', { isPremium: false });
-          win.webContents.send('trial-ended', { choice: 'byok' });
-        }
-      });
-
-      return { success: true };
-    } catch (error: any) {
-      console.error('[IPC] trial:end-byok error:', error);
-      return { success: false, error: error.message };
-    }
-  });
-
-  // Wipe only Pro profile data (resume + JD + company dossiers) without clearing
-  // trial token or natively key. Called automatically when trial expires so that
-  // profile intelligence data can't linger in SQLite after the trial window closes.
-  safeHandle("trial:wipe-profile-data", async () => {
-    try {
-      // 1. Disable knowledge mode + wipe orchestrator in-memory caches
-      try {
-        const orchestrator = appState.getKnowledgeOrchestrator();
-        if (orchestrator) {
-          orchestrator.setKnowledgeMode(false);
-          const { DocType } = require('../premium/electron/knowledge/types');
-          orchestrator.deleteDocumentsByType(DocType.RESUME);
-          orchestrator.deleteDocumentsByType(DocType.JD);
-        }
-      } catch { /* ignore — orchestrator may not be initialised */ }
-
-      // 2. Wipe Pro-specific SQLite tables
-      //    NOT wiped: meetings, transcripts, audio chunks (user's own recordings)
-      try {
-        const sqliteDb = DatabaseManager.getInstance().getDb();
-        if (sqliteDb) {
-          sqliteDb.exec(`
-            DELETE FROM company_dossiers;
-            DELETE FROM knowledge_documents;
-            DELETE FROM resume_nodes;
-            DELETE FROM user_profile;
-          `);
-        }
-      } catch (dbErr: any) {
-        console.warn('[IPC] trial:wipe-profile-data: SQLite wipe partial error:', dbErr.message);
-      }
-
-      return { success: true };
-    } catch (error: any) {
-      console.error('[IPC] trial:wipe-profile-data error:', error);
-      return { success: false, error: error.message };
-    }
-  });
-
-  // Custom Provider Handlers
-  safeHandle("get-custom-providers", async () => {
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      const cm = CredentialsManager.getInstance();
-      // Merge new Curl Providers with legacy Custom Providers
-      // New ones take precedence if IDs conflict (though unlikely as UUIDs)
-      const curlProviders = cm.getCurlProviders();
-      const legacyProviders = cm.getCustomProviders() || [];
-      return [...curlProviders, ...legacyProviders];
-    } catch (error: any) {
-      console.error("Error getting custom providers:", error);
-      return [];
-    }
-  });
-
-  safeHandle("save-custom-provider", async (_, provider: unknown) => {
-    try {
-      // SECURITY FIX (P1-2): Validate provider payload shape before persisting.
-      // Prevents malformed/malicious renderer data from polluting CredentialsManager.
-      if (
-        typeof provider !== 'object' || provider === null ||
-        typeof (provider as any).id !== 'string' ||
-        typeof (provider as any).name !== 'string' ||
-        typeof (provider as any).curlCommand !== 'string'
-      ) {
-        console.error('[IPC] save-custom-provider: invalid payload shape', typeof provider);
-        return { success: false, error: 'Invalid provider payload' };
-      }
-
-      const curlCmd: string = (provider as any).curlCommand;
-      // Require {{TEXT}} so the app always has a defined injection point for the user prompt.
-      // We do NOT require the string to start with 'curl' — curlCommand is a template field,
-      // not necessarily a raw CLI string, and over-constraining it would break valid providers.
-      if (!curlCmd.includes('{{TEXT}}')) {
-        return { success: false, error: 'curlCommand must contain {{TEXT}} placeholder for the prompt' };
-      }
-
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      // Save as CurlProvider (supports responsePath)
-      CredentialsManager.getInstance().saveCurlProvider(provider);
-      return { success: true };
-    } catch (error: any) {
-      console.error("Error saving custom provider:", error);
-      return { success: false, error: error.message };
-    }
-  });
-
-  safeHandle("delete-custom-provider", async (_, id: string) => {
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      // Try deleting from both storages to be safe
-      CredentialsManager.getInstance().deleteCurlProvider(id);
-      CredentialsManager.getInstance().deleteCustomProvider(id);
-      return { success: true };
-    } catch (error: any) {
-      console.error("Error deleting custom provider:", error);
-      return { success: false, error: error.message };
-    }
-  });
-
-  safeHandle("switch-to-custom-provider", async (_, providerId: string) => {
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      const cm = CredentialsManager.getInstance();
-      // BUG-05 fix: providers may be in either the curl or legacy custom store —
-      // merge both when looking up by id so neither store is silently ignored.
-      const provider = [
-        ...(cm.getCurlProviders() || []),
-        ...(cm.getCustomProviders() || [])
-      ].find((p: any) => p.id === providerId);
-
-      if (!provider) {
-        throw new Error("Provider not found");
-      }
-
-      const llmHelper = appState.processingHelper.getLLMHelper();
-      await llmHelper.switchToCustom(provider);
-
-      // Re-init IntelligenceManager (optional, but good for consistency)
-      appState.getIntelligenceManager().initializeLLMs();
-
-      return { success: true };
-    } catch (error: any) {
-      console.error("Error switching to custom provider:", error);
-      return { success: false, error: error.message };
-    }
-  });
-
-
-  // cURL Provider Handlers
-  safeHandle("get-curl-providers", async () => {
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      return CredentialsManager.getInstance().getCurlProviders();
-    } catch (error: any) {
-      console.error("Error getting curl providers:", error);
-      return [];
-    }
-  });
-
-  safeHandle("save-curl-provider", async (_, provider: any) => {
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      CredentialsManager.getInstance().saveCurlProvider(provider);
-      return { success: true };
-    } catch (error: any) {
-      console.error("Error saving curl provider:", error);
-      return { success: false, error: error.message };
-    }
-  });
-
-  safeHandle("delete-curl-provider", async (_, id: string) => {
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      CredentialsManager.getInstance().deleteCurlProvider(id);
-      return { success: true };
-    } catch (error: any) {
-      console.error("Error deleting curl provider:", error);
-      return { success: false, error: error.message };
-    }
-  });
-
-  safeHandle("switch-to-curl-provider", async (_, providerId: string) => {
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      const provider = CredentialsManager.getInstance().getCurlProviders().find((p: any) => p.id === providerId);
-
-      if (!provider) {
-        throw new Error("Provider not found");
-      }
-
-      const llmHelper = appState.processingHelper.getLLMHelper();
-      await llmHelper.switchToCurl(provider);
-
-      // Re-init IntelligenceManager (optional, but good for consistency)
-      appState.getIntelligenceManager().initializeLLMs();
-
-      return { success: true };
-    } catch (error: any) {
-      console.error("Error switching to curl provider:", error);
-      return { success: false, error: error.message };
-    }
-  });
-
   // Get stored API keys (masked for UI display)
   safeHandle("get-stored-credentials", async () => {
     try {
@@ -1360,81 +815,13 @@ export function initializeIpcHandlers(appState: AppState): void {
 
       return {
         hasGeminiKey: hasKey(creds.geminiApiKey),
-        hasGroqKey: hasKey(creds.groqApiKey),
-        hasOpenaiKey: hasKey(creds.openaiApiKey),
-        hasClaudeKey: hasKey(creds.claudeApiKey),
-        hasNativelyKey: hasKey(creds.nativelyApiKey),
         googleServiceAccountPath: creds.googleServiceAccountPath || null,
         sttProvider: 'firebase',
-        groqSttModel: creds.groqSttModel || 'whisper-large-v3-turbo',
-        hasSttGroqKey: false,
-        hasSttOpenaiKey: false,
-        hasDeepgramKey: false,
-        hasElevenLabsKey: false,
-        hasAzureKey: false,
-        azureRegion: creds.azureRegion || 'eastus',
-        hasIbmWatsonKey: false,
-        ibmWatsonRegion: creds.ibmWatsonRegion || 'us-south',
-        hasSonioxKey: false,
-        // STT key values — returned so the settings UI can pre-populate input fields.
-        // AI model keys (Gemini/Groq/OpenAI/Claude) remain boolean-only; STT keys are
-        // surfaced here because users need to see which key is active when switching providers.
-        sttGroqKey: '',
-        sttOpenaiKey: '',
-        sttDeepgramKey: '',
-        sttElevenLabsKey: '',
-        sttAzureKey: '',
-        sttIbmKey: '',
-        sttSonioxKey: '',
         hasTavilyKey: hasKey(creds.tavilyApiKey),
-        // Dynamic Model Discovery - preferred models
         geminiPreferredModel: creds.geminiPreferredModel || undefined,
-        groqPreferredModel: creds.groqPreferredModel || undefined,
-        openaiPreferredModel: creds.openaiPreferredModel || undefined,
-        claudePreferredModel: creds.claudePreferredModel || undefined,
       };
     } catch (error: any) {
-      return { hasGeminiKey: false, hasGroqKey: false, hasOpenaiKey: false, hasClaudeKey: false, hasNativelyKey: false, googleServiceAccountPath: null, sttProvider: 'firebase', groqSttModel: 'whisper-large-v3-turbo', hasSttGroqKey: false, hasSttOpenaiKey: false, hasDeepgramKey: false, hasElevenLabsKey: false, hasAzureKey: false, azureRegion: 'eastus', hasIbmWatsonKey: false, ibmWatsonRegion: 'us-south', hasSonioxKey: false, hasTavilyKey: false, sttGroqKey: '', sttOpenaiKey: '', sttDeepgramKey: '', sttElevenLabsKey: '', sttAzureKey: '', sttIbmKey: '', sttSonioxKey: '' };
-    }
-  });
-
-  // ==========================================
-  // Dynamic Model Discovery Handlers
-  // ==========================================
-
-  safeHandle("fetch-provider-models", async (_, provider: 'gemini' | 'groq' | 'openai' | 'claude', apiKey: string) => {
-    try {
-      // Fall back to stored key if no key was explicitly provided
-      let key = apiKey?.trim();
-      if (!key) {
-        const { CredentialsManager } = require('./services/CredentialsManager');
-        const cm = CredentialsManager.getInstance();
-        if (provider === 'gemini') key = cm.getGeminiApiKey();
-        else if (provider === 'groq') key = cm.getGroqApiKey();
-        else if (provider === 'openai') key = cm.getOpenaiApiKey();
-        else if (provider === 'claude') key = cm.getClaudeApiKey();
-      }
-
-      if (!key) {
-        return { success: false, error: 'No API key available. Please save a key first.' };
-      }
-
-      const { fetchProviderModels } = require('./utils/modelFetcher');
-      const models = await fetchProviderModels(provider, key);
-      return { success: true, models };
-    } catch (error: any) {
-      console.error(`[IPC] Failed to fetch ${provider} models:`, error);
-      const msg = error?.response?.data?.error?.message || error.message || 'Failed to fetch models';
-      return { success: false, error: msg };
-    }
-  });
-
-  safeHandle("set-provider-preferred-model", async (_, provider: 'gemini' | 'groq' | 'openai' | 'claude', modelId: string) => {
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      CredentialsManager.getInstance().setPreferredModel(provider, modelId);
-    } catch (error: any) {
-      console.error(`[IPC] Failed to set preferred model for ${provider}:`, error);
+      return { hasGeminiKey: false, googleServiceAccountPath: null, sttProvider: 'firebase', hasTavilyKey: false };
     }
   });
 
@@ -1457,16 +844,17 @@ export function initializeIpcHandlers(appState: AppState): void {
     return msg.replace(/:\s*[a-zA-Z0-9*]+\*+[a-zA-Z0-9*]+\.?$/g, '').trim();
   };
 
-  safeHandle("test-llm-connection", async (_, provider: 'gemini' | 'groq' | 'openai' | 'claude', apiKey?: string) => {
+  safeHandle("test-llm-connection", async (_, provider: 'gemini', apiKey?: string) => {
     console.log(`[IPC] Received test-llm-connection request for provider: ${provider}`);
     try {
+      if (provider !== 'gemini') {
+        return { success: false, error: 'Only backend-managed Gemini validation is supported in Cluegent.' };
+      }
+
       if (!apiKey || !apiKey.trim()) {
         const { CredentialsManager } = require('./services/CredentialsManager');
         const creds = CredentialsManager.getInstance();
-        if (provider === 'gemini') apiKey = creds.getGeminiApiKey();
-        else if (provider === 'groq') apiKey = creds.getGroqApiKey();
-        else if (provider === 'openai') apiKey = creds.getOpenaiApiKey();
-        else if (provider === 'claude') apiKey = creds.getClaudeApiKey();
+        apiKey = creds.getGeminiApiKey();
       }
 
       if (!apiKey || !apiKey.trim()) {
@@ -1476,44 +864,13 @@ export function initializeIpcHandlers(appState: AppState): void {
       const axios = require('axios');
       let response;
 
-      if (provider === 'gemini') {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent`;
-        response = await axios.post(url, {
-          contents: [{ parts: [{ text: "Hello" }] }]
-        }, {
-          headers: { 'x-goog-api-key': apiKey },
-          timeout: 15000
-        });
-      } else if (provider === 'groq') {
-        response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
-          model: "llama-3.3-70b-versatile",
-          messages: [{ role: "user", content: "Hello" }]
-        }, {
-          headers: { Authorization: `Bearer ${apiKey}` },
-          timeout: 15000
-        });
-      } else if (provider === 'openai') {
-        response = await axios.post('https://api.openai.com/v1/chat/completions', {
-          model: "gpt-4o-mini",
-          messages: [{ role: "user", content: "Hello" }]
-        }, {
-          headers: { Authorization: `Bearer ${apiKey}` },
-          timeout: 15000
-        });
-      } else if (provider === 'claude') {
-        response = await axios.post('https://api.anthropic.com/v1/messages', {
-          model: "claude-sonnet-4-6",
-          max_tokens: 10,
-          messages: [{ role: "user", content: "Hello" }]
-        }, {
-          headers: {
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-            'content-type': 'application/json'
-          },
-          timeout: 15000
-        });
-      }
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent`;
+      response = await axios.post(url, {
+        contents: [{ parts: [{ text: "Hello" }] }]
+      }, {
+        headers: { 'x-goog-api-key': apiKey },
+        timeout: 15000
+      });
 
       if (response && (response.status === 200 || response.status === 201)) {
         return { success: true };
@@ -1529,47 +886,10 @@ export function initializeIpcHandlers(appState: AppState): void {
     }
   });
 
-  safeHandle("get-groq-fast-text-mode", () => {
-    try {
-      const llmHelper = appState.processingHelper.getLLMHelper();
-      return { enabled: llmHelper.getGroqFastTextMode() };
-    } catch (error: any) {
-      return { enabled: false };
-    }
-  });
-
-  // Set Groq Fast Text Mode
-  safeHandle("set-groq-fast-text-mode", (_, enabled: boolean) => {
-    try {
-      const llmHelper = appState.processingHelper.getLLMHelper();
-      llmHelper.setGroqFastTextMode(enabled);
-
-      const { SettingsManager } = require('./services/SettingsManager');
-      SettingsManager.getInstance().set('groqFastTextMode', enabled);
-
-      // Broadcast to all windows
-      BrowserWindow.getAllWindows().forEach(win => {
-        win.webContents.send('groq-fast-text-changed', enabled);
-      });
-
-      return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
-  });
-
   safeHandle("set-model", async (_, modelId: string) => {
     try {
       const llmHelper = appState.processingHelper.getLLMHelper();
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      const cm = CredentialsManager.getInstance();
-
-      // Get all providers (Curl + Custom)
-      const curlProviders = cm.getCurlProviders();
-      const legacyProviders = cm.getCustomProviders() || [];
-      const allProviders = [...curlProviders, ...legacyProviders];
-
-      llmHelper.setModel(modelId, allProviders);
+      llmHelper.setModel(modelId);
 
       // Close the selector window if open
       appState.modelSelectorWindowHelper.hideWindow();
@@ -1597,10 +917,7 @@ export function initializeIpcHandlers(appState: AppState): void {
 
       // Also update the runtime model
       const llmHelper = appState.processingHelper.getLLMHelper();
-      const curlProviders = cm.getCurlProviders();
-      const legacyProviders = cm.getCustomProviders() || [];
-      const allProviders = [...curlProviders, ...legacyProviders];
-      llmHelper.setModel(modelId, allProviders);
+      llmHelper.setModel(modelId);
 
       // Close the selector window if open
       appState.modelSelectorWindowHelper.hideWindow();
@@ -1854,7 +1171,7 @@ export function initializeIpcHandlers(appState: AppState): void {
       const intelligenceManager = appState.getIntelligenceManager();
       const clarification = await intelligenceManager.runClarify(behaviorInstructions);
       // If null returned without throwing, the engine already set mode to idle.
-      // We must still ensure the frontend un-sticks — emit an error so onIntelligenceError fires.
+      // We must still ensure the frontend un-sticks â€” emit an error so onIntelligenceError fires.
       if (clarification === null) {
         const win = appState.getMainWindow();
         win?.webContents.send('intelligence-error', { error: 'Could not generate a clarifying question. Try again after some audio context is available.', mode: 'clarify' });
@@ -2351,17 +1668,9 @@ export function initializeIpcHandlers(appState: AppState): void {
 
   safeHandle("profile:upload-resume", async (_, filePath: string) => {
     try {
-      // Premium gate: require active license or free trial for profile features
-      if (!isProOrTrialActive()) {
-        return { success: false, error: 'Pro license required. Please activate a license key to use Profile Intelligence features.' };
-      }
       console.log(`[IPC] profile:upload-resume called with: ${filePath}`);
-      const orchestrator = appState.getKnowledgeOrchestrator();
-      if (!orchestrator) {
-        return { success: false, error: 'Knowledge engine not initialized. Please ensure API keys are configured.' };
-      }
-      const { DocType } = require('../premium/electron/knowledge/types');
-      const result = await orchestrator.ingestDocument(filePath, DocType.RESUME);
+      const result = await LocalProfileManager.getInstance().uploadResume(filePath);
+      if (result.success) broadcastProfileStatus();
       return result;
     } catch (error: any) {
       console.error('[IPC] profile:upload-resume error:', error);
@@ -2371,9 +1680,14 @@ export function initializeIpcHandlers(appState: AppState): void {
 
   safeHandle("profile:get-status", async () => {
     try {
+      const localStatus = LocalProfileManager.getInstance().getStatus();
+      if (localStatus.hasProfile) {
+        return localStatus;
+      }
+
       const orchestrator = appState.getKnowledgeOrchestrator();
       if (!orchestrator) {
-        return { hasProfile: false, profileMode: false };
+        return localStatus;
       }
       // Map new KnowledgeStatus back to legacy UI shape temporarily
       const status = orchestrator.getStatus();
@@ -2385,25 +1699,25 @@ export function initializeIpcHandlers(appState: AppState): void {
         totalExperienceYears: status.resumeSummary?.totalExperienceYears
       };
     } catch (error: any) {
-      return { hasProfile: false, profileMode: false };
+      return LocalProfileManager.getInstance().getStatus();
     }
   });
 
   safeHandle("profile:set-mode", async (_, enabled: boolean) => {
     try {
-      // Premium gate: only allow enabling profile mode with active license or free trial
-      if (enabled && !isProOrTrialActive()) {
-        return { success: false, error: 'Pro license required. Please activate a license key to use Profile Intelligence features.' };
-      }
+      LocalProfileManager.getInstance().setMode(enabled);
+
       const orchestrator = appState.getKnowledgeOrchestrator();
-      if (!orchestrator) {
-        return { success: false, error: 'Knowledge engine not initialized' };
+      if (!orchestrator || !isProOrTrialActive()) {
+        broadcastProfileStatus();
+        return { success: true };
       }
       orchestrator.setKnowledgeMode(enabled);
 
       const { SettingsManager } = require('./services/SettingsManager');
       SettingsManager.getInstance().set('knowledgeMode', enabled);
 
+      broadcastProfileStatus();
       return { success: true };
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -2412,12 +1726,16 @@ export function initializeIpcHandlers(appState: AppState): void {
 
   safeHandle("profile:delete", async () => {
     try {
+      LocalProfileManager.getInstance().deleteResume();
+
       const orchestrator = appState.getKnowledgeOrchestrator();
-      if (!orchestrator) {
-        return { success: false, error: 'Knowledge engine not initialized' };
+      if (!orchestrator || !isProOrTrialActive()) {
+        broadcastProfileStatus();
+        return { success: true };
       }
       const { DocType } = require('../premium/electron/knowledge/types');
       orchestrator.deleteDocumentsByType(DocType.RESUME);
+      broadcastProfileStatus();
       return { success: true };
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -2426,11 +1744,22 @@ export function initializeIpcHandlers(appState: AppState): void {
 
   safeHandle("profile:get-profile", async () => {
     try {
+      const localProfile = LocalProfileManager.getInstance().getProfileData();
+      if (localProfile?.hasProfile) return localProfile;
+
       const orchestrator = appState.getKnowledgeOrchestrator();
-      if (!orchestrator) return null;
+      if (!orchestrator) return localProfile;
       return orchestrator.getProfileData();
     } catch (error: any) {
-      return null;
+      return LocalProfileManager.getInstance().getProfileData();
+    }
+  });
+
+  safeHandle("profile:open-resume", async () => {
+    try {
+      return await LocalProfileManager.getInstance().openResume();
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Could not open resume' };
     }
   });
 
@@ -2459,9 +1788,8 @@ export function initializeIpcHandlers(appState: AppState): void {
 
   safeHandle("profile:upload-jd", async (_, filePath: string) => {
     try {
-      // Premium gate
       if (!isProOrTrialActive()) {
-        return { success: false, error: 'Pro license required. Please activate a license key to use Profile Intelligence features.' };
+        return { success: false, error: 'Job description upload is not available in this local resume context build.' };
       }
       console.log(`[IPC] profile:upload-jd called with: ${filePath}`);
       const orchestrator = appState.getKnowledgeOrchestrator();
@@ -2493,9 +1821,8 @@ export function initializeIpcHandlers(appState: AppState): void {
 
   safeHandle("profile:research-company", async (_, companyName: string) => {
     try {
-      // Premium gate
       if (!isProOrTrialActive()) {
-        return { success: false, error: 'Pro license required. Please activate a license key to use Profile Intelligence features.' };
+        return { success: false, error: 'Company research is not available in this local resume context build.' };
       }
       const orchestrator = appState.getKnowledgeOrchestrator();
       if (!orchestrator) {
@@ -2503,23 +1830,13 @@ export function initializeIpcHandlers(appState: AppState): void {
       }
       const engine = orchestrator.getCompanyResearchEngine();
 
-      // Wire search provider: Tavily (user key) → Natively API (fallback) → none (LLM-only)
+      // Wire search provider: Tavily (user key) or none (LLM-only).
       const { CredentialsManager } = require('./services/CredentialsManager');
       const cm = CredentialsManager.getInstance();
       const tavilyApiKey = cm.getTavilyApiKey();
       if (tavilyApiKey) {
         const { TavilySearchProvider } = require('../premium/electron/knowledge/TavilySearchProvider');
         engine.setSearchProvider(new TavilySearchProvider(tavilyApiKey));
-      } else {
-        const nativelyKey = cm.getNativelyApiKey();
-        if (nativelyKey) {
-          const { NativelySearchProvider } = require('../premium/electron/knowledge/NativelySearchProvider');
-          // Pass the real trial token when key is the __trial__ sentinel so the
-          // server can authenticate via x-trial-token instead of the invalid key.
-          const trialToken = nativelyKey === '__trial__' ? cm.getTrialToken() : undefined;
-          engine.setSearchProvider(new NativelySearchProvider(nativelyKey, trialToken ?? undefined));
-          console.log('[IPC] Company research: using Natively API search (no Tavily key configured)');
-        }
       }
 
       // Build full JD context so the dossier is tailored to the exact role
@@ -2546,9 +1863,8 @@ export function initializeIpcHandlers(appState: AppState): void {
 
   safeHandle("profile:generate-negotiation", async (_, force: boolean = false) => {
     try {
-      // Premium gate
       if (!isProOrTrialActive()) {
-        return { success: false, error: 'Pro license required. Please activate a license key to use Profile Intelligence features.' };
+        return { success: false, error: 'Negotiation coaching is not available in this local resume context build.' };
       }
       const orchestrator = appState.getKnowledgeOrchestrator();
       if (!orchestrator) {
@@ -2670,14 +1986,14 @@ export function initializeIpcHandlers(appState: AppState): void {
     return;
   });
 
-  // ── Permissions ──────────────────────────────────────────────
+  // â”€â”€ Permissions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   safeHandle("permissions:check", async () => {
     if (process.platform === 'darwin') {
       const mic    = systemPreferences.getMediaAccessStatus('microphone')
       const screen = systemPreferences.getMediaAccessStatus('screen')
       return { microphone: mic, screen, platform: 'darwin' }
     }
-    // Windows/Linux: no TCC — permissions handled by OS at install/first-use time
+    // Windows/Linux: no TCC â€” permissions handled by OS at install/first-use time
     return { microphone: 'granted', screen: 'granted', platform: process.platform }
   })
 
@@ -2863,7 +2179,7 @@ export function initializeIpcHandlers(appState: AppState): void {
     }
   });
 
-  // ── Note Sections ──────────────────────────────────────────────
+  // â”€â”€ Note Sections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   safeHandle("modes:get-note-sections", async (_, modeId: string) => {
     try {

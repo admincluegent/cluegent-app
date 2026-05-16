@@ -429,20 +429,11 @@ export class AppState {
     // Initialize ThemeManager
     this.themeManager = ThemeManager.getInstance()
 
-    // Restore toggle states that live in LLMHelper memory.
-    // This MUST happen here — not inside initializeRAGManager() — so that
-    // it runs unconditionally regardless of whether premium modules are available.
-    // Previously, groqFastTextMode restore was inside the KnowledgeOrchestrator
-    // block which silently skips when premium modules are absent.
     {
-      const llmHelper = this.processingHelper.getLLMHelper();
-      if (settingsManager.get('groqFastTextMode')) {
-        llmHelper.setGroqFastTextMode(true);
-        console.log('[AppState] Fast mode restored from settings');
-      }
       // Restore custom notes for non-premium path
       if (DatabaseManager.isLegacySqliteEnabled()) {
         try {
+          const llmHelper = this.processingHelper.getLLMHelper();
           const savedNotes = DatabaseManager.getInstance().getCustomNotes();
           if (savedNotes) {
             llmHelper.setCustomNotes(savedNotes);
@@ -1460,9 +1451,8 @@ export class AppState {
       const { CredentialsManager } = require('./services/CredentialsManager');
       const cm = CredentialsManager.getInstance();
       const defaultModel = cm.getDefaultModel();
-      const all = [...(cm.getCurlProviders() || []), ...(cm.getCustomProviders() || [])];
       console.log(`[Main] Reverting model to default: ${defaultModel}`);
-      this.processingHelper.getLLMHelper().setModel(defaultModel, all);
+      this.processingHelper.getLLMHelper().setModel(defaultModel);
       BrowserWindow.getAllWindows().forEach(win => {
         if (!win.isDestroyed()) win.webContents.send('model-changed', defaultModel);
       });
@@ -1682,7 +1672,7 @@ export class AppState {
 
     // 'auto' is only meaningful for NativelyProSTT — other providers fall back to en-US.
     const sttProvider = CredentialsManager.getInstance().getSttProvider();
-    const effectiveKey = (key === 'auto' && sttProvider !== 'natively') ? 'english-us' : key;
+    const effectiveKey = key === 'auto' ? 'english-us' : key;
 
     this.googleSTT?.setRecognitionLanguage(effectiveKey);
     this.googleSTT_User?.setRecognitionLanguage(effectiveKey);
@@ -2026,11 +2016,12 @@ export class AppState {
     // Update tooltip for verification
     this.tray.setToolTip('Cluegent');
 
-    // Helper to format accelerator for display (e.g. CommandOrControl+H -> Cmd+H)
+    // Helper to format accelerator for display (e.g. CommandOrControl+H -> Command+H on macOS, Ctrl+H elsewhere)
     const formatAccel = (accel: string) => {
+      const commandOrControlLabel = process.platform === 'darwin' ? 'Command' : 'Ctrl';
       return accel
-        .replace('CommandOrControl', 'Cmd')
-        .replace('Command', 'Cmd')
+        .replace('CommandOrControl', commandOrControlLabel)
+        .replace('Command', 'Command')
         .replace('Control', 'Ctrl')
         .replace('OrControl', '') // Cleanup just in case
         .replace(/\+/g, '+');

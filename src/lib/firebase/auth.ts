@@ -1,7 +1,12 @@
 import {
+  createUserWithEmailAndPassword,
   getRedirectResult,
   GoogleAuthProvider,
   onAuthStateChanged,
+  reload,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
   signInWithCredential,
   signInWithPopup,
   signInWithRedirect,
@@ -83,6 +88,47 @@ export async function loginWithGoogle() {
   }
 }
 
+export async function loginWithEmailPassword(email: string, password: string) {
+  const result = await signInWithEmailAndPassword(auth, email, password);
+  return result.user;
+}
+
+export async function registerWithEmailPassword(
+  email: string,
+  password: string
+) {
+  const result = await createUserWithEmailAndPassword(auth, email, password);
+
+  try {
+    await sendEmailVerification(result.user);
+  } catch (error) {
+    console.warn("[FirebaseAuth] Failed to send verification email", error);
+  }
+
+  return result.user;
+}
+
+export async function sendPasswordReset(email: string) {
+  await sendPasswordResetEmail(auth, email);
+}
+
+export async function resendVerificationEmail() {
+  if (!auth.currentUser) {
+    throw new Error("No signed-in user is available for email verification.");
+  }
+
+  await sendEmailVerification(auth.currentUser);
+}
+
+export async function refreshCurrentUser() {
+  if (!auth.currentUser) {
+    return null;
+  }
+
+  await reload(auth.currentUser);
+  return auth.currentUser;
+}
+
 export async function logout() {
   await signOut(auth);
 }
@@ -120,6 +166,22 @@ export function getFirebaseAuthErrorMessage(error: unknown) {
         return "This environment does not allow popup sign-in.";
       case "auth/network-request-failed":
         return "Network error while contacting Firebase.";
+      case "auth/email-already-in-use":
+        return "That email is already in use. Try signing in instead.";
+      case "auth/invalid-email":
+        return "That email address looks invalid.";
+      case "auth/missing-password":
+        return "Enter your password to continue.";
+      case "auth/invalid-credential":
+        return "The email or password is incorrect.";
+      case "auth/wrong-password":
+        return "The email or password is incorrect.";
+      case "auth/user-not-found":
+        return "No account was found for that email.";
+      case "auth/weak-password":
+        return "Password must be at least 6 characters.";
+      case "auth/too-many-requests":
+        return "Too many attempts. Please wait a bit and try again.";
       case "auth/argument-error":
         return "Firebase rejected the Google credential returned by the browser sign-in flow.";
       case "auth/unauthorized-domain":

@@ -50,8 +50,7 @@
         </button>
 
         <nav class="site-nav" id="site-nav">
-          <a href="#preview">Preview</a>
-          <a href="#features">Features</a>
+          <a href="#features">Undetectable</a>
           <a href="#faq">FAQ</a>
           <a class="nav-button" href="https://github.com/admincluegent/cluegent-app/releases/download/v1.0.0/Cluegent-Setup-1.0.0.exe">
             Download
@@ -70,7 +69,7 @@
           <div class="hero-copy reveal">
             <!-- <p class="trust-line">Undetectable</p> -->
             <h1>
-              <span>100%  Undetectable Intelligent</span>
+              <span> Undetectable Intelligent</span>
               <span>AI for Meetings</span>
             </h1>
             <p class="hero-subtitle">
@@ -104,7 +103,6 @@
                     src="/assets/demo_video.mp4"
                     autoplay
                     muted
-                    loop
                     playsinline
                     preload="metadata"
                     aria-label="Cluegent desktop app demo"
@@ -127,7 +125,7 @@
                         <span>Give example</span>
                         <span>Answer shortly</span>
                       </div>
-                      <div class="static-prompt">Ask anything... <kbd>Ctrl</kbd><kbd>Enter</kbd></div>
+                      <div class="static-prompt">Ask anything... <kbd data-shortcut-mod>Ctrl</kbd><kbd>Enter</kbd></div>
                     </div>
                   </div>
                 </div>
@@ -185,7 +183,7 @@
 
                     <div class="walkthrough-prompt-row">
                       <div class="walkthrough-prompt">
-                        Ask anything... <span>Ctrl + Enter</span> to submit
+                        Ask anything... <span data-shortcut="Enter">Ctrl + Enter</span> to submit
                       </div>
                       <button class="walkthrough-send-button" type="button" aria-label="Send">
                         →
@@ -216,7 +214,7 @@
                   <div class="walkthrough-top-pill">
                     <span class="walkthrough-top-logo"><img src="/assets/icon.png" alt="" /></span>
                     <button class="walkthrough-shot-button" type="button" data-screenshot-hotkey>
-                      Ctrl + [
+                      <span data-shortcut="[">Ctrl + [</span>
                     </button>
                     <button class="walkthrough-hide-button" type="button">Hide</button>
                     <button class="walkthrough-icon-button" type="button" aria-label="Options">
@@ -247,13 +245,13 @@
                     <div class="walkthrough-response">
                       <small>Cluegent response</small>
                       <p data-demo-screenshot-response>
-                        Press Ctrl + [ to attach the current screen from inside the same overlay.
+                        Press <span data-shortcut="[">Ctrl + [</span> to attach the current screen from inside the same overlay.
                       </p>
                     </div>
 
                     <div class="walkthrough-prompt-row">
                       <div class="walkthrough-prompt">
-                        Ask anything... <span>Ctrl + [</span> for screenshot
+                        Ask anything... <span data-shortcut="[">Ctrl + [</span> for screenshot
                       </div>
                       <button class="walkthrough-send-button walkthrough-send-button--camera" type="button" aria-label="Screenshot">
                         ◉
@@ -262,7 +260,7 @@
                   </div>
 
                   <div class="walkthrough-step-pill walkthrough-step-pill--amber" data-demo-screenshot-step>
-                    Capture screenshot with Ctrl + [
+                    Capture screenshot with <span data-shortcut="[">Ctrl + [</span>
                   </div>
 
                   <div class="walkthrough-cursor" data-demo-screenshot-cursor>
@@ -277,7 +275,7 @@
 
         <section class="section modes-section undetectable-section">
           <div class="section-heading reveal">
-            <span class="eyebrow">100% Undetectable</span>
+            <span class="eyebrow">Undetectable</span>
             <h2>Visible to you. Invisible to screen share.</h2>
           </div>
 
@@ -305,7 +303,7 @@
                     <span></span><span></span><span></span>
                   </div>
                   <div class="step-window-body">
-                    <video class="step-bg-video" src="/assets/meeting_steps_bg.mp4" autoplay muted loop playsinline preload="metadata"></video>
+                    <img class="step-bg-image" src="/assets/meetingnotesimage.png" alt="" loading="lazy" />
                     <div class="step-launch-panel">
                       <button class="step-launch-button">Start Cluegent</button>
                       <span class="step-avatar"></span>
@@ -324,7 +322,7 @@
                     <span></span><span></span><span></span>
                   </div>
                   <div class="step-window-body step-window-body--meeting">
-                    <video class="step-bg-video" src="/assets/meeting_steps_bg.mp4" autoplay muted loop playsinline preload="metadata"></video>
+                    <img class="step-bg-image" src="/assets/meetingnotesimage.png" alt="" loading="lazy" />
                     <div class="step-cluegent-pill">
                       <span class="step-pill-logo"><img src="/assets/icon.png" alt="" /></span>
                       <span class="step-pill-hide">Hide</span>
@@ -355,28 +353,27 @@
           </div>
         </section>
 
-        <section class="section transcription-section">
-          <div class="transcript-visual reveal">
-            <div class="live-pill">Live transcription</div>
-            <p>“Can you explain how Razorpay subscriptions map back to Firebase users?”</p>
-            <p>“Yes. The backend creates the subscription and stores the provider IDs.”</p>
-            <p>“Then the webhook updates entitlement and usage limits server-side.”</p>
+        <section class="section workflow-section">
+          <div class="section-heading reveal">
+            <h2>Built around the way you actually ask.</h2>
+            <p>Start listening when the meeting matters, tune how Cluegent answers, and keep your best prompts one click away.</p>
           </div>
 
-          <div class="transcript-copy reveal">
-            <h2>Realtime transcription that only runs when you need it.</h2>
-            <div class="stat-line">
-              <strong>3</strong>
-              <span>Input modes: transcript, typed prompt, screenshot</span>
-            </div>
-            <div class="stat-line">
-              <strong>15h</strong>
-              <span>STT usage available on the Pro plan</span>
-            </div>
-            <div class="stat-line">
-              <strong>Local</strong>
-              <span>Recent meeting history stays on the user’s machine</span>
-            </div>
+          <div class="workflow-table reveal">
+            <article>
+              <h3>Realtime transcription</h3>
+              <p>Click Start listening and Cluegent begins showing the rolling transcript in your private overlay. Turn listening off whenever you do not need audio context.</p>
+            </article>
+
+            <article>
+              <h3>Customize AI behaviour</h3>
+              <p>Set separate behavior for Listening response, Typed prompt Response, and Screenshot response in the Customize settings.</p>
+            </article>
+
+            <article>
+              <h3>Quick Action Buttons</h3>
+              <p>Add, edit, or remove quick prompt buttons like Give example or Answer shortly, then ask Cluegent using the current transcript, typed prompt, or screenshot context.</p>
+            </article>
           </div>
         </section>
 
@@ -408,17 +405,19 @@
               </p>
             </details>
             <details>
-              <summary>How is usage tracked?</summary>
+              <summary>Is my data safe?</summary>
               <p>
-                LLM prompts, screenshot requests, and STT seconds are checked by Firebase backend
-                functions against the user’s current subscription limits.
+                Cluegent is built on privacy. Recent meeting history and saved local context stay
+                on your machine, while active transcription, prompt, and screenshot requests are
+                processed only when you use those features.
               </p>
             </details>
             <details>
-              <summary>Is Recent Meetings cloud synced?</summary>
+              <summary>Can I talk to customer support?</summary>
               <p>
-                Not right now. Recent Meetings are stored locally on the user’s device so they can
-                delete them without affecting backend billing usage records.
+                Yes. Our support team is available to help you get the most out of your AI meeting
+                assistant. You can reach us at
+                <a href="mailto:admincluegent@gmail.com">admincluegent@gmail.com</a>.
               </p>
             </details>
           </div>
@@ -447,8 +446,7 @@
         <div class="footer-grid">
           <div>
             <h3>Product</h3>
-            <a href="#features">Features</a>
-            <a href="#preview">Preview</a>
+            <a href="#features">Undetectable</a>
             <a href="#faq">FAQ</a>
           </div>
           <div>
@@ -456,7 +454,12 @@
             <a href="mailto:admincluegent@gmail.com">Support</a>
             <a href="mailto:admincluegent@gmail.com?subject=Cluegent%20Bug%20Report">Report bug</a>
             <a href="mailto:admincluegent@gmail.com?subject=Cluegent%20Feedback">Feedback</a>
-            <a href="https://github.com/admincluegent/cluegent-app" target="_blank" rel="noreferrer">Source code</a>
+            <a class="footer-icon-link" href="https://github.com/admincluegent/cluegent-app" target="_blank" rel="noreferrer">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.09.68-.22.68-.49 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.49-1.11-1.49-.91-.64.07-.63.07-.63 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.36 1.12 2.93.86.09-.67.35-1.12.64-1.38-2.22-.26-4.56-1.14-4.56-5.08 0-1.12.39-2.04 1.03-2.76-.1-.26-.45-1.31.1-2.72 0 0 .84-.28 2.75 1.05A9.33 9.33 0 0 1 12 6.96c.85 0 1.7.12 2.5.34 1.9-1.33 2.74-1.05 2.74-1.05.55 1.41.2 2.46.1 2.72.64.72 1.03 1.64 1.03 2.76 0 3.95-2.34 4.82-4.57 5.08.36.32.68.95.68 1.92 0 1.38-.01 2.5-.01 2.84 0 .27.18.59.69.49A10.11 10.11 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"/>
+              </svg>
+              <span>Source</span>
+            </a>
           </div>
           <div>
             <h3>Legal</h3>

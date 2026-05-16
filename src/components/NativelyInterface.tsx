@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import {
     Sparkles,
     Pencil,
@@ -343,7 +343,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         return () => unsub?.();
     }, []);
 
-    // PR #173: STT not configured warning — shown when provider is 'none' during a meeting
+    // PR #173: STT not configured warning â€” shown when provider is 'none' during a meeting
     const [sttNotConfigured, setSttNotConfigured] = useState(false);
     useEffect(() => {
         let mounted = true;
@@ -604,7 +604,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         });
     };
 
-    // STT Status listener — must survive isExpanded changes.
+    // STT Status listener â€” must survive isExpanded changes.
     // If registered inside the [isExpanded] effect, events are dropped during cleanup.
     useEffect(() => {
         return window.electronAPI.onSttStatusChanged((data) => {
@@ -694,7 +694,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
             if (transcript.final) {
                 const nextTranscript = committed
-                    ? `${committed}  ·  ${nextText}`
+                    ? `${committed}  Â·  ${nextText}`
                     : nextText;
                 finalizedRollingTranscriptRef.current = nextTranscript;
                 rollingTranscriptRef.current = nextTranscript;
@@ -729,18 +729,18 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
             setRollingTranscript(
                 committed && nextText
-                    ? `${committed}  ·  ${nextText}`
+                    ? `${committed}  Â·  ${nextText}`
                     : nextText || committed
             );
             rollingTranscriptRef.current = committed && nextText
-                ? `${committed}  Â·  ${nextText}`
+                ? `${committed}  Ã‚Â·  ${nextText}`
                 : nextText || committed;
             return;
 
             if (transcript.final) {
                 // Append finalized text to accumulated transcript
                 setRollingTranscript(prev => {
-                    const separator = prev ? '  ·  ' : '';
+                    const separator = prev ? '  Â·  ' : '';
                     return prev + separator + transcript.text;
                 });
 
@@ -752,7 +752,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                 // For partial transcripts, show current segment appended to accumulated
                 setRollingTranscript(prev => {
                     // Find where previous finalized content ends (look for last separator)
-                    const lastSeparator = prev.lastIndexOf('  ·  ');
+                    const lastSeparator = prev.lastIndexOf('  Â·  ');
                     const accumulated = lastSeparator >= 0 ? prev.substring(0, lastSeparator + 5) : '';
                     return accumulated + transcript.text;
                 });
@@ -988,7 +988,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             setMessages(prev => [...prev, {
                 id: Date.now().toString(),
                 role: 'system',
-                text: `🎯 **Answer:**\n\n${data.answer}`
+                text: `ðŸŽ¯ **Answer:**\n\n${data.answer}`
             }]);
         }));
 
@@ -997,16 +997,16 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             setMessages(prev => [...prev, {
                 id: Date.now().toString(),
                 role: 'system',
-                text: `❌ Error (${data.mode}): ${data.error}`
+                text: `âŒ Error (${data.mode}): ${data.error}`
             }]);
         }));
         return () => cleanups.forEach(fn => fn());
     }, [isExpanded]);
 
     // Stable mount-only effect for screenshot listeners.
-    // These MUST NOT be inside the [isExpanded] effect — when a screenshot is
+    // These MUST NOT be inside the [isExpanded] effect â€” when a screenshot is
     // taken, `switchToOverlay` fires `ensure-expanded` which can flip isExpanded
-    // from false→true, triggering the [isExpanded] effect cleanup. If `screenshot-taken`
+    // from falseâ†’true, triggering the [isExpanded] effect cleanup. If `screenshot-taken`
     // arrives during that teardown gap the event is silently dropped (same issue
     // as clarify streaming listeners below). handleScreenshotAttach only uses stable
     // useState setters so a mount-only closure is safe here.
@@ -1020,7 +1020,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     }, []);
 
     // Stable mount-only effect for clarify streaming listeners.
-    // These MUST NOT be inside the [isExpanded] effect — if the user
+    // These MUST NOT be inside the [isExpanded] effect â€” if the user
     // expands/collapses the panel while a clarify stream is in-flight,
     // the [isExpanded] effect would tear down and re-register listeners,
     // orphaning the final 'clarify' event and leaving isProcessing=true forever.
@@ -1066,7 +1066,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             cleanupFinal();
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // intentionally empty — these listeners must survive isExpanded changes
+    }, []); // intentionally empty â€” these listeners must survive isExpanded changes
 
     // Quick Actions - Updated to use new Intelligence APIs
 
@@ -1417,7 +1417,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             // Guard: if this token is the negotiation coaching JSON sentinel, accumulate it
             // silently. The JSON is always emitted as a single complete `yield JSON.stringify(...)`
             // call, so one parse attempt is sufficient. The onGeminiStreamDone handler will
-            // detect the accumulated JSON and render the proper card UI — we just prevent the
+            // detect the accumulated JSON and render the proper card UI â€” we just prevent the
             // raw JSON characters from ever appearing in the chat bubble.
             try {
                 const parsed = JSON.parse(token);
@@ -1435,7 +1435,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                     return; // Skip the normal append below
                 }
             } catch {
-                // Not JSON — normal text token, fall through to the standard append.
+                // Not JSON â€” normal text token, fall through to the standard append.
             }
 
             setMessages(prev => {
@@ -1536,7 +1536,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                 return [...prev, {
                     id: Date.now().toString(),
                     role: 'system',
-                    text: `❌ Error: ${error}`
+                    text: `âŒ Error: ${error}`
                 }];
             });
         }));
@@ -1562,7 +1562,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                         return; // Skip normal append
                     }
                 } catch {
-                    // Normal text chunk — fall through.
+                    // Normal text chunk â€” fall through.
                 }
 
                 streamingResponseTextRef.current += data.chunk;
@@ -1685,24 +1685,24 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
             /*
             if (!question && currentAttachments.length === 0) {
-                // No voice input and no image — show real STT error if available
+                // No voice input and no image â€” show real STT error if available
                 if (sttUserStatus === 'failed' && sttUserError) {
                     setMessages(prev => [...prev, {
                         id: Date.now().toString(),
                         role: 'system',
-                        text: `❌ STT Error: ${sttUserError}`
+                        text: `âŒ STT Error: ${sttUserError}`
                     }]);
                 } else if (sttUserStatus === 'reconnecting') {
                     setMessages(prev => [...prev, {
                         id: Date.now().toString(),
                         role: 'system',
-                        text: '⏳ STT is reconnecting, try again in a moment.'
+                        text: 'â³ STT is reconnecting, try again in a moment.'
                     }]);
                 } else {
                     setMessages(prev => [...prev, {
                         id: Date.now().toString(),
                         role: 'system',
-                        text: '⚠️ No speech detected. Try speaking closer to your microphone.'
+                        text: 'âš ï¸ No speech detected. Try speaking closer to your microphone.'
                     }]);
                 }
                 return;
@@ -1766,11 +1766,11 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                         ? await window.electronAPI.ragQueryLive?.(question)
                         : undefined;
                     if (ragResult?.success) {
-                        // JIT RAG handled it — response streamed via rag:stream-chunk events
+                        // JIT RAG handled it â€” response streamed via rag:stream-chunk events
                         return;
                     }
 
-                    // Voice Only (Smart Extract) — fallback
+                    // Voice Only (Smart Extract) â€” fallback
                     prompt = `You are a real-time technical copilot. The user just asked a live or typed question.
 Instructions:
 1. Answer the latest explicit request directly.
@@ -1796,13 +1796,13 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                         return prev.slice(0, -1).concat({
                             id: Date.now().toString(),
                             role: 'system',
-                            text: `❌ Error starting stream: ${err}`
+                            text: `âŒ Error starting stream: ${err}`
                         });
                     }
                     return [...prev, {
                         id: Date.now().toString(),
                         role: 'system',
-                        text: `❌ Error: ${err}`
+                        text: `âŒ Error: ${err}`
                     }];
                 });
             }
@@ -1914,7 +1914,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
             if (currentAttachments.length === 0 && shouldQueryLiveRag(effectivePrompt)) {
                 const ragResult = await window.electronAPI.ragQueryLive?.(effectivePrompt);
                 if (ragResult?.success) {
-                    // JIT RAG handled it — response streamed via rag:stream-chunk events
+                    // JIT RAG handled it â€” response streamed via rag:stream-chunk events
                     return;
                 }
             }
@@ -1961,13 +1961,13 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                     return prev.slice(0, -1).concat({
                         id: Date.now().toString(),
                         role: 'system',
-                        text: `❌ Error starting stream: ${err}`
+                        text: `âŒ Error starting stream: ${err}`
                     });
                 }
                 return [...prev, {
                     id: Date.now().toString(),
                     role: 'system',
-                    text: `❌ Error: ${err}`
+                    text: `âŒ Error: ${err}`
                 }];
             });
         }
@@ -2554,7 +2554,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                 return [...prev, data].slice(-5);
             });
 
-            // Use requestAnimationFrame so we wait for at least one paint cycle —
+            // Use requestAnimationFrame so we wait for at least one paint cycle â€”
             // more reliable than setTimeout(0) under React 18 concurrent scheduling.
             // The ref guarantees handleWhatToSay has the screenshot regardless of
             // whether the state update has flushed yet.
@@ -2605,9 +2605,9 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
         return unsubscribe;
     }, []);
 
-    // ── Derived STT status for the rolling transcript indicator (interviewer channel) ──
+    // â”€â”€ Derived STT status for the rolling transcript indicator (interviewer channel) â”€â”€
     const interviewerSttIndicatorStatus = sttInterviewerStatus;
-    // Strip consecutive error count from display — show only in expanded diagnostics
+    // Strip consecutive error count from display â€” show only in expanded diagnostics
     const interviewerSttIndicatorError = sttInterviewerError?.replace(/\s*\(\d+ consecutive errors\):?/gi, '');
 
     const copyDiagnostics = async () => {
@@ -2669,7 +2669,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
             }
 
             if (isFreePlanExhausted) {
-                await window.electronAPI?.openSettingsTab?.('natively-api');
+                await window.electronAPI?.openSettingsTab?.('billing');
                 return;
             }
 
@@ -2805,7 +2805,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                             <span>Transcription Not Configured</span>
                                         </div>
                                         <p className="text-[11px] text-orange-600/70 dark:text-orange-400/60 leading-snug pl-[26px]">
-                                            No STT provider selected. Open Settings → Audio to pick one.
+                                            No STT provider selected. Open Settings â†’ Audio to pick one.
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
@@ -2826,7 +2826,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                 </div>
                             )}
 
-                            {/* Rolling Transcript Bar — includes STT status indicator inline */}
+                            {/* Rolling Transcript Bar â€” includes STT status indicator inline */}
                             {isListening && ((showTranscript && rollingTranscript) || interviewerSttIndicatorStatus !== 'connected' || (isManualRecording && sttUserStatus !== 'connected')) ? (
                                 <RollingTranscript
                                     text={showTranscript ? rollingTranscript : ''}
@@ -2938,7 +2938,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                             </p>
                                         </div>
                                         <button
-                                            onClick={() => void window.electronAPI?.openSettingsTab?.('natively-api')}
+                                            onClick={() => void window.electronAPI?.openSettingsTab?.('billing')}
                                             className="inline-flex shrink-0 items-center gap-2 rounded-full bg-violet-500 px-4 py-2 text-[12px] font-semibold text-black transition hover:bg-violet-400"
                                         >
                                             Subscribe to Pro
@@ -2960,7 +2960,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                             </p>
                                         </div>
                                         <button
-                                            onClick={() => void window.electronAPI?.openSettingsTab?.('natively-api')}
+                                            onClick={() => void window.electronAPI?.openSettingsTab?.('billing')}
                                             className="inline-flex shrink-0 items-center gap-2 rounded-full bg-amber-300 px-4 py-2 text-[12px] font-semibold text-black transition hover:bg-amber-200"
                                         >
                                             View Plan
@@ -3060,7 +3060,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                         <div className="absolute inset-y-0 left-3 right-3 flex items-center gap-1.5 pointer-events-none text-[13px] overlay-text-muted overflow-hidden whitespace-nowrap">
                                             <span className="shrink-0">Ask anything...</span>
                                             <div className="flex items-center gap-1 opacity-80">
-                                                {(shortcuts.selectiveScreenshot || ['⌘', 'Shift', 'H']).map((key, i) => (
+                                                {(shortcuts.selectiveScreenshot || ['âŒ˜', 'Shift', 'H']).map((key, i) => (
                                                     <React.Fragment key={i}>
                                                         {i > 0 && <span className="text-[10px]">+</span>}
                                                         <kbd className="px-1.5 py-0.5 rounded border text-[10px] font-sans min-w-[20px] text-center overlay-control-surface overlay-text-secondary" style={appearance.controlStyle}>{key}</kbd>
@@ -3073,15 +3073,15 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
 
                                     {false && !inputValue && (
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none opacity-20">
-                                            <span className="text-[10px]">↵</span>
+                                            <span className="text-[10px]">â†µ</span>
                                         </div>
                                     )}
                                     {!inputValue && (
                                         <div className="absolute inset-y-0 left-3 right-3 flex items-center gap-1.5 pointer-events-none text-[13px] overlay-text-muted overflow-hidden whitespace-nowrap">
                                             <span className="shrink-0">Ask anything...</span>
-                                            <span className="opacity-45 shrink-0">•</span>
+                                            {/* <span className="opacity-45 shrink-0">â€¢</span> */}
                                             <div className="flex items-center gap-1 opacity-80 shrink-0">
-                                                {(shortcuts.processScreenshots || ['⌘', 'Enter']).map((key, i) => (
+                                                {(shortcuts.processScreenshots || ['âŒ˜', 'Enter']).map((key, i) => (
                                                     <React.Fragment key={`submit-${i}`}>
                                                         {i > 0 && <span className="text-[10px]">+</span>}
                                                         <kbd className="px-1.5 py-0.5 rounded border text-[10px] font-sans min-w-[20px] text-center overlay-control-surface overlay-text-secondary" style={appearance.controlStyle}>{key}</kbd>
@@ -3089,9 +3089,9 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                                 ))}
                                             </div>
                                             <span className="shrink-0">to submit</span>
-                                            <span className="opacity-45 shrink-0">•</span>
+                                            {/* <span className="opacity-45 shrink-0">â€¢</span> */}
                                             <div className="flex items-center gap-1 opacity-80 shrink-0">
-                                                {(shortcuts.takeScreenshot || ['⌘', '[']).map((key, i) => (
+                                                {(shortcuts.takeScreenshot || ['âŒ˜', '[']).map((key, i) => (
                                                     <React.Fragment key={`shot-${i}`}>
                                                         {i > 0 && <span className="text-[10px]">+</span>}
                                                         <kbd className="px-1.5 py-0.5 rounded border text-[10px] font-sans min-w-[20px] text-center overlay-control-surface overlay-text-secondary" style={appearance.controlStyle}>{key}</kbd>

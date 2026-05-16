@@ -145,6 +145,9 @@ export class SettingsWindowHelper {
         if (mainWindow) {
             mainWindow.webContents.send('settings-visibility-changed', isVisible);
         }
+        if (this.settingsWindow && !this.settingsWindow.isDestroyed()) {
+            this.settingsWindow.webContents.send('settings-visibility-changed', isVisible);
+        }
     }
 
     private createWindow(x?: number, y?: number, showWhenReady: boolean = true): void {

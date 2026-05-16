@@ -1,7 +1,4 @@
-import { GoogleGenAI } from "@google/genai"
-import Groq from "groq-sdk"
-import OpenAI from "openai"
-import Anthropic from "@anthropic-ai/sdk"
+﻿import { GoogleGenAI } from "@google/genai"
 import fs from "fs"
 import sharp from "sharp"
 import { ModelVersionManager, ModelFamily, TextModelFamily } from './services/ModelVersionManager'
@@ -86,9 +83,9 @@ function normalizeGeminiModelId(modelId: string): string {
 
 export class LLMHelper {
   private client: GoogleGenAI | null = null
-  private groqClient: Groq | null = null
-  private openaiClient: OpenAI | null = null
-  private claudeClient: Anthropic | null = null
+  private groqClient: any | null = null
+  private openaiClient: any | null = null
+  private claudeClient: any | null = null
   private apiKey: string | null = null
   private groqApiKey: string | null = null
   private openaiApiKey: string | null = null
@@ -100,12 +97,10 @@ export class LLMHelper {
   private geminiModel: string = GEMINI_FLASH_MODEL
   private customProvider: CustomProvider | null = null;
   private activeCurlProvider: CurlProvider | null = null;
-  private groqFastTextMode: boolean = false;
   private knowledgeOrchestrator: any = null;
   private customNotes: string = '';
   private aiResponseLanguage: string = 'auto';
   private sttLanguage: string = 'english-us';
-  private nativelyKey: string | null = null;
 
   // Rate limiters per provider to prevent 429 errors on free tiers
   private rateLimiters: ReturnType<typeof createProviderRateLimiters>;
@@ -122,26 +117,9 @@ export class LLMHelper {
     // Initialize model version manager
     this.modelVersionManager = new ModelVersionManager();
 
-    // Initialize Groq client if API key provided
-    if (groqApiKey) {
-      this.groqApiKey = groqApiKey
-      this.groqClient = new Groq({ apiKey: groqApiKey })
-      console.log(`[LLMHelper] Groq client initialized with model: ${GROQ_MODEL}`)
-    }
-
-    // Initialize OpenAI client if API key provided
-    if (openaiApiKey) {
-      this.openaiApiKey = openaiApiKey
-      this.openaiClient = new OpenAI({ apiKey: openaiApiKey })
-      console.log(`[LLMHelper] OpenAI client initialized with model: ${OPENAI_MODEL}`)
-    }
-
-    // Initialize Claude client if API key provided
-    if (claudeApiKey) {
-      this.claudeApiKey = claudeApiKey
-      this.claudeClient = new Anthropic({ apiKey: claudeApiKey })
-      console.log(`[LLMHelper] Claude client initialized with model: ${CLAUDE_MODEL}`)
-    }
+    this.groqApiKey = null
+    this.openaiApiKey = null
+    this.claudeApiKey = null
 
     if (useOllama) {
       this.ollamaUrl = ollamaUrl || "http://localhost:11434"
@@ -178,32 +156,6 @@ export class LLMHelper {
       httpOptions: { apiVersion: "v1alpha" }
     })
     console.log("[LLMHelper] Gemini API Key updated.");
-  }
-
-  public setGroqApiKey(apiKey: string) {
-    this.groqClient = new Groq({ apiKey });
-    console.log("[LLMHelper] Groq API Key updated.");
-  }
-
-  public setOpenaiApiKey(apiKey: string) {
-    this.openaiApiKey = apiKey;
-    this.openaiClient = new OpenAI({ apiKey });
-    console.log("[LLMHelper] OpenAI API Key updated.");
-  }
-
-  public setClaudeApiKey(apiKey: string) {
-    this.claudeApiKey = apiKey;
-    this.claudeClient = new Anthropic({ apiKey });
-    console.log("[LLMHelper] Claude API Key updated.");
-  }
-
-  public setNativelyKey(key: string | null): void {
-    this.nativelyKey = key || null;
-    console.log(`[LLMHelper] Natively key ${key ? 'set' : 'cleared'}`);
-  }
-
-  private hasNatively(): boolean {
-    return !!this.nativelyKey;
   }
 
   private async ensureGeminiClientReady(): Promise<void> {
@@ -482,7 +434,6 @@ export class LLMHelper {
     this.groqApiKey = null;
     this.openaiApiKey = null;
     this.claudeApiKey = null;
-    this.nativelyKey = null;
     this.client = null;
     this.groqClient = null;
     this.openaiClient = null;
@@ -494,15 +445,6 @@ export class LLMHelper {
     // Stop model version manager background scheduler
     this.modelVersionManager.stopScheduler();
     console.log('[LLMHelper] Keys scrubbed from memory');
-  }
-
-  public setGroqFastTextMode(enabled: boolean) {
-    this.groqFastTextMode = enabled;
-    console.log(`[LLMHelper] Groq Fast Text Mode: ${enabled}`);
-  }
-
-  public getGroqFastTextMode(): boolean {
-    return this.groqFastTextMode;
   }
 
   public getAiResponseLanguage(): string {
@@ -584,7 +526,7 @@ export class LLMHelper {
 
   private async callOllama(prompt: string, imagePath?: string): Promise<string> {
     try {
-      // Build optional images array — Ollama multimodal API accepts raw base64 strings (no data-URL prefix)
+      // Build optional images array â€” Ollama multimodal API accepts raw base64 strings (no data-URL prefix)
       let images: string[] | undefined;
       if (imagePath) {
         try {
@@ -912,8 +854,8 @@ Output EXACTLY this JSON structure, and nothing else (no markdown fences around 
   "brainstorm_script": "3-4 conversational sentences. First, mention a naive/brute-force approach and its complexity. Then, pivot to the optimal approach, mentioning the key data structure or algorithm. End by asking the interviewer if you can proceed with the optimal approach. Keep it natural.",
   "code": "The full, production-ready, heavily-commented optimal code solution in the language shown or Python if unclear. Include all necessary imports.",
   "dry_run_script": "2-3 conversational sentences doing a quick dry-run of the code with a simple example input. E.g., 'Let\\'s trace this. If our array is [1,2], the loop starts...'",
-  "time_complexity": "O(...) — brief 5-word explanation",
-  "space_complexity": "O(...) — brief 5-word explanation"
+  "time_complexity": "O(...) â€” brief 5-word explanation",
+  "space_complexity": "O(...) â€” brief 5-word explanation"
 }
 
 CRITICAL RULES:
@@ -1128,7 +1070,7 @@ ANSWER DIRECTLY:`;
    * WHY prepended, not appended:
    *   LLMs attend more strongly to early tokens. Appending after a long
    *   system prompt means the instruction competes against the strong
-   *   "Output ONLY…" rules and gets down-weighted, especially for
+   *   "Output ONLYâ€¦" rules and gets down-weighted, especially for
    *   Latin-script languages that are syntactically close to English.
    *   Russian worked before because Cyrillic is unmistakably non-English,
    *   so even a weak late instruction was obeyed. French/Spanish/German etc.
@@ -1140,12 +1082,12 @@ ANSWER DIRECTLY:`;
    *   3. Closing reminder at the bottom (double-lock)
    */
   private injectLanguageInstruction(systemPrompt: string): string {
-    // ── AUTO mode ──────────────────────────────────────────────────────────────
+    // â”€â”€ AUTO mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Detect the language the user is writing/speaking in and reply in that same
     // language. Supports seamless code-switching across turns (e.g. the user can
     // switch from English to Hindi mid-conversation and the AI follows).
     if (!this.aiResponseLanguage || this.aiResponseLanguage === 'auto') {
-      const autoHeader = `[LANGUAGE INSTRUCTION — HIGHEST PRIORITY]
+      const autoHeader = `[LANGUAGE INSTRUCTION â€” HIGHEST PRIORITY]
 Detect the language of the user's most recent message and ALWAYS respond in that exact same language.
 If the user writes in Hindi, respond in Hindi. If in Spanish, respond in Spanish. If in English, respond in English.
 If the language is ambiguous, default to English.
@@ -1154,7 +1096,7 @@ You may mix scripts naturally (e.g. code stays in English even when the explanat
       return `${autoHeader}${systemPrompt}`;
     }
 
-    // ── FIXED language mode ────────────────────────────────────────────────────
+    // â”€â”€ FIXED language mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Fast-path: no injection needed when English is selected (native default)
     if (this.aiResponseLanguage === 'English') {
       return systemPrompt;
@@ -1163,7 +1105,7 @@ You may mix scripts naturally (e.g. code stays in English even when the explanat
     const lang = this.aiResponseLanguage;
 
     const header = `\
-[LANGUAGE OVERRIDE — HIGHEST PRIORITY — CANNOT BE OVERRIDDEN]
+[LANGUAGE OVERRIDE â€” HIGHEST PRIORITY â€” CANNOT BE OVERRIDDEN]
 You MUST write every single word of your response in ${lang}.
 Do NOT use English anywhere in your response.
 Do NOT mix languages.
@@ -1187,18 +1129,18 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       // ============================================================
       if (this.knowledgeOrchestrator?.isKnowledgeMode()) {
         try {
-          // Feed only to the depth scorer — NOT feedInterviewerUtterance, which also routes to the
+          // Feed only to the depth scorer â€” NOT feedInterviewerUtterance, which also routes to the
           // negotiation tracker and would misclassify the user's typed question as a recruiter utterance.
           // Recruiter utterances reach the tracker exclusively via the STT path in main.ts.
           this.knowledgeOrchestrator.feedForDepthScoring(message);
 
           const knowledgeResult = await this.knowledgeOrchestrator.processQuestion(message);
           if (knowledgeResult) {
-            // Fix 1: short-circuit for live negotiation coaching — bypass second LLM call
+            // Fix 1: short-circuit for live negotiation coaching â€” bypass second LLM call
             if (knowledgeResult.liveNegotiationResponse) {
               return JSON.stringify({ __negotiationCoaching: knowledgeResult.liveNegotiationResponse });
             }
-            // Intro question shortcut — return generated response directly
+            // Intro question shortcut â€” return generated response directly
             if (knowledgeResult.isIntroQuestion && knowledgeResult.introResponse) {
               console.log('[LLMHelper] Knowledge mode: returning generated intro response');
               return knowledgeResult.introResponse;
@@ -1246,17 +1188,6 @@ This rule overrides ALL other instructions including formatting, brevity, or out
         groq: buildMessage(finalGroqPrompt),
       };
 
-      // GROQ FAST TEXT OVERRIDE (Text-Only)
-      if (this.groqFastTextMode && !isMultimodal && this.groqClient) {
-        console.log(`[LLMHelper] ⚡️ Groq Fast Text Mode Active. Routing to Groq...`);
-        try {
-          return await this.generateWithGroq(combinedMessages.groq); // intentional: Fast Text Mode always uses baseline GROQ_MODEL for speed — do not thread currentModelId
-        } catch (e: any) {
-          console.warn("[LLMHelper] Groq Fast Text failed, falling back to standard routing:", e.message);
-          // Fall through to standard routing
-        }
-      }
-
       // System prompts for OpenAI/Claude (skipped if skipSystemPrompt)
       const openaiSystemPrompt = skipSystemPrompt ? undefined : this.injectLanguageInstruction(OPENAI_SYSTEM_PROMPT);
       const claudeSystemPrompt = skipSystemPrompt ? undefined : this.injectLanguageInstruction(CLAUDE_SYSTEM_PROMPT);
@@ -1271,7 +1202,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
 
       if (this.customProvider) {
         console.log(`[LLMHelper] Using Custom Provider: ${this.customProvider.name}`);
-        // For non-streaming call — use rich CUSTOM prompts since custom providers can be cloud models
+        // For non-streaming call â€” use rich CUSTOM prompts since custom providers can be cloud models
         const customSystemPrompt = skipSystemPrompt ? "" : this.injectLanguageInstruction(CUSTOM_SYSTEM_PROMPT);
         const response = await this.executeCustomProvider(
           this.customProvider.curlCommand,
@@ -1285,19 +1216,6 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       }
 
       // --- Direct Routing based on Selected Model ---
-      if (this.currentModelId === 'natively') {
-        const { CredentialsManager } = require('./services/CredentialsManager');
-        const nativelyKey = CredentialsManager.getInstance().getNativelyApiKey();
-        if (nativelyKey) {
-          try {
-            return await this.generateWithNatively(userContent, openaiSystemPrompt, imagePaths);
-          } catch (err: any) {
-            console.warn('[LLMHelper] Natively API failed in chatWithGemini, falling back to Gemini:', err.message);
-            // Fall through to smart dynamic fallback below
-          }
-        }
-        // No key or call failed — fall through to default routing
-      }
       if (this.isOpenAiModel(this.currentModelId) && this.openaiClient) {
         return await this.generateWithOpenai(userContent, openaiSystemPrompt, imagePaths);
       }
@@ -1315,8 +1233,8 @@ This rule overrides ALL other instructions including formatting, brevity, or out
 
       // ============================================================
       // SMART DYNAMIC FALLBACK (Non-Streaming)
-      // Multimodal: Gemini Flash → OpenAI → Claude → Gemini Pro (Groq excluded)
-      // Text-only:  Gemini Flash → Gemini Pro → Groq → OpenAI → Claude
+      // Multimodal: Gemini Flash â†’ OpenAI â†’ Claude â†’ Gemini Pro (Groq excluded)
+      // Text-only:  Gemini Flash â†’ Gemini Pro â†’ Groq â†’ OpenAI â†’ Claude
       // OpenAI/Claude use proper system+user message separation
       // ============================================================
       type ProviderAttempt = { name: string; execute: () => Promise<string> };
@@ -1330,10 +1248,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       const textGroq = this.modelVersionManager.getTextTieredModels(TextModelFamily.GROQ).tier1;
 
       if (isMultimodal) {
-        // MULTIMODAL PROVIDER ORDER: [Natively] -> OpenAI -> Gemini Flash -> Claude -> Gemini Pro -> Groq -> Custom/Ollama
-        if (this.hasNatively()) {
-          providers.push({ name: 'Natively API', execute: () => this.generateWithNatively(userContent, openaiSystemPrompt, imagePaths) });
-        }
+        // MULTIMODAL PROVIDER ORDER: OpenAI -> Gemini Flash -> Claude -> Gemini Pro -> Groq -> Custom/Ollama
         if (this.openaiClient) {
           providers.push({ name: `OpenAI (${textOpenAI})`, execute: () => this.generateWithOpenai(userContent, openaiSystemPrompt, imagePaths, textOpenAI) });
         }
@@ -1359,10 +1274,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
           });
         }
       } else {
-        // TEXT-ONLY: [Natively] -> Groq -> Gemini Flash -> Gemini Pro -> OpenAI -> Claude
-        if (this.hasNatively()) {
-          providers.push({ name: 'Natively API', execute: () => this.generateWithNatively(userContent, openaiSystemPrompt) });
-        }
+        // TEXT-ONLY: Groq -> Gemini Flash -> Gemini Pro -> OpenAI -> Claude
         if (this.groqClient) {
           providers.push({ name: `Groq (${textGroq})`, execute: () => this.generateWithGroq(combinedMessages.groq, textGroq) });
         }
@@ -1397,27 +1309,27 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       for (let rotation = 0; rotation < MAX_FULL_ROTATIONS; rotation++) {
         if (rotation > 0) {
           const backoffMs = 1000 * rotation;
-          console.log(`[LLMHelper] 🔄 Non-streaming rotation ${rotation + 1}/${MAX_FULL_ROTATIONS} after ${backoffMs}ms backoff...`);
+          console.log(`[LLMHelper] ðŸ”„ Non-streaming rotation ${rotation + 1}/${MAX_FULL_ROTATIONS} after ${backoffMs}ms backoff...`);
           await this.delay(backoffMs);
         }
 
         for (const provider of providers) {
           try {
-            console.log(`[LLMHelper] ${rotation === 0 ? '🚀' : '🔁'} Attempting ${provider.name}...`);
+            console.log(`[LLMHelper] ${rotation === 0 ? 'ðŸš€' : 'ðŸ”'} Attempting ${provider.name}...`);
             const rawResponse = await provider.execute();
             if (rawResponse && rawResponse.trim().length > 0) {
-              console.log(`[LLMHelper] ✅ ${provider.name} succeeded`);
+              console.log(`[LLMHelper] âœ… ${provider.name} succeeded`);
               return this.processResponse(rawResponse);
             }
-            console.warn(`[LLMHelper] ⚠️ ${provider.name} returned empty response`);
+            console.warn(`[LLMHelper] âš ï¸ ${provider.name} returned empty response`);
           } catch (error: any) {
-            console.warn(`[LLMHelper] ⚠️ ${provider.name} failed: ${error.message}`);
+            console.warn(`[LLMHelper] âš ï¸ ${provider.name} failed: ${error.message}`);
           }
         }
       }
 
       // All exhausted
-      console.error("[LLMHelper] ❌ All non-streaming providers exhausted");
+      console.error("[LLMHelper] âŒ All non-streaming providers exhausted");
       return "I apologize, but I couldn't generate a response. Please try again.";
 
     } catch (error: any) {
@@ -1435,9 +1347,9 @@ This rule overrides ALL other instructions including formatting, brevity, or out
 
   /**
    * Generate content using only reasoning-capable models.
-   * Priority: OpenAI → Claude → Gemini Pro → Groq (last resort).
+   * Priority: OpenAI â†’ Claude â†’ Gemini Pro â†’ Groq (last resort).
    * Used for structured JSON output tasks (resume/JD/company research).
-   * NOTE: Does NOT mutate this.geminiModel — calls Gemini Pro directly to avoid race conditions.
+   * NOTE: Does NOT mutate this.geminiModel â€” calls Gemini Pro directly to avoid race conditions.
    */
   public async generateContentStructured(message: string): Promise<string> {
     type ProviderAttempt = { name: string; execute: () => Promise<string> };
@@ -1449,7 +1361,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
     }
 
     // Priority 2: Gemini Pro (don't mutate this.geminiModel to avoid race conditions)
-    // NOTE: Claude is intentionally de-prioritised here — messages.create (non-streaming) is
+    // NOTE: Claude is intentionally de-prioritised here â€” messages.create (non-streaming) is
     // rejected by Anthropic for large payloads ("Streaming is required for operations that may
     // take longer than 10 minutes"), causing a wasted round-trip before the Gemini fallback.
     // Claude remains available as a last resort after Gemini Flash.
@@ -1497,7 +1409,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       });
     }
 
-    // Priority 4: Claude (last resort before Groq — non-streaming, fails on large payloads)
+    // Priority 4: Claude (last resort before Groq â€” non-streaming, fails on large payloads)
     if (this.claudeClient) {
       providers.push({ name: `Claude (${CLAUDE_MODEL})`, execute: () => this.generateWithClaude(message) });
     }
@@ -1507,7 +1419,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       providers.push({ name: `Groq (${GROQ_MODEL}) fallback`, execute: () => this.generateWithGroq(message) }); // intentional: structured-gen last-resort uses stable baseline model, not user selection
     }
 
-    // Priority 6: Ollama (on-device fallback — last resort, no cloud dependency)
+    // Priority 6: Ollama (on-device fallback â€” last resort, no cloud dependency)
     if (this.useOllama && await this.checkOllamaAvailable()) {
       providers.push({
         name: `Ollama (${this.ollamaModel})`,
@@ -1534,40 +1446,29 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       });
     }
 
-    // Priority 8: Natively API — used when no other provider is available, or as final fallback
-    const nativelyKeyForStructured = this.nativelyKey || (() => {
-      try { return require('./services/CredentialsManager').CredentialsManager.getInstance().getNativelyApiKey() || null; } catch { return null; }
-    })();
-    if (nativelyKeyForStructured) {
-      providers.push({
-        name: 'Natively API',
-        execute: () => this.generateWithNatively(message)
-      });
-    }
-
     if (providers.length === 0) {
-      throw new Error('No reasoning model available. Please configure an API key (OpenAI, Claude, Gemini, Groq, Natively) or a custom provider.');
+      throw new Error('No reasoning model available. Please configure backend-managed AI or a supported local provider.');
     }
 
     const MAX_ROTATIONS = 3;
     for (let rotation = 0; rotation < MAX_ROTATIONS; rotation++) {
       if (rotation > 0) {
         const backoffMs = 1000 * rotation;
-        console.log(`[LLMHelper] 🔄 Structured generation rotation ${rotation + 1}/${MAX_ROTATIONS} after ${backoffMs}ms backoff...`);
+        console.log(`[LLMHelper] ðŸ”„ Structured generation rotation ${rotation + 1}/${MAX_ROTATIONS} after ${backoffMs}ms backoff...`);
         await this.delay(backoffMs);
       }
 
       for (const provider of providers) {
         try {
-          console.log(`[LLMHelper] 🧠 Structured generation: trying ${provider.name}...`);
+          console.log(`[LLMHelper] ðŸ§  Structured generation: trying ${provider.name}...`);
           const result = await provider.execute();
           if (result && result.trim().length > 0) {
-            console.log(`[LLMHelper] ✅ Structured generation succeeded with ${provider.name}`);
+            console.log(`[LLMHelper] âœ… Structured generation succeeded with ${provider.name}`);
             return result;
           }
-          console.warn(`[LLMHelper] ⚠️ ${provider.name} returned empty response`);
+          console.warn(`[LLMHelper] âš ï¸ ${provider.name} returned empty response`);
         } catch (error: any) {
-          console.warn(`[LLMHelper] ⚠️ Structured generation: ${provider.name} failed: ${error.message}`);
+          console.warn(`[LLMHelper] âš ï¸ Structured generation: ${provider.name} failed: ${error.message}`);
         }
       }
     }
@@ -1590,93 +1491,6 @@ This rule overrides ALL other instructions including formatting, brevity, or out
     });
 
     return response.choices[0]?.message?.content || "";
-  }
-
-  /**
-   * Non-streaming OpenAI generation with proper system/user separation
-   */
-  /**
-   * Routes AI generation through the Natively API backend (Gemini-powered).
-   */
-  private async generateWithNatively(userMessage: string, systemPrompt?: string, imagePaths?: string[]): Promise<string> {
-    // Prefer the in-memory field; fall back to CredentialsManager for the direct-routing path
-    // where currentModelId === 'natively' but setNativelyKey() wasn't called yet.
-    let nativelyKey = this.nativelyKey;
-    if (!nativelyKey) {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      nativelyKey = CredentialsManager.getInstance().getNativelyApiKey() || null;
-    }
-    if (!nativelyKey) throw new Error('Natively API key not set');
-
-    const endpointUrl = 'https://api.natively.software/v1/chat';
-    // When the key is the trial sentinel, authenticate with the real trial token
-    // instead — the server validates x-trial-token, not __trial__ as an API key.
-    const headers: any = { 'Content-Type': 'application/json' };
-    if (nativelyKey === '__trial__') {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      const trialToken = CredentialsManager.getInstance().getTrialToken();
-      if (!trialToken) throw new Error('Trial token not found');
-      headers['x-trial-token'] = trialToken;
-    } else {
-      headers['x-natively-key'] = nativelyKey;
-    }
-
-    const body: any = { messages: [{ role: 'user', content: userMessage }] };
-
-    // Signal fast mode so the server routes to Groq Llama 3.3 (text-only, key-rotated).
-    // Only sent for text-only requests — server ignores it when images are present.
-    if (this.groqFastTextMode) body.fast_mode = true;
-
-    // Send images as a structured array so the server can build proper Gemini inlineData parts.
-    // Embedding base64 in the text content would be truncated at 4000 chars and treated as text.
-    //
-    // Compress before sending: retina screenshots are 2-5 MB PNG; the Natively API body limit
-    // is 4 MB. Resize to max 1920px (above the 1470px logical resolution of a MacBook Air, so
-    // no detail is lost) and encode as JPEG 85% — typically 200-250 KB per image.
-    // 4 screenshots × ~278KB base64 = ~1.1 MB, well within the 4 MB server limit.
-    if (imagePaths?.length) {
-      const images: { mime_type: string; data: string }[] = [];
-      for (const p of imagePaths) {
-        if (fs.existsSync(p)) {
-          try {
-            const compressed = await sharp(p)
-              .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
-              .jpeg({ quality: 85 })
-              .toBuffer();
-            images.push({ mime_type: 'image/jpeg', data: compressed.toString('base64') });
-          } catch (compressErr: any) {
-            // Fallback: send raw if sharp fails (e.g. unsupported format)
-            console.warn('[LLMHelper] Image compression failed, sending raw:', compressErr.message);
-            const imageData = await fs.promises.readFile(p);
-            if (imageData.length > 500 * 1024) {
-              console.warn('[LLMHelper] Raw fallback image too large to send, skipping:', p);
-              continue;
-            }
-            images.push({ mime_type: 'image/png', data: imageData.toString('base64') });
-          }
-        }
-      }
-      if (images.length) body.images = images;
-    }
-    if (systemPrompt) body.system = systemPrompt;
-    if (this.aiResponseLanguage && this.aiResponseLanguage !== 'English') {
-      body.language = this.aiResponseLanguage; // 'auto' is forwarded — server handles it
-    }
-
-    const response = await fetch(endpointUrl, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(25000),
-    });
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(`Natively API error ${response.status}: ${errData.error || 'unknown'}`);
-    }
-
-    const data = await response.json();
-    return data.content || '';
   }
 
   /**
@@ -1708,7 +1522,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       messages.push({ role: "user", content: userMessage });
     }
 
-    const response = await this.withTimeout(
+    const response: any = await this.withTimeout(
       this.withRetry(() => this.openaiClient!.chat.completions.create({
         model,
         messages,
@@ -1814,7 +1628,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
     }
     content.push({ type: "text", text: userMessage });
 
-    const response = await this.withTimeout(
+    const response: any = await this.withTimeout(
       this.withRetry(() => this.claudeClient!.messages.create({
         model,
         max_tokens: CLAUDE_MAX_OUTPUT_TOKENS,
@@ -1878,7 +1692,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       body = injectImageIntoMessages(body, base64Image, imagePath);
     }
 
-    // 5. Execute Fetch (30s timeout — same as RestSTT uploads)
+    // 5. Execute Fetch (30s timeout â€” same as RestSTT uploads)
     const customAbort = new AbortController();
     const customTimeout = setTimeout(() => customAbort.abort(), 30_000);
     try {
@@ -2050,8 +1864,8 @@ This rule overrides ALL other instructions including formatting, brevity, or out
    *
    * THREE-TIER RETRY ROTATION (self-improving):
    *   Tier 1: Pinned stable models (promoted only when 2+ minor versions behind)
-   *   Tier 2: Latest auto-discovered models (updated every ~14 days) — 1st retry
-   *   Tier 3: Same as Tier 2 — 2nd retry (with backoff between tiers)
+   *   Tier 2: Latest auto-discovered models (updated every ~14 days) â€” 1st retry
+   *   Tier 3: Same as Tier 2 â€” 2nd retry (with backoff between tiers)
    *
    * Provider order per tier: OpenAI -> Gemini Flash -> Claude -> Gemini Pro -> Groq Scout
    * After all cloud tiers: Custom Provider -> cURL Provider -> Ollama
@@ -2139,9 +1953,9 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       }
     };
 
-    // ──────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Build 3-tier retry rotation from ModelVersionManager
-    // ──────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const allTiers = this.modelVersionManager.getAllVisionTiers();
 
     const buildTierProviders = (tierKey: 'tier1' | 'tier2' | 'tier3'): ProviderAttempt[] => {
@@ -2156,12 +1970,12 @@ This rule overrides ALL other instructions including formatting, brevity, or out
 
     const tier1Providers = buildTierProviders('tier1');
     const tier2Providers = buildTierProviders('tier2');
-    const tier3Providers = buildTierProviders('tier3'); // Same as tier2 — pure retry
+    const tier3Providers = buildTierProviders('tier3'); // Same as tier2 â€” pure retry
 
 
-    // ──────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Local fallback providers (appended after all cloud tiers)
-    // ──────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const localProviders: ProviderAttempt[] = [];
 
     if (this.customProvider) {
@@ -2205,9 +2019,9 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       });
     }
 
-    // ──────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Execute 3-tier rotation with exponential backoff between tiers
-    // ──────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const tiers = [
       { label: 'Tier 1 (Stable)', providers: tier1Providers },
       { label: 'Tier 2 (Latest)', providers: tier2Providers },
@@ -2222,22 +2036,22 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       // Exponential backoff between tiers (skip for first tier)
       if (tierIndex > 0) {
         const backoffMs = 1000 * Math.pow(2, tierIndex - 1);
-        console.log(`[LLMHelper] 🔄 Escalating to ${tier.label} after ${backoffMs}ms backoff...`);
+        console.log(`[LLMHelper] ðŸ”„ Escalating to ${tier.label} after ${backoffMs}ms backoff...`);
         await new Promise(resolve => setTimeout(resolve, backoffMs));
       }
 
       for (const provider of tier.providers) {
         try {
-          const emoji = tierIndex === 0 ? '🚀' : tierIndex === 1 ? '🔁' : '🆘';
+          const emoji = tierIndex === 0 ? 'ðŸš€' : tierIndex === 1 ? 'ðŸ”' : 'ðŸ†˜';
           console.log(`[LLMHelper] ${emoji} [${tier.label}] Attempting ${provider.name}...`);
           const result = await provider.execute();
           if (result && result.trim().length > 0) {
-            console.log(`[LLMHelper] ✅ [${tier.label}] ${provider.name} succeeded.`);
+            console.log(`[LLMHelper] âœ… [${tier.label}] ${provider.name} succeeded.`);
             return result;
           }
-          console.warn(`[LLMHelper] ⚠️ [${tier.label}] ${provider.name} returned empty response`);
+          console.warn(`[LLMHelper] âš ï¸ [${tier.label}] ${provider.name} returned empty response`);
         } catch (err: any) {
-          console.warn(`[LLMHelper] ⚠️ [${tier.label}] ${provider.name} failed: ${err.message}`);
+          console.warn(`[LLMHelper] âš ï¸ [${tier.label}] ${provider.name} failed: ${err.message}`);
 
           // Event-driven discovery: trigger on 404 / model-not-found errors
           const errMsg = (err.message || '').toLowerCase();
@@ -2248,19 +2062,19 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       }
     }
 
-    // ──────────────────────────────────────────────────────────────────
-    // Local fallback — absolute last resort after all cloud tiers exhausted
-    // ──────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Local fallback â€” absolute last resort after all cloud tiers exhausted
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     for (const provider of localProviders) {
       try {
-        console.log(`[LLMHelper] 🏠 [Local Fallback] Attempting ${provider.name}...`);
+        console.log(`[LLMHelper] ðŸ  [Local Fallback] Attempting ${provider.name}...`);
         const result = await provider.execute();
         if (result && result.trim().length > 0) {
-          console.log(`[LLMHelper] ✅ [Local Fallback] ${provider.name} succeeded.`);
+          console.log(`[LLMHelper] âœ… [Local Fallback] ${provider.name} succeeded.`);
           return result;
         }
       } catch (err: any) {
-        console.warn(`[LLMHelper] ⚠️ [Local Fallback] ${provider.name} failed: ${err.message}`);
+        console.warn(`[LLMHelper] âš ï¸ [Local Fallback] ${provider.name} failed: ${err.message}`);
       }
     }
 
@@ -2337,10 +2151,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
     const textGroq = this.modelVersionManager.getTextTieredModels(TextModelFamily.GROQ).tier1;
 
     if (isMultimodal) {
-      // MULTIMODAL PROVIDER ORDER: [Natively] -> OpenAI -> Gemini Flash -> Claude -> Gemini Pro -> Groq Scout 4
-      if (this.hasNatively()) {
-        providers.push({ name: 'Natively API', execute: () => this.streamWithNatively(userContent, openaiSystemPrompt, imagePaths) });
-      }
+      // MULTIMODAL PROVIDER ORDER: OpenAI -> Gemini Flash -> Claude -> Gemini Pro -> Groq Scout 4
       if (this.openaiClient) {
         providers.push({ name: `OpenAI (${textOpenAI})`, execute: () => this.streamWithOpenaiMultimodal(userContent, imagePaths!, openaiSystemPrompt, textOpenAI) });
       }
@@ -2357,10 +2168,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
         providers.push({ name: `Groq (meta-llama/llama-4-scout-17b-16e-instruct)`, execute: () => this.streamWithGroqMultimodal(userContent, imagePaths!, openaiSystemPrompt) });
       }
     } else {
-      // TEXT-ONLY PROVIDER ORDER: [Natively] → Groq → OpenAI → Claude → Gemini Flash → Gemini Pro
-      if (this.hasNatively()) {
-        providers.push({ name: 'Natively API', execute: () => this.streamWithNatively(userContent, openaiSystemPrompt) });
-      }
+      // TEXT-ONLY PROVIDER ORDER: Groq -> OpenAI -> Claude -> Gemini Flash -> Gemini Pro
       if (this.groqClient) {
         providers.push({ name: `Groq (${textGroq})`, execute: () => this.streamWithGroq(combinedMessages.groq, textGroq) });
       }
@@ -2386,8 +2194,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
     // Ensure the model the user selected handles the request first
     // before falling back to others.
     // ============================================================
-    const currentFamilyLabel = this.currentModelId === 'natively' ? 'Natively'
-      : this.isClaudeModel(this.currentModelId) ? 'Claude'
+    const currentFamilyLabel = this.isClaudeModel(this.currentModelId) ? 'Claude'
       : this.isOpenAiModel(this.currentModelId) ? 'OpenAI'
       : this.isGroqModel(this.currentModelId) ? 'Groq'
       : this.isGeminiModel(this.currentModelId) ? 'Gemini'
@@ -2401,16 +2208,6 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       });
     }
 
-    // Natively is always first when configured, regardless of which model is selected.
-    // The sort above may have displaced it — restore it to position 0.
-    if (this.hasNatively() && providers[0]?.name !== 'Natively API') {
-      const idx = providers.findIndex(p => p.name === 'Natively API');
-      if (idx > 0) {
-        const [entry] = providers.splice(idx, 1);
-        providers.unshift(entry);
-      }
-    }
-
     // ============================================================
     // RELENTLESS RETRY: Try all providers, then retry entire chain
     // with exponential backoff. Max 2 full rotations.
@@ -2420,26 +2217,26 @@ This rule overrides ALL other instructions including formatting, brevity, or out
     for (let rotation = 0; rotation < MAX_FULL_ROTATIONS; rotation++) {
       if (rotation > 0) {
         const backoffMs = 1000 * rotation;
-        console.log(`[LLMHelper] 🔄 Starting rotation ${rotation + 1}/${MAX_FULL_ROTATIONS} after ${backoffMs}ms backoff...`);
+        console.log(`[LLMHelper] ðŸ”„ Starting rotation ${rotation + 1}/${MAX_FULL_ROTATIONS} after ${backoffMs}ms backoff...`);
         await this.delay(backoffMs);
       }
 
       for (let i = 0; i < providers.length; i++) {
         const provider = providers[i];
         try {
-          console.log(`[LLMHelper] ${rotation === 0 ? '🚀' : '🔁'} Attempting ${provider.name}...`);
+          console.log(`[LLMHelper] ${rotation === 0 ? 'ðŸš€' : 'ðŸ”'} Attempting ${provider.name}...`);
           yield* provider.execute();
-          console.log(`[LLMHelper] ✅ ${provider.name} stream completed successfully`);
-          return; // SUCCESS — exit immediately
+          console.log(`[LLMHelper] âœ… ${provider.name} stream completed successfully`);
+          return; // SUCCESS â€” exit immediately
         } catch (err: any) {
-          console.warn(`[LLMHelper] ⚠️ ${provider.name} failed: ${err.message}`);
+          console.warn(`[LLMHelper] âš ï¸ ${provider.name} failed: ${err.message}`);
           // Continue to next provider
         }
       }
     }
 
     // Truly exhausted after all rotations
-    console.error(`[LLMHelper] ❌ All providers exhausted after ${MAX_FULL_ROTATIONS} rotations`);
+    console.error(`[LLMHelper] âŒ All providers exhausted after ${MAX_FULL_ROTATIONS} rotations`);
     yield "All AI services are currently unavailable. Please check your API keys and try again.";
   }
 
@@ -2459,17 +2256,17 @@ This rule overrides ALL other instructions including formatting, brevity, or out
     // ============================================================
     if (!ignoreKnowledgeMode && this.knowledgeOrchestrator?.isKnowledgeMode()) {
       try {
-        // Feed to depth scorer only (not negotiation tracker) — mirrors non-streaming path fix.
+        // Feed to depth scorer only (not negotiation tracker) â€” mirrors non-streaming path fix.
         this.knowledgeOrchestrator.feedForDepthScoring(message);
 
         const knowledgeResult = await this.knowledgeOrchestrator.processQuestion(message);
         if (knowledgeResult) {
-          // Fix 1: short-circuit for live negotiation coaching — bypass second LLM call
+          // Fix 1: short-circuit for live negotiation coaching â€” bypass second LLM call
           if (knowledgeResult.liveNegotiationResponse) {
             yield JSON.stringify({ __negotiationCoaching: knowledgeResult.liveNegotiationResponse });
             return;
           }
-          // Intro question shortcut — yield generated response directly
+          // Intro question shortcut â€” yield generated response directly
           if (knowledgeResult.isIntroQuestion && knowledgeResult.introResponse) {
             console.log('[LLMHelper] Knowledge mode (stream): returning generated intro response');
             yield knowledgeResult.introResponse;
@@ -2505,7 +2302,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       const modeContextBlock = modesMgr.buildActiveModeContextBlock();
 
       if (modePromptSuffix) {
-        // Mode prompt supplements the base prompt — preserves KO profile intelligence if already set
+        // Mode prompt supplements the base prompt â€” preserves KO profile intelligence if already set
         const baseForMode = systemPromptOverride || HARD_SYSTEM_PROMPT;
         systemPromptOverride = `${baseForMode}\n\n## ACTIVE MODE\n${modePromptSuffix}`;
       }
@@ -2518,7 +2315,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
         if (existingLen + modeContextBlock.length > COMBINED_CTX_CAP) {
           const available = Math.max(0, COMBINED_CTX_CAP - existingLen);
           const trimmed = available > 0 ? modeContextBlock.slice(0, available) + '\n[...mode context truncated]' : '';
-          console.warn(`[LLMHelper] Combined context exceeded ${COMBINED_CTX_CAP} chars — mode context trimmed`);
+          console.warn(`[LLMHelper] Combined context exceeded ${COMBINED_CTX_CAP} chars â€” mode context trimmed`);
           if (trimmed) context = context ? `${trimmed}\n\n${context}` : trimmed;
         } else {
           context = context ? `${modeContextBlock}\n\n${context}` : modeContextBlock;
@@ -2561,42 +2358,13 @@ This rule overrides ALL other instructions including formatting, brevity, or out
         return;
       }
 
-    // GROQ FAST TEXT OVERRIDE (Text-Only)
-    // Two paths: local Groq key → call Groq directly; Natively API only → send fast_mode:true
-    // to the server so it routes to its internal Groq pool (llama-3.3-70b-versatile).
-    if (this.groqFastTextMode && !isMultimodal) {
-      if (this.groqClient) {
-        console.log(`[LLMHelper] ⚡️ Groq Fast Text Mode Active (Streaming). Routing to local Groq...`);
-        try {
-          const groqSystem = systemPromptOverride || GROQ_SYSTEM_PROMPT;
-          const finalGroqSystem = this.injectLanguageInstruction(groqSystem);
-          const groqFullMessage = `${finalGroqSystem}\n\n${userContent}`;
-          yield* this.streamWithGroq(groqFullMessage, this.currentModelId);
-          return;
-        } catch (e: any) {
-          console.warn("[LLMHelper] Groq Fast Text streaming failed, falling back:", e.message);
-        }
-        // Local Groq failed — fall through to Natively if available
-      }
-      if (this.hasNatively()) {
-        // streamWithNatively → generateWithNatively → sends fast_mode:true → server Groq pool
-        console.log(`[LLMHelper] ⚡️ Groq Fast Text Mode Active (Streaming). Routing to Natively server Groq pool...`);
-        try {
-          yield* this.streamWithNatively(userContent, finalSystemPrompt);
-          return;
-        } catch (e: any) {
-          console.warn("[LLMHelper] Natively fast-mode failed, falling back:", e.message);
-        }
-      }
-    }
-
     // 1. Ollama Streaming
     if (this.useOllama) {
       yield* this.streamWithOllama(message, context, finalSystemPrompt, imagePaths);
       return;
     }
 
-    // 2a. CustomProvider (switchToCustom path) — full SSE-capable streaming
+    // 2a. CustomProvider (switchToCustom path) â€” full SSE-capable streaming
     if (this.customProvider) {
       yield* this.streamWithCustom(message, context, imagePaths, finalSystemPrompt);
       return;
@@ -2659,40 +2427,6 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       return;
     }
 
-    // 3b. Natively API
-    if (this.currentModelId === 'natively') {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      const nativelyKey = CredentialsManager.getInstance().getNativelyApiKey();
-      if (nativelyKey) {
-        try {
-          const response = await this.generateWithNatively(userContent, finalSystemPrompt, imagePaths);
-          yield response;
-          return;
-        } catch (err: any) {
-          console.warn('[LLMHelper] Natively API failed in streamChat, trying Groq fallback:', err.message);
-          // Try Groq before Gemini — Groq key is more commonly available
-          if (this.groqClient) {
-            try {
-              if (isMultimodal && imagePaths) {
-                const groqSystem = systemPromptOverride || OPENAI_SYSTEM_PROMPT;
-                const finalGroqSystem = this.injectLanguageInstruction(groqSystem);
-                yield* this.streamWithGroqMultimodal(userContent, imagePaths, finalGroqSystem);
-              } else {
-                const groqSystem = systemPromptOverride ? baseSystemPrompt : GROQ_SYSTEM_PROMPT;
-                const finalGroqSystem = this.injectLanguageInstruction(groqSystem);
-                yield* this.streamWithGroq(`${finalGroqSystem}\n\n${userContent}`); // intentional: emergency fallback waterfall — use stable GROQ_MODEL baseline, not currentModelId
-              }
-              return;
-            } catch (groqErr: any) {
-              console.warn('[LLMHelper] Groq fallback also failed, trying Gemini:', groqErr.message);
-            }
-          }
-          // Fall through to Gemini
-        }
-      }
-      // No key or all fallbacks failed — fall through to Gemini
-    }
-
     // 4. Gemini Routing & Fallback
     if (this.client) {
       // Direct model use if specified
@@ -2708,119 +2442,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       return;
     }
 
-    // 5. Last-resort: Natively API (if user has a key but no cloud provider configured)
-    if (this.hasNatively()) {
-      try {
-        yield* this.streamWithNatively(userContent, finalSystemPrompt, imagePaths);
-        return;
-      } catch (e: any) {
-        console.warn('[LLMHelper] Natively last-resort fallback failed:', e.message);
-      }
-    }
-
-    throw new Error("No AI provider configured. Please add at least one API key in Settings.");
-  }
-
-  /**
-   * Fake-stream for Natively API (non-streaming endpoint).
-   * Yields the full response in small word-batches so the UI typing effect still plays.
-   * Throws on empty response so the fallback chain tries the next provider.
-   */
-  private async * streamWithNatively(userContent: string, systemPrompt?: string, imagePaths?: string[]): AsyncGenerator<string, void, unknown> {
-    // ── REAL SSE STREAM (replaces the fake word-by-word simulation) ──────────
-    // Previous implementation called generateWithNatively() (blocking, waited for
-    // the full response), then drip-fed words with setTimeout delays — pure theater.
-    // This version opens a streaming fetch and yields tokens as the server generates
-    // them, cutting time-to-first-token from ~3s to ~80ms.
-    let nativelyKey = this.nativelyKey;
-    if (!nativelyKey) {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      nativelyKey = CredentialsManager.getInstance().getNativelyApiKey() || null;
-    }
-    if (!nativelyKey) throw new Error('Natively API key not set');
-
-    const body: Record<string, unknown> = {
-      messages: [{ role: 'user', content: userContent }],
-      stream:   true,
-    };
-    if (this.groqFastTextMode)                                  body.fast_mode = true;
-    if (systemPrompt)                                           body.system    = systemPrompt;
-    if (this.aiResponseLanguage && this.aiResponseLanguage !== 'English') {
-      body.language = this.aiResponseLanguage; // 'auto' is forwarded — server handles it
-    }
-
-    // Attach images — the server routes image requests to the appropriate provider
-    if (imagePaths?.length) {
-      const images: { mime_type: string; data: string }[] = [];
-      for (const p of imagePaths) {
-        if (fs.existsSync(p)) {
-          const imageData = await fs.promises.readFile(p);
-          images.push({ mime_type: 'image/png', data: imageData.toString('base64') });
-        }
-      }
-      if (images.length) body.images = images;
-    }
-
-    // When the key is the trial sentinel, authenticate with the real trial token.
-    const streamHeaders: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'Accept':       'text/event-stream',
-    };
-    if (nativelyKey === '__trial__') {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      const trialToken = CredentialsManager.getInstance().getTrialToken();
-      if (!trialToken) throw new Error('Trial token not found');
-      streamHeaders['x-trial-token'] = trialToken;
-    } else {
-      streamHeaders['x-natively-key'] = nativelyKey;
-    }
-
-    // 60s timeout covers worst-case: max-token Gemini Pro response streamed over a slow connection.
-    // This is intentionally longer than the non-streaming 25s timeout.
-    const response = await fetch('https://api.natively.software/v1/chat', {
-      method:  'POST',
-      headers: streamHeaders,
-      body:   JSON.stringify(body),
-      signal: AbortSignal.timeout(60_000),
-    });
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}) as Record<string, unknown>);
-      throw new Error(`Natively API ${response.status}: ${(errData as any).error || 'unknown'}`);
-    }
-
-    // Parse the SSE response body incrementally.
-    // Protocol: each line starting with "data: " carries a JSON payload.
-    //   data: {"delta":"token","model":"llama-3.3-70b"}
-    //   data: [DONE]
-    const reader  = response.body!.getReader();
-    const decoder = new TextDecoder();
-    let   buf     = '';
-
-    try {
-      outer: while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buf += decoder.decode(value, { stream: true });
-        const lines = buf.split('\n');
-        buf = lines.pop()!;  // last line may be incomplete — carry it to next chunk
-
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const payload = line.slice(6).trim();
-          if (payload === '[DONE]') break outer;
-
-          let chunk: any;
-          try { chunk = JSON.parse(payload); } catch { continue; }
-
-          if (chunk.error) throw new Error(`Server error: ${chunk.error}`);
-          if (typeof chunk.delta === 'string' && chunk.delta) yield chunk.delta;
-        }
-      }
-    } finally {
-      try { reader.cancel(); } catch {}  // release the fetch connection cleanly
-    }
+    throw new Error("No AI provider configured. Please sign in so Cluegent can use backend-managed AI.");
   }
 
   /**
@@ -3141,7 +2763,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       ? `SYSTEM: ${systemPrompt}\nCONTEXT: ${context}\nUSER: ${message}`
       : `SYSTEM: ${systemPrompt}\nUSER: ${message}`;
 
-    // Build optional images array — Ollama multimodal API accepts raw base64 strings (no data-URL prefix)
+    // Build optional images array â€” Ollama multimodal API accepts raw base64 strings (no data-URL prefix)
     let images: string[] | undefined;
     if (imagePaths?.length) {
       const encoded: string[] = [];
@@ -3393,7 +3015,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
   /**
    * Get the Groq client for mode-specific LLMs
    */
-  public getGroqClient(): Groq | null {
+  public getGroqClient(): any | null {
     return this.groqClient;
   }
 
@@ -3407,14 +3029,14 @@ This rule overrides ALL other instructions including formatting, brevity, or out
   /**
    * Get the OpenAI client for mode-specific LLMs
    */
-  public getOpenaiClient(): OpenAI | null {
+  public getOpenaiClient(): any | null {
     return this.openaiClient;
   }
 
   /**
    * Get the Claude client for mode-specific LLMs
    */
-  public getClaudeClient(): Anthropic | null {
+  public getClaudeClient(): any | null {
     return this.claudeClient;
   }
 
@@ -3450,7 +3072,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
     // Try Groq first if available
     if (this.groqClient) {
       try {
-        console.log(`[LLMHelper] 🚀 Mode-specific Groq stream starting...`);
+        console.log(`[LLMHelper] ðŸš€ Mode-specific Groq stream starting...`);
         const stream = await this.groqClient.chat.completions.create({
           model: GROQ_MODEL,
           messages: [{ role: "user", content: groqMessage }],
@@ -3465,16 +3087,16 @@ This rule overrides ALL other instructions including formatting, brevity, or out
             yield content;
           }
         }
-        console.log(`[LLMHelper] ✅ Mode-specific Groq stream completed`);
+        console.log(`[LLMHelper] âœ… Mode-specific Groq stream completed`);
         return; // Success - done
       } catch (err: any) {
-        console.warn(`[LLMHelper] ⚠️ Groq mode-specific failed: ${err.message}, falling back to Gemini`);
+        console.warn(`[LLMHelper] âš ï¸ Groq mode-specific failed: ${err.message}, falling back to Gemini`);
       }
     }
 
     // Fallback to Gemini
     if (this.client) {
-      console.log(`[LLMHelper] 🔄 Falling back to Gemini for mode-specific request...`);
+      console.log(`[LLMHelper] ðŸ”„ Falling back to Gemini for mode-specific request...`);
       yield* this.streamWithGeminiModel(geminiMessage, GEMINI_FLASH_MODEL);
     } else {
       throw new Error("No LLM provider available");
@@ -3546,7 +3168,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       console.warn(`[LLMHelper] Initial ${originalModel} call failed: ${error.message}`);
     }
 
-    console.log(`[LLMHelper] 🚀 Triggering Speculative Parallel Retry (Flash + Pro)...`);
+    console.log(`[LLMHelper] ðŸš€ Triggering Speculative Parallel Retry (Flash + Pro)...`);
 
     // 2. Parallel Execution (Retry Flash vs Pro)
     // We create promises for both but treat them carefully
@@ -3586,7 +3208,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
     }
 
     // 4. Last Resort: Flash Final Retry
-    console.log(`[LLMHelper] ⚠️ All parallel attempts failed. Trying Flash one last time...`);
+    console.log(`[LLMHelper] âš ï¸ All parallel attempts failed. Trying Flash one last time...`);
     try {
       return await client.models.generateContent({ ...args, model: originalModel });
     } catch (finalError) {
@@ -3616,11 +3238,10 @@ This rule overrides ALL other instructions including formatting, brevity, or out
   /**
    * Robust Meeting Summary Generation
    * Strategy:
-   * 0. Custom / cURL Provider (if user selected one — always takes priority)
-   * 1. Natively API (if configured)
-   * 2. Groq (if context text < 100k tokens approx)
-   * 3. Gemini Flash (Retry 2x)
-   * 4. Gemini Pro (Retry 5x)
+   * 0. Custom / cURL Provider (if user selected one â€” always takes priority)
+   * 1. Groq (if context text < 100k tokens approx)
+   * 2. Gemini Flash (Retry 2x)
+   * 3. Gemini Pro (Retry 5x)
    */
   public async generateMeetingSummary(systemPrompt: string, context: string, groqSystemPrompt?: string): Promise<string> {
     console.log(`[LLMHelper] generateMeetingSummary called. Context length: ${context.length}`);
@@ -3630,13 +3251,13 @@ This rule overrides ALL other instructions including formatting, brevity, or out
     const tokenCount = estimateTokens(context);
     console.log(`[LLMHelper] Estimated tokens: ${tokenCount}`);
 
-    // ATTEMPT 0: Custom Provider (highest priority — user explicitly chose this)
+    // ATTEMPT 0: Custom Provider (highest priority â€” user explicitly chose this)
     if (this.customProvider || this.activeCurlProvider) {
       try {
         console.log(`[LLMHelper] Attempting custom provider for summary...`);
         // Collect the async generator into a Promise so withTimeout works.
         // ignoreKnowledgeMode=true: meeting summaries must never go through the
-        // profile/knowledge intercept — it would corrupt the output.
+        // profile/knowledge intercept â€” it would corrupt the output.
         const collectChunks = async (): Promise<string> => {
           let result = '';
           for await (const chunk of this.streamChat(`Context:\n${context}`, undefined, undefined, systemPrompt, true)) {
@@ -3646,29 +3267,11 @@ This rule overrides ALL other instructions including formatting, brevity, or out
         };
         const text = await this.withTimeout(collectChunks(), 60000, 'Custom Provider Summary');
         if (text.trim().length > 0) {
-          console.log(`[LLMHelper] ✅ Custom provider summary generated successfully.`);
+          console.log(`[LLMHelper] âœ… Custom provider summary generated successfully.`);
           return this.processResponse(text);
         }
       } catch (e: any) {
-        console.warn(`[LLMHelper] ⚠️ Custom provider summary failed: ${e.message}. Falling back...`);
-      }
-    }
-
-    // ATTEMPT 1: Natively API (if configured — first in chain)
-    if (this.hasNatively()) {
-      try {
-        console.log(`[LLMHelper] Attempting Natively API for summary...`);
-        const text = await this.withTimeout(
-          this.generateWithNatively(`Context:\n${context}`, systemPrompt),
-          60000,
-          'Natively Summary'
-        );
-        if (text.trim().length > 0) {
-          console.log(`[LLMHelper] ✅ Natively API summary generated successfully.`);
-          return this.processResponse(text);
-        }
-      } catch (e: any) {
-        console.warn(`[LLMHelper] ⚠️ Natively API summary failed: ${e.message}. Falling back...`);
+        console.warn(`[LLMHelper] âš ï¸ Custom provider summary failed: ${e.message}. Falling back...`);
       }
     }
 
@@ -3676,7 +3279,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       console.log(`[LLMHelper] Attempting Groq for summary...`);
       try {
         const groqPrompt = groqSystemPrompt || systemPrompt;
-        const response = await this.withTimeout(
+        const response: any = await this.withTimeout(
           this.groqClient.chat.completions.create({
             model: GROQ_MODEL,
             messages: [
@@ -3693,11 +3296,11 @@ This rule overrides ALL other instructions including formatting, brevity, or out
 
         const text = response.choices[0]?.message?.content || "";
         if (text.trim().length > 0) {
-          console.log(`[LLMHelper] ✅ Groq summary generated successfully.`);
+          console.log(`[LLMHelper] âœ… Groq summary generated successfully.`);
           return this.processResponse(text);
         }
       } catch (e: any) {
-        console.warn(`[LLMHelper] ⚠️ Groq summary failed: ${e.message}. Falling back to Gemini...`);
+        console.warn(`[LLMHelper] âš ï¸ Groq summary failed: ${e.message}. Falling back to Gemini...`);
       }
     } else {
       if (tokenCount >= 100000) {
@@ -3717,11 +3320,11 @@ This rule overrides ALL other instructions including formatting, brevity, or out
           `Gemini Flash Summary (Attempt ${attempt})`
         );
         if (text.trim().length > 0) {
-          console.log(`[LLMHelper] ✅ Gemini Flash summary generated successfully (Attempt ${attempt}).`);
+          console.log(`[LLMHelper] âœ… Gemini Flash summary generated successfully (Attempt ${attempt}).`);
           return this.processResponse(text);
         }
       } catch (e: any) {
-        console.warn(`[LLMHelper] ⚠️ Gemini Flash attempt ${attempt}/3 failed: ${e.message}`);
+        console.warn(`[LLMHelper] âš ï¸ Gemini Flash attempt ${attempt}/3 failed: ${e.message}`);
         if (attempt < 3) {
           await new Promise(r => setTimeout(r, 1000 * attempt)); // Linear backoff
         }
@@ -3729,13 +3332,13 @@ This rule overrides ALL other instructions including formatting, brevity, or out
     }
 
     // ATTEMPT 4: Gemini Pro
-    console.log(`[LLMHelper] ⚠️ Flash exhausted. Switching to Gemini Pro for robust retry...`);
+    console.log(`[LLMHelper] âš ï¸ Flash exhausted. Switching to Gemini Pro for robust retry...`);
     const maxProRetries = 5;
 
     if (this.client) {
       for (let attempt = 1; attempt <= maxProRetries; attempt++) {
         try {
-          console.log(`[LLMHelper] 🔄 Gemini Pro Attempt ${attempt}/${maxProRetries}...`);
+          console.log(`[LLMHelper] ðŸ”„ Gemini Pro Attempt ${attempt}/${maxProRetries}...`);
           const response = await this.withTimeout(
             // @ts-ignore
             this.client.models.generateContent({
@@ -3752,11 +3355,11 @@ This rule overrides ALL other instructions including formatting, brevity, or out
           const text = response.text || "";
 
           if (text.trim().length > 0) {
-            console.log(`[LLMHelper] ✅ Gemini Pro summary generated successfully.`);
+            console.log(`[LLMHelper] âœ… Gemini Pro summary generated successfully.`);
             return this.processResponse(text);
           }
         } catch (e: any) {
-          console.warn(`[LLMHelper] ⚠️ Gemini Pro attempt ${attempt} failed: ${e.message}`);
+          console.warn(`[LLMHelper] âš ï¸ Gemini Pro attempt ${attempt} failed: ${e.message}`);
           // Aggressive backoff for Pro: 2s, 4s, 8s, 16s, 32s
           const backoff = 2000 * Math.pow(2, attempt - 1);
           console.log(`[LLMHelper] Waiting ${backoff}ms before next retry...`);
@@ -3764,7 +3367,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
         }
       }
     } else {
-      console.log(`[LLMHelper] Gemini client not initialized — skipping Gemini Pro.`);
+      console.log(`[LLMHelper] Gemini client not initialized â€” skipping Gemini Pro.`);
     }
 
     throw new Error("Failed to generate summary after all fallback attempts.");

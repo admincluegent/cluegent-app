@@ -1,64 +1,57 @@
-import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
-import { MessageSquare, Camera, Zap, User } from 'lucide-react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import { MessageSquare, Camera, User } from 'lucide-react';
 import { useShortcuts } from '../hooks/useShortcuts';
 
 const SettingsPopup = () => {
     const { shortcuts } = useShortcuts();
     const [isUndetectable, setIsUndetectable] = useState(false);
-    const [useGroqFastText, setUseGroqFastText] = useState(() => {
-        return localStorage.getItem('natively_groq_fast_text') === 'true';
-    });
     const [profileMode, setProfileMode] = useState(false);
     const [hasProfile, setHasProfile] = useState(false);
-    const [isPremium, setIsPremium] = useState(false);
 
-    const isFirstRender = React.useRef(true);
-
-    const [hasStoredKey, setHasStoredKey] = useState<Record<string, boolean>>({});
-
-    // Load credentials func
-    const loadCredentials = async () => {
+    const loadProfile = useCallback(async () => {
         try {
-            // @ts-ignore
-            const creds = await window.electronAPI?.getStoredCredentials?.();
-            if (creds) {
-                setHasStoredKey({
-                    gemini: !!creds.hasGeminiKey,
-                    groq: !!creds.hasGroqKey,
-                    openai: !!creds.hasOpenaiKey,
-                    claude: !!creds.hasClaudeKey,
-                    natively: !!creds.hasNativelyKey
-                });
+            const status = await window.electronAPI?.profileGetStatus?.();
+            if (status) {
+                setHasProfile(status.hasProfile);
+                setProfileMode(status.profileMode);
             }
         } catch (e) {
-            console.error("Failed to load settings:", e);
+            console.warn('[SettingsPopup] Failed to load profile status:', e);
         }
-    };
+    }, []);
 
     // Load Initial Data and refresh on focus
     useEffect(() => {
-        loadCredentials();
-        const handleFocus = () => loadCredentials();
-        window.addEventListener('focus', handleFocus);
+        void loadProfile();
 
-        // Load profile status
-        const loadProfile = async () => {
-            try {
-                // @ts-ignore
-                const status = await window.electronAPI?.profileGetStatus?.();
-                if (status) {
-                    setHasProfile(status.hasProfile);
-                    setProfileMode(status.profileMode);
-                }
-                // Check premium status
-                const premium = await window.electronAPI?.licenseCheckPremium?.();
-                setIsPremium(!!premium);
-            } catch (e) { console.warn('[SettingsPopup] Failed to load profile/premium status:', e); }
-
+        const handleFocus = () => void loadProfile();
+        const handleVisibility = () => {
+            if (!document.hidden) void loadProfile();
         };
-        loadProfile();
 
-        return () => window.removeEventListener('focus', handleFocus);
+        window.addEventListener('focus', handleFocus);
+        document.addEventListener('visibilitychange', handleVisibility);
+        return () => {
+            window.removeEventListener('focus', handleFocus);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
+    }, [loadProfile]);
+
+    useEffect(() => {
+        if (!window.electronAPI?.onSettingsVisibilityChange) return;
+        const unsubscribe = window.electronAPI.onSettingsVisibilityChange((isVisible) => {
+            if (isVisible) void loadProfile();
+        });
+        return () => unsubscribe();
+    }, [loadProfile]);
+
+    useEffect(() => {
+        if (!window.electronAPI?.onProfileStatusChanged) return;
+        const unsubscribe = window.electronAPI.onProfileStatusChanged((status) => {
+            setHasProfile(status.hasProfile);
+            setProfileMode(status.profileMode);
+        });
+        return () => unsubscribe();
     }, []);
 
     // Fetch initial undetectable state from main process (source of truth)
@@ -81,43 +74,6 @@ const SettingsPopup = () => {
         }
     }, []);
 
-    useEffect(() => {
-        // Listen for changes from other windows (2-way sync)
-        if (window.electronAPI?.onGroqFastTextChanged) {
-            const unsubscribe = window.electronAPI.onGroqFastTextChanged((enabled: boolean) => {
-                setUseGroqFastText(enabled);
-                localStorage.setItem('natively_groq_fast_text', String(enabled));
-            });
-            return () => unsubscribe();
-        }
-    }, []);
-
-    useEffect(() => {
-        // Skip initial render to avoid unnecessary IPC calls
-        if (isFirstRender.current) {
-            isFirstRender.current = false;
-            // Ensure backend is synced on mount (even if no change)
-            try {
-                // @ts-ignore
-                window.electronAPI?.invoke('set-groq-fast-text-mode', useGroqFastText);
-            } catch (e) {
-                console.error(e);
-            }
-            return;
-        }
-
-        // Apply Groq Text Mode
-        localStorage.setItem('natively_groq_fast_text', String(useGroqFastText));
-        try {
-            // @ts-ignore - electronAPI not typed in this file yet
-            window.electronAPI?.invoke('set-groq-fast-text-mode', useGroqFastText);
-        } catch (e) {
-            console.error(e);
-        }
-    }, [useGroqFastText]);
-
-    const [actionButtonMode, setActionButtonModeState] = useState<'recap' | 'brainstorm'>('recap');
-
     const [showTranscript, setShowTranscript] = useState(() => {
         const stored = localStorage.getItem('natively_interviewer_transcript');
         return stored !== 'false'; // Default to true if not set
@@ -131,21 +87,6 @@ const SettingsPopup = () => {
 
         window.addEventListener('storage', handleStorage);
         return () => window.removeEventListener('storage', handleStorage);
-    }, []);
-
-    // Load action button mode and subscribe to changes from other windows
-    useEffect(() => {
-        // @ts-ignore
-        window.electronAPI?.getActionButtonMode?.()?.then((mode: 'recap' | 'brainstorm') => {
-            setActionButtonModeState(mode ?? 'recap');
-        }).catch(() => {});
-        // @ts-ignore
-        if (!window.electronAPI?.onActionButtonModeChanged) return;
-        // @ts-ignore
-        const unsubscribe = window.electronAPI.onActionButtonModeChanged((mode: 'recap' | 'brainstorm') => {
-            setActionButtonModeState(mode);
-        });
-        return () => unsubscribe();
     }, []);
 
     const contentRef = useRef<HTMLDivElement>(null);
@@ -221,28 +162,6 @@ const SettingsPopup = () => {
                     </button>
                 </div>
 
-
-                        {/* Groq (Fast Text) Toggle — enabled with Groq key OR Cluegent API key */}
-                            <div className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors duration-200 group ${!(hasStoredKey.groq || hasStoredKey.natively) ? 'opacity-50 grayscale cursor-not-allowed' : `${itemHoverClass} cursor-default`}`} title={!(hasStoredKey.groq || hasStoredKey.natively) ? "Requires Groq or Cluegent API key" : ""}>
-                    <div className="flex items-center gap-3">
-                        <Zap
-                            className="w-4 h-4 transition-colors text-white"
-                            fill={useGroqFastText ? "currentColor" : "none"}
-                        />
-                        <span className={`text-[12px] font-medium transition-colors ${useGroqFastText ? 'text-white' : labelInactiveClass}`}>Fast Response</span>
-                    </div>
-                    <button
-                        onClick={() => {
-                            if (!(hasStoredKey.groq || hasStoredKey.natively)) return;
-                            setUseGroqFastText(!useGroqFastText);
-                        }}
-                        className={`w-[30px] h-[18px] rounded-full p-[1.5px] transition-all duration-300 ease-spring active:scale-[0.92] ${useGroqFastText ? 'bg-orange-500 shadow-[0_2px_10px_rgba(249,115,22,0.3)]' : defaultToggleTrackClass}`}
-                        disabled={!(hasStoredKey.groq || hasStoredKey.natively)}
-                    >
-                        <div className={`w-[15px] h-[15px] rounded-full transition-transform duration-300 ease-spring ${toggleKnobClass} ${useGroqFastText ? 'translate-x-[12px]' : 'translate-x-0'}`} />
-                    </button>
-                </div>
-
                 {/* Interviewer Transcript Toggle */}
                 <div className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors duration-200 group cursor-default ${itemHoverClass}`}>
                     <div className="flex items-center gap-3">
@@ -266,68 +185,30 @@ const SettingsPopup = () => {
                     </button>
                 </div>
 
-                {/* Interview Mode (Brainstorm) Toggle */}
-                <div className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors duration-200 group cursor-default ${itemHoverClass}`}>
+                {/* Resume Context Toggle */}
+                <div className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors duration-200 group ${hasProfile ? `${itemHoverClass} cursor-default` : 'opacity-50 cursor-not-allowed'}`} title={hasProfile ? 'Use uploaded resume when relevant' : 'Upload a resume in Customize first'}>
                     <div className="flex items-center gap-3">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+                        <User
                             className="w-3.5 h-3.5 transition-colors text-white"
-                        >
-                            <line x1="6" y1="3" x2="6" y2="15" />
-                            <circle cx="18" cy="6" r="3" />
-                            <circle cx="6" cy="18" r="3" />
-                            <path d="M18 9a9 9 0 0 1-9 9" />
-                        </svg>
-                        <span className={`text-[12px] font-medium transition-colors ${actionButtonMode === 'brainstorm' ? 'text-white' : labelInactiveClass}`}>Interview Mode</span>
+                            fill={profileMode ? "currentColor" : "none"}
+                        />
+                        <span className={`text-[12px] font-medium transition-colors ${profileMode ? 'text-white' : labelInactiveClass}`}>Resume Context</span>
                     </div>
                     <button
                         onClick={async () => {
-                            const newMode: 'recap' | 'brainstorm' = actionButtonMode === 'brainstorm' ? 'recap' : 'brainstorm';
-                            setActionButtonModeState(newMode);
+                            if (!hasProfile) return;
+                            const newState = !profileMode;
+                            setProfileMode(newState);
                             try {
-                                // @ts-ignore
-                                await window.electronAPI?.setActionButtonMode?.(newMode);
+                                await window.electronAPI?.profileSetMode?.(newState);
                             } catch (e) { console.error(e); }
                         }}
-                        className={`w-[30px] h-[18px] rounded-full p-[1.5px] transition-all duration-300 ease-spring active:scale-[0.92] ${actionButtonMode === 'brainstorm' ? 'bg-violet-500 shadow-[0_2px_10px_rgba(139,92,246,0.3)]' : defaultToggleTrackClass}`}
+                        className={`w-[30px] h-[18px] rounded-full p-[1.5px] transition-all duration-300 ease-spring active:scale-[0.92] ${profileMode ? 'bg-emerald-500 shadow-[0_2px_10px_rgba(16,185,129,0.3)]' : defaultToggleTrackClass}`}
+                        disabled={!hasProfile}
                     >
-                        <div className={`w-[15px] h-[15px] rounded-full transition-transform duration-300 ease-spring ${toggleKnobClass} ${actionButtonMode === 'brainstorm' ? 'translate-x-[12px]' : 'translate-x-0'}`} />
+                        <div className={`w-[15px] h-[15px] rounded-full transition-transform duration-300 ease-spring ${toggleKnobClass} ${profileMode ? 'translate-x-[12px]' : 'translate-x-0'}`} />
                     </button>
                 </div>
-
-                {/* Profile Mode Toggle */}
-                {hasProfile && (
-                    <div className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors duration-200 group ${!isPremium ? 'opacity-50 grayscale cursor-not-allowed' : `${itemHoverClass} cursor-default`}`} title={!isPremium ? 'Requires Pro license to be active' : ''}>
-                        <div className="flex items-center gap-3">
-                            <User
-                                className="w-3.5 h-3.5 transition-colors text-white"
-                                fill={profileMode && isPremium ? "currentColor" : "none"}
-                            />
-                            <span className={`text-[12px] font-medium transition-colors ${profileMode && isPremium ? 'text-white' : labelInactiveClass}`}>Profile Mode</span>
-                        </div>
-                        <button
-                            onClick={async () => {
-                                if (!isPremium) return;
-                                const newState = !profileMode;
-                                setProfileMode(newState);
-                                try {
-                                    // @ts-ignore
-                                    await window.electronAPI?.profileSetMode?.(newState);
-                                } catch (e) { console.error(e); }
-                            }}
-                            className={`w-[30px] h-[18px] rounded-full p-[1.5px] transition-all duration-300 ease-spring active:scale-[0.92] ${profileMode && isPremium ? 'bg-accent-primary shadow-[0_2px_10px_rgba(var(--color-accent-primary),0.3)]' : defaultToggleTrackClass}`}
-                            disabled={!isPremium}
-                        >
-                            <div className={`w-[15px] h-[15px] rounded-full transition-transform duration-300 ease-spring ${toggleKnobClass} ${profileMode && isPremium ? 'translate-x-[12px]' : 'translate-x-0'}`} />
-                        </button>
-                    </div>
-                )}
 
                 <div className={`h-px my-0.5 mx-2 ${dividerClass}`} />
 

@@ -11,6 +11,7 @@ import {
     SlidersHorizontal
 } from 'lucide-react';
 import CluegentIcon from '../icon.png';
+import { isMac } from '../../utils/platformUtils';
 
 type HelpSettingsProps = {
     onNavigate?: (tab: string) => void;
@@ -38,6 +39,9 @@ const HelpCard = ({ icon, title, description, children }: HelpCardProps) => (
     </section>
 );
 
+const shortcutModifier = isMac ? 'Command' : 'Ctrl';
+const shortcutText = (key: string) => `${shortcutModifier} + ${key}`;
+
 const guideSteps = {
     permissions: [
         { label: 'Open Privacy settings', x: 44, y: 48 },
@@ -47,10 +51,10 @@ const guideSteps = {
     interface: [
         { label: 'Start listening', x: 244, y: 38 },
         { label: 'Use a quick action', x: 174, y: 142 },
-        { label: 'Submit with Ctrl + Enter', x: 516, y: 218 }
+        { label: `Submit with ${shortcutText('Enter')}`, x: 516, y: 218 }
     ],
     screenshot: [
-        { label: 'Capture screenshot with Ctrl + [', x: 520, y: 226 },
+        { label: `Capture screenshot with ${shortcutText('[')}`, x: 520, y: 226 },
         { label: 'Screenshot attached', x: 452, y: 112 },
         { label: 'AI analyzes the same overlay', x: 138, y: 164 }
     ]
@@ -242,7 +246,7 @@ export const MockInterfaceWalkthrough = () => {
 
                     <div className="flex items-center gap-3">
                         <div className="flex-1 rounded-2xl border border-border-subtle bg-bg-input px-4 py-3 text-sm text-text-secondary">
-                            Ask anything... <span className="mx-2 text-text-tertiary">Ctrl + Enter</span> to submit
+                            Ask anything... <span className="mx-2 text-text-tertiary">{shortcutText('Enter')}</span> to submit
                         </div>
                         <button className="flex h-11 w-11 items-center justify-center rounded-full bg-bg-item-active text-text-primary">
                             <ArrowRight className="h-4 w-4" />
@@ -297,7 +301,7 @@ export const MockScreenshotWalkthrough = () => {
                         className="flex items-center gap-2 rounded-full border border-border-subtle px-4 py-2 text-xs font-bold text-text-primary"
                     >
                         <Camera className="h-3.5 w-3.5 text-amber-500" />
-                        Ctrl + [
+                        {shortcutText('[')}
                     </motion.button>
                     <button className="flex items-center gap-2 rounded-full bg-bg-item-active px-4 py-2 text-xs font-bold text-text-primary">
                         <EyeOff className="h-3.5 w-3.5" /> Hide
@@ -356,7 +360,7 @@ export const MockScreenshotWalkthrough = () => {
                             initial={{ opacity: 0, y: 6 }}
                             animate={{ opacity: 1, y: 0 }}
                         >
-                            {step === 0 && 'Press Ctrl + [ to attach the current screen from inside the same overlay.'}
+                            {step === 0 && `Press ${shortcutText('[')} to attach the current screen from inside the same overlay.`}
                             {step === 1 && 'Screenshot attached. Cluegent keeps the UI quiet and sends the image with your behavior rules.'}
                             {step === 2 && 'AI reads the screenshot, combines any rolling transcript context, and answers the visible question directly.'}
                         </motion.div>
@@ -364,7 +368,7 @@ export const MockScreenshotWalkthrough = () => {
 
                     <div className="flex items-center gap-3">
                         <div className="flex-1 rounded-2xl border border-border-subtle bg-bg-input px-4 py-3 text-sm text-text-secondary">
-                            Ask anything... <span className="mx-2 text-text-tertiary">Ctrl + [</span> for screenshot
+                            Ask anything... <span className="mx-2 text-text-tertiary">{shortcutText('[')}</span> for screenshot
                         </div>
                         <motion.button
                             animate={{ backgroundColor: step === 0 ? 'rgba(245,158,11,0.18)' : 'var(--bg-item-active)' }}
@@ -413,7 +417,7 @@ export const HelpSettings: React.FC<HelpSettingsProps> = () => {
                 <HelpCard
                     icon={<Monitor size={18} />}
                     title="Cluegent Interface Operations"
-                    description="Use Start listening for rolling transcript, quick actions for reusable prompts, and Ctrl + Enter when you want an answer."
+                    description={`Use Start listening for rolling transcript, quick actions for reusable prompts, and ${shortcutText('Enter')} when you want an answer.`}
                 >
                     <MockInterfaceWalkthrough />
                 </HelpCard>
@@ -421,7 +425,7 @@ export const HelpSettings: React.FC<HelpSettingsProps> = () => {
                 <HelpCard
                     icon={<Camera size={18} />}
                     title="Screenshot Response"
-                    description="Press Ctrl + [ to attach a screenshot, then submit so Cluegent can answer visible questions, code, errors, and transcript context."
+                    description={`Press ${shortcutText('[')} to attach a screenshot, then submit so Cluegent can answer visible questions, code, errors, and transcript context.`}
                 >
                     <MockScreenshotWalkthrough />
                 </HelpCard>

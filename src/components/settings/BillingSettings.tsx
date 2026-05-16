@@ -258,7 +258,7 @@ function ensureRazorpayCheckoutLoaded() {
   });
 }
 
-export const NativelyApiSettings: React.FC = () => {
+export const BillingSettings: React.FC = () => {
   const { profile, subscription, planStatus, refreshProfile, isSyncing } = useAuth();
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);

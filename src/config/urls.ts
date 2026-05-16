@@ -6,7 +6,7 @@
  * after the user is authenticated.
  */
 
-export const BILLING_SETTINGS_TAB = "natively-api" as const;
+export const BILLING_SETTINGS_TAB = "billing" as const;
 
 export const CHECKOUT_URLS = {
   sandboxManaged: null,

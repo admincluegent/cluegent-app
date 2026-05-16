@@ -2,6 +2,7 @@ import { LLMHelper } from "../LLMHelper";
 import { FAST_LIVE_COPILOT_SYSTEM_PROMPT } from "./prompts";
 import { TemporalContext } from "./TemporalContextBuilder";
 import { IntentResult } from "./IntentClassifier";
+import { LocalProfileManager } from "../services/LocalProfileManager";
 
 export class WhatToAnswerLLM {
     private llmHelper: LLMHelper;
@@ -56,7 +57,21 @@ ANSWER SHAPE: ${intentResult.answerShape}
                 ? `${extraContext}\n\nCONVERSATION:\n${cleanedTranscript}`
                 : cleanedTranscript;
 
-            yield* this.llmHelper.streamChat(fullMessage, imagePaths, undefined, FAST_LIVE_COPILOT_SYSTEM_PROMPT, true);
+            let profileContext: string | undefined;
+            try {
+                const profileResult = LocalProfileManager.getInstance().buildContextForRequest({
+                    message: fullMessage,
+                    hasImages: Boolean(imagePaths?.length),
+                });
+                if (profileResult.shouldInject && profileResult.contextBlock) {
+                    profileContext = profileResult.contextBlock;
+                    console.log(`[WhatToAnswerLLM] Local resume context injected (${profileResult.reason})`);
+                }
+            } catch (profileErr: any) {
+                console.warn("[WhatToAnswerLLM] Local resume context skipped:", profileErr?.message || profileErr);
+            }
+
+            yield* this.llmHelper.streamChat(fullMessage, imagePaths, profileContext, FAST_LIVE_COPILOT_SYSTEM_PROMPT, true);
 
         } catch (error) {
             console.error("[WhatToAnswerLLM] Stream failed:", error);

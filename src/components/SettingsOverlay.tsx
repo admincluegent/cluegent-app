@@ -4,14 +4,14 @@ import {
     X, Mic, Speaker, Monitor, Keyboard, User, LifeBuoy, LogOut, Upload,
     ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
     Camera, RotateCcw, Eye, Layout, MessageSquare, Crop,
-    ChevronDown, ChevronUp, Check, BadgeCheck, Power, Palette, Clock, Ghost, Sun, Moon, RefreshCw, Info, Globe, Terminal, Settings, Activity, ExternalLink, Trash2,
+    ChevronDown, ChevronUp, Check, BadgeCheck, Power, Palette, Clock, Ghost, Sun, Moon, RefreshCw, Info, Globe, Terminal, Settings, Activity, ExternalLink, Trash2, FileText, FileType,
     Sparkles, Pencil, Edit3, Briefcase, Building2, Search, MapPin, CheckCircle, HelpCircle, Zap, SlidersHorizontal, PointerOff,
     Star, AlertCircle, Gift, Loader2
 } from 'lucide-react';
 import { analytics } from '../lib/analytics/analytics.service';
 import { AboutSection } from './AboutSection';
 import { HelpSettings } from './settings/HelpSettings';
-import { NativelyApiSettings } from './settings/NativelyApiSettings';
+import { BillingSettings } from './settings/BillingSettings';
 import { RecentLocalMeetings } from './settings/RecentLocalMeetings';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useShortcuts } from '../hooks/useShortcuts';
@@ -405,7 +405,7 @@ interface SettingsOverlayProps {
 
 const normalizeSettingsTab = (tab: string) =>
     tab === 'ai-providers'
-        ? 'natively-api'
+        ? 'billing'
         : tab === 'calendar'
             ? 'general'
             : tab;
@@ -425,6 +425,17 @@ const formatAccountDate = (value?: string | null) => {
         day: 'numeric',
         year: 'numeric',
     });
+};
+
+const getResumeFileIcon = (fileName?: string | null) => {
+    const ext = (fileName?.split('.').pop() || '').toLowerCase();
+    if (ext === 'pdf') {
+        return <FileText size={15} className="shrink-0 text-red-500" />;
+    }
+    if (ext === 'doc' || ext === 'docx') {
+        return <FileType size={15} className="shrink-0 text-blue-500" />;
+    }
+    return <FileText size={15} className="shrink-0 text-text-secondary" />;
 };
 
 const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, initialTab = 'general', isTrialActive = false }) => {
@@ -557,6 +568,12 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
             window.electronAPI?.getUndetectable?.().then(setIsUndetectable).catch(() => { });
             window.electronAPI?.getOverlayMousePassthrough?.().then(setIsMousePassthrough).catch(() => { });
             window.electronAPI?.getDisguise?.().then(setDisguiseMode).catch(() => { });
+            window.electronAPI?.profileGetStatus?.().then((status) => {
+                if (status) setProfileStatus(status);
+            }).catch(() => { });
+            window.electronAPI?.profileGetProfile?.().then((data) => {
+                if (data) setProfileData(data);
+            }).catch(() => { });
         }
     }, [isOpen]);
 
@@ -578,6 +595,21 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                 }
             });
         }
+    }, []);
+
+    useEffect(() => {
+        if (!window.electronAPI?.onProfileStatusChanged) return;
+        const unsubscribe = window.electronAPI.onProfileStatusChanged((status) => {
+            setProfileStatus(status);
+            if (status.hasProfile) {
+                window.electronAPI?.profileGetProfile?.().then((data) => {
+                    if (data) setProfileData(data);
+                }).catch(() => { });
+            } else {
+                setProfileData(null);
+            }
+        });
+        return () => unsubscribe();
     }, []);
 
     useEffect(() => {
@@ -945,74 +977,14 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
     const [selectedOutput, setSelectedOutput] = useState('');
     const [micLevel, setMicLevel] = useState(0);
 
-    // STT Provider settings
-    const [sttProvider, setSttProvider] = useState<'none' | 'google' | 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox' | 'natively' | 'firebase'>('firebase');
-    const [groqSttModel, setGroqSttModel] = useState('whisper-large-v3-turbo');
-    const [sttGroqKey, setSttGroqKey] = useState('');
-    const [sttOpenaiKey, setSttOpenaiKey] = useState('');
-    const [sttDeepgramKey, setSttDeepgramKey] = useState('');
-    const [sttElevenLabsKey, setSttElevenLabsKey] = useState('');
-    const [sttAzureKey, setSttAzureKey] = useState('');
-    const [sttAzureRegion, setSttAzureRegion] = useState('eastus');
-    const [sttIbmKey, setSttIbmKey] = useState('');
-    const [sttTestStatus, setSttTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
-    const [sttTestError, setSttTestError] = useState('');
-    const [sttSaving, setSttSaving] = useState(false);
-    const [sttSaved, setSttSaved] = useState(false);
-    const [googleServiceAccountPath, setGoogleServiceAccountPath] = useState<string | null>(null);
-    const [hasNativelyKey, setHasNativelyKey] = useState(false);
-    const [hasStoredSttGroqKey, setHasStoredSttGroqKey] = useState(false);
-    const [hasStoredSttOpenaiKey, setHasStoredSttOpenaiKey] = useState(false);
-    const [hasStoredDeepgramKey, setHasStoredDeepgramKey] = useState(false);
-    const [hasStoredElevenLabsKey, setHasStoredElevenLabsKey] = useState(false);
-    const [hasStoredAzureKey, setHasStoredAzureKey] = useState(false);
-    const [hasStoredIbmWatsonKey, setHasStoredIbmWatsonKey] = useState(false);
-    const [sttSonioxKey, setSttSonioxKey] = useState('');
-    const [hasStoredSonioxKey, setHasStoredSonioxKey] = useState(false);
-    const [isSttDropdownOpen, setIsSttDropdownOpen] = useState(false);
-    const sttDropdownRef = React.useRef<HTMLDivElement>(null);
-
-    // Close STT dropdown when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (sttDropdownRef.current && !sttDropdownRef.current.contains(event.target as Node)) {
-                setIsSttDropdownOpen(false);
-            }
-        };
-        if (isSttDropdownOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [isSttDropdownOpen]);
-
-    // Load STT settings on mount
+    // Load backend-managed settings on mount.
     useEffect(() => {
         const loadSttSettings = async () => {
             try {
                 // @ts-ignore
                 const creds = await window.electronAPI?.getStoredCredentials?.();
                 if (creds) {
-                    setSttProvider('firebase');
-                    if (creds.groqSttModel) setGroqSttModel(creds.groqSttModel);
-                    setGoogleServiceAccountPath(creds.googleServiceAccountPath);
-                    setHasStoredSttGroqKey(creds.hasSttGroqKey);
-                    setHasStoredSttOpenaiKey(creds.hasSttOpenaiKey);
-                    setHasStoredDeepgramKey(creds.hasDeepgramKey);
-                    setHasStoredElevenLabsKey(creds.hasElevenLabsKey);
-                    setHasStoredAzureKey(creds.hasAzureKey);
-                    if (creds.azureRegion) setSttAzureRegion(creds.azureRegion);
-                    setHasStoredIbmWatsonKey(creds.hasIbmWatsonKey);
-                    setHasStoredSonioxKey(creds.hasSonioxKey || false);
                     setHasStoredTavilyKey(creds.hasTavilyKey || false);
-                    setHasNativelyKey(creds.hasNativelyKey || false);
-                    // Populate key fields so switching providers doesn't make saved keys appear gone
-                    if (creds.sttGroqKey) setSttGroqKey(creds.sttGroqKey);
-                    if (creds.sttOpenaiKey) setSttOpenaiKey(creds.sttOpenaiKey);
-                    if (creds.sttDeepgramKey) setSttDeepgramKey(creds.sttDeepgramKey);
-                    if (creds.sttElevenLabsKey) setSttElevenLabsKey(creds.sttElevenLabsKey);
-                    if (creds.sttAzureKey) setSttAzureKey(creds.sttAzureKey);
-                    if (creds.sttIbmKey) setSttIbmKey(creds.sttIbmKey);
-                    if (creds.sttSonioxKey) setSttSonioxKey(creds.sttSonioxKey);
                 }
             } catch (e) {
                 console.error('Failed to load STT settings:', e);
@@ -1031,147 +1003,12 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                 // Re-fetch credentials silently — purely additive, no state reset
                 window.electronAPI?.getStoredCredentials?.().then((creds: any) => {
                     if (!creds) return;
-                    setSttProvider('firebase');
-                    if (creds.groqSttModel) setGroqSttModel(creds.groqSttModel);
-                    setHasNativelyKey(creds.hasNativelyKey || false);
-                    setHasStoredSttGroqKey(creds.hasSttGroqKey);
-                    setHasStoredSttOpenaiKey(creds.hasSttOpenaiKey);
-                    setHasStoredDeepgramKey(creds.hasDeepgramKey);
-                    setHasStoredElevenLabsKey(creds.hasElevenLabsKey);
-                    setHasStoredAzureKey(creds.hasAzureKey);
-                    setHasStoredIbmWatsonKey(creds.hasIbmWatsonKey);
-                    setHasStoredSonioxKey(creds.hasSonioxKey || false);
+                    setHasStoredTavilyKey(creds.hasTavilyKey || false);
                 }).catch(() => { /* silently ignore */ });
             }
         });
         return () => unsubscribe();
     }, []); // mount-once: isOpen is checked inside the callback
-
-    const handleSttProviderChange = async (provider: 'none' | 'google' | 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox' | 'natively' | 'firebase') => {
-        setSttProvider(provider);
-        setIsSttDropdownOpen(false);
-        setSttTestStatus('idle');
-        setSttTestError('');
-        try {
-            // @ts-ignore
-            await window.electronAPI?.setSttProvider?.(provider);
-        } catch (e) {
-            console.error('Failed to set STT provider:', e);
-        }
-    };
-
-    const handleSttKeySubmit = async (provider: 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox', key: string) => {
-        if (!key.trim()) return;
-
-        // Auto-test before saving
-        setSttSaving(true);
-        setSttTestStatus('testing');
-        setSttTestError('');
-
-        try {
-            // @ts-ignore
-            const testResult = await window.electronAPI?.testSttConnection?.(
-                provider,
-                key.trim(),
-                provider === 'azure' ? sttAzureRegion : undefined
-            );
-
-            if (!testResult?.success) {
-                setSttTestStatus('error');
-                setSttTestError(testResult?.error || 'Validation failed. Key not saved.');
-                setSttSaving(false);
-                return; // Stop save
-            }
-
-            // If success, proceed to save
-            setSttTestStatus('success');
-            setTimeout(() => setSttTestStatus('idle'), 3000);
-
-            if (provider === 'groq') {
-                // @ts-ignore
-                await window.electronAPI?.setGroqSttApiKey?.(key.trim());
-            } else if (provider === 'openai') {
-                // @ts-ignore
-                await window.electronAPI?.setOpenAiSttApiKey?.(key.trim());
-            } else if (provider === 'elevenlabs') {
-                // @ts-ignore
-                await window.electronAPI?.setElevenLabsApiKey?.(key.trim());
-            } else if (provider === 'azure') {
-                // @ts-ignore
-                await window.electronAPI?.setAzureApiKey?.(key.trim());
-            } else if (provider === 'ibmwatson') {
-                // @ts-ignore
-                await window.electronAPI?.setIbmWatsonApiKey?.(key.trim());
-            } else if (provider === 'soniox') {
-                // @ts-ignore
-                await window.electronAPI?.setSonioxApiKey?.(key.trim());
-            } else {
-                // @ts-ignore
-                await window.electronAPI?.setDeepgramApiKey?.(key.trim());
-            }
-            if (provider === 'groq') setHasStoredSttGroqKey(true);
-            else if (provider === 'openai') setHasStoredSttOpenaiKey(true);
-            else if (provider === 'elevenlabs') setHasStoredElevenLabsKey(true);
-            else if (provider === 'azure') setHasStoredAzureKey(true);
-            else if (provider === 'ibmwatson') setHasStoredIbmWatsonKey(true);
-            else if (provider === 'soniox') setHasStoredSonioxKey(true);
-            else setHasStoredDeepgramKey(true);
-
-            setSttSaved(true);
-            setTimeout(() => setSttSaved(false), 2000);
-        } catch (e: any) {
-            console.error(`Failed to save ${provider} STT key:`, e);
-            setSttTestStatus('error');
-            setSttTestError(e.message || 'Validation failed');
-        } finally {
-            setSttSaving(false);
-        }
-    };
-
-    const handleRemoveSttKey = async (provider: 'groq' | 'openai' | 'deepgram' | 'elevenlabs' | 'azure' | 'ibmwatson' | 'soniox') => {
-        if (!confirm(`Are you sure you want to remove the ${provider === 'ibmwatson' ? 'IBM Watson' : provider.charAt(0).toUpperCase() + provider.slice(1)} API key?`)) return;
-
-        try {
-            if (provider === 'groq') {
-                // @ts-ignore
-                await window.electronAPI?.setGroqSttApiKey?.('');
-                setSttGroqKey('');
-                setHasStoredSttGroqKey(false);
-            } else if (provider === 'openai') {
-                // @ts-ignore
-                await window.electronAPI?.setOpenAiSttApiKey?.('');
-                setSttOpenaiKey('');
-                setHasStoredSttOpenaiKey(false);
-            } else if (provider === 'elevenlabs') {
-                // @ts-ignore
-                await window.electronAPI?.setElevenLabsApiKey?.('');
-                setSttElevenLabsKey('');
-                setHasStoredElevenLabsKey(false);
-            } else if (provider === 'azure') {
-                // @ts-ignore
-                await window.electronAPI?.setAzureApiKey?.('');
-                setSttAzureKey('');
-                setHasStoredAzureKey(false);
-            } else if (provider === 'ibmwatson') {
-                // @ts-ignore
-                await window.electronAPI?.setIbmWatsonApiKey?.('');
-                setSttIbmKey('');
-                setHasStoredIbmWatsonKey(false);
-            } else if (provider === 'soniox') {
-                // @ts-ignore
-                await window.electronAPI?.setSonioxApiKey?.('');
-                setSttSonioxKey('');
-                setHasStoredSonioxKey(false);
-            } else {
-                // @ts-ignore
-                await window.electronAPI?.setDeepgramApiKey?.('');
-                setSttDeepgramKey('');
-                setHasStoredDeepgramKey(false);
-            }
-        } catch (e) {
-            console.error(`Failed to remove ${provider} STT key:`, e);
-        }
-    };
 
     const handleRemoveTavilyKey = async () => {
         if (!confirm('Are you sure you want to remove the Tavily API Key?')) return;
@@ -1184,43 +1021,6 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
             console.error('Failed to remove Tavily API key:', e);
         }
     };
-
-    const handleTestSttConnection = async () => {
-        if (sttProvider === 'none' || sttProvider === 'google' || sttProvider === 'natively' || sttProvider === 'firebase') return;
-        const keyMap: Record<string, string> = {
-            groq: sttGroqKey, openai: sttOpenaiKey, deepgram: sttDeepgramKey,
-            elevenlabs: sttElevenLabsKey, azure: sttAzureKey, ibmwatson: sttIbmKey,
-            soniox: sttSonioxKey,
-        };
-        const keyToTest = keyMap[sttProvider] || '';
-        if (!keyToTest.trim()) {
-            setSttTestStatus('error');
-            setSttTestError('Please enter an API key first');
-            return;
-        }
-
-        setSttTestStatus('testing');
-        setSttTestError('');
-        try {
-            // @ts-ignore
-            const result = await window.electronAPI?.testSttConnection?.(
-                sttProvider,
-                keyToTest.trim(),
-                sttProvider === 'azure' ? sttAzureRegion : undefined
-            );
-            if (result?.success) {
-                setSttTestStatus('success');
-                setTimeout(() => setSttTestStatus('idle'), 3000);
-            } else {
-                setSttTestStatus('error');
-                setSttTestError(result?.error || 'Connection failed');
-            }
-        } catch (e: any) {
-            setSttTestStatus('error');
-            setSttTestError(e.message || 'Test failed');
-        }
-    };
-
 
     // Load stored credentials on mount
 
@@ -1385,6 +1185,66 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
             || current.customPrompt !== saved.customPrompt;
     };
 
+    const handleResumeUpload = async () => {
+        setProfileError('');
+        try {
+            const fileResult = await window.electronAPI?.profileSelectFile?.();
+            if (fileResult?.cancelled || !fileResult?.filePath) return;
+
+            setProfileUploading(true);
+            const result = await window.electronAPI?.profileUploadResume?.(fileResult.filePath);
+            if (result?.success) {
+                const status = await window.electronAPI?.profileGetStatus?.();
+                if (status) setProfileStatus(status);
+                const data = await window.electronAPI?.profileGetProfile?.();
+                if (data) setProfileData(data);
+            } else {
+                setProfileError(result?.error || 'Upload failed');
+            }
+        } catch (e: any) {
+            setProfileError(e.message || 'Upload failed');
+        } finally {
+            setProfileUploading(false);
+        }
+    };
+
+    const handleResumeModeToggle = async () => {
+        if (!profileStatus.hasProfile) return;
+        const next = !profileStatus.profileMode;
+        try {
+            const result = await window.electronAPI?.profileSetMode?.(next);
+            if (result?.success !== false) {
+                setProfileStatus(prev => ({ ...prev, profileMode: next }));
+            } else {
+                setProfileError(result?.error || 'Could not update resume context mode');
+            }
+        } catch (e: any) {
+            setProfileError(e.message || 'Could not update resume context mode');
+        }
+    };
+
+    const handleResumeDelete = async () => {
+        try {
+            await window.electronAPI?.profileDelete?.();
+            setProfileStatus({ hasProfile: false, profileMode: false });
+            setProfileData(null);
+            setProfileError('');
+        } catch (e: any) {
+            setProfileError(e.message || 'Could not remove resume');
+        }
+    };
+
+    const handleResumeOpen = async () => {
+        try {
+            const result = await window.electronAPI?.profileOpenResume?.();
+            if (result?.success === false) {
+                setProfileError(result.error || 'Could not open resume');
+            }
+        } catch (e: any) {
+            setProfileError(e.message || 'Could not open resume');
+        }
+    };
+
     const updateQuickAction = (
         id: string,
         patch: Partial<Pick<QuickActionConfig, 'label' | 'instruction'>>
@@ -1526,10 +1386,10 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                         <Monitor size={16} /> General
                                     </button>
                                     <button
-                                        onClick={() => setActiveTab('natively-api')}
-                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${activeTab === 'natively-api' ? 'bg-bg-item-active text-text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-bg-item-active/50'}`}
+                                        onClick={() => setActiveTab('billing')}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${activeTab === 'billing' ? 'bg-bg-item-active text-text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-bg-item-active/50'}`}
                                     >
-                                        <Zap size={16} className={activeTab === 'natively-api' ? 'text-blue-500' : 'text-blue-500/70'} />
+                                        <Zap size={16} className={activeTab === 'billing' ? 'text-blue-500' : 'text-blue-500/70'} />
                                         <span>Billing</span>
                                     </button>
                                     <button
@@ -2162,6 +2022,86 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                         </div>
                                     </div>
 
+                                    <div className="rounded-2xl border border-border-subtle bg-bg-item-surface overflow-hidden">
+                                        <div className="p-5">
+                                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                                <div className="flex min-w-0 gap-4">
+                                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-input text-accent-primary">
+                                                        {profileUploading ? <RefreshCw size={19} className="animate-spin" /> : <Upload size={19} />}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <h4 className="text-base font-bold text-text-primary">Resume context</h4>
+                                                            <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] ${profileStatus.hasProfile ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-500' : 'border-border-subtle bg-bg-input text-text-tertiary'}`}>
+                                                                {profileStatus.hasProfile ? 'Ready' : 'Local'}
+                                                            </span>
+                                                        </div>
+                                                        <p className="mt-1 max-w-xl text-xs leading-relaxed text-text-secondary">
+                                                            Upload PDF, DOCX, or TXT. Cluegent keeps it local and uses it only when the question is relevant.
+                                                        </p>
+                                                        {profileStatus.hasProfile && (
+                                                            <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-text-tertiary">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={handleResumeOpen}
+                                                                    className="inline-flex max-w-[280px] items-center gap-2 rounded-full bg-bg-input px-3 py-2 text-text-secondary transition-colors hover:text-text-primary"
+                                                                    title="Open uploaded resume"
+                                                                >
+                                                                    {getResumeFileIcon(profileData?.fileName)}
+                                                                    <span className="min-w-0 flex-1 truncate text-left leading-tight">
+                                                                        {profileData?.fileName || profileStatus.name || 'Resume uploaded'}
+                                                                    </span>
+                                                                    <ExternalLink size={12} className="shrink-0" />
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleResumeUpload}
+                                                        disabled={profileUploading}
+                                                        className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition-all ${profileUploading ? 'cursor-wait border border-border-subtle bg-bg-input text-text-tertiary' : 'bg-slate-950 text-white shadow-sm hover:bg-slate-800 active:scale-[0.98]'}`}
+                                                    >
+                                                        {profileUploading ? <RefreshCw size={13} className="animate-spin" /> : <Upload size={13} />}
+                                                        {profileUploading ? 'Uploading' : profileStatus.hasProfile ? 'Replace' : 'Upload resume'}
+                                                    </button>
+                                                    {profileStatus.hasProfile && (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleResumeModeToggle}
+                                                                className={`inline-flex h-9 min-w-[82px] items-center justify-center gap-2 rounded-full border px-3 text-xs font-semibold transition-all ${profileStatus.profileMode ? 'border-emerald-500/25 bg-emerald-500/12 text-emerald-500' : 'border-border-subtle bg-bg-input text-text-secondary hover:text-text-primary'}`}
+                                                            >
+                                                                <span className={`relative h-4 w-8 shrink-0 rounded-full transition-colors ${profileStatus.profileMode ? 'bg-emerald-500' : 'bg-bg-toggle-switch border border-border-muted'}`}>
+                                                                    <span className={`absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-white transition-transform ${profileStatus.profileMode ? 'translate-x-4' : 'translate-x-0'}`} />
+                                                                </span>
+                                                                <span className="w-5 text-left leading-none">{profileStatus.profileMode ? 'On' : 'Off'}</span>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleResumeDelete}
+                                                                aria-label="Remove resume"
+                                                                title="Remove resume"
+                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border-subtle bg-bg-input text-text-tertiary transition-colors hover:border-red-500/25 hover:bg-red-500/10 hover:text-red-500"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {profileError && (
+                                                <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-500">
+                                                    {profileError}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
                                     <div className="hidden rounded-2xl border border-border-subtle bg-bg-item-surface p-5">
                                         <div className="flex items-start gap-4">
                                             <div className="w-10 h-10 rounded-xl bg-bg-input border border-border-subtle flex items-center justify-center text-accent-primary shrink-0">
@@ -2494,11 +2434,11 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                         )}
 
                                                         {/* High-fidelity Toggle */}
-                                                        <div className={`flex items-center gap-2 bg-bg-input px-3 py-1.5 rounded-full border border-border-subtle ${!hasProfileAccess ? 'opacity-40 cursor-not-allowed' : ''}`} title={!hasProfileAccess ? 'Requires Pro license' : ''}>
+                                                        <div className={`flex items-center gap-2 bg-bg-input px-3 py-1.5 rounded-full border border-border-subtle ${!profileStatus.hasProfile ? 'opacity-40 cursor-not-allowed' : ''}`} title={!profileStatus.hasProfile ? 'Upload a resume first' : ''}>
                                                             <span className="text-xs font-medium text-text-secondary">Persona Engine</span>
                                                             <div
                                                                 onClick={async () => {
-                                                                    if (!profileStatus.hasProfile || !hasProfileAccess) return;
+                                                                    if (!profileStatus.hasProfile) return;
                                                                     const newState = !profileStatus.profileMode;
                                                                     try {
                                                                         await window.electronAPI?.profileSetMode?.(newState);
@@ -2507,9 +2447,9 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                                         console.error('Failed to toggle profile mode:', e);
                                                                     }
                                                                 }}
-                                                                className={`w-9 h-5 rounded-full relative transition-colors ${(!profileStatus.hasProfile || !hasProfileAccess) ? 'opacity-40 cursor-not-allowed bg-bg-toggle-switch' : profileStatus.profileMode ? 'bg-accent-primary' : 'bg-bg-toggle-switch border border-border-muted'}`}
+                                                                className={`w-9 h-5 rounded-full relative transition-colors ${!profileStatus.hasProfile ? 'opacity-40 cursor-not-allowed bg-bg-toggle-switch' : profileStatus.profileMode ? 'bg-accent-primary' : 'bg-bg-toggle-switch border border-border-muted'}`}
                                                             >
-                                                                <div className={`absolute top-1 left-1 w-3 h-3 rounded-full bg-white transition-transform ${profileStatus.profileMode && hasProfileAccess ? 'translate-x-4' : 'translate-x-0'}`} />
+                                                                <div className={`absolute top-1 left-1 w-3 h-3 rounded-full bg-white transition-transform ${profileStatus.profileMode ? 'translate-x-4' : 'translate-x-0'}`} />
                                                             </div>
                                                         </div>
                                                     </div>
@@ -2916,7 +2856,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                         <span className="shrink-0 mt-[1px]">⚠</span>
                                                         <span>
                                                             Web search credits exhausted for this month — showing AI-only research instead.
-                                                            Resets next billing cycle or <span className="underline cursor-pointer" onClick={() => setActiveTab('natively-api')}>upgrade your plan</span>.
+                                                            Resets next billing cycle or <span className="underline cursor-pointer" onClick={() => setActiveTab('billing')}>upgrade your plan</span>.
                                                         </span>
                                                     </div>
                                                 )}
@@ -3340,8 +3280,8 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
 
                                 </div>
                             )}
-                            {activeTab === 'natively-api' && (
-                                <NativelyApiSettings />
+                            {activeTab === 'billing' && (
+                                <BillingSettings />
                             )}
                             {activeTab === 'keybinds' && (
                                 <div className="space-y-5 animated fadeIn select-text pb-4">

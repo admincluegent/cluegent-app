@@ -2,6 +2,15 @@ const root = document.documentElement;
 const menuToggle = document.querySelector(".menu-toggle");
 const navLinks = document.querySelectorAll(".site-nav a");
 const revealItems = document.querySelectorAll(".reveal");
+const shortcutModifier = /mac|iphone|ipad|ipod/i.test(navigator.platform) ? "Command" : "Ctrl";
+
+document.querySelectorAll("[data-shortcut-mod]").forEach((element) => {
+  element.textContent = shortcutModifier;
+});
+
+document.querySelectorAll("[data-shortcut]").forEach((element) => {
+  element.textContent = `${shortcutModifier} + ${element.getAttribute("data-shortcut")}`;
+});
 
 if (menuToggle) {
   menuToggle.addEventListener("click", () => {
@@ -70,7 +79,7 @@ if (interfaceDemo) {
       transcript: "...now answer in one short interview-ready version",
       response: "Submit sends the prompt to the backend and streams the answer back into the overlay.",
       activeAction: -1,
-      stepLabel: "Submit with Ctrl + Enter",
+      stepLabel: `Submit with ${shortcutModifier} + Enter`,
       cursor: { x: 516, y: 302 },
       collapsed: true,
       listenActive: false,
@@ -112,8 +121,8 @@ if (screenshotDemo) {
   const screenshotStates = [
     {
       transcript: "...transcript hint: explain the visible React hook question clearly",
-      response: "Press Ctrl + [ to attach the current screen from inside the same overlay.",
-      stepLabel: "Capture screenshot with Ctrl + [",
+      response: `Press ${shortcutModifier} + [ to attach the current screen from inside the same overlay.`,
+      stepLabel: `Capture screenshot with ${shortcutModifier} + [`,
       cursor: { x: 520, y: 306 },
       bubbleVisible: false,
       hotkeyActive: true,

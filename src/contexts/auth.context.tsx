@@ -13,7 +13,12 @@ import {
   consumeGoogleRedirectResult,
   getFirebaseAuthErrorMessage,
   initializeDesktopGoogleAuthBridge,
+  loginWithEmailPassword,
   loginWithGoogle,
+  refreshCurrentUser,
+  registerWithEmailPassword,
+  resendVerificationEmail,
+  sendPasswordReset,
   logout,
   subscribeToAuthChanges,
 } from "@/lib/firebase";
@@ -36,6 +41,15 @@ type AuthContextValue = {
   isSyncing: boolean;
   error: string | null;
   loginWithGoogle: () => Promise<void>;
+  loginWithEmailPassword: (email: string, password: string) => Promise<boolean>;
+  registerWithEmailPassword: (
+    email: string,
+    password: string
+  ) => Promise<{ success: boolean; verificationSent: boolean }>;
+  sendPasswordReset: (email: string) => Promise<boolean>;
+  resendVerificationEmail: () => Promise<boolean>;
+  refreshAuthUser: () => Promise<void>;
+  clearError: () => void;
   logoutUser: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 };
@@ -111,6 +125,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await syncUserState(true);
   }, [syncUserState, user]);
 
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
   const handleGoogleLogin = useCallback(async () => {
     if (isAuthenticating) {
       return;
@@ -133,6 +151,83 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsAuthenticating(false);
     }
   }, [isAuthenticating, syncUserState]);
+
+  const handleEmailLogin = useCallback(
+    async (email: string, password: string) => {
+      if (isAuthenticating) {
+        return false;
+      }
+
+      setIsAuthenticating(true);
+      setError(null);
+
+      try {
+        const authUser = await loginWithEmailPassword(email, password);
+        setUser(authUser);
+        await syncUserState(true);
+        return true;
+      } catch (loginError) {
+        setError(getFirebaseAuthErrorMessage(loginError));
+        return false;
+      } finally {
+        setIsAuthenticating(false);
+      }
+    },
+    [isAuthenticating, syncUserState]
+  );
+
+  const handleEmailRegistration = useCallback(
+    async (email: string, password: string) => {
+      if (isAuthenticating) {
+        return { success: false, verificationSent: false };
+      }
+
+      setIsAuthenticating(true);
+      setError(null);
+
+      try {
+        const authUser = await registerWithEmailPassword(email, password);
+        setUser(authUser);
+        await syncUserState(true);
+        return { success: true, verificationSent: true };
+      } catch (registerError) {
+        setError(getFirebaseAuthErrorMessage(registerError));
+        return { success: false, verificationSent: false };
+      } finally {
+        setIsAuthenticating(false);
+      }
+    },
+    [isAuthenticating, syncUserState]
+  );
+
+  const handlePasswordReset = useCallback(async (email: string) => {
+    setError(null);
+
+    try {
+      await sendPasswordReset(email);
+      return true;
+    } catch (resetError) {
+      setError(getFirebaseAuthErrorMessage(resetError));
+      return false;
+    }
+  }, []);
+
+  const handleResendVerificationEmail = useCallback(async () => {
+    setError(null);
+
+    try {
+      await resendVerificationEmail();
+      return true;
+    } catch (verificationError) {
+      setError(getFirebaseAuthErrorMessage(verificationError));
+      return false;
+    }
+  }, []);
+
+  const handleRefreshAuthUser = useCallback(async () => {
+    const refreshedUser = await refreshCurrentUser();
+    setUser(refreshedUser);
+  }, []);
 
   const logoutUser = useCallback(async () => {
     setError(null);
@@ -300,12 +395,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isSyncing,
       error,
       loginWithGoogle: handleGoogleLogin,
+      loginWithEmailPassword: handleEmailLogin,
+      registerWithEmailPassword: handleEmailRegistration,
+      sendPasswordReset: handlePasswordReset,
+      resendVerificationEmail: handleResendVerificationEmail,
+      refreshAuthUser: handleRefreshAuthUser,
+      clearError,
       logoutUser,
       refreshProfile,
     }),
     [
+      clearError,
       error,
+      handleEmailLogin,
+      handleEmailRegistration,
       handleGoogleLogin,
+      handlePasswordReset,
+      handleRefreshAuthUser,
+      handleResendVerificationEmail,
       isAuthenticating,
       isLoading,
       isSyncing,

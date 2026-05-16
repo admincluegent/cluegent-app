@@ -56,7 +56,7 @@ export const AboutSection: React.FC = () => {
                     <div>
                         <h4 className="text-sm font-bold text-text-primary">What Cluegent Does</h4>
                         <p className="mt-2 text-sm leading-relaxed text-text-secondary">
-                            Cluegent is a real-time AI assistant for meetings, interviews, coding conversations, and
+                            Cluegent is a real-time AI assistant for meetings,coding conversations, and
                             screen-based questions. It can listen when you start listening, answer typed prompts,
                             analyze screenshots to produce useful responses.
                             </p>
@@ -73,7 +73,7 @@ export const AboutSection: React.FC = () => {
                         <h4 className="text-sm font-bold text-text-primary">Privacy Statement</h4>
                         <p className="mt-2 text-sm leading-relaxed text-text-secondary">
                             Cluegent does not start listening until you choose to start listening. Screenshots are sent
-                            only when you explicitly attach a screenshot. API keys stay on the backend, and
+                            only when you explicitly attach a screenshot and
                             local meeting history/customization data is stored on this device unless a backend feature
                             explicitly requires syncing usage or entitlement data.
                         </p>
