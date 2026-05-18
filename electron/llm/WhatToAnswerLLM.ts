@@ -3,6 +3,7 @@ import { FAST_LIVE_COPILOT_SYSTEM_PROMPT } from "./prompts";
 import { TemporalContext } from "./TemporalContextBuilder";
 import { IntentResult } from "./IntentClassifier";
 import { LocalProfileManager } from "../services/LocalProfileManager";
+import { FREE_PLAN_LIMIT_REACHED_MESSAGE, isPlanLimitError } from "./limitMessages";
 
 export class WhatToAnswerLLM {
     private llmHelper: LLMHelper;
@@ -75,6 +76,10 @@ ANSWER SHAPE: ${intentResult.answerShape}
 
         } catch (error) {
             console.error("[WhatToAnswerLLM] Stream failed:", error);
+            if (isPlanLimitError(error)) {
+                yield FREE_PLAN_LIMIT_REACHED_MESSAGE;
+                return;
+            }
             yield "Could you repeat that? I want to make sure I address your question properly.";
         }
     }

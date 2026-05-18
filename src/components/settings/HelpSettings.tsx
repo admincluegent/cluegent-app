@@ -296,12 +296,12 @@ export const MockScreenshotWalkthrough = () => {
                     </div>
                     <motion.button
                         animate={{
-                            backgroundColor: step === 0 ? 'rgba(245,158,11,0.18)' : 'var(--bg-item-surface)'
+                            backgroundColor: step === 0 ? 'rgba(16,185,129,0.18)' : 'var(--bg-item-surface)'
                         }}
                         className="flex items-center gap-2 rounded-full border border-border-subtle px-4 py-2 text-xs font-bold text-text-primary"
                     >
-                        <Camera className="h-3.5 w-3.5 text-amber-500" />
-                        {shortcutText('[')}
+                        <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                        Start listening
                     </motion.button>
                     <button className="flex items-center gap-2 rounded-full bg-bg-item-active px-4 py-2 text-xs font-bold text-text-primary">
                         <EyeOff className="h-3.5 w-3.5" /> Hide

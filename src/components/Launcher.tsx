@@ -797,7 +797,7 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                                             aria-expanded={isGuideSectionOpen}
                                         >
                                             <div>
-                                                <h2 className="text-sm font-bold text-text-primary">Guide animations</h2>
+                                                <h2 className="text-sm font-bold text-text-primary">Guide </h2>
                                                 <p className="mt-1 text-xs text-text-secondary">
                                                     Quick walkthroughs for listening, quick actions, and screenshot answers.
                                                 </p>

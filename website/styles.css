@@ -913,7 +913,7 @@ kbd {
 }
 
 .walkthrough-shot-button.is-active {
-  background: rgba(245, 158, 11, 0.18);
+  background: rgba(16, 185, 129, 0.18);
 }
 
 .walkthrough-live-dot {
@@ -1450,12 +1450,12 @@ kbd {
   font-weight: 800;
 }
 
-.undetectable-section {
+.privacy-controls-section {
   background:
     linear-gradient(180deg, #ffffff, #f8fafc);
 }
 
-.undetectable-section .eyebrow {
+.privacy-controls-section .eyebrow {
   display: block;
   color: #111827;
   font-size: clamp(34px, 5.2vw, 58px);
@@ -1466,17 +1466,17 @@ kbd {
   text-align: center;
 }
 
-.undetectable-section .section-heading {
+.privacy-controls-section .section-heading {
   gap: 18px;
 }
 
-.undetectable-section .section-heading h2 {
+.privacy-controls-section .section-heading h2 {
   max-width: 980px;
   margin: 0 auto;
   text-align: center;
 }
 
-.undetectable-showcase {
+.privacy-controls-showcase {
   display: grid;
   grid-template-columns: minmax(320px, 0.9fr) minmax(320px, 0.7fr);
   gap: 56px;
@@ -1485,7 +1485,7 @@ kbd {
   margin: 0 auto;
 }
 
-.undetectable-visual {
+.privacy-controls-visual {
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(226, 232, 240, 0.96);
@@ -1494,13 +1494,13 @@ kbd {
   box-shadow: 0 24px 70px rgba(15, 23, 42, 0.08);
 }
 
-.undetectable-visual img {
+.privacy-controls-visual img {
   display: block;
   width: 100%;
   height: auto;
 }
 
-.undetectable-copy {
+.privacy-controls-copy {
   max-width: 460px;
   margin: 0;
   color: #6b7280;
@@ -1510,8 +1510,53 @@ kbd {
   letter-spacing: 0;
 }
 
-.undetectable-copy strong {
+.privacy-controls-copy strong {
   color: #111827;
+}
+
+.responsible-section {
+  padding-top: 70px;
+  padding-bottom: 70px;
+  background: #ffffff;
+}
+
+.responsible-card {
+  width: min(100%, 1040px);
+  margin: 0 auto;
+  padding: 42px;
+  border: 1px solid rgba(203, 213, 225, 0.88);
+  border-radius: 28px;
+  background:
+    linear-gradient(135deg, rgba(236, 253, 245, 0.92), rgba(255, 255, 255, 0.96) 46%, rgba(239, 246, 255, 0.9));
+}
+
+.responsible-card .eyebrow {
+  color: #047857;
+}
+
+.responsible-card h2 {
+  max-width: 780px;
+  margin: 14px 0 18px;
+  color: #111827;
+  font-size: clamp(34px, 4.6vw, 58px);
+  line-height: 1.04;
+}
+
+.responsible-card p {
+  max-width: 820px;
+  margin: 0;
+  color: #4b5563;
+  font-size: 20px;
+  line-height: 1.65;
+}
+
+.responsible-card a {
+  display: inline-flex;
+  margin-top: 26px;
+  color: #047857;
+  font-size: 16px;
+  font-weight: 800;
+  text-decoration: none;
 }
 
 .steps-grid {
@@ -2207,15 +2252,19 @@ kbd {
     width: 56%;
   }
 
-  .undetectable-showcase {
+  .privacy-controls-showcase {
     grid-template-columns: 1fr;
     gap: 30px;
     width: min(100%, 720px);
   }
 
-  .undetectable-copy {
+  .privacy-controls-copy {
     max-width: 680px;
     font-size: 30px;
+  }
+
+  .responsible-card {
+    padding: 34px;
   }
 
   .workflow-table {
@@ -2345,7 +2394,7 @@ kbd {
     border-radius: 24px;
   }
 
-  .undetectable-copy {
+  .privacy-controls-copy {
     font-size: 24px;
   }
 

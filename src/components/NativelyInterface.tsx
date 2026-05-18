@@ -88,6 +88,26 @@ interface NativelyInterfaceProps {
     overlayOpacity?: number;
 }
 
+const FREE_PLAN_LIMIT_REACHED_MESSAGE = "Free Plan Limit Reached. Subscribe to use more.";
+
+const isPlanLimitMessage = (error: string) => {
+    const lower = error.toLowerCase();
+    return (
+        lower.includes('free trial limit') ||
+        lower.includes('free plan limit') ||
+        lower.includes('monthly screenshot limit') ||
+        lower.includes('screenshot limit') ||
+        lower.includes('prompt limit') ||
+        lower.includes('plan limit') ||
+        lower.includes('quota exceeded') ||
+        lower.includes('resource_exhausted')
+    );
+};
+
+const formatAssistantError = (error: string) => (
+    isPlanLimitMessage(error) ? FREE_PLAN_LIMIT_REACHED_MESSAGE : error
+);
+
 const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, overlayOpacity = OVERLAY_OPACITY_DEFAULT }) => {
     const isLightTheme = useResolvedTheme() === 'light';
     const { planStatus, refreshProfile, isSyncing } = useAuth();
@@ -164,6 +184,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
     // Latent Context State (Screenshots attached but not sent)
     const [attachedContext, setAttachedContext] = useState<Array<{ path: string, preview: string }>>([]);
+    const [copiedCodeBlockKey, setCopiedCodeBlockKey] = useState<string | null>(null);
 
     // Settings State with Persistence
     const [isUndetectable, setIsUndetectable] = useState(false);
@@ -994,10 +1015,13 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
         cleanups.push(window.electronAPI.onIntelligenceError((data) => {
             setIsProcessing(false);
+            const errorText = formatAssistantError(data.error);
             setMessages(prev => [...prev, {
                 id: Date.now().toString(),
                 role: 'system',
-                text: `âŒ Error (${data.mode}): ${data.error}`
+                text: errorText === FREE_PLAN_LIMIT_REACHED_MESSAGE
+                    ? errorText
+                    : `âŒ Error (${data.mode}): ${errorText}`
             }]);
         }));
         return () => cleanups.forEach(fn => fn());
@@ -1074,6 +1098,82 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         navigator.clipboard.writeText(text);
         analytics.trackCopyAnswer();
         // Optional: Trigger a small toast or state change for visual feedback
+    };
+
+    const handleCopyCodeBlock = (code: string, key: string) => {
+        navigator.clipboard.writeText(code);
+        setCopiedCodeBlockKey(key);
+        window.setTimeout(() => {
+            setCopiedCodeBlockKey(current => current === key ? null : current);
+        }, 1400);
+    };
+
+    const renderCodeBlock = (code: string, lang: string, key: string | number) => {
+        const blockKey = String(key);
+        const isCopied = copiedCodeBlockKey === blockKey;
+
+        return (
+            <div key={blockKey} className={`my-3 w-full min-w-0 overflow-hidden rounded-xl border shadow-lg ${codeBlockClass}`} style={appearance.codeBlockStyle}>
+                <div className={`flex items-center justify-between gap-3 border-b px-3 py-1.5 ${codeHeaderClass}`} style={appearance.codeHeaderStyle}>
+                    <span className={`truncate text-[10px] font-semibold uppercase tracking-widest font-mono ${codeHeaderTextClass}`}>
+                        {lang || 'CODE'}
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => handleCopyCodeBlock(code, blockKey)}
+                        className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-lg border border-white/10 bg-white/10 px-2.5 text-[11px] font-semibold text-white/80 transition-colors hover:bg-white/20 hover:text-white"
+                        title="Copy code"
+                        aria-label="Copy code"
+                    >
+                        {isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                        <span>{isCopied ? 'Copied' : 'Copy'}</span>
+                    </button>
+                </div>
+                <div className="w-full min-w-0 overflow-x-auto overflow-y-hidden bg-transparent">
+                    <SyntaxHighlighter
+                        language={lang}
+                        style={codeTheme}
+                        customStyle={{
+                            margin: 0,
+                            borderRadius: 0,
+                            fontSize: '13px',
+                            lineHeight: '1.6',
+                            background: 'transparent',
+                            padding: '16px',
+                            color: '#ffffff',
+                            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'normal',
+                            overflowWrap: 'anywhere',
+                        }}
+                        codeTagProps={{
+                            style: {
+                                color: '#ffffff',
+                                whiteSpace: 'inherit',
+                                wordBreak: 'inherit',
+                                overflowWrap: 'inherit',
+                            }
+                        }}
+                        PreTag={({ children, ...props }: any) => <pre {...props} style={{ ...props.style, color: '#ffffff', maxWidth: '100%', whiteSpace: 'pre-wrap', wordBreak: 'normal', overflowWrap: 'normal' }}>{children}</pre>}
+                        wrapLongLines={true}
+                        wrapLines={true}
+                        showLineNumbers={true}
+                        lineNumberStyle={{ minWidth: '2.5em', paddingRight: '1.2em', color: codeLineNumberColor, textAlign: 'right', fontSize: '11px' }}
+                        lineProps={() => ({
+                            style: {
+                                display: 'block',
+                                width: '100%',
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'normal',
+                                overflowWrap: 'anywhere',
+                            }
+                        })}
+                    >
+                        {code}
+                    </SyntaxHighlighter>
+                </div>
+            </div>
+        );
     };
 
     const handleWhatToSay = async () => {
@@ -1512,6 +1612,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         cleanups.push(window.electronAPI.onGeminiStreamError((error) => {
             setIsProcessing(false);
             requestStartTimeRef.current = null; // Clear timer on error
+            const errorText = formatAssistantError(error);
             setMessages(prev => {
                 // Append error to the current message or add new one?
                 // Let's add a new error block if the previous one confusing,
@@ -1520,15 +1621,17 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                 const lastMsg = prev[prev.length - 1];
                 if (lastMsg && lastMsg.isStreaming) {
                     const updated = [...prev];
-                    const errorText = lastMsg.text + `\n\n[Error: ${error}]`;
+                    const messageText = errorText === FREE_PLAN_LIMIT_REACHED_MESSAGE
+                        ? errorText
+                        : lastMsg.text + `\n\n[Error: ${errorText}]`;
                     updated[prev.length - 1] = {
                         ...lastMsg,
                         isStreaming: false,
-                        text: errorText
+                        text: messageText
                     };
                     appendLocalMeetingEvent({
                         type: 'response',
-                        text: errorText,
+                        text: messageText,
                     }, localMeetingIdRef.current);
                     streamingResponseTextRef.current = '';
                     return updated;
@@ -1536,7 +1639,9 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                 return [...prev, {
                     id: Date.now().toString(),
                     role: 'system',
-                    text: `âŒ Error: ${error}`
+                    text: errorText === FREE_PLAN_LIMIT_REACHED_MESSAGE
+                        ? errorText
+                        : `âŒ Error: ${errorText}`
                 }];
             });
         }));
@@ -2034,59 +2139,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                 if (match) {
                                     const lang = match[1] || 'python';
                                     const code = match[2].trim();
-                                    return (
-                                        <div key={i} className={`my-3 w-full min-w-0 rounded-xl overflow-x-auto overflow-y-hidden border shadow-lg ${codeBlockClass}`} style={appearance.codeBlockStyle}>
-                                            {/* Minimalist Apple Header */}
-                                            <div className={`px-3 py-1.5 border-b ${codeHeaderClass}`} style={appearance.codeHeaderStyle}>
-                                                <span className={`text-[10px] uppercase tracking-widest font-semibold font-mono ${codeHeaderTextClass}`}>
-                                                    {lang || 'CODE'}
-                                                </span>
-                                            </div>
-                                            <div className="w-full min-w-0 bg-transparent">
-                                                <SyntaxHighlighter
-                                                    language={lang}
-                                                    style={codeTheme}
-                                                    customStyle={{
-                                                        margin: 0,
-                                                        borderRadius: 0,
-                                                        fontSize: '13px',
-                                                        lineHeight: '1.6',
-                                                        background: 'transparent',
-                                                        padding: '16px',
-                                                        color: '#ffffff',
-                                                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                                                        whiteSpace: 'pre-wrap',
-                                                        wordBreak: 'normal',
-                                                        overflowWrap: 'anywhere',
-                                                    }}
-                                                    codeTagProps={{
-                                                        style: {
-                                                            color: '#ffffff',
-                                                            whiteSpace: 'inherit',
-                                                            wordBreak: 'inherit',
-                                                            overflowWrap: 'inherit',
-                                                        }
-                                                    }}
-                                                    PreTag={({ children, ...props }: any) => <pre {...props} style={{ ...props.style, color: '#ffffff', maxWidth: '100%', whiteSpace: 'pre-wrap', wordBreak: 'normal', overflowWrap: 'normal' }}>{children}</pre>}
-                                                    wrapLongLines={true}
-                                                    wrapLines={true}
-                                                    showLineNumbers={true}
-                                                    lineNumberStyle={{ minWidth: '2.5em', paddingRight: '1.2em', color: codeLineNumberColor, textAlign: 'right', fontSize: '11px' }}
-                                                    lineProps={() => ({
-                                                        style: {
-                                                            display: 'block',
-                                                            width: '100%',
-                                                            whiteSpace: 'pre-wrap',
-                                                            wordBreak: 'normal',
-                                                            overflowWrap: 'anywhere',
-                                                        }
-                                                    })}
-                                                >
-                                                    {code}
-                                                </SyntaxHighlighter>
-                                            </div>
-                                        </div>
-                                    );
+                                    return renderCodeBlock(code, lang, `${msg.id}-code-${i}`);
                                 }
                             }
                             // Regular text - Render with Markdown
@@ -2211,60 +2264,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                         code = part.replace(/^```\w*\s*/, '').replace(/```$/, '').trim();
                                     }
 
-                                    return (
-                                        <div key={i} className={`my-3 w-full min-w-0 rounded-xl overflow-x-auto overflow-y-hidden border shadow-lg ${codeBlockClass}`} style={appearance.codeBlockStyle}>
-                                            {/* Minimalist Apple Header */}
-                                            <div className={`px-3 py-1.5 border-b ${codeHeaderClass}`} style={appearance.codeHeaderStyle}>
-                                                <span className={`text-[10px] uppercase tracking-widest font-semibold font-mono ${codeHeaderTextClass}`}>
-                                                    {lang || 'CODE'}
-                                                </span>
-                                            </div>
-
-                                            <div className="w-full min-w-0 bg-transparent">
-                                                <SyntaxHighlighter
-                                                    language={lang}
-                                                    style={codeTheme}
-                                                    customStyle={{
-                                                        margin: 0,
-                                                        borderRadius: 0,
-                                                        fontSize: '13px',
-                                                        lineHeight: '1.6',
-                                                        background: 'transparent',
-                                                        padding: '16px',
-                                                        color: '#ffffff',
-                                                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                                                        whiteSpace: 'pre-wrap',
-                                                        wordBreak: 'normal',
-                                                        overflowWrap: 'anywhere',
-                                                    }}
-                                                    codeTagProps={{
-                                                        style: {
-                                                            color: '#ffffff',
-                                                            whiteSpace: 'inherit',
-                                                            wordBreak: 'inherit',
-                                                            overflowWrap: 'inherit',
-                                                        }
-                                                    }}
-                                                    PreTag={({ children, ...props }: any) => <pre {...props} style={{ ...props.style, color: '#ffffff', maxWidth: '100%', whiteSpace: 'pre-wrap', wordBreak: 'normal', overflowWrap: 'normal' }}>{children}</pre>}
-                                                    wrapLongLines={true}
-                                                    wrapLines={true}
-                                                    showLineNumbers={true}
-                                                    lineNumberStyle={{ minWidth: '2.5em', paddingRight: '1.2em', color: codeLineNumberColor, textAlign: 'right', fontSize: '11px' }}
-                                                    lineProps={() => ({
-                                                        style: {
-                                                            display: 'block',
-                                                            width: '100%',
-                                                            whiteSpace: 'pre-wrap',
-                                                            wordBreak: 'normal',
-                                                            overflowWrap: 'anywhere',
-                                                        }
-                                                    })}
-                                                >
-                                                    {code}
-                                                </SyntaxHighlighter>
-                                            </div>
-                                        </div>
-                                    );
+                                    return renderCodeBlock(code, lang, `${msg.id}-answer-code-${i}`);
                                 }
                             }
                             // Regular text - Render Markdown

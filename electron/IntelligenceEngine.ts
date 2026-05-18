@@ -11,6 +11,7 @@ import {
     prepareTranscriptForWhatToAnswer, buildTemporalContext,
     AssistantResponse as LLMAssistantResponse, classifyIntent
 } from './llm';
+import { FREE_PLAN_LIMIT_REACHED_MESSAGE, isPlanLimitError } from './llm/limitMessages';
 
 // Mode types
 export type IntelligenceMode = 'idle' | 'assist' | 'what_to_say' | 'follow_up' | 'recap' | 'clarify' | 'manual' | 'follow_up_questions' | 'code_hint' | 'brainstorm';
@@ -345,6 +346,10 @@ export class IntelligenceEngine extends EventEmitter {
         } catch (error) {
             this.emit('error', error as Error, 'what_to_say');
             this.setMode('idle');
+            if (isPlanLimitError(error)) {
+                this.emit('suggested_answer', FREE_PLAN_LIMIT_REACHED_MESSAGE, question || 'What to Answer', confidence);
+                return FREE_PLAN_LIMIT_REACHED_MESSAGE;
+            }
             return "Could you repeat that? I want to make sure I address your question properly.";
         }
     }

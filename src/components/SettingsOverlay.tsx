@@ -1377,7 +1377,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                         onClick={() => setActiveTab('account')}
                                         className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${activeTab === 'account' ? 'bg-bg-item-active text-text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-bg-item-active/50'}`}
                                     >
-                                        <User size={16} /> Profile
+                                        <User size={14} className="shrink-0" /> Profile
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('general')}
@@ -1477,18 +1477,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                         <div className="divide-y divide-border-subtle">
                                             <div className="flex items-center justify-between gap-5 py-4 first:pt-0">
                                                 <p className="text-sm font-semibold text-text-primary">Name</p>
-                                                <div className="flex items-center gap-3 min-w-0">
-                                                    {profile?.photoURL ? (
-                                                        <img
-                                                            src={profile.photoURL}
-                                                            alt={profile.displayName}
-                                                            className="h-10 w-10 rounded-full object-cover border border-border-subtle"
-                                                        />
-                                                    ) : (
-                                                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border-subtle bg-bg-item-surface text-sm font-semibold text-text-primary">
-                                                            {(profile?.displayName || profile?.email || 'U').slice(0, 1).toUpperCase()}
-                                                        </div>
-                                                    )}
+                                                <div className="min-w-0">
                                                     <p className="truncate text-sm font-medium text-text-primary">
                                                         {profile?.displayName || 'Signed-in user'}
                                                     </p>
