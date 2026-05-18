@@ -2134,6 +2134,68 @@ kbd {
   font-size: 14px;
 }
 
+.footer-disclaimer {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.footer-tooltip {
+  position: relative;
+  color: #a8b3c3;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: help;
+  outline: none;
+}
+
+.footer-tooltip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 7px);
+  width: 10px;
+  height: 10px;
+  background: #111827;
+  opacity: 0;
+  transform: translate(-50%, 4px) rotate(45deg);
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  pointer-events: none;
+}
+
+.footer-tooltip-text {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 12px);
+  z-index: 20;
+  width: min(330px, calc(100vw - 40px));
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #111827;
+  color: #f8fafc;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  pointer-events: none;
+}
+
+.footer-tooltip:hover::after,
+.footer-tooltip:focus-visible::after,
+.footer-tooltip:hover .footer-tooltip-text,
+.footer-tooltip:focus-visible .footer-tooltip-text {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.footer-tooltip:hover::after,
+.footer-tooltip:focus-visible::after {
+  transform: translate(-50%, 0) rotate(45deg);
+}
+
 .legal-shell {
   min-height: 100vh;
 }
