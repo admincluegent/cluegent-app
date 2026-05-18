@@ -308,11 +308,11 @@ export class WindowHelper {
       }
     })
 
-    // On Windows/Linux: intercept close and hide to tray instead of quitting,
-    // unless the app is actually quitting (e.g. from tray "Quit" menu).
+    // On Windows/Linux, closing the launcher should quit when idle. During an
+    // active meeting, keep the close action as a lightweight hide path.
     if (process.platform !== 'darwin') {
       this.launcherWindow.on('close', (e) => {
-        if (!this.appState.isQuitting()) {
+        if (!this.appState.isQuitting() && this.appState.getIsMeetingActive()) {
           e.preventDefault();
           this.launcherWindow?.hide();
           this.isWindowVisible = false;
@@ -713,8 +713,6 @@ export class WindowHelper {
     const win = this.launcherWindow;
     if (!win || win.isDestroyed()) return;
     if (this.opacityTimeout) clearTimeout(this.opacityTimeout);
-    // On Windows/Linux the 'close' event listener intercepts this
-    // and hides to tray unless the app is actually quitting.
     win.close();
   }
 }

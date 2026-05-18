@@ -2442,6 +2442,15 @@ async function initializeApp() {
     return;
   }
 
+  let appState: AppState | null = null;
+
+  app.on('second-instance', () => {
+    console.log('[Main] Second instance requested. Restoring existing Cluegent window.');
+    if (appState) {
+      appState.centerAndShowWindow();
+    }
+  });
+
   // 2. Wait for app to be ready
   await app.whenReady()
 
@@ -2464,7 +2473,7 @@ async function initializeApp() {
   CredentialsManager.getInstance().init();
 
   // 4. Initialize State
-  const appState = AppState.getInstance()
+  appState = AppState.getInstance()
 
   // Explicitly load credentials into helpers
   appState.processingHelper.loadStoredCredentials();

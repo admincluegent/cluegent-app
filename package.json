@@ -122,6 +122,10 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "deleteAppDataOnUninstall": false,
+      "installerIcon": "assets/icons/win/icon.ico",
+      "uninstallerIcon": "assets/icons/win/icon.ico",
+      "installerHeaderIcon": "assets/icons/win/icon.ico",
+      "shortcutName": "Cluegent",
       "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "publish": [
