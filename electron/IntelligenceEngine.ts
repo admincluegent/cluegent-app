@@ -251,7 +251,7 @@ export class IntelligenceEngine extends EventEmitter {
                     this.emit('suggested_answer', answer, question || 'inferred', confidence);
                 }
                 this.setMode('idle');
-                return answer || "Could you repeat that? I want to make sure I address your question properly.";
+                return answer || "I couldn't generate a response from the current context. Please try again with a little more transcript or a typed question.";
             }
 
             const contextItems = this.session.getContext(180);
@@ -324,7 +324,9 @@ export class IntelligenceEngine extends EventEmitter {
             }
 
             if (!fullAnswer || fullAnswer.trim().length < 5) {
-                fullAnswer = "Could you repeat that? I want to make sure I address your question properly.";
+                fullAnswer = hasImages
+                    ? "I couldn't read the screenshot on this attempt. Please capture it again and make sure the question or code is visible."
+                    : "I couldn't generate a response from the current context. Please try again with a little more transcript or a typed question.";
             }
 
             this.session.addAssistantMessage(fullAnswer);
@@ -350,7 +352,9 @@ export class IntelligenceEngine extends EventEmitter {
                 this.emit('suggested_answer', FREE_PLAN_LIMIT_REACHED_MESSAGE, question || 'What to Answer', confidence);
                 return FREE_PLAN_LIMIT_REACHED_MESSAGE;
             }
-            return "Could you repeat that? I want to make sure I address your question properly.";
+            return hasImages
+                ? "I couldn't read the screenshot on this attempt. Please capture it again and make sure the question or code is visible."
+                : "I couldn't generate a response from the current context. Please try again with a little more transcript or a typed question.";
         }
     }
 

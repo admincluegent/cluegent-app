@@ -88,6 +88,8 @@ interface NativelyInterfaceProps {
     overlayOpacity?: number;
 }
 
+type ScreenshotAttachment = { path: string; preview: string };
+
 const FREE_PLAN_LIMIT_REACHED_MESSAGE = "Free Plan Limit Reached. Subscribe to use more.";
 
 const isPlanLimitMessage = (error: string) => {
@@ -180,10 +182,20 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     // Captures data from onCaptureAndProcess before the React state flush so
     // handleWhatToSay() can access it even in React 18 concurrent mode (where
     // a plain setTimeout(0) may fire before setAttachedContext flushes).
-    const pendingCaptureRef = useRef<{ path: string; preview: string } | null>(null);
+    const pendingCaptureRef = useRef<ScreenshotAttachment | null>(null);
 
     // Latent Context State (Screenshots attached but not sent)
-    const [attachedContext, setAttachedContext] = useState<Array<{ path: string, preview: string }>>([]);
+    const [attachedContext, setAttachedContextState] = useState<ScreenshotAttachment[]>([]);
+    const attachedContextRef = useRef<ScreenshotAttachment[]>([]);
+    const setAttachedContext = (
+        next: ScreenshotAttachment[] | ((prev: ScreenshotAttachment[]) => ScreenshotAttachment[])
+    ) => {
+        const resolved = typeof next === 'function'
+            ? next(attachedContextRef.current)
+            : next;
+        attachedContextRef.current = resolved;
+        setAttachedContextState(resolved);
+    };
     const [copiedCodeBlockKey, setCopiedCodeBlockKey] = useState<string | null>(null);
 
     // Settings State with Persistence
@@ -615,7 +627,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     }, []);
 
 
-    const handleScreenshotAttach = (data: { path: string; preview: string }) => {
+    const handleScreenshotAttach = (data: ScreenshotAttachment) => {
         setIsExpanded(true);
         setAttachedContext(prev => {
             // Prevent duplicates and cap at 5
@@ -1185,7 +1197,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         // Also merge in any screenshot from the capture-and-process shortcut that
         // arrived via pendingCaptureRef before the React state flush (React 18 fix).
         const pending = pendingCaptureRef.current;
-        let currentAttachments = attachedContext;
+        let currentAttachments = attachedContextRef.current;
         if (pending && !currentAttachments.some(s => s.path === pending.path)) {
             currentAttachments = [...currentAttachments, pending].slice(-5);
         }
@@ -1272,7 +1284,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         analytics.trackCommandExecuted(`quick_action_${action.id.replace(/[^a-z0-9_-]/gi, '_').toLowerCase()}`);
 
         const pending = pendingCaptureRef.current;
-        let currentAttachments = attachedContext;
+        let currentAttachments = attachedContextRef.current;
         if (pending && !currentAttachments.some(s => s.path === pending.path)) {
             currentAttachments = [...currentAttachments, pending].slice(-5);
         }
@@ -1437,7 +1449,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         setIsProcessing(true);
         analytics.trackCommandExecuted('code_hint');
 
-        const currentAttachments = attachedContext;
+        const currentAttachments = attachedContextRef.current;
         if (currentAttachments.length > 0) {
             setAttachedContext([]);
             // Show the attached image in chat
@@ -1472,7 +1484,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         setIsProcessing(true);
         analytics.trackCommandExecuted('brainstorm');
 
-        const currentAttachments = attachedContext;
+        const currentAttachments = attachedContextRef.current;
         if (currentAttachments.length > 0) {
             setAttachedContext([]);
             // Show the attached image in chat
@@ -1943,7 +1955,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
     const handleManualSubmit = async () => {
         const rollingPrompt = getLatestRollingTranscript();
         const pending = pendingCaptureRef.current;
-        let currentAttachments = attachedContext;
+        let currentAttachments = attachedContextRef.current;
         if (pending && !currentAttachments.some(s => s.path === pending.path)) {
             currentAttachments = [...currentAttachments, pending].slice(-5);
         }
@@ -2084,7 +2096,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
             return;
         }
 
-        if (inputValue.trim() || attachedContext.length > 0) {
+        if (inputValue.trim() || attachedContextRef.current.length > 0) {
             void handleManualSubmit();
             return;
         }
@@ -2559,11 +2571,13 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
             // The ref guarantees handleWhatToSay has the screenshot regardless of
             // whether the state update has flushed yet.
             requestAnimationFrame(() => {
-                try {
-                    handlersRef.current.handleWhatToSay();
-                } finally {
-                    pendingCaptureRef.current = null;
-                }
+                void (async () => {
+                    try {
+                        await handlersRef.current.handleWhatToSay();
+                    } finally {
+                        pendingCaptureRef.current = null;
+                    }
+                })();
             });
         });
         return unsubscribe;

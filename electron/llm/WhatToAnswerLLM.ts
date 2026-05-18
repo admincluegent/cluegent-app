@@ -80,7 +80,11 @@ ANSWER SHAPE: ${intentResult.answerShape}
                 yield FREE_PLAN_LIMIT_REACHED_MESSAGE;
                 return;
             }
-            yield "Could you repeat that? I want to make sure I address your question properly.";
+            if (imagePaths?.length) {
+                yield "I couldn't read the screenshot on this attempt. Please capture it again and make sure the question or code is visible.";
+                return;
+            }
+            yield "I couldn't generate a response from the current context. Please try again with a little more transcript or a typed question.";
         }
     }
 }
