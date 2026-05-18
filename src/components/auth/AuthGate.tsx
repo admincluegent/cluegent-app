@@ -451,6 +451,30 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             {!isAuthenticating ? <ArrowRight className="h-4 w-4" /> : null}
           </button>
 
+          {mode !== "reset" ? (
+            <p className="px-2 text-center text-xs leading-5 text-slate-400">
+              By signing up, you agree to our{" "}
+              <a
+                href="https://www.cluegent.com/terms.html"
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-slate-600 underline decoration-slate-300 underline-offset-2 transition hover:text-blue-600"
+              >
+                Terms and Conditions
+              </a>{" "}
+              and{" "}
+              <a
+                href="https://www.cluegent.com/privacy.html"
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-slate-600 underline decoration-slate-300 underline-offset-2 transition hover:text-blue-600"
+              >
+                Privacy Policy
+              </a>
+              .
+            </p>
+          ) : null}
+
           {mode === "signin" ? (
             <p className="text-center text-sm text-slate-500">
               Don&apos;t have an account?{" "}
