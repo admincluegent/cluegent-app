@@ -928,24 +928,15 @@ export async function processAssistantReplyStreamController(
       }
     };
 
-    const assistantResult =
-      route.provider === "openai"
-        ? await streamOpenAiReply(
-            {
-              apiKey: openAiApiKey,
-              prompt,
-              screenshotBase64: data.screenshotBase64,
-              screenshotUrl: data.screenshotUrl,
-              systemPrompt: data.systemPrompt,
-              history: data.history,
-              modelId: route.modelId,
-            },
-            streamDelta
-          )
-        : route.provider === "gemini"
-          ? await streamGeminiReply(
+    let resolvedRoute = route;
+    let assistantResult: Awaited<ReturnType<typeof streamOpenAiReply>>;
+
+    try {
+      assistantResult =
+        route.provider === "openai"
+          ? await streamOpenAiReply(
               {
-                apiKey: geminiApiKey,
+                apiKey: openAiApiKey,
                 prompt,
                 screenshotBase64: data.screenshotBase64,
                 screenshotUrl: data.screenshotUrl,
@@ -955,19 +946,101 @@ export async function processAssistantReplyStreamController(
               },
               streamDelta
             )
-          : await streamDeepSeekReply(
-              {
-                apiKey: deepseekApiKey,
-                prompt,
-                systemPrompt: data.systemPrompt,
-                history: data.history,
-                modelId: route.modelId,
-              },
-              streamDelta
-            );
+          : route.provider === "gemini"
+            ? await streamGeminiReply(
+                {
+                  apiKey: geminiApiKey,
+                  prompt,
+                  screenshotBase64: data.screenshotBase64,
+                  screenshotUrl: data.screenshotUrl,
+                  systemPrompt: data.systemPrompt,
+                  history: data.history,
+                  modelId: route.modelId,
+                },
+                streamDelta
+              )
+            : await streamDeepSeekReply(
+                {
+                  apiKey: deepseekApiKey,
+                  prompt,
+                  systemPrompt: data.systemPrompt,
+                  history: data.history,
+                  modelId: route.modelId,
+                },
+                streamDelta
+              );
+    } catch (error) {
+      if (route.provider !== "openai" || !(error instanceof OpenAiServiceError)) {
+        throw error;
+      }
+
+      console.warn("[processAssistantReplyStream] OpenAI route failed; falling back", {
+        hasScreenshot,
+        model: route.modelId,
+        error: error.message,
+      });
+
+      if (hasScreenshot && geminiApiKey) {
+        resolvedRoute = {
+          provider: "gemini",
+          modelId: "gemini-2.5-flash-lite",
+          premiumApplied: false,
+          premiumAllowance: route.premiumAllowance,
+          premiumUsedBefore: route.premiumUsedBefore,
+          premiumCounter: null,
+        };
+        writeSse(response, {
+          meta: {
+            provider: resolvedRoute.provider,
+            model: resolvedRoute.modelId,
+            fallbackFrom: "openai",
+          },
+        });
+        assistantResult = await streamGeminiReply(
+          {
+            apiKey: geminiApiKey,
+            prompt,
+            screenshotBase64: data.screenshotBase64,
+            screenshotUrl: data.screenshotUrl,
+            systemPrompt: data.systemPrompt,
+            history: data.history,
+            modelId: resolvedRoute.modelId,
+          },
+          streamDelta
+        );
+      } else if (!hasScreenshot && deepseekApiKey) {
+        resolvedRoute = {
+          provider: "deepseek",
+          modelId: DEFAULT_DEEPSEEK_CHAT_MODEL_ID,
+          premiumApplied: false,
+          premiumAllowance: route.premiumAllowance,
+          premiumUsedBefore: route.premiumUsedBefore,
+          premiumCounter: null,
+        };
+        writeSse(response, {
+          meta: {
+            provider: resolvedRoute.provider,
+            model: resolvedRoute.modelId,
+            fallbackFrom: "openai",
+          },
+        });
+        assistantResult = await streamDeepSeekReply(
+          {
+            apiKey: deepseekApiKey,
+            prompt,
+            systemPrompt: data.systemPrompt,
+            history: data.history,
+            modelId: resolvedRoute.modelId,
+          },
+          streamDelta
+        );
+      } else {
+        throw error;
+      }
+    }
 
     const costEstimate =
-      route.provider === "openai"
+      resolvedRoute.provider === "openai"
         ? estimateOpenAiRequestCost({
             modelId: assistantResult.modelId,
             inputTokens: assistantResult.usage.inputTokens,
@@ -976,7 +1049,7 @@ export async function processAssistantReplyStreamController(
             fallbackInputText,
             fallbackOutputText: assistantResult.reply,
           })
-        : route.provider === "gemini"
+        : resolvedRoute.provider === "gemini"
           ? estimateGeminiRequestCost({
               modelId: assistantResult.modelId,
               inputTokens: assistantResult.usage.inputTokens,
