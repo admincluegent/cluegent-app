@@ -49,6 +49,9 @@ export interface MonthlyUsage {
   promptCount: number;
   screenshotCount: number;
   sttSecondsUsed: number;
+  deepseekProPromptCount: number;
+  openAiPromptCount: number;
+  openAiScreenshotCount: number;
   inputTokens: number;
   outputTokens: number;
   estimatedCostUsd: number;

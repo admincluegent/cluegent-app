@@ -19,6 +19,10 @@ import {
   type DeepSeekChatModelId,
 } from "../config/deepseek.js";
 import {
+  DEFAULT_OPENAI_CHAT_MODEL_ID,
+  type OpenAiChatModelId,
+} from "../config/openai.js";
+import {
   DeepSeekServiceError,
   generateDeepSeekReply,
   streamDeepSeekReply,
@@ -32,8 +36,14 @@ import {
   generateGeminiReply,
   streamGeminiReply,
 } from "../services/geminiService.js";
+import {
+  OpenAiServiceError,
+  generateOpenAiReply,
+  streamOpenAiReply,
+} from "../services/openaiService.js";
 import { estimateDeepSeekRequestCost } from "../utils/deepseekCost.js";
 import { estimateGeminiRequestCost } from "../utils/geminiCost.js";
+import { estimateOpenAiRequestCost } from "../utils/openaiCost.js";
 
 interface ProcessAssistantReplyData {
   prompt: string;
@@ -108,7 +118,8 @@ type AssistantErrorCode =
   | "PROMPT_LIMIT_EXCEEDED"
   | "SCREENSHOT_LIMIT_EXCEEDED"
   | "UNAUTHENTICATED"
-  | "GROQ_REQUEST_FAILED";
+  | "GROQ_REQUEST_FAILED"
+  | "SUBSCRIPTION_INACTIVE";
 
 type TranscriptionErrorCode =
   | "UNAUTHENTICATED"
@@ -125,7 +136,7 @@ interface AssistantSuccessResponse {
   success: true;
   reply: string;
   modelRoute?: {
-    provider: "gemini" | "deepseek";
+    provider: AssistantProvider;
     model: string;
     premiumApplied?: boolean;
     premiumAllowance?: number;
@@ -143,20 +154,116 @@ interface AssistantSuccessResponse {
   };
 }
 
-function selectDeepSeekModelForMonthlyUsage(input: {
+type AssistantProvider = "gemini" | "deepseek" | "openai";
+
+type AssistantModelRoute =
+  | {
+      provider: "openai";
+      modelId: OpenAiChatModelId;
+      premiumApplied: true;
+      premiumAllowance: number;
+      premiumUsedBefore: number;
+      premiumCounter: "openAiPromptCount" | "openAiScreenshotCount";
+    }
+  | {
+      provider: "gemini";
+      modelId: "gemini-2.5-flash-lite";
+      premiumApplied: false;
+      premiumAllowance: number;
+      premiumUsedBefore: number;
+      premiumCounter: null;
+    }
+  | {
+      provider: "deepseek";
+      modelId: DeepSeekChatModelId;
+      premiumApplied: false;
+      premiumAllowance: number;
+      premiumUsedBefore: number;
+      premiumCounter: null;
+    };
+
+const OPENAI_PRO_MONTHLY_PROMPT_ALLOWANCE = 200;
+const OPENAI_PRO_MONTHLY_SCREENSHOT_ALLOWANCE = 200;
+
+function getOpenAiMonthlyAllowance(input: {
+  subscription: ReturnType<typeof materializeSubscription>;
+  hasScreenshot: boolean;
+}) {
+  if (
+    input.subscription.status !== "active" ||
+    (input.subscription.plan !== "pro" && input.subscription.plan !== "power")
+  ) {
+    return 0;
+  }
+
+  return input.hasScreenshot
+    ? OPENAI_PRO_MONTHLY_SCREENSHOT_ALLOWANCE
+    : OPENAI_PRO_MONTHLY_PROMPT_ALLOWANCE;
+}
+
+function assertSubscriptionActive(
+  subscription: ReturnType<typeof materializeSubscription>
+) {
+  if (subscription.status !== "active") {
+    throw new Error("SUBSCRIPTION_INACTIVE");
+  }
+}
+
+function selectAssistantModelRoute(input: {
   subscription: ReturnType<typeof materializeSubscription>;
   usage: ReturnType<typeof materializeUsage>;
-}): {
-  modelId: DeepSeekChatModelId;
-  premiumApplied: boolean;
-  premiumAllowance: number;
-  premiumUsedBefore: number;
-} {
+  hasScreenshot: boolean;
+  hasOpenAiApiKey: boolean;
+  hasGeminiApiKey: boolean;
+  hasDeepSeekApiKey: boolean;
+}): AssistantModelRoute {
+  const premiumAllowance = getOpenAiMonthlyAllowance(input);
+  const premiumCounter = input.hasScreenshot
+    ? "openAiScreenshotCount"
+    : "openAiPromptCount";
+  const premiumUsedBefore = input.usage[premiumCounter];
+
+  if (
+    input.hasOpenAiApiKey &&
+    premiumAllowance > 0 &&
+    premiumUsedBefore < premiumAllowance
+  ) {
+    return {
+      provider: "openai",
+      modelId: DEFAULT_OPENAI_CHAT_MODEL_ID,
+      premiumApplied: true,
+      premiumAllowance,
+      premiumUsedBefore,
+      premiumCounter,
+    };
+  }
+
+  if (input.hasScreenshot) {
+    if (!input.hasGeminiApiKey) {
+      throw new Error("GEMINI_CONFIG_MISSING");
+    }
+
+    return {
+      provider: "gemini",
+      modelId: "gemini-2.5-flash-lite",
+      premiumApplied: false,
+      premiumAllowance,
+      premiumUsedBefore,
+      premiumCounter: null,
+    };
+  }
+
+  if (!input.hasDeepSeekApiKey) {
+    throw new Error("DEEPSEEK_CONFIG_MISSING");
+  }
+
   return {
+    provider: "deepseek",
     modelId: DEFAULT_DEEPSEEK_CHAT_MODEL_ID,
     premiumApplied: false,
-    premiumAllowance: 0,
-    premiumUsedBefore: input.usage.deepseekProPromptCount,
+    premiumAllowance,
+    premiumUsedBefore,
+    premiumCounter: null,
   };
 }
 
@@ -273,11 +380,111 @@ function sendAssistantHttpFailure(
   });
 }
 
+async function reserveAssistantUsage(input: {
+  uid: string;
+  monthKey: string;
+  hasScreenshot: boolean;
+  hasOpenAiApiKey: boolean;
+  hasGeminiApiKey: boolean;
+  hasDeepSeekApiKey: boolean;
+}) {
+  const refs = getUserRefs(input.uid, input.monthKey);
+  const subscriptionRef = db.doc(refs.subscriptionPath);
+  const usageRef = db.doc(refs.usagePath);
+
+  return db.runTransaction(async (transaction) => {
+    const [subscriptionSnap, usageSnap] = await Promise.all([
+      transaction.get(subscriptionRef),
+      transaction.get(usageRef),
+    ]);
+    const latestSubscription = materializeSubscription(
+      subscriptionSnap.data() as ReturnType<typeof materializeSubscription>
+    );
+    const latestUsage = materializeUsage(
+      usageSnap.data() as ReturnType<typeof materializeUsage>,
+      input.monthKey
+    );
+    const latestPlanStatus = buildPlanStatus(latestSubscription, latestUsage);
+
+    assertSubscriptionActive(latestSubscription);
+
+    if (isFreeTrialExhausted(latestPlanStatus)) {
+      throw new Error("FREE_TRIAL_LIMIT_EXCEEDED");
+    }
+
+    if (latestPlanStatus.remaining.prompts <= 0) {
+      throw new Error("PROMPT_LIMIT_EXCEEDED");
+    }
+
+    if (input.hasScreenshot && latestPlanStatus.remaining.screenshots <= 0) {
+      throw new Error("SCREENSHOT_LIMIT_EXCEEDED");
+    }
+
+    const route = selectAssistantModelRoute({
+      subscription: latestSubscription,
+      usage: latestUsage,
+      hasScreenshot: input.hasScreenshot,
+      hasOpenAiApiKey: input.hasOpenAiApiKey,
+      hasGeminiApiKey: input.hasGeminiApiKey,
+      hasDeepSeekApiKey: input.hasDeepSeekApiKey,
+    });
+
+    transaction.set(
+      usageRef,
+      {
+        monthKey: input.monthKey,
+        promptCount: FieldValue.increment(1),
+        screenshotCount: FieldValue.increment(input.hasScreenshot ? 1 : 0),
+        ...(route.premiumCounter
+          ? { [route.premiumCounter]: FieldValue.increment(1) }
+          : {}),
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    return {
+      route,
+      remaining: {
+        promptsRemaining: Math.max(latestPlanStatus.remaining.prompts - 1, 0),
+        screenshotsRemaining: Math.max(
+          latestPlanStatus.remaining.screenshots -
+            (input.hasScreenshot ? 1 : 0),
+          0
+        ),
+      },
+    };
+  });
+}
+
+async function recordAssistantCost(input: {
+  uid: string;
+  monthKey: string;
+  inputTokens: number;
+  outputTokens: number;
+  estimatedCostUsd: number;
+}) {
+  const refs = getUserRefs(input.uid, input.monthKey);
+  const usageRef = db.doc(refs.usagePath);
+
+  await usageRef.set(
+    {
+      monthKey: input.monthKey,
+      inputTokens: FieldValue.increment(input.inputTokens),
+      outputTokens: FieldValue.increment(input.outputTokens),
+      estimatedCostUsd: FieldValue.increment(input.estimatedCostUsd),
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+}
+
 export async function processAssistantReplyController(
   request: CallableRequest<ProcessAssistantReplyData>,
   input: {
     geminiApiKey: string;
     deepseekApiKey: string;
+    openAiApiKey: string;
   }
 ): Promise<AssistantFailureResponse | AssistantSuccessResponse> {
   try {
@@ -293,40 +500,19 @@ export async function processAssistantReplyController(
 
     const geminiApiKey = input.geminiApiKey.trim();
     const deepseekApiKey = input.deepseekApiKey.trim();
+    const openAiApiKey = input.openAiApiKey.trim();
 
-    if (!geminiApiKey && !deepseekApiKey) {
+    if (!geminiApiKey && !deepseekApiKey && !openAiApiKey) {
       return assistantFailure(
         "GROQ_REQUEST_FAILED",
-        "None of GEMINI_API_KEY or DEEPSEEK_AI_API_KEY is configured in Firebase Functions."
+        "None of OPENAI_API_KEY, GEMINI_API_KEY, or DEEPSEEK_AI_API_KEY is configured in Firebase Functions."
       );
     }
 
-    const { monthKey, subscription, usage } = await ensureUsageDocuments(
+    const { monthKey } = await ensureUsageDocuments(
       authUser.uid,
       authUser
     );
-    const planStatus = buildPlanStatus(subscription, usage);
-
-    if (isFreeTrialExhausted(planStatus)) {
-      return assistantFailure(
-        "PROMPT_LIMIT_EXCEEDED",
-        "Free trial limit reached. Subscribe to continue using Cluegent."
-      );
-    }
-
-    if (planStatus.remaining.prompts <= 0) {
-      return assistantFailure(
-        "PROMPT_LIMIT_EXCEEDED",
-        "Monthly prompt limit exceeded for the current plan."
-      );
-    }
-
-    if (hasScreenshot && planStatus.remaining.screenshots <= 0) {
-      return assistantFailure(
-        "SCREENSHOT_LIMIT_EXCEEDED",
-        "Monthly screenshot limit exceeded for the current plan."
-      );
-    }
 
     const fallbackInputText = [
       request.data?.systemPrompt,
@@ -336,6 +522,16 @@ export async function processAssistantReplyController(
       .filter(Boolean)
       .join("\n");
 
+    const reservation = await reserveAssistantUsage({
+      uid: authUser.uid,
+      monthKey,
+      hasScreenshot,
+      hasOpenAiApiKey: Boolean(openAiApiKey),
+      hasGeminiApiKey: Boolean(geminiApiKey),
+      hasDeepSeekApiKey: Boolean(deepseekApiKey),
+    });
+    const route = reservation.route;
+
     let replyText = "";
     let costEstimate: {
       inputTokens: number;
@@ -343,11 +539,7 @@ export async function processAssistantReplyController(
       estimatedCostUsd: number;
     } | null = null;
     let lastLlmError: Error | null = null;
-    let resolvedProvider: "gemini" | "deepseek" | null = null;
-    const deepseekModelRoute = selectDeepSeekModelForMonthlyUsage({
-      subscription,
-      usage,
-    });
+    let resolvedProvider: AssistantProvider | null = null;
 
     const tryGemini = async () => {
       if (!geminiApiKey || replyText) {
@@ -362,7 +554,7 @@ export async function processAssistantReplyController(
           screenshotUrl: request.data?.screenshotUrl,
           systemPrompt: request.data?.systemPrompt,
           history: request.data?.history,
-          modelId: "gemini-2.5-flash-lite",
+          modelId: route.modelId,
         });
 
         replyText = geminiResult.reply;
@@ -395,7 +587,7 @@ export async function processAssistantReplyController(
           prompt,
           systemPrompt: request.data?.systemPrompt,
           history: request.data?.history,
-          modelId: deepseekModelRoute.modelId,
+          modelId: route.modelId,
         });
 
         replyText = deepseekResult.reply;
@@ -416,30 +608,53 @@ export async function processAssistantReplyController(
       }
     };
 
-    if (hasScreenshot) {
-      if (!geminiApiKey) {
-        return assistantFailure(
-          "GROQ_REQUEST_FAILED",
-          "GEMINI_API_KEY is required for screenshot-attached requests."
-        );
+    const tryOpenAi = async () => {
+      if (!openAiApiKey || replyText) {
+        return;
       }
+
+      try {
+        const openAiResult = await generateOpenAiReply({
+          apiKey: openAiApiKey,
+          prompt,
+          screenshotBase64: request.data?.screenshotBase64,
+          screenshotUrl: request.data?.screenshotUrl,
+          systemPrompt: request.data?.systemPrompt,
+          history: request.data?.history,
+          modelId: route.modelId,
+        });
+
+        replyText = openAiResult.reply;
+        resolvedProvider = "openai";
+        costEstimate = estimateOpenAiRequestCost({
+          modelId: openAiResult.modelId,
+          inputTokens: openAiResult.usage.inputTokens,
+          outputTokens: openAiResult.usage.outputTokens,
+          screenshotCount: hasScreenshot ? 1 : 0,
+          fallbackInputText,
+          fallbackOutputText: openAiResult.reply,
+        });
+      } catch (error) {
+        if (error instanceof OpenAiServiceError) {
+          lastLlmError = error;
+        } else {
+          throw error;
+        }
+      }
+    };
+
+    if (route.provider === "openai") {
+      await tryOpenAi();
+    } else if (route.provider === "gemini") {
       await tryGemini();
     } else {
-      if (!deepseekApiKey) {
-        return assistantFailure(
-          "GROQ_REQUEST_FAILED",
-          "DEEPSEEK_AI_API_KEY is required for text-only requests."
-        );
-      }
       await tryDeepSeek();
     }
 
     if (!replyText || !costEstimate) {
       const fallbackMessage = lastLlmError
         ? String((lastLlmError as Error).message)
-        : hasScreenshot
-          ? "The backend-managed Gemini request failed."
-          : "The backend-managed DeepSeek request failed.";
+        : `The backend-managed ${route.provider} request failed.`;
       return assistantFailure(
         "GROQ_REQUEST_FAILED",
         fallbackMessage
@@ -450,10 +665,10 @@ export async function processAssistantReplyController(
       uid: authUser.uid,
       hasScreenshot,
       provider: resolvedProvider,
-      model: hasScreenshot ? "gemini-2.5-flash-lite" : deepseekModelRoute.modelId,
-      premiumApplied: hasScreenshot ? false : deepseekModelRoute.premiumApplied,
-      premiumAllowance: hasScreenshot ? 0 : deepseekModelRoute.premiumAllowance,
-      premiumUsedBefore: hasScreenshot ? 0 : deepseekModelRoute.premiumUsedBefore,
+      model: route.modelId,
+      premiumApplied: route.premiumApplied,
+      premiumAllowance: route.premiumAllowance,
+      premiumUsedBefore: route.premiumUsedBefore,
     });
 
     const finalCostEstimate = costEstimate as {
@@ -462,67 +677,23 @@ export async function processAssistantReplyController(
       estimatedCostUsd: number;
     };
 
-    const refs = getUserRefs(authUser.uid, monthKey);
-    const subscriptionRef = db.doc(refs.subscriptionPath);
-    const usageRef = db.doc(refs.usagePath);
-    const updatedRemaining = await db.runTransaction(async (transaction) => {
-      const [subscriptionSnap, usageSnap] = await Promise.all([
-        transaction.get(subscriptionRef),
-        transaction.get(usageRef),
-      ]);
-      const latestSubscription = materializeSubscription(
-        subscriptionSnap.data() as ReturnType<typeof materializeSubscription>
-      );
-      const latestUsage = materializeUsage(
-        usageSnap.data() as ReturnType<typeof materializeUsage>,
-        monthKey
-      );
-      const latestPlanStatus = buildPlanStatus(latestSubscription, latestUsage);
-
-      if (isFreeTrialExhausted(latestPlanStatus)) {
-        throw new Error("FREE_TRIAL_LIMIT_EXCEEDED");
-      }
-
-      if (latestPlanStatus.remaining.prompts <= 0) {
-        throw new Error("PROMPT_LIMIT_EXCEEDED");
-      }
-
-      if (hasScreenshot && latestPlanStatus.remaining.screenshots <= 0) {
-        throw new Error("SCREENSHOT_LIMIT_EXCEEDED");
-      }
-
-      transaction.set(
-        usageRef,
-        {
-          monthKey,
-          promptCount: FieldValue.increment(1),
-          screenshotCount: FieldValue.increment(hasScreenshot ? 1 : 0),
-          inputTokens: FieldValue.increment(finalCostEstimate.inputTokens),
-          outputTokens: FieldValue.increment(finalCostEstimate.outputTokens),
-          estimatedCostUsd: FieldValue.increment(finalCostEstimate.estimatedCostUsd),
-          updatedAt: FieldValue.serverTimestamp(),
-        },
-        { merge: true }
-      );
-
-      return {
-        promptsRemaining: Math.max(latestPlanStatus.remaining.prompts - 1, 0),
-        screenshotsRemaining: Math.max(
-          latestPlanStatus.remaining.screenshots - (hasScreenshot ? 1 : 0),
-          0
-        ),
-      };
+    await recordAssistantCost({
+      uid: authUser.uid,
+      monthKey,
+      inputTokens: finalCostEstimate.inputTokens,
+      outputTokens: finalCostEstimate.outputTokens,
+      estimatedCostUsd: finalCostEstimate.estimatedCostUsd,
     });
 
     return {
       success: true,
       reply: replyText,
       modelRoute: {
-        provider: resolvedProvider ?? (hasScreenshot ? "gemini" : "deepseek"),
-        model: hasScreenshot ? "gemini-2.5-flash-lite" : deepseekModelRoute.modelId,
-        premiumApplied: hasScreenshot ? false : deepseekModelRoute.premiumApplied,
-        premiumAllowance: hasScreenshot ? 0 : deepseekModelRoute.premiumAllowance,
-        premiumUsedBefore: hasScreenshot ? 0 : deepseekModelRoute.premiumUsedBefore,
+        provider: resolvedProvider ?? route.provider,
+        model: route.modelId,
+        premiumApplied: route.premiumApplied,
+        premiumAllowance: route.premiumAllowance,
+        premiumUsedBefore: route.premiumUsedBefore,
       },
       usage: {
         inputTokens: finalCostEstimate.inputTokens,
@@ -530,7 +701,7 @@ export async function processAssistantReplyController(
         screenshotCountAdded: hasScreenshot ? 1 : 0,
         estimatedCostUsdAdded: finalCostEstimate.estimatedCostUsd,
       },
-      remaining: updatedRemaining,
+      remaining: reservation.remaining,
     };
   } catch (error) {
     if (error instanceof HttpsError && error.code === "unauthenticated") {
@@ -544,6 +715,27 @@ export async function processAssistantReplyController(
       return assistantFailure(
         "PROMPT_LIMIT_EXCEEDED",
         "Monthly prompt limit exceeded for the current plan."
+      );
+    }
+
+    if (error instanceof Error && error.message === "SUBSCRIPTION_INACTIVE") {
+      return assistantFailure(
+        "SUBSCRIPTION_INACTIVE",
+        "Your subscription is not active. Please subscribe again to continue using Cluegent."
+      );
+    }
+
+    if (error instanceof Error && error.message === "GEMINI_CONFIG_MISSING") {
+      return assistantFailure(
+        "GROQ_REQUEST_FAILED",
+        "GEMINI_API_KEY is required for screenshot-attached requests after the OpenAI premium allowance is used."
+      );
+    }
+
+    if (error instanceof Error && error.message === "DEEPSEEK_CONFIG_MISSING") {
+      return assistantFailure(
+        "GROQ_REQUEST_FAILED",
+        "DEEPSEEK_AI_API_KEY is required for text-only requests after the OpenAI premium allowance is used."
       );
     }
 
@@ -565,6 +757,14 @@ export async function processAssistantReplyController(
     }
 
     if (error instanceof DeepSeekServiceError) {
+      return assistantFailure("GROQ_REQUEST_FAILED", error.message);
+    }
+
+    if (error instanceof GeminiServiceError) {
+      return assistantFailure("GROQ_REQUEST_FAILED", error.message);
+    }
+
+    if (error instanceof OpenAiServiceError) {
       return assistantFailure("GROQ_REQUEST_FAILED", error.message);
     }
 
@@ -594,6 +794,7 @@ export async function processAssistantReplyStreamController(
   input: {
     geminiApiKey: string;
     deepseekApiKey: string;
+    openAiApiKey: string;
   }
 ) {
   if (request.method === "OPTIONS") {
@@ -622,6 +823,7 @@ export async function processAssistantReplyStreamController(
     );
     const geminiApiKey = input.geminiApiKey.trim();
     const deepseekApiKey = input.deepseekApiKey.trim();
+    const openAiApiKey = input.openAiApiKey.trim();
 
     if (!prompt) {
       sendAssistantHttpFailure(
@@ -633,66 +835,29 @@ export async function processAssistantReplyStreamController(
       return;
     }
 
-    if (hasScreenshot && !geminiApiKey) {
+    if (!geminiApiKey && !deepseekApiKey && !openAiApiKey) {
       sendAssistantHttpFailure(
         response,
         500,
         "GROQ_REQUEST_FAILED",
-        "GEMINI_API_KEY is required for screenshot-attached requests."
+        "None of OPENAI_API_KEY, GEMINI_API_KEY, or DEEPSEEK_AI_API_KEY is configured in Firebase Functions."
       );
       return;
     }
 
-    if (!hasScreenshot && !deepseekApiKey) {
-      sendAssistantHttpFailure(
-        response,
-        500,
-        "GROQ_REQUEST_FAILED",
-        "DEEPSEEK_AI_API_KEY is required for text-only requests."
-      );
-      return;
-    }
-
-    const { monthKey, subscription, usage } = await ensureUsageDocuments(
+    const { monthKey } = await ensureUsageDocuments(
       authUser.uid,
       authUser
     );
-    const planStatus = buildPlanStatus(subscription, usage);
-
-    if (isFreeTrialExhausted(planStatus)) {
-      sendAssistantHttpFailure(
-        response,
-        429,
-        "PROMPT_LIMIT_EXCEEDED",
-        "Free trial limit reached. Subscribe to continue using Cluegent."
-      );
-      return;
-    }
-
-    if (planStatus.remaining.prompts <= 0) {
-      sendAssistantHttpFailure(
-        response,
-        429,
-        "PROMPT_LIMIT_EXCEEDED",
-        "Monthly prompt limit exceeded for the current plan."
-      );
-      return;
-    }
-
-    if (hasScreenshot && planStatus.remaining.screenshots <= 0) {
-      sendAssistantHttpFailure(
-        response,
-        429,
-        "SCREENSHOT_LIMIT_EXCEEDED",
-        "Monthly screenshot limit exceeded for the current plan."
-      );
-      return;
-    }
-
-    const deepseekModelRoute = selectDeepSeekModelForMonthlyUsage({
-      subscription,
-      usage,
+    const reservation = await reserveAssistantUsage({
+      uid: authUser.uid,
+      monthKey,
+      hasScreenshot,
+      hasOpenAiApiKey: Boolean(openAiApiKey),
+      hasGeminiApiKey: Boolean(geminiApiKey),
+      hasDeepSeekApiKey: Boolean(deepseekApiKey),
     });
+    const route = reservation.route;
 
     response.setHeader("Content-Type", "text/event-stream; charset=utf-8");
     response.setHeader("Cache-Control", "no-cache, no-transform");
@@ -702,11 +867,11 @@ export async function processAssistantReplyStreamController(
 
     writeSse(response, {
       meta: {
-        provider: hasScreenshot ? "gemini" : "deepseek",
-        model: hasScreenshot ? "gemini-2.5-flash-lite" : deepseekModelRoute.modelId,
-        premiumApplied: deepseekModelRoute.premiumApplied,
-        premiumAllowance: deepseekModelRoute.premiumAllowance,
-        premiumUsedBefore: deepseekModelRoute.premiumUsedBefore,
+        provider: route.provider,
+        model: route.modelId,
+        premiumApplied: route.premiumApplied,
+        premiumAllowance: route.premiumAllowance,
+        premiumUsedBefore: route.premiumUsedBefore,
       },
     });
 
@@ -724,97 +889,77 @@ export async function processAssistantReplyStreamController(
       }
     };
 
-    const assistantResult = hasScreenshot
-      ? await streamGeminiReply(
-          {
-            apiKey: geminiApiKey,
-            prompt,
-            screenshotBase64: data.screenshotBase64,
-            screenshotUrl: data.screenshotUrl,
-            systemPrompt: data.systemPrompt,
-            history: data.history,
-            modelId: "gemini-2.5-flash-lite",
-          },
-          streamDelta
-        )
-      : await streamDeepSeekReply(
-          {
-            apiKey: deepseekApiKey,
-            prompt,
-            systemPrompt: data.systemPrompt,
-            history: data.history,
-            modelId: deepseekModelRoute.modelId,
-          },
-          streamDelta
-        );
+    const assistantResult =
+      route.provider === "openai"
+        ? await streamOpenAiReply(
+            {
+              apiKey: openAiApiKey,
+              prompt,
+              screenshotBase64: data.screenshotBase64,
+              screenshotUrl: data.screenshotUrl,
+              systemPrompt: data.systemPrompt,
+              history: data.history,
+              modelId: route.modelId,
+            },
+            streamDelta
+          )
+        : route.provider === "gemini"
+          ? await streamGeminiReply(
+              {
+                apiKey: geminiApiKey,
+                prompt,
+                screenshotBase64: data.screenshotBase64,
+                screenshotUrl: data.screenshotUrl,
+                systemPrompt: data.systemPrompt,
+                history: data.history,
+                modelId: route.modelId,
+              },
+              streamDelta
+            )
+          : await streamDeepSeekReply(
+              {
+                apiKey: deepseekApiKey,
+                prompt,
+                systemPrompt: data.systemPrompt,
+                history: data.history,
+                modelId: route.modelId,
+              },
+              streamDelta
+            );
 
-    const costEstimate = hasScreenshot
-      ? estimateGeminiRequestCost({
-          modelId: assistantResult.modelId,
-          inputTokens: assistantResult.usage.inputTokens,
-          outputTokens: assistantResult.usage.outputTokens,
-          screenshotCount: 1,
-          fallbackInputText,
-          fallbackOutputText: assistantResult.reply,
-        })
-      : estimateDeepSeekRequestCost({
-          modelId: assistantResult.modelId,
-          inputTokens: assistantResult.usage.inputTokens,
-          outputTokens: assistantResult.usage.outputTokens,
-          fallbackInputText,
-          fallbackOutputText: assistantResult.reply,
-        });
+    const costEstimate =
+      route.provider === "openai"
+        ? estimateOpenAiRequestCost({
+            modelId: assistantResult.modelId,
+            inputTokens: assistantResult.usage.inputTokens,
+            outputTokens: assistantResult.usage.outputTokens,
+            screenshotCount: hasScreenshot ? 1 : 0,
+            fallbackInputText,
+            fallbackOutputText: assistantResult.reply,
+          })
+        : route.provider === "gemini"
+          ? estimateGeminiRequestCost({
+              modelId: assistantResult.modelId,
+              inputTokens: assistantResult.usage.inputTokens,
+              outputTokens: assistantResult.usage.outputTokens,
+              screenshotCount: 1,
+              fallbackInputText,
+              fallbackOutputText: assistantResult.reply,
+            })
+          : estimateDeepSeekRequestCost({
+              modelId: assistantResult.modelId,
+              inputTokens: assistantResult.usage.inputTokens,
+              outputTokens: assistantResult.usage.outputTokens,
+              fallbackInputText,
+              fallbackOutputText: assistantResult.reply,
+            });
 
-    const refs = getUserRefs(authUser.uid, monthKey);
-    const subscriptionRef = db.doc(refs.subscriptionPath);
-    const usageRef = db.doc(refs.usagePath);
-    const updatedRemaining = await db.runTransaction(async (transaction) => {
-      const [subscriptionSnap, usageSnap] = await Promise.all([
-        transaction.get(subscriptionRef),
-        transaction.get(usageRef),
-      ]);
-      const latestSubscription = materializeSubscription(
-        subscriptionSnap.data() as ReturnType<typeof materializeSubscription>
-      );
-      const latestUsage = materializeUsage(
-        usageSnap.data() as ReturnType<typeof materializeUsage>,
-        monthKey
-      );
-      const latestPlanStatus = buildPlanStatus(latestSubscription, latestUsage);
-
-      if (isFreeTrialExhausted(latestPlanStatus)) {
-        throw new Error("FREE_TRIAL_LIMIT_EXCEEDED");
-      }
-
-      if (latestPlanStatus.remaining.prompts <= 0) {
-        throw new Error("PROMPT_LIMIT_EXCEEDED");
-      }
-
-      if (hasScreenshot && latestPlanStatus.remaining.screenshots <= 0) {
-        throw new Error("SCREENSHOT_LIMIT_EXCEEDED");
-      }
-
-      transaction.set(
-        usageRef,
-        {
-          monthKey,
-          promptCount: FieldValue.increment(1),
-          screenshotCount: FieldValue.increment(hasScreenshot ? 1 : 0),
-          inputTokens: FieldValue.increment(costEstimate.inputTokens),
-          outputTokens: FieldValue.increment(costEstimate.outputTokens),
-          estimatedCostUsd: FieldValue.increment(costEstimate.estimatedCostUsd),
-          updatedAt: FieldValue.serverTimestamp(),
-        },
-        { merge: true }
-      );
-
-      return {
-        promptsRemaining: Math.max(latestPlanStatus.remaining.prompts - 1, 0),
-        screenshotsRemaining: Math.max(
-          latestPlanStatus.remaining.screenshots - (hasScreenshot ? 1 : 0),
-          0
-        ),
-      };
+    await recordAssistantCost({
+      uid: authUser.uid,
+      monthKey,
+      inputTokens: costEstimate.inputTokens,
+      outputTokens: costEstimate.outputTokens,
+      estimatedCostUsd: costEstimate.estimatedCostUsd,
     });
 
     writeSse(response, {
@@ -825,7 +970,7 @@ export async function processAssistantReplyStreamController(
         screenshotCountAdded: hasScreenshot ? 1 : 0,
         estimatedCostUsdAdded: costEstimate.estimatedCostUsd,
       },
-      remaining: updatedRemaining,
+      remaining: reservation.remaining,
     });
     response.end();
   } catch (error) {
@@ -845,6 +990,36 @@ export async function processAssistantReplyStreamController(
         429,
         "PROMPT_LIMIT_EXCEEDED",
         "Monthly prompt limit exceeded for the current plan."
+      );
+      return;
+    }
+
+    if (error instanceof Error && error.message === "SUBSCRIPTION_INACTIVE") {
+      sendAssistantHttpFailure(
+        response,
+        402,
+        "SUBSCRIPTION_INACTIVE",
+        "Your subscription is not active. Please subscribe again to continue using Cluegent."
+      );
+      return;
+    }
+
+    if (error instanceof Error && error.message === "GEMINI_CONFIG_MISSING") {
+      sendAssistantHttpFailure(
+        response,
+        500,
+        "GROQ_REQUEST_FAILED",
+        "GEMINI_API_KEY is required for screenshot-attached requests after the OpenAI premium allowance is used."
+      );
+      return;
+    }
+
+    if (error instanceof Error && error.message === "DEEPSEEK_CONFIG_MISSING") {
+      sendAssistantHttpFailure(
+        response,
+        500,
+        "GROQ_REQUEST_FAILED",
+        "DEEPSEEK_AI_API_KEY is required for text-only requests after the OpenAI premium allowance is used."
       );
       return;
     }
@@ -870,6 +1045,16 @@ export async function processAssistantReplyStreamController(
     }
 
     if (error instanceof GeminiServiceError) {
+      sendAssistantHttpFailure(
+        response,
+        502,
+        "GROQ_REQUEST_FAILED",
+        error.message
+      );
+      return;
+    }
+
+    if (error instanceof OpenAiServiceError) {
       sendAssistantHttpFailure(
         response,
         502,

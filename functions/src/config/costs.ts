@@ -1,6 +1,7 @@
 import type { GeminiModelId } from "./gemini.js";
 import type { DeepSeekChatModelId } from "./deepseek.js";
 import type { GroqChatModelId } from "./groq.js";
+import type { OpenAiChatModelId } from "./openai.js";
 
 export interface ChatModelPricing {
   inputUsdPerMillionTokens: number;
@@ -38,6 +39,12 @@ export const COST_CONFIG = {
       outputUsdPerMillionTokens: 0.42,
     },
   } satisfies Record<DeepSeekChatModelId, ChatModelPricing>,
+  openai: {
+    "gpt-4.1-mini": {
+      inputUsdPerMillionTokens: 0.4,
+      outputUsdPerMillionTokens: 1.6,
+    },
+  } satisfies Record<OpenAiChatModelId, ChatModelPricing>,
   // deepgram: {
   //   usdPerMinute: 0,
   // },

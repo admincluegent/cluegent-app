@@ -54,6 +54,8 @@ export interface UsageDoc {
   screenshotCount: number;
   sttSecondsUsed: number;
   deepseekProPromptCount: number;
+  openAiPromptCount: number;
+  openAiScreenshotCount: number;
   inputTokens: number;
   outputTokens: number;
   estimatedCostUsd: number;
@@ -88,6 +90,8 @@ export interface MaterializedUsage {
   screenshotCount: number;
   sttSecondsUsed: number;
   deepseekProPromptCount: number;
+  openAiPromptCount: number;
+  openAiScreenshotCount: number;
   inputTokens: number;
   outputTokens: number;
   estimatedCostUsd: number;
@@ -179,6 +183,8 @@ export function buildUsageDoc(monthKey = getMonthKey()): UsageDoc {
     screenshotCount: 0,
     sttSecondsUsed: 0,
     deepseekProPromptCount: 0,
+    openAiPromptCount: 0,
+    openAiScreenshotCount: 0,
     inputTokens: 0,
     outputTokens: 0,
     estimatedCostUsd: 0,
@@ -226,6 +232,8 @@ export function materializeUsage(
     screenshotCount: raw?.screenshotCount ?? 0,
     sttSecondsUsed: raw?.sttSecondsUsed ?? 0,
     deepseekProPromptCount: raw?.deepseekProPromptCount ?? 0,
+    openAiPromptCount: raw?.openAiPromptCount ?? 0,
+    openAiScreenshotCount: raw?.openAiScreenshotCount ?? 0,
     inputTokens: raw?.inputTokens ?? 0,
     outputTokens: raw?.outputTokens ?? 0,
     estimatedCostUsd: raw?.estimatedCostUsd ?? 0,

@@ -48,6 +48,7 @@ const warmSttTokenRequestOptions = {
 };
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
 const deepseekApiKey = defineSecret("DEEPSEEK_AI_API_KEY");
+const openAiApiKey = defineSecret("OPENAI_API_KEY");
 const assemblyAiApiKey = defineSecret("ASSEMBLY_AI_API_KEY");
 const razorpayTestKeyId = defineSecret("RAZORPAY_TEST_KEY_ID");
 const razorpayTestKeySecret = defineSecret("RAZORPAY_TEST_KEY_SECRET");
@@ -138,12 +139,13 @@ export const checkUsageBeforeAction = onCall(
 export const processAssistantReplyStream = onRequest(
   {
     ...warmAssistantRequestOptions,
-    secrets: [geminiApiKey, deepseekApiKey],
+    secrets: [geminiApiKey, deepseekApiKey, openAiApiKey],
   },
   async (request, response) =>
     processAssistantReplyStreamController(request, response, {
       geminiApiKey: geminiApiKey.value(),
       deepseekApiKey: deepseekApiKey.value(),
+      openAiApiKey: openAiApiKey.value(),
     })
 );
 
