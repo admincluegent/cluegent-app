@@ -16,12 +16,14 @@ export interface PlanConfig {
   screenshotLimit: number;
 }
 
+export const UNLIMITED_USAGE_LIMIT = Number.MAX_SAFE_INTEGER;
+
 export const PLAN_CONFIGS: Record<PlanId, PlanConfig> = {
   free: {
     id: "free",
     label: "Free",
     sttSecondsLimit: 1800,
-    promptLimit: 50,
+    promptLimit: 20,
     screenshotLimit: 20,
   },
   pro: {
@@ -35,8 +37,8 @@ export const PLAN_CONFIGS: Record<PlanId, PlanConfig> = {
     id: "power",
     label: "Power",
     sttSecondsLimit: 180000,
-    promptLimit: 10000,
-    screenshotLimit: 5000,
+    promptLimit: UNLIMITED_USAGE_LIMIT,
+    screenshotLimit: UNLIMITED_USAGE_LIMIT,
   },
 };
 

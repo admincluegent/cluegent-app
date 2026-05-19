@@ -18,6 +18,8 @@ export interface FirestoreUserProfile {
   displayName: string;
   photoURL: string;
   provider: "google";
+  freeTrialPromptCount: number;
+  freeTrialScreenshotCount: number;
   createdAt: string;
   updatedAt: string;
   lastLoginAt: string;
@@ -68,6 +70,10 @@ export interface PlanStatus {
     sttSecondsLimit: number;
   };
   usage: MonthlyUsage;
+  freeTrialUsage: {
+    promptCount: number;
+    screenshotCount: number;
+  };
   remaining: {
     prompts: number;
     screenshots: number;

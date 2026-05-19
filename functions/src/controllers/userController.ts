@@ -11,6 +11,7 @@ import {
   buildUserProfileDoc,
   buildUserProfileUpdate,
   getUserRefs,
+  materializeFreeTrialUsage,
   materializeSubscription,
   materializeUsage,
   serializeForClient,
@@ -54,7 +55,16 @@ export async function getOrCreateUserProfileController(
     if (!userSnap.exists) {
       transaction.set(userRef, profileDoc);
     } else {
-      transaction.update(userRef, profileUpdate);
+      const userData = userSnap.data();
+      transaction.update(userRef, {
+        ...profileUpdate,
+        ...(typeof userData?.freeTrialPromptCount !== "number"
+          ? { freeTrialPromptCount: 0 }
+          : {}),
+        ...(typeof userData?.freeTrialScreenshotCount !== "number"
+          ? { freeTrialScreenshotCount: 0 }
+          : {}),
+      });
     }
 
     if (!subscriptionSnap.exists) {
@@ -79,7 +89,8 @@ export async function getOrCreateUserProfileController(
     usageSnap.data() as ReturnType<typeof materializeUsage>,
     monthKey
   );
-  const planStatus = buildPlanStatus(subscription, usage);
+  const freeTrialUsage = materializeFreeTrialUsage(userSnap.data());
+  const planStatus = buildPlanStatus(subscription, usage, freeTrialUsage);
 
   return {
     success: true,

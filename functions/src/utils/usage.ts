@@ -22,6 +22,8 @@ export interface UserProfileDoc {
   displayName: string;
   photoURL: string;
   provider: "google";
+  freeTrialPromptCount: number;
+  freeTrialScreenshotCount: number;
   createdAt: FieldValue;
   updatedAt: FieldValue;
   lastLoginAt: FieldValue;
@@ -99,6 +101,11 @@ export interface MaterializedUsage {
   updatedAt?: unknown;
 }
 
+export interface FreeTrialUsage {
+  promptCount: number;
+  screenshotCount: number;
+}
+
 export function getUserRefs(uid: string, monthKey = getMonthKey()) {
   return {
     userPath: `users/${uid}`,
@@ -122,6 +129,8 @@ export function buildUserProfileDoc(input: {
     displayName: input.displayName,
     photoURL: input.photoURL,
     provider: "google",
+    freeTrialPromptCount: 0,
+    freeTrialScreenshotCount: 0,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
     lastLoginAt: toFirestoreTimestamp(input.authTime) ?? FieldValue.serverTimestamp(),
@@ -242,23 +251,17 @@ export function materializeUsage(
   };
 }
 
-export function getMonthlyDeepSeekProPromptAllowance(input: {
-  plan: PlanId;
-  billingInterval?: BillingInterval | null;
-}) {
-  if (input.plan === DEFAULT_PLAN_ID) {
-    return 200;
-  }
-
-  if (input.plan === "pro") {
-    return 200;
-  }
-
-  if (input.plan === "power") {
-    return 500;
-  }
-
-  return 0;
+export function materializeFreeTrialUsage(raw?: Record<string, unknown>): FreeTrialUsage {
+  return {
+    promptCount:
+      typeof raw?.freeTrialPromptCount === "number"
+        ? raw.freeTrialPromptCount
+        : 0,
+    screenshotCount:
+      typeof raw?.freeTrialScreenshotCount === "number"
+        ? raw.freeTrialScreenshotCount
+        : 0,
+  };
 }
 
 export function serializeForClient<T>(value: T): T {
@@ -323,8 +326,18 @@ function toFirestoreTimestamp(value: string | null | undefined) {
 
 export function buildPlanStatus(
   subscription: MaterializedSubscription,
-  usage: MaterializedUsage
+  usage: MaterializedUsage,
+  freeTrialUsage: FreeTrialUsage = { promptCount: 0, screenshotCount: 0 }
 ) {
+  const promptRemaining =
+    subscription.plan === "free"
+      ? Math.max(subscription.promptLimit - freeTrialUsage.promptCount, 0)
+      : Math.max(subscription.promptLimit - usage.promptCount, 0);
+  const screenshotRemaining =
+    subscription.plan === "free"
+      ? Math.max(subscription.screenshotLimit - freeTrialUsage.screenshotCount, 0)
+      : Math.max(subscription.screenshotLimit - usage.screenshotCount, 0);
+
   return {
     plan: subscription.plan,
     status: subscription.status,
@@ -334,12 +347,10 @@ export function buildPlanStatus(
       sttSecondsLimit: subscription.sttSecondsLimit,
     },
     usage,
+    freeTrialUsage,
     remaining: {
-      prompts: Math.max(subscription.promptLimit - usage.promptCount, 0),
-      screenshots: Math.max(
-        subscription.screenshotLimit - usage.screenshotCount,
-        0
-      ),
+      prompts: promptRemaining,
+      screenshots: screenshotRemaining,
       sttSeconds: Math.max(
         subscription.sttSecondsLimit - usage.sttSecondsUsed,
         0

@@ -10,6 +10,7 @@ import {
   buildUsageDoc,
   buildUserProfileDoc,
   getUserRefs,
+  materializeFreeTrialUsage,
   materializeSubscription,
   materializeUsage,
   serializeForClient,
@@ -34,18 +35,29 @@ export async function ensureUsageDocuments(
   const subscriptionRef = db.doc(refs.subscriptionPath);
   const usageRef = db.doc(refs.usagePath);
 
-  const [subscriptionSnap, usageSnap] = await Promise.all([
+  const [userSnap, subscriptionSnap, usageSnap] = await Promise.all([
+    userRef.get(),
     subscriptionRef.get(),
     usageRef.get(),
   ]);
+  const userData = userSnap.data();
   const subscriptionData = subscriptionSnap.data();
   const freeLimitsNeedRefresh =
     subscriptionData?.plan === "free" &&
     (subscriptionData.promptLimit !== PLAN_CONFIGS.free.promptLimit ||
       subscriptionData.screenshotLimit !== PLAN_CONFIGS.free.screenshotLimit ||
       subscriptionData.sttSecondsLimit !== PLAN_CONFIGS.free.sttSecondsLimit);
+  const freeTrialFieldsNeedRefresh =
+    userSnap.exists &&
+    (typeof userData?.freeTrialPromptCount !== "number" ||
+      typeof userData?.freeTrialScreenshotCount !== "number");
 
-  if (subscriptionSnap.exists && usageSnap.exists && !freeLimitsNeedRefresh) {
+  if (
+    subscriptionSnap.exists &&
+    usageSnap.exists &&
+    !freeLimitsNeedRefresh &&
+    !freeTrialFieldsNeedRefresh
+  ) {
     return {
       monthKey,
       subscription: materializeSubscription(
@@ -55,6 +67,7 @@ export async function ensureUsageDocuments(
         usageSnap.data() as ReturnType<typeof materializeUsage>,
         monthKey
       ),
+      freeTrialUsage: materializeFreeTrialUsage(userData),
     };
   }
 
@@ -76,6 +89,20 @@ export async function ensureUsageDocuments(
           photoURL: identity.photoURL,
           authTime: identity.authTime,
         }),
+        { merge: true }
+      );
+    } else if (freeTrialFieldsNeedRefresh) {
+      transaction.set(
+        userRef,
+        {
+          ...(typeof userSnap.data()?.freeTrialPromptCount !== "number"
+            ? { freeTrialPromptCount: 0 }
+            : {}),
+          ...(typeof userSnap.data()?.freeTrialScreenshotCount !== "number"
+            ? { freeTrialScreenshotCount: 0 }
+            : {}),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
         { merge: true }
       );
     }
@@ -103,7 +130,8 @@ export async function ensureUsageDocuments(
     }
   });
 
-  const [finalSubscriptionSnap, finalUsageSnap] = await Promise.all([
+  const [finalUserSnap, finalSubscriptionSnap, finalUsageSnap] = await Promise.all([
+    userRef.get(),
     subscriptionRef.get(),
     usageRef.get(),
   ]);
@@ -117,6 +145,7 @@ export async function ensureUsageDocuments(
       finalUsageSnap.data() as ReturnType<typeof materializeUsage>,
       monthKey
     ),
+    freeTrialUsage: materializeFreeTrialUsage(finalUserSnap.data()),
   };
 }
 
@@ -124,7 +153,7 @@ export async function getPlanStatusController(
   request: CallableRequest<unknown>
 ) {
   const authUser = requireAuth(request);
-  const { monthKey, subscription, usage } = await ensureUsageDocuments(
+  const { monthKey, subscription, usage, freeTrialUsage } = await ensureUsageDocuments(
     authUser.uid,
     authUser
   );
@@ -133,7 +162,7 @@ export async function getPlanStatusController(
     success: true,
     data: {
       monthKey,
-      planStatus: serializeForClient(buildPlanStatus(subscription, usage)),
+      planStatus: serializeForClient(buildPlanStatus(subscription, usage, freeTrialUsage)),
     },
   };
 }
@@ -155,11 +184,11 @@ export async function checkUsageBeforeActionController(
     );
   }
 
-  const { monthKey, subscription, usage } = await ensureUsageDocuments(
+  const { monthKey, subscription, usage, freeTrialUsage } = await ensureUsageDocuments(
     authUser.uid,
     authUser
   );
-  const planStatus = buildPlanStatus(subscription, usage);
+  const planStatus = buildPlanStatus(subscription, usage, freeTrialUsage);
   const check = assertUsageAvailable(actionType, planStatus);
 
   return {

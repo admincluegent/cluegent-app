@@ -11,6 +11,7 @@ import {
   buildPlanStatus,
   getUserRefs,
   isFreeTrialExhausted,
+  materializeFreeTrialUsage,
   materializeSubscription,
   materializeUsage,
 } from "../utils/usage.js";
@@ -182,29 +183,46 @@ type AssistantModelRoute =
       premiumCounter: null;
     };
 
+const OPENAI_FREE_MONTHLY_PROMPT_ALLOWANCE = 20;
+const OPENAI_FREE_MONTHLY_SCREENSHOT_ALLOWANCE = 20;
 const OPENAI_PRO_MONTHLY_PROMPT_ALLOWANCE = 200;
 const OPENAI_PRO_MONTHLY_SCREENSHOT_ALLOWANCE = 200;
+const OPENAI_POWER_MONTHLY_PROMPT_ALLOWANCE = 500;
+const OPENAI_POWER_MONTHLY_SCREENSHOT_ALLOWANCE = 500;
 
 function getOpenAiMonthlyAllowance(input: {
   subscription: ReturnType<typeof materializeSubscription>;
   hasScreenshot: boolean;
 }) {
-  if (
-    input.subscription.status !== "active" ||
-    (input.subscription.plan !== "pro" && input.subscription.plan !== "power")
-  ) {
+  if (input.subscription.status !== "active" && input.subscription.plan !== "free") {
     return 0;
   }
 
-  return input.hasScreenshot
-    ? OPENAI_PRO_MONTHLY_SCREENSHOT_ALLOWANCE
-    : OPENAI_PRO_MONTHLY_PROMPT_ALLOWANCE;
+  if (input.subscription.plan === "free") {
+    return input.hasScreenshot
+      ? OPENAI_FREE_MONTHLY_SCREENSHOT_ALLOWANCE
+      : OPENAI_FREE_MONTHLY_PROMPT_ALLOWANCE;
+  }
+
+  if (input.subscription.plan === "power") {
+    return input.hasScreenshot
+      ? OPENAI_POWER_MONTHLY_SCREENSHOT_ALLOWANCE
+      : OPENAI_POWER_MONTHLY_PROMPT_ALLOWANCE;
+  }
+
+  if (input.subscription.plan === "pro") {
+    return input.hasScreenshot
+      ? OPENAI_PRO_MONTHLY_SCREENSHOT_ALLOWANCE
+      : OPENAI_PRO_MONTHLY_PROMPT_ALLOWANCE;
+  }
+
+  return 0;
 }
 
 function assertSubscriptionActive(
   subscription: ReturnType<typeof materializeSubscription>
 ) {
-  if (subscription.status !== "active") {
+  if (subscription.plan !== "free" && subscription.status !== "active") {
     throw new Error("SUBSCRIPTION_INACTIVE");
   }
 }
@@ -389,11 +407,13 @@ async function reserveAssistantUsage(input: {
   hasDeepSeekApiKey: boolean;
 }) {
   const refs = getUserRefs(input.uid, input.monthKey);
+  const userRef = db.doc(refs.userPath);
   const subscriptionRef = db.doc(refs.subscriptionPath);
   const usageRef = db.doc(refs.usagePath);
 
   return db.runTransaction(async (transaction) => {
-    const [subscriptionSnap, usageSnap] = await Promise.all([
+    const [userSnap, subscriptionSnap, usageSnap] = await Promise.all([
+      transaction.get(userRef),
       transaction.get(subscriptionRef),
       transaction.get(usageRef),
     ]);
@@ -404,7 +424,12 @@ async function reserveAssistantUsage(input: {
       usageSnap.data() as ReturnType<typeof materializeUsage>,
       input.monthKey
     );
-    const latestPlanStatus = buildPlanStatus(latestSubscription, latestUsage);
+    const freeTrialUsage = materializeFreeTrialUsage(userSnap.data());
+    const latestPlanStatus = buildPlanStatus(
+      latestSubscription,
+      latestUsage,
+      freeTrialUsage
+    );
 
     assertSubscriptionActive(latestSubscription);
 
@@ -442,6 +467,20 @@ async function reserveAssistantUsage(input: {
       },
       { merge: true }
     );
+
+    if (latestSubscription.plan === "free") {
+      transaction.set(
+        userRef,
+        {
+          freeTrialPromptCount: FieldValue.increment(1),
+          freeTrialScreenshotCount: FieldValue.increment(
+            input.hasScreenshot ? 1 : 0
+          ),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
 
     return {
       route,
