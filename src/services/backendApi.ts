@@ -5,14 +5,12 @@ import type {
   CancelRazorpayLiveSubscriptionResponse,
   CancelRazorpayTestSubscriptionResponse,
   CreateRazorpayLiveOrderResponse,
-  CreateRazorpayLiveTestOrderResponse,
   CreateRazorpayLiveSubscriptionResponse,
   CreateRazorpayTestSubscriptionResponse,
   DeleteAccountResponse,
   GetOrCreateUserProfileResponse,
   GetPlanStatusResponse,
   VerifyRazorpayLiveOrderPaymentResponse,
-  VerifyRazorpayLiveTestOrderPaymentResponse,
   VerifyRazorpayLivePaymentResponse,
   VerifyRazorpayTestPaymentResponse,
 } from "@/types/backend";
@@ -58,28 +56,19 @@ export async function createRazorpayTestSubscription(
 }
 
 export async function createRazorpayLiveSubscription(
-  planId: Extract<UserPlan, "livetest" | "pro" | "power">,
+  planId: Extract<UserPlan, "pro" | "power">,
   interval: BillingInterval,
   currency: "INR" | "USD"
 ) {
   const callable = httpsCallable<
     {
-      planId: Extract<UserPlan, "livetest" | "pro" | "power">;
+      planId: Extract<UserPlan, "pro" | "power">;
       interval: BillingInterval;
       currency: "INR" | "USD";
     },
     BackendEnvelope<CreateRazorpayLiveSubscriptionResponse>
   >(functions, "createRazorpayLiveSubscription");
   const result = await callable({ planId, interval, currency });
-  return result.data.data;
-}
-
-export async function createRazorpayLiveTestOrder() {
-  const callable = httpsCallable<
-    Record<string, never>,
-    BackendEnvelope<CreateRazorpayLiveTestOrderResponse>
-  >(functions, "createRazorpayLiveTestOrder");
-  const result = await callable({});
   return result.data.data;
 }
 
@@ -122,19 +111,6 @@ export async function verifyRazorpayLivePayment(input: {
     typeof input,
     BackendEnvelope<VerifyRazorpayLivePaymentResponse>
   >(functions, "verifyRazorpayLivePayment");
-  const result = await callable(input);
-  return result.data.data;
-}
-
-export async function verifyRazorpayLiveTestOrderPayment(input: {
-  razorpay_payment_id: string;
-  razorpay_order_id: string;
-  razorpay_signature: string;
-}) {
-  const callable = httpsCallable<
-    typeof input,
-    BackendEnvelope<VerifyRazorpayLiveTestOrderPaymentResponse>
-  >(functions, "verifyRazorpayLiveTestOrderPayment");
   const result = await callable(input);
   return result.data.data;
 }

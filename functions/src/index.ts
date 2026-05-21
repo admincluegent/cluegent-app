@@ -12,13 +12,11 @@ import {
   cancelRazorpayTestSubscriptionController,
   cancelRazorpayLiveSubscriptionController,
   createRazorpayLiveOrderController,
-  createRazorpayLiveTestOrderController,
   createRazorpayLiveSubscriptionController,
   createRazorpayTestSubscriptionController,
   razorpayLiveWebhookController,
   razorpayTestWebhookController,
   verifyRazorpayLiveOrderPaymentController,
-  verifyRazorpayLiveTestOrderPaymentController,
   verifyRazorpayLivePaymentController,
   verifyRazorpayTestPaymentController,
 } from "./controllers/billingController.js";
@@ -172,18 +170,6 @@ export const createRazorpayLiveSubscription = onCall(
     })
 );
 
-export const createRazorpayLiveTestOrder = onCall(
-  {
-    ...callableOptions,
-    secrets: [razorpayLiveKeyId, razorpayLiveKeySecret],
-  },
-  (request) =>
-    createRazorpayLiveTestOrderController(request, {
-      keyId: razorpayLiveKeyId.value(),
-      keySecret: razorpayLiveKeySecret.value(),
-    })
-);
-
 export const createRazorpayLiveOrder = onCall(
   {
     ...callableOptions,
@@ -196,24 +182,14 @@ export const createRazorpayLiveOrder = onCall(
     })
 );
 
-export const verifyRazorpayLiveTestOrderPayment = onCall(
-  {
-    ...callableOptions,
-    secrets: [razorpayLiveKeySecret],
-  },
-  (request) =>
-    verifyRazorpayLiveTestOrderPaymentController(request, {
-      keySecret: razorpayLiveKeySecret.value(),
-    })
-);
-
 export const verifyRazorpayLiveOrderPayment = onCall(
   {
     ...callableOptions,
-    secrets: [razorpayLiveKeySecret],
+    secrets: [razorpayLiveKeyId, razorpayLiveKeySecret],
   },
   (request) =>
     verifyRazorpayLiveOrderPaymentController(request, {
+      keyId: razorpayLiveKeyId.value(),
       keySecret: razorpayLiveKeySecret.value(),
     })
 );

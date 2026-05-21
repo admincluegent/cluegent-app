@@ -29,8 +29,8 @@ export const DEFAULT_KEYBINDS: KeybindConfig[] = [
     { id: 'chat:clearTranscript', label: 'Clear Transcript', accelerator: 'CommandOrControl+]', isGlobal: true, defaultAccelerator: 'CommandOrControl+]' },
     { id: 'chat:codeHint', label: 'Get Code Hint', accelerator: 'CommandOrControl+6', isGlobal: true, defaultAccelerator: 'CommandOrControl+6' },
     { id: 'chat:brainstorm', label: 'Brainstorm Approaches', accelerator: 'CommandOrControl+7', isGlobal: true, defaultAccelerator: 'CommandOrControl+7' },
-    { id: 'chat:scrollUp', label: 'Scroll Up', accelerator: 'CommandOrControl+Up', isGlobal: true, defaultAccelerator: 'CommandOrControl+Up' },
-    { id: 'chat:scrollDown', label: 'Scroll Down', accelerator: 'CommandOrControl+Down', isGlobal: true, defaultAccelerator: 'CommandOrControl+Down' },
+    { id: 'chat:scrollUp', label: 'Scroll Up', accelerator: 'CommandOrControl+Alt+Up', isGlobal: true, defaultAccelerator: 'CommandOrControl+Alt+Up' },
+    { id: 'chat:scrollDown', label: 'Scroll Down', accelerator: 'CommandOrControl+Alt+Down', isGlobal: true, defaultAccelerator: 'CommandOrControl+Alt+Down' },
 
     // Window Movement - Global shortcuts (stealth window positioning)
     { id: 'window:move-up', label: 'Move Window Up', accelerator: 'CommandOrControl+Up', isGlobal: true, defaultAccelerator: 'CommandOrControl+Up' },
@@ -213,6 +213,14 @@ export class KeybindManager {
             'chat:answer': {
                 previous: 'CommandOrControl+[',
                 next: 'CommandOrControl+5',
+            },
+            'chat:scrollUp': {
+                previous: 'CommandOrControl+Up',
+                next: 'CommandOrControl+Alt+Up',
+            },
+            'chat:scrollDown': {
+                previous: 'CommandOrControl+Down',
+                next: 'CommandOrControl+Alt+Down',
             },
         };
 

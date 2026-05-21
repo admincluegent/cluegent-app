@@ -6,6 +6,7 @@ import {
   cancelRazorpayTestSubscription,
   createRazorpayOrder,
   createRazorpayTestSubscription,
+  fetchRazorpayOrder,
   parseAllowedEmails,
   resolvePlanFromRazorpayPlanId,
   resolveRazorpayPlanId,
@@ -46,7 +47,7 @@ interface VerifyRazorpayTestPaymentData {
   razorpay_signature?: string;
 }
 
-interface VerifyRazorpayLiveTestOrderPaymentData {
+interface VerifyRazorpayLiveOrderPaymentData {
   razorpay_payment_id?: string;
   razorpay_order_id?: string;
   razorpay_signature?: string;
@@ -73,10 +74,22 @@ interface RazorpayWebhookEnvelope {
     subscription?: {
       entity?: RazorpaySubscriptionEntity;
     };
+    order?: {
+      entity?: RazorpayOrderEntity;
+    };
     payment?: {
-      entity?: Record<string, unknown>;
+      entity?: RazorpayWebhookPaymentEntity;
     };
   };
+}
+
+interface RazorpayWebhookPaymentEntity extends Record<string, unknown> {
+  id?: string;
+  order_id?: string | null;
+  status?: string;
+  amount?: number;
+  currency?: RazorpayCurrency;
+  captured?: boolean;
 }
 
 const TEST_EVENTS_COLLECTION = "billing_razorpay_test_events";
@@ -90,21 +103,34 @@ const LIVE_TEST_PLAN_ID = "livetest";
 const LIVE_TEST_DURATION_MS = 30 * 60 * 1000;
 const LIVE_MONTH_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
 const LIVE_YEAR_DURATION_MS = 365 * 24 * 60 * 60 * 1000;
-const LIVE_ORDER_CURRENCY: RazorpayCurrency = "INR";
-const LIVE_ORDER_PRICES_INR_PAISE: Record<
-  PaidPlanId,
-  Partial<Record<BillingInterval, number>>
+const DEFAULT_LIVE_ORDER_CURRENCY: RazorpayCurrency = "INR";
+const LIVE_ORDER_PRICES_SUBUNITS: Record<
+  RazorpayCurrency,
+  Record<PaidPlanId, Partial<Record<BillingInterval, number>>>
 > = {
-  livetest: {
-    month: 500,
+  INR: {
+    livetest: {
+      month: 500,
+    },
+    pro: {
+      month: 349_900,
+      year: 3_499_000,
+    },
+    power: {
+      month: 649_900,
+      year: 6_499_000,
+    },
   },
-  pro: {
-    month: 349_900,
-    year: 3_499_000,
-  },
-  power: {
-    month: 649_900,
-    year: 6_499_000,
+  USD: {
+    livetest: {},
+    pro: {
+      month: 3_900,
+      year: 39_000,
+    },
+    power: {
+      month: 6_900,
+      year: 69_000,
+    },
   },
 };
 
@@ -356,20 +382,6 @@ export async function cancelRazorpayTestSubscriptionController(
   };
 }
 
-export async function createRazorpayLiveTestOrderController(
-  request: CallableRequest<unknown>,
-  env: Pick<RazorpayLiveEnv, "keyId" | "keySecret">
-) {
-  const authUser = requireAuth(request);
-  return createRazorpayLiveOrderForPlan({
-    authUser,
-    env,
-    planId: LIVE_TEST_PLAN_ID,
-    interval: "month",
-    currency: LIVE_ORDER_CURRENCY,
-  });
-}
-
 export async function createRazorpayLiveOrderController(
   request: CallableRequest<CreateRazorpayLiveSubscriptionData>,
   env: Pick<RazorpayLiveEnv, "keyId" | "keySecret">
@@ -377,7 +389,7 @@ export async function createRazorpayLiveOrderController(
   const authUser = requireAuth(request);
   const planId = request.data?.planId;
   const interval = request.data?.interval;
-  const currency = request.data?.currency ?? LIVE_ORDER_CURRENCY;
+  const currency = request.data?.currency ?? DEFAULT_LIVE_ORDER_CURRENCY;
 
   if (!isSupportedPaidPlan(planId as PaidPlanId, interval as BillingInterval)) {
     throw new HttpsError(
@@ -389,14 +401,14 @@ export async function createRazorpayLiveOrderController(
   if (planId === LIVE_TEST_PLAN_ID) {
     throw new HttpsError(
       "invalid-argument",
-      "Use the Live Test checkout for the Live Test plan."
+      "Live Test checkout is no longer available."
     );
   }
 
-  if (currency !== LIVE_ORDER_CURRENCY) {
+  if (currency !== "INR" && currency !== "USD") {
     throw new HttpsError(
-      "failed-precondition",
-      "USD checkout is disabled until Razorpay approves international payments."
+      "invalid-argument",
+      "Choose a supported Razorpay checkout currency."
     );
   }
 
@@ -491,23 +503,16 @@ async function createRazorpayLiveOrderForPlan(input: {
   };
 }
 
-export async function verifyRazorpayLiveTestOrderPaymentController(
-  request: CallableRequest<VerifyRazorpayLiveTestOrderPaymentData>,
-  env: Pick<RazorpayLiveEnv, "keySecret">
-) {
-  return verifyRazorpayLiveOrderPaymentForPlan(request, env);
-}
-
 export async function verifyRazorpayLiveOrderPaymentController(
-  request: CallableRequest<VerifyRazorpayLiveTestOrderPaymentData>,
-  env: Pick<RazorpayLiveEnv, "keySecret">
+  request: CallableRequest<VerifyRazorpayLiveOrderPaymentData>,
+  env: Pick<RazorpayLiveEnv, "keyId" | "keySecret">
 ) {
   return verifyRazorpayLiveOrderPaymentForPlan(request, env);
 }
 
 async function verifyRazorpayLiveOrderPaymentForPlan(
-  request: CallableRequest<VerifyRazorpayLiveTestOrderPaymentData>,
-  env: Pick<RazorpayLiveEnv, "keySecret">
+  request: CallableRequest<VerifyRazorpayLiveOrderPaymentData>,
+  env: Pick<RazorpayLiveEnv, "keyId" | "keySecret">
 ) {
   const authUser = requireAuth(request);
   const paymentId = request.data?.razorpay_payment_id?.trim();
@@ -563,6 +568,24 @@ async function verifyRazorpayLiveOrderPaymentForPlan(
     );
   }
 
+  const razorpayOrder = await fetchRazorpayOrder({
+    keyId: env.keyId,
+    keySecret: env.keySecret,
+    orderId,
+    providerMode: "live",
+  });
+
+  if (
+    razorpayOrder.status !== "paid" ||
+    razorpayOrder.amount !== expectedPricing.amount ||
+    razorpayOrder.currency !== expectedPricing.currency
+  ) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Razorpay has not marked this order as paid yet. Refresh Billing after payment capture."
+    );
+  }
+
   if (orderData.status === "paid") {
     if (orderData.paymentId !== paymentId) {
       throw new HttpsError(
@@ -590,7 +613,7 @@ async function verifyRazorpayLiveOrderPaymentForPlan(
     amount: expectedPricing.amount,
     currency: expectedPricing.currency,
     providerPayload: {
-      razorpay_order_id: orderId,
+      razorpay_order: razorpayOrder,
       razorpay_payment_id: paymentId,
     },
   });
@@ -1076,13 +1099,11 @@ export async function razorpayLiveWebhookController(
   }
 
   try {
-    const duplicate = await persistRazorpayWebhookEvent(
+    const duplicate = await persistRazorpayLiveWebhookEvent(
       payload,
       eventId,
       rawBody,
-      env.plans.inr,
-      "live",
-      env.plans.usd
+      env.plans
     );
     response.status(200).json({ success: true, duplicate });
   } catch (error) {
@@ -1093,6 +1114,205 @@ export async function razorpayLiveWebhookController(
       message: error instanceof Error ? error.message : "Unknown error",
     });
   }
+}
+
+async function persistRazorpayLiveWebhookEvent(
+  payload: RazorpayWebhookEnvelope,
+  eventId: string,
+  rawBody: string,
+  plans: RazorpayLivePlanConfig
+) {
+  if (isLiveOrderWebhookEvent(payload)) {
+    return persistRazorpayLiveOrderWebhookEvent(payload, eventId, rawBody);
+  }
+
+  return persistRazorpayWebhookEvent(
+    payload,
+    eventId,
+    rawBody,
+    plans.inr,
+    "live",
+    plans.usd
+  );
+}
+
+async function persistRazorpayLiveOrderWebhookEvent(
+  payload: RazorpayWebhookEnvelope,
+  eventId: string,
+  rawBody: string
+) {
+  const eventRef = db.collection(LIVE_EVENTS_COLLECTION).doc(eventId);
+  const existingEvent = await eventRef.get();
+  if (existingEvent.exists) {
+    return true;
+  }
+
+  const eventType = readString(payload.event) ?? "unknown";
+  const order = payload.payload?.order?.entity ?? {};
+  const payment = payload.payload?.payment?.entity ?? {};
+  const orderId = readString(order.id) ?? readString(payment.order_id);
+  const paymentId = readString(payment.id);
+  const orderSnap = orderId
+    ? await db.collection(LIVE_ORDERS_COLLECTION).doc(orderId).get()
+    : null;
+  const orderData = orderSnap?.data();
+  const mappedPlan = orderData
+    ? {
+        planId: orderData.planId as PaidPlanId,
+        interval: orderData.billingInterval as BillingInterval,
+      }
+    : null;
+  const expectedPricing = mappedPlan
+    ? getLiveOrderPricing(
+        mappedPlan.planId,
+        mappedPlan.interval,
+        readRazorpayCurrency(orderData?.currency)
+      )
+    : null;
+  const amount = readNumber(order.amount) ?? readNumber(payment.amount);
+  const currency = readRazorpayCurrency(order.currency ?? payment.currency);
+
+  await eventRef.set({
+    eventId,
+    eventType,
+    rawBody,
+    payload,
+    uid: readString(orderData?.uid),
+    orderId: orderId ?? null,
+    paymentId: paymentId ?? null,
+    mappedPlanId: mappedPlan?.planId ?? null,
+    mappedInterval: mappedPlan?.interval ?? null,
+    processed: false,
+    processedAt: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const rejectionReason = getLiveOrderWebhookRejectionReason({
+    eventType,
+    orderId,
+    paymentId,
+    orderExists: Boolean(orderSnap?.exists),
+    uid: readString(orderData?.uid),
+    expectedPricing,
+    amount,
+    currency,
+    paymentStatus: readString(payment.status),
+    orderStatus: readString(order.status),
+  });
+
+  if (
+    rejectionReason ||
+    !orderId ||
+    !orderData ||
+    !mappedPlan ||
+    !expectedPricing ||
+    !paymentId
+  ) {
+    await eventRef.set(
+      {
+        rejectionReason,
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+    return false;
+  }
+
+  if (orderData.status === "paid") {
+    await eventRef.set(
+      {
+        processed: orderData.paymentId === paymentId,
+        rejectionReason:
+          orderData.paymentId === paymentId
+            ? null
+            : "order already paid with a different payment",
+        effectivePlanId: orderData.planId,
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+    return false;
+  }
+
+  await applyRazorpayOrderEntitlement({
+    uid: readString(orderData.uid) ?? "",
+    email: readString(orderData.email),
+    orderId,
+    paymentId,
+    mappedPlan,
+    amount: expectedPricing.amount,
+    currency: expectedPricing.currency,
+    providerPayload: {
+      order,
+      payment,
+      event: eventType,
+    },
+  });
+
+  await eventRef.set(
+    {
+      processed: true,
+      rejectionReason: null,
+      effectivePlanId: mappedPlan.planId,
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  return false;
+}
+
+function isLiveOrderWebhookEvent(payload: RazorpayWebhookEnvelope) {
+  return payload.event === "order.paid" || payload.event === "payment.captured";
+}
+
+function getLiveOrderWebhookRejectionReason(input: {
+  eventType: string;
+  orderId: string | null;
+  paymentId: string | null;
+  orderExists: boolean;
+  uid: string | null;
+  expectedPricing: ReturnType<typeof getLiveOrderPricing>;
+  amount: number | null;
+  currency: RazorpayCurrency | null;
+  paymentStatus: string | null;
+  orderStatus: string | null;
+}) {
+  if (!input.orderId) {
+    return "missing order id";
+  }
+  if (!input.paymentId) {
+    return "missing payment id";
+  }
+  if (!input.orderExists || !input.uid || !input.expectedPricing) {
+    return "unknown Cluegent live order";
+  }
+  if (
+    input.amount !== null &&
+    input.amount !== input.expectedPricing.amount
+  ) {
+    return "webhook amount does not match the stored order";
+  }
+  if (input.currency && input.currency !== input.expectedPricing.currency) {
+    return "webhook currency does not match the stored order";
+  }
+  if (
+    input.eventType === "payment.captured" &&
+    input.paymentStatus &&
+    input.paymentStatus !== "captured"
+  ) {
+    return "payment webhook is not captured";
+  }
+  if (
+    input.eventType === "order.paid" &&
+    input.orderStatus &&
+    input.orderStatus !== "paid"
+  ) {
+    return "order webhook is not paid";
+  }
+
+  return null;
 }
 
 async function persistRazorpayWebhookEvent(
@@ -1429,7 +1649,22 @@ async function applyRazorpayOrderEntitlement(input: {
   const currentMonthKey = refs.usagePath.split("/").pop();
 
   await db.runTransaction(async (transaction) => {
-    const usageSnap = await transaction.get(usageRef);
+    const [usageSnap, currentOrderSnap] = await Promise.all([
+      transaction.get(usageRef),
+      transaction.get(orderRef),
+    ]);
+    const currentOrder = currentOrderSnap.data();
+    if (currentOrder?.status === "paid") {
+      if (currentOrder.paymentId !== input.paymentId) {
+        throw new HttpsError(
+          "permission-denied",
+          "This Razorpay order was already paid with a different payment."
+        );
+      }
+
+      return;
+    }
+
     const usageBaseline = buildUsageBaseline(
       materializeUsage(
         usageSnap.data() as ReturnType<typeof materializeUsage>,
@@ -1591,11 +1826,11 @@ function getLiveOrderPricing(
   interval: BillingInterval,
   currency: RazorpayCurrency | null
 ) {
-  if (currency !== LIVE_ORDER_CURRENCY || !isSupportedPaidPlan(planId, interval)) {
+  if (!currency || !isSupportedPaidPlan(planId, interval)) {
     return null;
   }
 
-  const amount = LIVE_ORDER_PRICES_INR_PAISE[planId]?.[interval];
+  const amount = LIVE_ORDER_PRICES_SUBUNITS[currency][planId]?.[interval];
   if (!amount) {
     return null;
   }

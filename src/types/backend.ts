@@ -58,7 +58,7 @@ export interface CreateRazorpayLiveOrderResponse {
   keyId: string;
   orderId: string;
   amount: number;
-  currency: "INR";
+  currency: "INR" | "USD";
   planId: UserPlan;
   interval: BillingInterval;
   name: string;
@@ -70,19 +70,11 @@ export interface CreateRazorpayLiveOrderResponse {
   notes: Record<string, string>;
 }
 
-export type CreateRazorpayLiveTestOrderResponse = CreateRazorpayLiveOrderResponse & {
-  planId: "livetest";
-  interval: "month";
-};
-
 export interface VerifyRazorpayLiveOrderPaymentResponse {
   verified: boolean;
   orderId: string;
   paymentId: string;
 }
-
-export type VerifyRazorpayLiveTestOrderPaymentResponse =
-  VerifyRazorpayLiveOrderPaymentResponse;
 
 export interface CancelRazorpayTestSubscriptionResponse {
   cancelled: boolean;

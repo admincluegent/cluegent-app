@@ -308,6 +308,24 @@ export function needsPaidUsageBaseline(
   );
 }
 
+export function isExpiredLiveOrderEntitlement(
+  subscriptionData?: Record<string, unknown>
+) {
+  if (
+    subscriptionData?.plan === DEFAULT_PLAN_ID ||
+    subscriptionData?.status !== "active" ||
+    subscriptionData?.provider !== "razorpay" ||
+    subscriptionData?.providerMode !== "live" ||
+    typeof subscriptionData?.orderId !== "string" ||
+    !subscriptionData.orderId.trim()
+  ) {
+    return false;
+  }
+
+  const expiresAt = readDate(subscriptionData.expiresAt);
+  return Boolean(expiresAt && expiresAt.getTime() <= Date.now());
+}
+
 export function getPlanPeriodUsage(
   subscription: MaterializedSubscription,
   usage: MaterializedUsage
@@ -403,6 +421,28 @@ function toFirestoreTimestamp(value: string | null | undefined) {
   }
 
   return Timestamp.fromDate(parsed);
+}
+
+function readDate(value: unknown) {
+  if (!value) {
+    return null;
+  }
+
+  if (typeof value === "string") {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { toDate?: unknown }).toDate === "function"
+  ) {
+    const parsed = (value as { toDate: () => Date }).toDate();
+    return parsed instanceof Date && !Number.isNaN(parsed.getTime()) ? parsed : null;
+  }
+
+  return null;
 }
 
 export function buildPlanStatus(

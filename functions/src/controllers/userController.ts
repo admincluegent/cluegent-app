@@ -12,6 +12,7 @@ import {
   buildUserProfileDoc,
   buildUserProfileUpdate,
   getUserRefs,
+  isExpiredLiveOrderEntitlement,
   materializeFreeTrialUsage,
   materializeSubscription,
   materializeUsage,
@@ -82,7 +83,7 @@ export async function getOrCreateUserProfileController(
 
     if (!subscriptionSnap.exists) {
       transaction.set(subscriptionRef, buildSubscriptionDoc());
-    } else if (isLiveTestSubscriptionExpired(subscriptionSnap.data())) {
+    } else if (isExpiredLiveOrderEntitlement(subscriptionSnap.data())) {
       transaction.set(
         subscriptionRef,
         {
@@ -96,7 +97,7 @@ export async function getOrCreateUserProfileController(
           renewsAt: null,
           expiresAt: subscriptionSnap.data()?.expiresAt ?? null,
           cancelAtPeriodEnd: false,
-          lastWebhookEventId: "livetest_local_expired",
+          lastWebhookEventId: "live_order_local_expired",
           isTestEntitlement: false,
           updatedAt: FieldValue.serverTimestamp(),
         },
@@ -287,37 +288,6 @@ async function deleteRazorpayProviderCustomerRecords(
 
 function readString(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
-}
-
-function isLiveTestSubscriptionExpired(subscriptionData?: Record<string, unknown>) {
-  if (subscriptionData?.plan !== "livetest" || subscriptionData?.status !== "active") {
-    return false;
-  }
-
-  const expiresAt = readDate(subscriptionData.expiresAt);
-  return Boolean(expiresAt && expiresAt.getTime() <= Date.now());
-}
-
-function readDate(value: unknown) {
-  if (!value) {
-    return null;
-  }
-
-  if (typeof value === "string") {
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  }
-
-  if (
-    typeof value === "object" &&
-    value !== null &&
-    typeof (value as { toDate?: unknown }).toDate === "function"
-  ) {
-    const parsed = (value as { toDate: () => Date }).toDate();
-    return parsed instanceof Date && !Number.isNaN(parsed.getTime()) ? parsed : null;
-  }
-
-  return null;
 }
 
 function isAuthUserNotFoundError(error: unknown) {

@@ -219,6 +219,42 @@ export async function createRazorpayOrder(input: {
   return payload;
 }
 
+export async function fetchRazorpayOrder(input: {
+  keyId: string;
+  keySecret: string;
+  orderId: string;
+  providerMode?: RazorpayProviderMode;
+}) {
+  const providerMode = input.providerMode ?? "live";
+  const response = await fetch(
+    `${RAZORPAY_API_BASE_URL}/orders/${encodeURIComponent(input.orderId)}`,
+    {
+      method: "GET",
+      headers: {
+        authorization: buildBasicAuthHeader(input.keyId, input.keySecret),
+      },
+    }
+  );
+
+  const payload = (await response.json().catch(() => ({}))) as RazorpayOrderEntity & {
+    error?: { description?: string };
+  };
+
+  if (!response.ok) {
+    throw new Error(
+      `Razorpay ${providerMode} order fetch failed with status ${response.status}: ${
+        payload.error?.description ?? JSON.stringify(payload)
+      }`
+    );
+  }
+
+  if (!payload.id) {
+    throw new Error(`Razorpay ${providerMode} order fetch returned no order id.`);
+  }
+
+  return payload;
+}
+
 export async function fetchRazorpayTestSubscription(input: {
   keyId: string;
   keySecret: string;

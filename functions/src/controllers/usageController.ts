@@ -11,6 +11,7 @@ import {
   buildUsageDoc,
   buildUserProfileDoc,
   getUserRefs,
+  isExpiredLiveOrderEntitlement,
   materializeFreeTrialUsage,
   materializeSubscription,
   materializeUsage,
@@ -49,7 +50,7 @@ export async function ensureUsageDocuments(
     (subscriptionData.promptLimit !== PLAN_CONFIGS.free.promptLimit ||
       subscriptionData.screenshotLimit !== PLAN_CONFIGS.free.screenshotLimit ||
       subscriptionData.sttSecondsLimit !== PLAN_CONFIGS.free.sttSecondsLimit);
-  const liveTestExpired = isLiveTestSubscriptionExpired(subscriptionData);
+  const liveOrderExpired = isExpiredLiveOrderEntitlement(subscriptionData);
   const paidBaselineNeedRefresh =
     subscriptionSnap.exists &&
     usageSnap.exists &&
@@ -72,7 +73,7 @@ export async function ensureUsageDocuments(
     subscriptionSnap.exists &&
     usageSnap.exists &&
     !freeLimitsNeedRefresh &&
-    !liveTestExpired &&
+    !liveOrderExpired &&
     !paidBaselineNeedRefresh &&
     !freeTrialFieldsNeedRefresh
   ) {
@@ -141,7 +142,7 @@ export async function ensureUsageDocuments(
       transaction.set(subscriptionRef, buildSubscriptionDoc());
     } else {
       const latestSubscriptionData = latestSubscriptionSnap.data();
-      if (isLiveTestSubscriptionExpired(latestSubscriptionData)) {
+      if (isExpiredLiveOrderEntitlement(latestSubscriptionData)) {
         transaction.set(
           subscriptionRef,
           {
@@ -155,7 +156,7 @@ export async function ensureUsageDocuments(
             renewsAt: null,
             expiresAt: latestSubscriptionData?.expiresAt ?? null,
             cancelAtPeriodEnd: false,
-            lastWebhookEventId: "livetest_local_expired",
+            lastWebhookEventId: "live_order_local_expired",
             isTestEntitlement: false,
             updatedAt: FieldValue.serverTimestamp(),
           },
@@ -216,37 +217,6 @@ export async function ensureUsageDocuments(
     ),
     freeTrialUsage: materializeFreeTrialUsage(finalUserSnap.data()),
   };
-}
-
-function isLiveTestSubscriptionExpired(subscriptionData?: Record<string, unknown>) {
-  if (subscriptionData?.plan !== "livetest" || subscriptionData?.status !== "active") {
-    return false;
-  }
-
-  const expiresAt = readDate(subscriptionData.expiresAt);
-  return Boolean(expiresAt && expiresAt.getTime() <= Date.now());
-}
-
-function readDate(value: unknown) {
-  if (!value) {
-    return null;
-  }
-
-  if (typeof value === "string") {
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  }
-
-  if (
-    typeof value === "object" &&
-    value !== null &&
-    typeof (value as { toDate?: unknown }).toDate === "function"
-  ) {
-    const parsed = (value as { toDate: () => Date }).toDate();
-    return parsed instanceof Date && !Number.isNaN(parsed.getTime()) ? parsed : null;
-  }
-
-  return null;
 }
 
 export async function getPlanStatusController(

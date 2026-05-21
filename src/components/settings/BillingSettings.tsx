@@ -4,14 +4,11 @@ import {
   CheckCircle2,
   Check,
   Loader2,
-  Sparkles,
 } from "lucide-react";
 import {
   createRazorpayLiveOrder,
-  createRazorpayLiveTestOrder,
   createRazorpayTestSubscription,
   verifyRazorpayLiveOrderPayment,
-  verifyRazorpayLiveTestOrderPayment,
   verifyRazorpayTestPayment,
 } from "@/services/backendApi";
 import { useAuth } from "@/contexts/auth.context";
@@ -20,7 +17,6 @@ import type { BillingInterval } from "@/types/firebase";
 const BILLING_CHECKOUT_SYNC_WINDOW_MS = 60_000;
 const BILLING_PENDING_POLL_MS = 4_000;
 const RAZORPAY_CHECKOUT_SCRIPT_URL = "https://checkout.razorpay.com/v1/checkout.js";
-const LIVE_TEST_PLAN_DURATION_MINUTES = 30;
 
 type RazorpayPaymentResponse = {
   razorpay_payment_id: string;
@@ -58,7 +54,7 @@ declare global {
 }
 
 type CheckoutCard = {
-  id: "livetest" | "pro" | "power";
+  id: "pro" | "power";
   interval: BillingInterval;
   name: string;
   accent: "sky" | "violet";
@@ -74,26 +70,7 @@ type CheckoutCard = {
 };
 
 type BillingProviderMode = "test" | "live";
-
-const LIVE_TEST_CARD: CheckoutCard = {
-  id: "livetest",
-  interval: "month",
-  name: "Live Test",
-  accent: "sky",
-  eyebrow: "Live payment test",
-  price: "₹5",
-  priceSuffix: "/test",
-  tagline: "Temporary live payment plan for verifying Razorpay success, expiry, and cancellation.",
-  sttSecondsLimit: 1800,
-  promptLimit: 200,
-  screenshotLimit: 200,
-  highlights: [
-    "Live Razorpay payment",
-    "Expires after 30 minutes",
-    "Returns to free trial automatically",
-    "Use for payment flow testing",
-  ],
-};
+type BillingCurrency = "INR" | "USD";
 
 const CHECKOUT_CARDS: CheckoutCard[] = [
   {
@@ -188,6 +165,30 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
   },
 ];
 
+const USD_CHECKOUT_PRICING: Record<
+  "pro" | "power",
+  Record<BillingInterval, { price: string; savings?: string }>
+> = {
+  pro: {
+    month: {
+      price: "$39",
+    },
+    year: {
+      price: "$32.50",
+      savings: "Save $78",
+    },
+  },
+  power: {
+    month: {
+      price: "$69",
+    },
+    year: {
+      price: "$57.50",
+      savings: "Save $138",
+    },
+  },
+};
+
 const FREE_PLAN_CARD = {
   id: "free" as const,
   name: "Free",
@@ -204,25 +205,40 @@ const FREE_PLAN_CARD = {
   ],
 };
 
-function formatDuration(seconds: number) {
-  if (seconds >= 3600) {
-    return `${Math.round((seconds / 3600) * 10) / 10}h`;
+function getCheckoutCardPricing(plan: CheckoutCard, currency: BillingCurrency) {
+  if (currency === "INR") {
+    return {
+      price: plan.price,
+      savings: plan.savings,
+    };
   }
 
-  return `${Math.round(seconds / 60)}m`;
+  return USD_CHECKOUT_PRICING[plan.id][plan.interval];
 }
 
-function formatIsoDate(value: string | null | undefined) {
-  if (!value) {
-    return "Not set";
+function BillingCurrencyFlag({ currency }: { currency: BillingCurrency }) {
+  if (currency === "INR") {
+    return (
+      <span
+        aria-hidden="true"
+        className="relative h-4 w-4 shrink-0 overflow-hidden rounded-full border border-slate-300/90 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.18)]"
+      >
+        <span className="absolute inset-x-0 top-0 h-1/3 bg-orange-500" />
+        <span className="absolute inset-x-0 bottom-0 h-1/3 bg-emerald-600" />
+        <span className="absolute left-1/2 top-1/2 h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-700" />
+      </span>
+    );
   }
 
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-
-  return parsed.toLocaleString();
+  return (
+    <span
+      aria-hidden="true"
+      className="relative h-4 w-4 shrink-0 overflow-hidden rounded-full border border-slate-300/90 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.18)]"
+    >
+      <span className="absolute inset-0 bg-[repeating-linear-gradient(to_bottom,#b91c1c_0,#b91c1c_1.25px,#fff_1.25px,#fff_2.5px)]" />
+      <span className="absolute left-0 top-0 h-[8px] w-[8px] bg-blue-900" />
+    </span>
+  );
 }
 
 function getAccentClasses(accent: CheckoutCard["accent"]) {
@@ -299,6 +315,7 @@ export const BillingSettings: React.FC = () => {
   const [pendingCheckoutKey, setPendingCheckoutKey] = useState<string | null>(null);
   const [checkoutStartedAt, setCheckoutStartedAt] = useState<number | null>(null);
   const [selectedInterval, setSelectedInterval] = useState<BillingInterval>("month");
+  const [selectedCurrency, setSelectedCurrency] = useState<BillingCurrency>("INR");
 
   useEffect(() => {
     void refreshProfile();
@@ -346,7 +363,7 @@ export const BillingSettings: React.FC = () => {
   }, [checkoutStartedAt, pendingCheckoutKey, refreshProfile]);
 
   const handleOpenRazorpayCheckout = async (
-    planId: "livetest" | "pro" | "power",
+    planId: "pro" | "power",
     interval: BillingInterval,
     providerMode: BillingProviderMode = "test"
   ) => {
@@ -359,9 +376,7 @@ export const BillingSettings: React.FC = () => {
       await ensureRazorpayCheckoutLoaded();
       const result =
         providerMode === "live"
-          ? planId === "livetest"
-            ? await createRazorpayLiveTestOrder()
-            : await createRazorpayLiveOrder(planId, interval, "INR")
+          ? await createRazorpayLiveOrder(planId, interval, selectedCurrency)
           : await createRazorpayTestSubscription(planId as "pro" | "power", interval);
       setPendingCheckoutKey(requestKey);
       setCheckoutStartedAt(Date.now());
@@ -428,12 +443,7 @@ export const BillingSettings: React.FC = () => {
           throw new Error("Razorpay order id was missing from the payment response.");
         }
 
-        const verifyLiveOrder =
-          requestKey === "live-livetest-month"
-            ? verifyRazorpayLiveTestOrderPayment
-            : verifyRazorpayLiveOrderPayment;
-
-        await verifyLiveOrder({
+        await verifyRazorpayLiveOrderPayment({
           razorpay_payment_id: paymentResponse.razorpay_payment_id,
           razorpay_order_id: paymentResponse.razorpay_order_id,
           razorpay_signature: paymentResponse.razorpay_signature,
@@ -450,11 +460,7 @@ export const BillingSettings: React.FC = () => {
         });
       }
       await refreshProfile();
-      setMessage(
-        requestKey === "live-livetest-month"
-          ? `Payment verified. Live Test is active for ${LIVE_TEST_PLAN_DURATION_MINUTES} minutes.`
-          : "Payment verified. Your Cluegent plan is active."
-      );
+      setMessage("Payment verified. Your Cluegent plan is active.");
       setPendingCheckoutKey(null);
       setCheckoutStartedAt(null);
     } catch (verificationError) {
@@ -532,61 +538,39 @@ export const BillingSettings: React.FC = () => {
             })}
           </div>
 
+          <div className="inline-flex rounded-[18px] border border-slate-200 bg-slate-100/90 p-0.5 shadow-[0_14px_38px_-30px_rgba(15,23,42,0.35)]">
+            {(["INR", "USD"] as BillingCurrency[]).map((currency) => {
+              const isSelected = selectedCurrency === currency;
+
+              return (
+                <button
+                  key={currency}
+                  type="button"
+                  onClick={() => {
+                    setSelectedCurrency(currency);
+                  }}
+                  className={`min-w-[82px] rounded-[14px] px-3 py-2 text-sm font-semibold transition active:scale-[0.98] ${
+                    isSelected
+                      ? "bg-white text-slate-950 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.42)]"
+                      : "text-slate-500 hover:text-slate-950"
+                  }`}
+                >
+                  <span className="inline-flex items-center justify-center gap-1.5">
+                    <BillingCurrencyFlag currency={currency} />
+                    {currency}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
         </div>
 
         <div className="space-y-4">
-          <article className="mx-auto flex w-full max-w-[980px] flex-col overflow-hidden rounded-[28px] border border-emerald-400/30 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 p-6 text-white shadow-[0_28px_90px_-45px_rgba(15,118,110,0.75)]">
-            <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/75">
-                  {LIVE_TEST_CARD.eyebrow}
-                </p>
-                <h4 className="mt-2 text-[2.25rem] font-semibold leading-none tracking-[-0.05em] text-white">
-                  {LIVE_TEST_CARD.name}
-                </h4>
-                <p className="mt-3 max-w-[520px] text-sm leading-6 text-white/80">
-                  {LIVE_TEST_CARD.tagline}
-                </p>
-                <div className="mt-5 flex flex-wrap items-end gap-2">
-                  <span className="text-[2.65rem] font-semibold leading-none tracking-[-0.06em] text-white">
-                    {LIVE_TEST_CARD.price}
-                  </span>
-                  <span className="pb-1 text-base font-medium text-white/85">
-                    {LIVE_TEST_CARD.priceSuffix}
-                  </span>
-                  <span className="mb-1 rounded-full border border-white/25 bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
-                    {LIVE_TEST_PLAN_DURATION_MINUTES} min access
-                  </span>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  void handleOpenRazorpayCheckout("livetest", "month", "live");
-                }}
-                disabled={busyKey === "live-livetest-month" || subscription?.plan === "livetest"}
-                className={`inline-flex min-w-[220px] items-center justify-center gap-2 rounded-2xl border border-white/25 bg-white px-5 py-3 text-sm font-semibold text-slate-950 shadow-[0_18px_45px_-24px_rgba(255,255,255,0.9)] transition hover:bg-white/90 ${
-                  busyKey === "live-livetest-month" ? "opacity-70" : ""
-                }`}
-              >
-                {busyKey === "live-livetest-month" ? (
-                  <>
-                    <Loader2 size={15} className="animate-spin" />
-                    Opening
-                  </>
-                ) : subscription?.plan === "livetest" ? (
-                  "Live Test Active"
-                ) : (
-                  "Test Live Payment"
-                )}
-              </button>
-            </div>
-          </article>
-
           <div className="mx-auto grid w-full max-w-[980px] gap-4 lg:grid-cols-2">
             {visiblePaidCards.map((plan) => {
               const accent = getAccentClasses(plan.accent);
+              const pricing = getCheckoutCardPricing(plan, selectedCurrency);
               const cardKey = `${plan.id}-${plan.interval}`;
               const liveCardKey = `live-${cardKey}`;
               const isBusy = busyKey === cardKey || busyKey === liveCardKey;
@@ -615,13 +599,13 @@ export const BillingSettings: React.FC = () => {
                       <span className="text-[2.15rem] font-semibold leading-none tracking-[-0.04em] text-white sm:text-[2.35rem]">
                         {plan.interval === "year" ? (
                           <>
-                            {plan.price}
+                            {pricing.price}
                             <span className="ml-1 text-sm font-medium tracking-normal text-white/85">
                               /month
                             </span>
                           </>
                         ) : (
-                          plan.price
+                          pricing.price
                         )}
                       </span>
                       {plan.interval === "month" && (
@@ -634,9 +618,9 @@ export const BillingSettings: React.FC = () => {
                           billed yearly
                         </span>
                       )}
-                      {plan.savings && (
+                      {pricing.savings && (
                         <span className="mb-1 rounded-full border border-white/25 bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
-                          {plan.savings}
+                          {pricing.savings}
                         </span>
                       )}
                     </div>
