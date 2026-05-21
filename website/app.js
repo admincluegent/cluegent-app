@@ -76,7 +76,7 @@ if (interfaceDemo) {
       listenActive: false,
     },
     {
-      transcript: "...now answer in one short interview-ready version",
+      transcript: "...now answer in one short meeting-ready version",
       response: "Submit sends the prompt to the backend and streams the answer back into the overlay.",
       activeAction: -1,
       stepLabel: `Submit with ${shortcutModifier} + Enter`,

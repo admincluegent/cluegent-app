@@ -106,8 +106,11 @@ export const AboutSection: React.FC = () => {
 
                 <AccordionItem icon={<Scale size={18} className="text-amber-500" />} title="License and source">
                     <p className="text-sm leading-relaxed text-text-secondary">
-                        Cluegent is distributed under AGPL-3.0. The license and source-code links are provided
-                        here for transparency and compliance.
+                        Cluegent is distributed under AGPL-3.0. 
+                    </p>
+                    <p className="mt-3 text-sm leading-relaxed text-text-secondary">
+                        Cluegent is based on the open-source Natively desktop assistant project and modified
+                        for Cluegent branding, backend services, billing, and deployment.
                     </p>
                     <div className="mt-4 flex flex-wrap items-center gap-2">
                         <a
@@ -127,6 +130,15 @@ export const AboutSection: React.FC = () => {
                             className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border-subtle bg-bg-input text-text-primary transition-colors hover:bg-bg-item-active"
                         >
                             <Github size={18} />
+                        </a>
+                        <a
+                            href="https://github.com/admincluegent/cluegent-app/blob/development/ATTRIBUTION.md"
+                            onClick={(e) => handleOpenLink(e, 'https://github.com/admincluegent/cluegent-app/blob/development/ATTRIBUTION.md')}
+                            className="inline-flex items-center gap-2 rounded-xl border border-border-subtle bg-bg-input px-4 py-2 text-sm font-bold text-text-primary transition-colors hover:bg-bg-item-active"
+                        >
+                            <Scale size={16} />
+                            Attribution
+                            <ExternalLink size={14} />
                         </a>
                     </div>
                 </AccordionItem>

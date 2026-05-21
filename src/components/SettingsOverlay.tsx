@@ -17,7 +17,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { useResolvedTheme } from '../hooks/useResolvedTheme';
 import { useAuth } from '../contexts/auth.context';
-import { cancelRazorpayTestSubscription, deleteAccount } from '../services/backendApi';
+import {
+    cancelRazorpayLiveSubscription,
+    cancelRazorpayTestSubscription,
+    deleteAccount,
+} from '../services/backendApi';
 import {
     clampOverlayOpacity,
     getOverlayAppearance,
@@ -463,7 +467,11 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
         setCancelError(null);
 
         try {
-            await cancelRazorpayTestSubscription();
+            if (subscription?.providerMode === 'live') {
+                await cancelRazorpayLiveSubscription();
+            } else {
+                await cancelRazorpayTestSubscription();
+            }
             await refreshProfile();
             setCancelMessage('Subscription cancelled immediately. Your account is now on the free plan.');
             setIsCancelConfirmOpen(false);
@@ -3614,7 +3622,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                     </h3>
                                     <p className="mt-3 text-sm leading-6 text-slate-300">
                                         This deletes your Cluegent account data, removes local app data on this device,
-                                        cancels any active Razorpay test subscription immediately, signs you out, and quits the app.
+                                        cancels any active Razorpay subscription immediately, signs you out, and quits the app.
                                     </p>
                                 </div>
                             </div>

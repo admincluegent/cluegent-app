@@ -32,11 +32,12 @@ export interface GetPlanStatusResponse {
 }
 
 export interface CreateRazorpayTestSubscriptionResponse {
-  providerMode: "test";
+  providerMode: "test" | "live";
   keyId: string;
   subscriptionId: string;
   planId: UserPlan;
   interval: BillingInterval;
+  currency?: "INR" | "USD";
   name: string;
   description: string;
   prefill: {
@@ -52,8 +53,43 @@ export interface VerifyRazorpayTestPaymentResponse {
   paymentId: string;
 }
 
+export interface CreateRazorpayLiveOrderResponse {
+  providerMode: "live";
+  keyId: string;
+  orderId: string;
+  amount: number;
+  currency: "INR";
+  planId: UserPlan;
+  interval: BillingInterval;
+  name: string;
+  description: string;
+  prefill: {
+    name: string;
+    email: string;
+  };
+  notes: Record<string, string>;
+}
+
+export type CreateRazorpayLiveTestOrderResponse = CreateRazorpayLiveOrderResponse & {
+  planId: "livetest";
+  interval: "month";
+};
+
+export interface VerifyRazorpayLiveOrderPaymentResponse {
+  verified: boolean;
+  orderId: string;
+  paymentId: string;
+}
+
+export type VerifyRazorpayLiveTestOrderPaymentResponse =
+  VerifyRazorpayLiveOrderPaymentResponse;
+
 export interface CancelRazorpayTestSubscriptionResponse {
   cancelled: boolean;
   subscriptionId: string;
   planId: UserPlan;
 }
+
+export type CreateRazorpayLiveSubscriptionResponse = CreateRazorpayTestSubscriptionResponse;
+export type VerifyRazorpayLivePaymentResponse = VerifyRazorpayTestPaymentResponse;
+export type CancelRazorpayLiveSubscriptionResponse = CancelRazorpayTestSubscriptionResponse;

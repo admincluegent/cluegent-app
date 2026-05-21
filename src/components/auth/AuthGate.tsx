@@ -108,10 +108,10 @@ function AuthDemoPreview() {
 
         <div className="mx-auto mt-8 max-w-[560px] text-center">
           <h2 className="text-balance text-3xl font-semibold leading-tight tracking-[-0.01em] text-[#303240]">
-            Undetectable Intelligent AI for Meetings
+            Private Desktop AI for Meetings
           </h2>
           <p className="mt-4 text-sm leading-6 text-[#6b7280]">
-            Use transcript, typed prompts,Voice prompts and screenshots from one private desktop overlay.
+            Use transcripts, typed prompts, voice prompts, and screenshots from one private desktop overlay.
           </p>
         </div>
       </div>

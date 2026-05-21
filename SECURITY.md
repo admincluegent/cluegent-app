@@ -9,13 +9,13 @@
 
 ## Reporting a Vulnerability
 
-We take the security of our software seriously. If you have found a security vulnerability in this open-source interview meeting application, please report it to us as described below.
+We take the security of our software seriously. If you have found a security vulnerability in the open-source Cluegent desktop application, website, or backend services, please report it to us as described below.
 
 **Do not report security vulnerabilities through public GitHub issues.**
 
 ## Disclosure Process
 
-1.  Please email your report to **natively.contact@gmail.com**.
+1.  Please email your report to **admincluegent@gmail.com**.
 2.  In your report, please include:
     *   The type of issue (e.g., buffer overflow, SQL injection, cross-site scripting, etc.).
     *   Full paths of source file(s) related to the manifestation of the issue.

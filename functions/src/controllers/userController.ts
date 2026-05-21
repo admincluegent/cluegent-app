@@ -7,6 +7,7 @@ import { getMonthKey } from "../utils/monthKey.js";
 import {
   buildPlanStatus,
   buildSubscriptionDoc,
+  buildUsageBaseline,
   buildUsageDoc,
   buildUserProfileDoc,
   buildUserProfileUpdate,
@@ -14,11 +15,14 @@ import {
   materializeFreeTrialUsage,
   materializeSubscription,
   materializeUsage,
+  needsPaidUsageBaseline,
   serializeForClient,
 } from "../utils/usage.js";
 
 const RAZORPAY_TEST_CUSTOMERS_COLLECTION = "billing_razorpay_test_customers";
 const RAZORPAY_TEST_SUBSCRIPTIONS_COLLECTION = "billing_razorpay_test_subscriptions";
+const RAZORPAY_LIVE_CUSTOMERS_COLLECTION = "billing_razorpay_live_customers";
+const RAZORPAY_LIVE_SUBSCRIPTIONS_COLLECTION = "billing_razorpay_live_subscriptions";
 
 export async function getOrCreateUserProfileController(
   request: CallableRequest<unknown>
@@ -64,11 +68,59 @@ export async function getOrCreateUserProfileController(
         ...(typeof userData?.freeTrialScreenshotCount !== "number"
           ? { freeTrialScreenshotCount: 0 }
           : {}),
+        ...(typeof userData?.freeTrialSttSecondsUsed !== "number"
+          ? {
+              freeTrialSttSecondsUsed:
+                subscriptionSnap.data()?.plan === "free" &&
+                typeof usageSnap.data()?.sttSecondsUsed === "number"
+                  ? Math.max(usageSnap.data()?.sttSecondsUsed as number, 0)
+                  : 0,
+            }
+          : {}),
       });
     }
 
     if (!subscriptionSnap.exists) {
       transaction.set(subscriptionRef, buildSubscriptionDoc());
+    } else if (isLiveTestSubscriptionExpired(subscriptionSnap.data())) {
+      transaction.set(
+        subscriptionRef,
+        {
+          ...buildSubscriptionDoc(),
+          provider: "razorpay",
+          providerMode: "live",
+          billingInterval: null,
+          customerId: subscriptionSnap.data()?.customerId ?? null,
+          subscriptionId: subscriptionSnap.data()?.subscriptionId ?? null,
+          startedAt: subscriptionSnap.data()?.startedAt ?? null,
+          renewsAt: null,
+          expiresAt: subscriptionSnap.data()?.expiresAt ?? null,
+          cancelAtPeriodEnd: false,
+          lastWebhookEventId: "livetest_local_expired",
+          isTestEntitlement: false,
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    } else {
+      const subscription = materializeSubscription(
+        subscriptionSnap.data() as ReturnType<typeof materializeSubscription>
+      );
+      const usage = materializeUsage(
+        usageSnap.data() as ReturnType<typeof materializeUsage>,
+        monthKey
+      );
+
+      if (needsPaidUsageBaseline(subscription, usage)) {
+        transaction.set(
+          subscriptionRef,
+          {
+            usageBaseline: buildUsageBaseline(usage),
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
     }
 
     if (!usageSnap.exists) {
@@ -106,7 +158,12 @@ export async function getOrCreateUserProfileController(
 
 export async function deleteAccountController(
   request: CallableRequest<unknown>,
-  env: { razorpayTestKeyId?: string; razorpayTestKeySecret?: string }
+  env: {
+    razorpayTestKeyId?: string;
+    razorpayTestKeySecret?: string;
+    razorpayLiveKeyId?: string;
+    razorpayLiveKeySecret?: string;
+  }
 ) {
   const authUser = requireAuth(request);
   const refs = getUserRefs(authUser.uid);
@@ -122,12 +179,17 @@ export async function deleteAccountController(
 
   if (
     provider === "razorpay" &&
-    providerMode === "test" &&
+    (providerMode === "test" || providerMode === "live") &&
     plan &&
     plan !== "free" &&
     subscriptionId
   ) {
-    if (!env.razorpayTestKeyId || !env.razorpayTestKeySecret) {
+    const keyId =
+      providerMode === "live" ? env.razorpayLiveKeyId : env.razorpayTestKeyId;
+    const keySecret =
+      providerMode === "live" ? env.razorpayLiveKeySecret : env.razorpayTestKeySecret;
+
+    if (!keyId || !keySecret) {
       throw new HttpsError(
         "failed-precondition",
         "Razorpay credentials are not configured for account deletion."
@@ -136,10 +198,11 @@ export async function deleteAccountController(
 
     try {
       await cancelRazorpayTestSubscription({
-        keyId: env.razorpayTestKeyId,
-        keySecret: env.razorpayTestKeySecret,
+        keyId,
+        keySecret,
         subscriptionId,
         cancelAtCycleEnd: false,
+        providerMode,
       });
     } catch (error) {
       cancellationErrors.push(
@@ -155,7 +218,7 @@ export async function deleteAccountController(
     );
   }
 
-  await deleteRazorpayTestCustomerRecords(authUser.uid);
+  await deleteRazorpayCustomerRecords(authUser.uid);
   await db.recursiveDelete(userRef);
 
   await db.collection("account_deletion_audit").doc(authUser.uid).set(
@@ -187,17 +250,29 @@ export async function deleteAccountController(
   };
 }
 
-async function deleteRazorpayTestCustomerRecords(uid: string) {
-  await db
-    .collection(RAZORPAY_TEST_CUSTOMERS_COLLECTION)
-    .doc(uid)
-    .delete()
-    .catch(() => undefined);
+async function deleteRazorpayCustomerRecords(uid: string) {
+  await Promise.all([
+    deleteRazorpayProviderCustomerRecords(
+      uid,
+      RAZORPAY_TEST_CUSTOMERS_COLLECTION,
+      RAZORPAY_TEST_SUBSCRIPTIONS_COLLECTION
+    ),
+    deleteRazorpayProviderCustomerRecords(
+      uid,
+      RAZORPAY_LIVE_CUSTOMERS_COLLECTION,
+      RAZORPAY_LIVE_SUBSCRIPTIONS_COLLECTION
+    ),
+  ]);
+}
 
-  const subscriptions = await db
-    .collection(RAZORPAY_TEST_SUBSCRIPTIONS_COLLECTION)
-    .where("uid", "==", uid)
-    .get();
+async function deleteRazorpayProviderCustomerRecords(
+  uid: string,
+  customersCollection: string,
+  subscriptionsCollection: string
+) {
+  await db.collection(customersCollection).doc(uid).delete().catch(() => undefined);
+
+  const subscriptions = await db.collection(subscriptionsCollection).where("uid", "==", uid).get();
 
   if (subscriptions.empty) {
     return;
@@ -212,6 +287,37 @@ async function deleteRazorpayTestCustomerRecords(uid: string) {
 
 function readString(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function isLiveTestSubscriptionExpired(subscriptionData?: Record<string, unknown>) {
+  if (subscriptionData?.plan !== "livetest" || subscriptionData?.status !== "active") {
+    return false;
+  }
+
+  const expiresAt = readDate(subscriptionData.expiresAt);
+  return Boolean(expiresAt && expiresAt.getTime() <= Date.now());
+}
+
+function readDate(value: unknown) {
+  if (!value) {
+    return null;
+  }
+
+  if (typeof value === "string") {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { toDate?: unknown }).toDate === "function"
+  ) {
+    const parsed = (value as { toDate: () => Date }).toDate();
+    return parsed instanceof Date && !Number.isNaN(parsed.getTime()) ? parsed : null;
+  }
+
+  return null;
 }
 
 function isAuthUserNotFoundError(error: unknown) {

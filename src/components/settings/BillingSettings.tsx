@@ -7,7 +7,11 @@ import {
   Sparkles,
 } from "lucide-react";
 import {
+  createRazorpayLiveOrder,
+  createRazorpayLiveTestOrder,
   createRazorpayTestSubscription,
+  verifyRazorpayLiveOrderPayment,
+  verifyRazorpayLiveTestOrderPayment,
   verifyRazorpayTestPayment,
 } from "@/services/backendApi";
 import { useAuth } from "@/contexts/auth.context";
@@ -16,16 +20,19 @@ import type { BillingInterval } from "@/types/firebase";
 const BILLING_CHECKOUT_SYNC_WINDOW_MS = 60_000;
 const BILLING_PENDING_POLL_MS = 4_000;
 const RAZORPAY_CHECKOUT_SCRIPT_URL = "https://checkout.razorpay.com/v1/checkout.js";
+const LIVE_TEST_PLAN_DURATION_MINUTES = 30;
 
 type RazorpayPaymentResponse = {
   razorpay_payment_id: string;
-  razorpay_subscription_id: string;
+  razorpay_subscription_id?: string;
+  razorpay_order_id?: string;
   razorpay_signature: string;
 };
 
 type RazorpayCheckoutOptions = {
   key: string;
-  subscription_id: string;
+  subscription_id?: string;
+  order_id?: string;
   name: string;
   description: string;
   prefill: {
@@ -51,7 +58,7 @@ declare global {
 }
 
 type CheckoutCard = {
-  id: "pro" | "power";
+  id: "livetest" | "pro" | "power";
   interval: BillingInterval;
   name: string;
   accent: "sky" | "violet";
@@ -66,6 +73,28 @@ type CheckoutCard = {
   highlights: string[];
 };
 
+type BillingProviderMode = "test" | "live";
+
+const LIVE_TEST_CARD: CheckoutCard = {
+  id: "livetest",
+  interval: "month",
+  name: "Live Test",
+  accent: "sky",
+  eyebrow: "Live payment test",
+  price: "₹5",
+  priceSuffix: "/test",
+  tagline: "Temporary live payment plan for verifying Razorpay success, expiry, and cancellation.",
+  sttSecondsLimit: 1800,
+  promptLimit: 200,
+  screenshotLimit: 200,
+  highlights: [
+    "Live Razorpay payment",
+    "Expires after 30 minutes",
+    "Returns to free trial automatically",
+    "Use for payment flow testing",
+  ],
+};
+
 const CHECKOUT_CARDS: CheckoutCard[] = [
   {
     id: "pro",
@@ -73,9 +102,9 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
     name: "Pro",
     accent: "sky",
     eyebrow: "Pro",
-    price: "$39",
+    price: "₹3,499",
     priceSuffix: "/month",
-    tagline: "For regular meetings, coding interviews, and real-time assistant support.",
+    tagline: "For regular meetings, technical conversations, and real-time assistant support.",
     sttSecondsLimit: 108000,
     promptLimit: 5000,
     screenshotLimit: 2500,
@@ -94,9 +123,9 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
     name: "Pro",
     accent: "sky",
     eyebrow: "Pro",
-    price: "$349",
-    priceSuffix: "/year",
-    savings: "Save $119",
+    price: "₹2,916",
+    priceSuffix: "/month, billed yearly",
+    savings: "Save ₹6,998",
     tagline: "Annual Pro access with the same core assistant limits at a lower yearly price.",
     sttSecondsLimit: 108000,
     promptLimit: 5000,
@@ -116,7 +145,7 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
     name: "Power",
     accent: "violet",
     eyebrow: "Most Popular",
-    price: "$69",
+    price: "₹6,499",
     priceSuffix: "/month",
     tagline: "For heavy users who need more assistant capacity and faster responses.",
     sttSecondsLimit: 180000,
@@ -127,6 +156,8 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
       "50 hours listening",
       "Unlimited AI requests",
       "Unlimited screenshot analyses",
+      "Real-time assistant",
+      "Coding + meeting support",
       "Faster responses",
       "Priority processing",
     ],
@@ -137,9 +168,9 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
     name: "Power",
     accent: "violet",
     eyebrow: "Most Popular",
-    price: "$649",
-    priceSuffix: "/year",
-    savings: "Save $179",
+    price: "₹5,416",
+    priceSuffix: "/month, billed yearly",
+    savings: "Save ₹12,998",
     tagline: "Annual Power access for high-volume meetings, coding support, and screenshots.",
     sttSecondsLimit: 180000,
     promptLimit: Number.MAX_SAFE_INTEGER,
@@ -149,6 +180,8 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
       "50 hours/month listening",
       "Unlimited AI requests/month",
       "Unlimited screenshot analyses/month",
+      "Real-time assistant",
+      "Coding + meeting support",
       "Faster responses",
       "Priority processing",
     ],
@@ -312,21 +345,29 @@ export const BillingSettings: React.FC = () => {
     };
   }, [checkoutStartedAt, pendingCheckoutKey, refreshProfile]);
 
-  const handleOpenRazorpayCheckout = async (planId: "pro" | "power", interval: BillingInterval) => {
-    const requestKey = `${planId}-${interval}`;
+  const handleOpenRazorpayCheckout = async (
+    planId: "livetest" | "pro" | "power",
+    interval: BillingInterval,
+    providerMode: BillingProviderMode = "test"
+  ) => {
+    const requestKey = `${providerMode}-${planId}-${interval}`;
     setBusyKey(requestKey);
     setMessage(null);
     setError(null);
 
     try {
       await ensureRazorpayCheckoutLoaded();
-      const result = await createRazorpayTestSubscription(planId, interval);
+      const result =
+        providerMode === "live"
+          ? planId === "livetest"
+            ? await createRazorpayLiveTestOrder()
+            : await createRazorpayLiveOrder(planId, interval, "INR")
+          : await createRazorpayTestSubscription(planId as "pro" | "power", interval);
       setPendingCheckoutKey(requestKey);
       setCheckoutStartedAt(Date.now());
 
-      const checkout = new window.Razorpay!({
+      const checkoutOptions: RazorpayCheckoutOptions = {
         key: result.keyId,
-        subscription_id: result.subscriptionId,
         name: result.name,
         description: result.description,
         prefill: result.prefill,
@@ -335,7 +376,7 @@ export const BillingSettings: React.FC = () => {
           color: "#2563eb",
         },
         handler: (paymentResponse) => {
-          void handleRazorpayPaymentVerified(paymentResponse, requestKey);
+          void handleRazorpayPaymentVerified(paymentResponse, requestKey, providerMode);
         },
         modal: {
           ondismiss: () => {
@@ -343,10 +384,22 @@ export const BillingSettings: React.FC = () => {
             setMessage("Razorpay checkout was closed before payment completion.");
           },
         },
-      });
+      };
+
+      if ("orderId" in result) {
+        checkoutOptions.order_id = result.orderId;
+      } else {
+        checkoutOptions.subscription_id = result.subscriptionId;
+      }
+
+      const checkout = new window.Razorpay!(checkoutOptions);
 
       checkout.open();
-      setMessage("Opened Razorpay test checkout. Complete payment to unlock your plan.");
+      setMessage(
+        providerMode === "live"
+          ? "Opened Razorpay live checkout. Complete payment to unlock your plan."
+          : "Opened Razorpay test checkout. Complete payment to unlock your plan."
+      );
       setBusyKey(null);
     } catch (checkoutError) {
       setError(
@@ -362,16 +415,46 @@ export const BillingSettings: React.FC = () => {
 
   const handleRazorpayPaymentVerified = async (
     paymentResponse: RazorpayPaymentResponse,
-    requestKey: string
+    requestKey: string,
+    providerMode: BillingProviderMode
   ) => {
     setBusyKey(requestKey);
     setMessage("Verifying Razorpay payment...");
     setError(null);
 
     try {
-      await verifyRazorpayTestPayment(paymentResponse);
+      if (providerMode === "live") {
+        if (!paymentResponse.razorpay_order_id) {
+          throw new Error("Razorpay order id was missing from the payment response.");
+        }
+
+        const verifyLiveOrder =
+          requestKey === "live-livetest-month"
+            ? verifyRazorpayLiveTestOrderPayment
+            : verifyRazorpayLiveOrderPayment;
+
+        await verifyLiveOrder({
+          razorpay_payment_id: paymentResponse.razorpay_payment_id,
+          razorpay_order_id: paymentResponse.razorpay_order_id,
+          razorpay_signature: paymentResponse.razorpay_signature,
+        });
+      } else {
+        if (!paymentResponse.razorpay_subscription_id) {
+          throw new Error("Razorpay subscription id was missing from the payment response.");
+        }
+
+        await verifyRazorpayTestPayment({
+          razorpay_payment_id: paymentResponse.razorpay_payment_id,
+          razorpay_subscription_id: paymentResponse.razorpay_subscription_id,
+          razorpay_signature: paymentResponse.razorpay_signature,
+        });
+      }
       await refreshProfile();
-      setMessage("Payment verified. Your Cluegent plan is active.");
+      setMessage(
+        requestKey === "live-livetest-month"
+          ? `Payment verified. Live Test is active for ${LIVE_TEST_PLAN_DURATION_MINUTES} minutes.`
+          : "Payment verified. Your Cluegent plan is active."
+      );
       setPendingCheckoutKey(null);
       setCheckoutStartedAt(null);
     } catch (verificationError) {
@@ -404,7 +487,7 @@ export const BillingSettings: React.FC = () => {
       return;
     }
 
-    const [planId, interval] = pendingCheckoutKey.split("-");
+    const [, planId, interval] = pendingCheckoutKey.split("-");
     if (subscription.plan === planId && subscription.billingInterval === interval) {
       setPendingCheckoutKey(null);
       setCheckoutStartedAt(null);
@@ -452,11 +535,61 @@ export const BillingSettings: React.FC = () => {
         </div>
 
         <div className="space-y-4">
+          <article className="mx-auto flex w-full max-w-[980px] flex-col overflow-hidden rounded-[28px] border border-emerald-400/30 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 p-6 text-white shadow-[0_28px_90px_-45px_rgba(15,118,110,0.75)]">
+            <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/75">
+                  {LIVE_TEST_CARD.eyebrow}
+                </p>
+                <h4 className="mt-2 text-[2.25rem] font-semibold leading-none tracking-[-0.05em] text-white">
+                  {LIVE_TEST_CARD.name}
+                </h4>
+                <p className="mt-3 max-w-[520px] text-sm leading-6 text-white/80">
+                  {LIVE_TEST_CARD.tagline}
+                </p>
+                <div className="mt-5 flex flex-wrap items-end gap-2">
+                  <span className="text-[2.65rem] font-semibold leading-none tracking-[-0.06em] text-white">
+                    {LIVE_TEST_CARD.price}
+                  </span>
+                  <span className="pb-1 text-base font-medium text-white/85">
+                    {LIVE_TEST_CARD.priceSuffix}
+                  </span>
+                  <span className="mb-1 rounded-full border border-white/25 bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
+                    {LIVE_TEST_PLAN_DURATION_MINUTES} min access
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  void handleOpenRazorpayCheckout("livetest", "month", "live");
+                }}
+                disabled={busyKey === "live-livetest-month" || subscription?.plan === "livetest"}
+                className={`inline-flex min-w-[220px] items-center justify-center gap-2 rounded-2xl border border-white/25 bg-white px-5 py-3 text-sm font-semibold text-slate-950 shadow-[0_18px_45px_-24px_rgba(255,255,255,0.9)] transition hover:bg-white/90 ${
+                  busyKey === "live-livetest-month" ? "opacity-70" : ""
+                }`}
+              >
+                {busyKey === "live-livetest-month" ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" />
+                    Opening
+                  </>
+                ) : subscription?.plan === "livetest" ? (
+                  "Live Test Active"
+                ) : (
+                  "Test Live Payment"
+                )}
+              </button>
+            </div>
+          </article>
+
           <div className="mx-auto grid w-full max-w-[980px] gap-4 lg:grid-cols-2">
             {visiblePaidCards.map((plan) => {
               const accent = getAccentClasses(plan.accent);
               const cardKey = `${plan.id}-${plan.interval}`;
-              const isBusy = busyKey === cardKey;
+              const liveCardKey = `live-${cardKey}`;
+              const isBusy = busyKey === cardKey || busyKey === liveCardKey;
               const isActive =
                 subscription?.plan === plan.id && subscription?.billingInterval === plan.interval;
 
@@ -479,12 +612,28 @@ export const BillingSettings: React.FC = () => {
                       )}
                     </div>
                     <div className="mt-4 flex flex-wrap items-end gap-2">
-                      <span className="text-[2.65rem] font-semibold leading-none tracking-[-0.06em] text-white">
-                        {plan.price}
+                      <span className="text-[2.15rem] font-semibold leading-none tracking-[-0.04em] text-white sm:text-[2.35rem]">
+                        {plan.interval === "year" ? (
+                          <>
+                            {plan.price}
+                            <span className="ml-1 text-sm font-medium tracking-normal text-white/85">
+                              /month
+                            </span>
+                          </>
+                        ) : (
+                          plan.price
+                        )}
                       </span>
-                      <span className="pb-1 text-base font-medium text-white/85">
-                        {plan.priceSuffix}
-                      </span>
+                      {plan.interval === "month" && (
+                        <span className="whitespace-nowrap pb-0.5 text-sm font-medium leading-snug text-white/85">
+                          {plan.priceSuffix}
+                        </span>
+                      )}
+                      {plan.interval === "year" && (
+                        <span className="mb-1 rounded-full border border-white/25 bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
+                          billed yearly
+                        </span>
+                      )}
                       {plan.savings && (
                         <span className="mb-1 rounded-full border border-white/25 bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
                           {plan.savings}
@@ -506,7 +655,7 @@ export const BillingSettings: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => {
-                        void handleOpenRazorpayCheckout(plan.id, plan.interval);
+                        void handleOpenRazorpayCheckout(plan.id, plan.interval, "live");
                       }}
                       disabled={isBusy || isActive}
                       className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition ${

@@ -1,10 +1,8 @@
 # Cluegent Privacy Policy
 
-Effective date: May 8, 2026
+Effective date: May 18, 2026
 
-Cluegent is a desktop AI assistant for meetings, interviews, coding conversations, rolling transcription, typed prompts, and screenshot-based answers. This policy explains what data Cluegent processes, why it is processed, and the choices you have.
-
-This policy is written for the current Cluegent desktop app and website. If a future release adds new cloud sync, analytics, team features, or live billing changes, this policy should be updated before those features are launched.
+Cluegent is a desktop AI assistant for permitted meetings, sales calls, learning sessions, technical conversations, rolling transcription, typed prompts, and screenshot-based answers. This policy explains what data Cluegent processes, why it is processed, and the choices you have.
 
 ## Information We Collect or Process
 

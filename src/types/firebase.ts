@@ -1,4 +1,4 @@
-export type UserPlan = "free" | "pro" | "power";
+export type UserPlan = "free" | "livetest" | "pro" | "power";
 export type SubscriptionStatus =
   | "active"
   | "inactive"
@@ -20,6 +20,7 @@ export interface FirestoreUserProfile {
   provider: "google";
   freeTrialPromptCount: number;
   freeTrialScreenshotCount: number;
+  freeTrialSttSecondsUsed: number;
   createdAt: string;
   updatedAt: string;
   lastLoginAt: string;
@@ -42,6 +43,7 @@ export interface UserSubscription {
   cancelAtPeriodEnd: boolean;
   lastWebhookEventId: string | null;
   isTestEntitlement: boolean;
+  usageBaseline: UsageBaseline | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -61,6 +63,16 @@ export interface MonthlyUsage {
   updatedAt: string;
 }
 
+export interface UsageBaseline {
+  monthKey: string;
+  promptCount: number;
+  screenshotCount: number;
+  sttSecondsUsed: number;
+  deepseekProPromptCount: number;
+  openAiPromptCount: number;
+  openAiScreenshotCount: number;
+}
+
 export interface PlanStatus {
   plan: UserPlan;
   status: SubscriptionStatus;
@@ -70,9 +82,11 @@ export interface PlanStatus {
     sttSecondsLimit: number;
   };
   usage: MonthlyUsage;
+  totalUsage?: MonthlyUsage;
   freeTrialUsage: {
     promptCount: number;
     screenshotCount: number;
+    sttSecondsUsed: number;
   };
   remaining: {
     prompts: number;

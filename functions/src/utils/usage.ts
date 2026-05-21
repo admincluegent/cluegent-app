@@ -24,6 +24,7 @@ export interface UserProfileDoc {
   provider: "google";
   freeTrialPromptCount: number;
   freeTrialScreenshotCount: number;
+  freeTrialSttSecondsUsed: number;
   createdAt: FieldValue;
   updatedAt: FieldValue;
   lastLoginAt: FieldValue;
@@ -46,6 +47,7 @@ export interface SubscriptionDoc {
   cancelAtPeriodEnd: boolean;
   lastWebhookEventId: string | null;
   isTestEntitlement: boolean;
+  usageBaseline: UsageBaseline | null;
   createdAt: FieldValue;
   updatedAt: FieldValue;
 }
@@ -82,6 +84,7 @@ export interface MaterializedSubscription {
   cancelAtPeriodEnd: boolean;
   lastWebhookEventId: string | null;
   isTestEntitlement: boolean;
+  usageBaseline: UsageBaseline | null;
   createdAt?: unknown;
   updatedAt?: unknown;
 }
@@ -104,6 +107,17 @@ export interface MaterializedUsage {
 export interface FreeTrialUsage {
   promptCount: number;
   screenshotCount: number;
+  sttSecondsUsed: number;
+}
+
+export interface UsageBaseline {
+  monthKey: string;
+  promptCount: number;
+  screenshotCount: number;
+  sttSecondsUsed: number;
+  deepseekProPromptCount: number;
+  openAiPromptCount: number;
+  openAiScreenshotCount: number;
 }
 
 export function getUserRefs(uid: string, monthKey = getMonthKey()) {
@@ -131,6 +145,7 @@ export function buildUserProfileDoc(input: {
     provider: "google",
     freeTrialPromptCount: 0,
     freeTrialScreenshotCount: 0,
+    freeTrialSttSecondsUsed: 0,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
     lastLoginAt: toFirestoreTimestamp(input.authTime) ?? FieldValue.serverTimestamp(),
@@ -180,6 +195,7 @@ export function buildSubscriptionDoc(
     cancelAtPeriodEnd: false,
     lastWebhookEventId: null,
     isTestEntitlement: false,
+    usageBaseline: null,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   };
@@ -226,6 +242,7 @@ export function materializeSubscription(
     cancelAtPeriodEnd: raw?.cancelAtPeriodEnd ?? false,
     lastWebhookEventId: raw?.lastWebhookEventId ?? null,
     isTestEntitlement: raw?.isTestEntitlement ?? false,
+    usageBaseline: materializeUsageBaseline(raw?.usageBaseline),
     createdAt: raw?.createdAt,
     updatedAt: raw?.updatedAt,
   };
@@ -261,6 +278,70 @@ export function materializeFreeTrialUsage(raw?: Record<string, unknown>): FreeTr
       typeof raw?.freeTrialScreenshotCount === "number"
         ? raw.freeTrialScreenshotCount
         : 0,
+    sttSecondsUsed:
+      typeof raw?.freeTrialSttSecondsUsed === "number"
+        ? raw.freeTrialSttSecondsUsed
+        : 0,
+  };
+}
+
+export function buildUsageBaseline(usage: MaterializedUsage): UsageBaseline {
+  return {
+    monthKey: usage.monthKey,
+    promptCount: usage.promptCount,
+    screenshotCount: usage.screenshotCount,
+    sttSecondsUsed: usage.sttSecondsUsed,
+    deepseekProPromptCount: usage.deepseekProPromptCount,
+    openAiPromptCount: usage.openAiPromptCount,
+    openAiScreenshotCount: usage.openAiScreenshotCount,
+  };
+}
+
+export function needsPaidUsageBaseline(
+  subscription: MaterializedSubscription,
+  usage: MaterializedUsage
+) {
+  return (
+    subscription.plan !== "free" &&
+    subscription.status === "active" &&
+    subscription.usageBaseline?.monthKey !== usage.monthKey
+  );
+}
+
+export function getPlanPeriodUsage(
+  subscription: MaterializedSubscription,
+  usage: MaterializedUsage
+): MaterializedUsage {
+  const baseline =
+    subscription.plan !== "free" &&
+    subscription.usageBaseline?.monthKey === usage.monthKey
+      ? subscription.usageBaseline
+      : null;
+
+  if (!baseline) {
+    return usage;
+  }
+
+  return {
+    ...usage,
+    promptCount: Math.max(usage.promptCount - baseline.promptCount, 0),
+    screenshotCount: Math.max(
+      usage.screenshotCount - baseline.screenshotCount,
+      0
+    ),
+    sttSecondsUsed: Math.max(usage.sttSecondsUsed - baseline.sttSecondsUsed, 0),
+    deepseekProPromptCount: Math.max(
+      usage.deepseekProPromptCount - baseline.deepseekProPromptCount,
+      0
+    ),
+    openAiPromptCount: Math.max(
+      usage.openAiPromptCount - baseline.openAiPromptCount,
+      0
+    ),
+    openAiScreenshotCount: Math.max(
+      usage.openAiScreenshotCount - baseline.openAiScreenshotCount,
+      0
+    ),
   };
 }
 
@@ -327,16 +408,25 @@ function toFirestoreTimestamp(value: string | null | undefined) {
 export function buildPlanStatus(
   subscription: MaterializedSubscription,
   usage: MaterializedUsage,
-  freeTrialUsage: FreeTrialUsage = { promptCount: 0, screenshotCount: 0 }
+  freeTrialUsage: FreeTrialUsage = {
+    promptCount: 0,
+    screenshotCount: 0,
+    sttSecondsUsed: 0,
+  }
 ) {
+  const planPeriodUsage = getPlanPeriodUsage(subscription, usage);
   const promptRemaining =
     subscription.plan === "free"
       ? Math.max(subscription.promptLimit - freeTrialUsage.promptCount, 0)
-      : Math.max(subscription.promptLimit - usage.promptCount, 0);
+      : Math.max(subscription.promptLimit - planPeriodUsage.promptCount, 0);
   const screenshotRemaining =
     subscription.plan === "free"
       ? Math.max(subscription.screenshotLimit - freeTrialUsage.screenshotCount, 0)
-      : Math.max(subscription.screenshotLimit - usage.screenshotCount, 0);
+      : Math.max(subscription.screenshotLimit - planPeriodUsage.screenshotCount, 0);
+  const sttSecondsRemaining =
+    subscription.plan === "free"
+      ? Math.max(subscription.sttSecondsLimit - freeTrialUsage.sttSecondsUsed, 0)
+      : Math.max(subscription.sttSecondsLimit - planPeriodUsage.sttSecondsUsed, 0);
 
   return {
     plan: subscription.plan,
@@ -346,16 +436,39 @@ export function buildPlanStatus(
       screenshotLimit: subscription.screenshotLimit,
       sttSecondsLimit: subscription.sttSecondsLimit,
     },
-    usage,
+    usage: planPeriodUsage,
+    totalUsage: usage,
     freeTrialUsage,
     remaining: {
       prompts: promptRemaining,
       screenshots: screenshotRemaining,
-      sttSeconds: Math.max(
-        subscription.sttSecondsLimit - usage.sttSecondsUsed,
-        0
-      ),
+      sttSeconds: sttSecondsRemaining,
     },
+  };
+}
+
+function materializeUsageBaseline(raw?: UsageBaseline | null): UsageBaseline | null {
+  if (!raw || typeof raw !== "object" || typeof raw.monthKey !== "string") {
+    return null;
+  }
+
+  return {
+    monthKey: raw.monthKey,
+    promptCount: typeof raw.promptCount === "number" ? raw.promptCount : 0,
+    screenshotCount:
+      typeof raw.screenshotCount === "number" ? raw.screenshotCount : 0,
+    sttSecondsUsed:
+      typeof raw.sttSecondsUsed === "number" ? raw.sttSecondsUsed : 0,
+    deepseekProPromptCount:
+      typeof raw.deepseekProPromptCount === "number"
+        ? raw.deepseekProPromptCount
+        : 0,
+    openAiPromptCount:
+      typeof raw.openAiPromptCount === "number" ? raw.openAiPromptCount : 0,
+    openAiScreenshotCount:
+      typeof raw.openAiScreenshotCount === "number"
+        ? raw.openAiScreenshotCount
+        : 0,
   };
 }
 

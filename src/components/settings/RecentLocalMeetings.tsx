@@ -64,7 +64,7 @@ export const RecentLocalMeetings: React.FC = () => {
 
             {meetings.length === 0 ? (
                 <div className="px-5 py-8 text-sm text-text-tertiary">
-                    No recent meetings yet. Start Cluegent, use STT or ask a question, then stop the meeting to save it here.
+                    No recent meetings yet.
                 </div>
             ) : selectedMeeting ? (
                 <div className="min-h-[520px]">

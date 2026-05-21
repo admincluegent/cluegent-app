@@ -4,13 +4,21 @@ import type { BillingInterval } from "../utils/usage.js";
 
 const RAZORPAY_API_BASE_URL = "https://api.razorpay.com/v1";
 
-export type PaidPlanId = Extract<PlanId, "pro" | "power">;
+export type PaidPlanId = Extract<PlanId, "livetest" | "pro" | "power">;
+export type RazorpayProviderMode = "test" | "live";
+export type RazorpayCurrency = "INR" | "USD";
 
 export interface RazorpayTestPlanConfig {
+  liveTestMonthly?: string;
   proMonthly: string;
   proYearly: string;
   powerMonthly: string;
   powerYearly: string;
+}
+
+export interface RazorpayLivePlanConfig {
+  inr: RazorpayTestPlanConfig;
+  usd?: RazorpayTestPlanConfig;
 }
 
 export interface CreateRazorpaySubscriptionInput {
@@ -23,6 +31,8 @@ export interface CreateRazorpaySubscriptionInput {
   displayName: string;
   appPlanId: PaidPlanId;
   interval: BillingInterval;
+  providerMode?: RazorpayProviderMode;
+  currency?: RazorpayCurrency;
 }
 
 export interface RazorpaySubscriptionEntity {
@@ -37,6 +47,18 @@ export interface RazorpaySubscriptionEntity {
   charge_at?: number | null;
   start_at?: number | null;
   end_at?: number | null;
+  notes?: Record<string, string>;
+}
+
+export interface RazorpayOrderEntity {
+  id?: string;
+  entity?: "order";
+  amount?: number;
+  amount_paid?: number;
+  amount_due?: number;
+  currency?: RazorpayCurrency;
+  receipt?: string | null;
+  status?: string;
   notes?: Record<string, string>;
 }
 
@@ -56,6 +78,10 @@ export function resolveRazorpayPlanId(
 ) {
   if (planId === "pro" && interval === "month") {
     return plans.proMonthly;
+  }
+
+  if (planId === "livetest" && interval === "month") {
+    return plans.liveTestMonthly ?? "";
   }
 
   if (planId === "pro" && interval === "year") {
@@ -81,6 +107,10 @@ export function resolvePlanFromRazorpayPlanId(
     return { planId: "pro", interval: "month" };
   }
 
+  if (plans.liveTestMonthly && planId === plans.liveTestMonthly) {
+    return { planId: "livetest", interval: "month" };
+  }
+
   if (planId === plans.proYearly) {
     return { planId: "pro", interval: "year" };
   }
@@ -99,6 +129,7 @@ export function resolvePlanFromRazorpayPlanId(
 export async function createRazorpayTestSubscription(
   input: CreateRazorpaySubscriptionInput
 ) {
+  const providerMode = input.providerMode ?? "test";
   const response = await fetch(`${RAZORPAY_API_BASE_URL}/subscriptions`, {
     method: "POST",
     headers: {
@@ -115,7 +146,8 @@ export async function createRazorpayTestSubscription(
         firebase_email: input.email,
         cluegent_plan_id: input.appPlanId,
         cluegent_billing_interval: input.interval,
-        cluegent_provider_mode: "test",
+        cluegent_provider_mode: providerMode,
+        cluegent_currency: input.currency ?? "INR",
         cluegent_source: "desktop_app",
       },
     }),
@@ -127,14 +159,61 @@ export async function createRazorpayTestSubscription(
 
   if (!response.ok) {
     throw new Error(
-      `Razorpay test subscription creation failed with status ${response.status}: ${
+      `Razorpay ${providerMode} subscription creation failed with status ${response.status}: ${
         payload.error?.description ?? JSON.stringify(payload)
       }`
     );
   }
 
   if (!payload.id) {
-    throw new Error("Razorpay test subscription creation returned no subscription id.");
+    throw new Error(`Razorpay ${providerMode} subscription creation returned no subscription id.`);
+  }
+
+  return payload;
+}
+
+export async function createRazorpayOrder(input: {
+  keyId: string;
+  keySecret: string;
+  amount: number;
+  currency: RazorpayCurrency;
+  receipt: string;
+  notes: Record<string, string>;
+  providerMode?: RazorpayProviderMode;
+}) {
+  const providerMode = input.providerMode ?? "live";
+  const response = await fetch(`${RAZORPAY_API_BASE_URL}/orders`, {
+    method: "POST",
+    headers: {
+      authorization: buildBasicAuthHeader(input.keyId, input.keySecret),
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      amount: input.amount,
+      currency: input.currency,
+      receipt: input.receipt,
+      notes: {
+        ...input.notes,
+        cluegent_provider_mode: providerMode,
+        cluegent_source: "desktop_app",
+      },
+    }),
+  });
+
+  const payload = (await response.json().catch(() => ({}))) as RazorpayOrderEntity & {
+    error?: { description?: string };
+  };
+
+  if (!response.ok) {
+    throw new Error(
+      `Razorpay ${providerMode} order creation failed with status ${response.status}: ${
+        payload.error?.description ?? JSON.stringify(payload)
+      }`
+    );
+  }
+
+  if (!payload.id) {
+    throw new Error(`Razorpay ${providerMode} order creation returned no order id.`);
   }
 
   return payload;
@@ -144,7 +223,9 @@ export async function fetchRazorpayTestSubscription(input: {
   keyId: string;
   keySecret: string;
   subscriptionId: string;
+  providerMode?: RazorpayProviderMode;
 }) {
+  const providerMode = input.providerMode ?? "test";
   const response = await fetch(
     `${RAZORPAY_API_BASE_URL}/subscriptions/${encodeURIComponent(input.subscriptionId)}`,
     {
@@ -161,7 +242,7 @@ export async function fetchRazorpayTestSubscription(input: {
 
   if (!response.ok) {
     throw new Error(
-      `Razorpay test subscription fetch failed with status ${response.status}: ${
+      `Razorpay ${providerMode} subscription fetch failed with status ${response.status}: ${
         payload.error?.description ?? JSON.stringify(payload)
       }`
     );
@@ -175,7 +256,9 @@ export async function cancelRazorpayTestSubscription(input: {
   keySecret: string;
   subscriptionId: string;
   cancelAtCycleEnd?: boolean;
+  providerMode?: RazorpayProviderMode;
 }) {
+  const providerMode = input.providerMode ?? "test";
   const response = await fetch(
     `${RAZORPAY_API_BASE_URL}/subscriptions/${encodeURIComponent(
       input.subscriptionId
@@ -198,7 +281,7 @@ export async function cancelRazorpayTestSubscription(input: {
 
   if (!response.ok) {
     throw new Error(
-      `Razorpay test subscription cancellation failed with status ${response.status}: ${
+      `Razorpay ${providerMode} subscription cancellation failed with status ${response.status}: ${
         payload.error?.description ?? JSON.stringify(payload)
       }`
     );
@@ -214,6 +297,20 @@ export function verifyRazorpayCheckoutSignature(input: {
   keySecret: string;
 }) {
   const signedPayload = `${input.paymentId}|${input.subscriptionId}`;
+  const expectedSignature = createHmac("sha256", input.keySecret)
+    .update(signedPayload)
+    .digest("hex");
+
+  return safeCompare(input.signature, expectedSignature);
+}
+
+export function verifyRazorpayOrderSignature(input: {
+  orderId: string;
+  paymentId: string;
+  signature: string;
+  keySecret: string;
+}) {
+  const signedPayload = `${input.orderId}|${input.paymentId}`;
   const expectedSignature = createHmac("sha256", input.keySecret)
     .update(signedPayload)
     .digest("hex");

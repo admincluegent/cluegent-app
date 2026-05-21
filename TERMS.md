@@ -1,6 +1,6 @@
 # Cluegent Terms of Service
 
-Effective date: May 8, 2026
+Effective date: May 18, 2026
 
 These Terms of Service govern your use of the Cluegent desktop app, website, backend services, and related features.
 
@@ -8,7 +8,7 @@ By using Cluegent, you agree to these terms. If you do not agree, do not use Clu
 
 ## What Cluegent Provides
 
-Cluegent is an AI assistant for meetings, interviews, coding conversations, typed prompts, rolling transcription, and screenshot-based answers. The app can help summarize context, answer questions, explain code, analyze screenshots, and provide realtime assistance.
+Cluegent is designed solely as a professional communication enhancement tool for permitted sales calls, business meetings, learning sessions, technical discussions, and similar contexts. The app can help summarize context, answer questions, explain code, analyze screenshots, and provide realtime assistance where AI assistance, transcription, and screenshot processing are allowed.
 
 AI responses may be incomplete, inaccurate, or inappropriate for your situation. You are responsible for reviewing and verifying outputs before relying on them.
 

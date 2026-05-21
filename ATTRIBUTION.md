@@ -10,10 +10,13 @@ Cluegent is a modified version of the Natively open-source desktop assistant pro
 - Upstream repository: https://github.com/Natively-AI-assistant/natively-cluely-ai-assistant
 - License: GNU Affero General Public License v3.0
 
+The upstream Natively project and its contributors retain their original copyright and license notices. Cluegent keeps this attribution to make the project lineage clear and to preserve open-source notice information.
+
 ## Cluegent Source Code
 
 - Cluegent source repository: https://github.com/admincluegent/cluegent-app
 - Cluegent license file: https://github.com/admincluegent/cluegent-app/blob/development/LICENSE
+- Cluegent attribution file: https://github.com/admincluegent/cluegent-app/blob/development/ATTRIBUTION.md
 
 ## Summary of Cluegent Modifications
 

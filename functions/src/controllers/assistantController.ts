@@ -10,6 +10,7 @@ import { ensureUsageDocuments } from "./usageController.js";
 import {
   buildPlanStatus,
   getUserRefs,
+  getPlanPeriodUsage,
   isFreeTrialExhausted,
   materializeFreeTrialUsage,
   materializeSubscription,
@@ -239,7 +240,8 @@ function selectAssistantModelRoute(input: {
   const premiumCounter = input.hasScreenshot
     ? "openAiScreenshotCount"
     : "openAiPromptCount";
-  const premiumUsedBefore = input.usage[premiumCounter];
+  const planPeriodUsage = getPlanPeriodUsage(input.subscription, input.usage);
+  const premiumUsedBefore = planPeriodUsage[premiumCounter];
 
   if (
     input.hasOpenAiApiKey &&
@@ -1221,11 +1223,11 @@ export async function trackSttUsageForAuthenticatedUser(
     }
 
     const durationSeconds = Math.max(1, Math.ceil(data.durationSeconds));
-    const { monthKey, subscription, usage } = await ensureUsageDocuments(
+    const { monthKey, subscription, usage, freeTrialUsage } = await ensureUsageDocuments(
       authUser.uid,
       authUser
     );
-    const planStatus = buildPlanStatus(subscription, usage);
+    const planStatus = buildPlanStatus(subscription, usage, freeTrialUsage);
 
     if (isFreeTrialExhausted(planStatus)) {
       return trackUsageFailure(
@@ -1242,12 +1244,14 @@ export async function trackSttUsageForAuthenticatedUser(
     }
 
     const refs = getUserRefs(authUser.uid, monthKey);
+    const userRef = db.doc(refs.userPath);
     const subscriptionRef = db.doc(refs.subscriptionPath);
     const usageRef = db.doc(refs.usagePath);
     const estimatedCostUsdAdded = 0;
 
     const updatedRemaining = await db.runTransaction(async (transaction) => {
-      const [subscriptionSnap, usageSnap] = await Promise.all([
+      const [userSnap, subscriptionSnap, usageSnap] = await Promise.all([
+        transaction.get(userRef),
         transaction.get(subscriptionRef),
         transaction.get(usageRef),
       ]);
@@ -1258,7 +1262,12 @@ export async function trackSttUsageForAuthenticatedUser(
         usageSnap.data() as ReturnType<typeof materializeUsage>,
         monthKey
       );
-      const latestPlanStatus = buildPlanStatus(latestSubscription, latestUsage);
+      const latestFreeTrialUsage = materializeFreeTrialUsage(userSnap.data());
+      const latestPlanStatus = buildPlanStatus(
+        latestSubscription,
+        latestUsage,
+        latestFreeTrialUsage
+      );
 
       if (isFreeTrialExhausted(latestPlanStatus)) {
         throw new Error("FREE_TRIAL_LIMIT_EXCEEDED");
@@ -1286,6 +1295,17 @@ export async function trackSttUsageForAuthenticatedUser(
         },
         { merge: true }
       );
+
+      if (latestSubscription.plan === "free") {
+        transaction.set(
+          userRef,
+          {
+            freeTrialSttSecondsUsed: FieldValue.increment(durationSeconds),
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
 
       return {
         sttSecondsRemaining: Math.max(
@@ -1347,11 +1367,11 @@ export async function createDeepgramTokenForAuthenticatedUser(
       );
     }
 
-    const { subscription, usage } = await ensureUsageDocuments(
+    const { subscription, usage, freeTrialUsage } = await ensureUsageDocuments(
       authUser.uid,
       authUser
     );
-    const planStatus = buildPlanStatus(subscription, usage);
+    const planStatus = buildPlanStatus(subscription, usage, freeTrialUsage);
 
     if (isFreeTrialExhausted(planStatus)) {
       return createTokenFailure(

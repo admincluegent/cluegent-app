@@ -7,12 +7,14 @@ import {
   assertUsageAvailable,
   buildPlanStatus,
   buildSubscriptionDoc,
+  buildUsageBaseline,
   buildUsageDoc,
   buildUserProfileDoc,
   getUserRefs,
   materializeFreeTrialUsage,
   materializeSubscription,
   materializeUsage,
+  needsPaidUsageBaseline,
   serializeForClient,
   type UsageActionType,
 } from "../utils/usage.js";
@@ -47,15 +49,31 @@ export async function ensureUsageDocuments(
     (subscriptionData.promptLimit !== PLAN_CONFIGS.free.promptLimit ||
       subscriptionData.screenshotLimit !== PLAN_CONFIGS.free.screenshotLimit ||
       subscriptionData.sttSecondsLimit !== PLAN_CONFIGS.free.sttSecondsLimit);
+  const liveTestExpired = isLiveTestSubscriptionExpired(subscriptionData);
+  const paidBaselineNeedRefresh =
+    subscriptionSnap.exists &&
+    usageSnap.exists &&
+    needsPaidUsageBaseline(
+      materializeSubscription(
+        subscriptionData as ReturnType<typeof materializeSubscription>
+      ),
+      materializeUsage(
+        usageSnap.data() as ReturnType<typeof materializeUsage>,
+        monthKey
+      )
+    );
   const freeTrialFieldsNeedRefresh =
     userSnap.exists &&
     (typeof userData?.freeTrialPromptCount !== "number" ||
-      typeof userData?.freeTrialScreenshotCount !== "number");
+      typeof userData?.freeTrialScreenshotCount !== "number" ||
+      typeof userData?.freeTrialSttSecondsUsed !== "number");
 
   if (
     subscriptionSnap.exists &&
     usageSnap.exists &&
     !freeLimitsNeedRefresh &&
+    !liveTestExpired &&
+    !paidBaselineNeedRefresh &&
     !freeTrialFieldsNeedRefresh
   ) {
     return {
@@ -101,6 +119,18 @@ export async function ensureUsageDocuments(
           ...(typeof userSnap.data()?.freeTrialScreenshotCount !== "number"
             ? { freeTrialScreenshotCount: 0 }
             : {}),
+          ...(typeof userSnap.data()?.freeTrialSttSecondsUsed !== "number"
+            ? {
+                freeTrialSttSecondsUsed:
+                  latestSubscriptionSnap.data()?.plan === "free" &&
+                  typeof latestUsageSnap.data()?.sttSecondsUsed === "number"
+                    ? Math.max(
+                        latestUsageSnap.data()?.sttSecondsUsed as number,
+                        0
+                      )
+                    : 0,
+              }
+            : {}),
           updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true }
@@ -111,7 +141,27 @@ export async function ensureUsageDocuments(
       transaction.set(subscriptionRef, buildSubscriptionDoc());
     } else {
       const latestSubscriptionData = latestSubscriptionSnap.data();
-      if (latestSubscriptionData?.plan === "free" && freeLimitsNeedRefresh) {
+      if (isLiveTestSubscriptionExpired(latestSubscriptionData)) {
+        transaction.set(
+          subscriptionRef,
+          {
+            ...buildSubscriptionDoc(),
+            provider: "razorpay",
+            providerMode: "live",
+            billingInterval: null,
+            customerId: latestSubscriptionData?.customerId ?? null,
+            subscriptionId: latestSubscriptionData?.subscriptionId ?? null,
+            startedAt: latestSubscriptionData?.startedAt ?? null,
+            renewsAt: null,
+            expiresAt: latestSubscriptionData?.expiresAt ?? null,
+            cancelAtPeriodEnd: false,
+            lastWebhookEventId: "livetest_local_expired",
+            isTestEntitlement: false,
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      } else if (latestSubscriptionData?.plan === "free" && freeLimitsNeedRefresh) {
         transaction.set(
           subscriptionRef,
           {
@@ -122,6 +172,25 @@ export async function ensureUsageDocuments(
           },
           { merge: true }
         );
+      } else {
+        const latestSubscription = materializeSubscription(
+          latestSubscriptionData as ReturnType<typeof materializeSubscription>
+        );
+        const latestUsage = materializeUsage(
+          latestUsageSnap.data() as ReturnType<typeof materializeUsage>,
+          monthKey
+        );
+
+        if (needsPaidUsageBaseline(latestSubscription, latestUsage)) {
+          transaction.set(
+            subscriptionRef,
+            {
+              usageBaseline: buildUsageBaseline(latestUsage),
+              updatedAt: FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+        }
       }
     }
 
@@ -147,6 +216,37 @@ export async function ensureUsageDocuments(
     ),
     freeTrialUsage: materializeFreeTrialUsage(finalUserSnap.data()),
   };
+}
+
+function isLiveTestSubscriptionExpired(subscriptionData?: Record<string, unknown>) {
+  if (subscriptionData?.plan !== "livetest" || subscriptionData?.status !== "active") {
+    return false;
+  }
+
+  const expiresAt = readDate(subscriptionData.expiresAt);
+  return Boolean(expiresAt && expiresAt.getTime() <= Date.now());
+}
+
+function readDate(value: unknown) {
+  if (!value) {
+    return null;
+  }
+
+  if (typeof value === "string") {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { toDate?: unknown }).toDate === "function"
+  ) {
+    const parsed = (value as { toDate: () => Date }).toDate();
+    return parsed instanceof Date && !Number.isNaN(parsed.getTime()) ? parsed : null;
+  }
+
+  return null;
 }
 
 export async function getPlanStatusController(

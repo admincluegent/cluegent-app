@@ -10,8 +10,16 @@ import {
 } from "./controllers/usageController.js";
 import {
   cancelRazorpayTestSubscriptionController,
+  cancelRazorpayLiveSubscriptionController,
+  createRazorpayLiveOrderController,
+  createRazorpayLiveTestOrderController,
+  createRazorpayLiveSubscriptionController,
   createRazorpayTestSubscriptionController,
+  razorpayLiveWebhookController,
   razorpayTestWebhookController,
+  verifyRazorpayLiveOrderPaymentController,
+  verifyRazorpayLiveTestOrderPaymentController,
+  verifyRazorpayLivePaymentController,
   verifyRazorpayTestPaymentController,
 } from "./controllers/billingController.js";
 import {
@@ -58,6 +66,9 @@ const razorpayTestPlanProMonthly = defineSecret("RAZORPAY_TEST_PLAN_PRO_MONTHLY"
 const razorpayTestPlanProYearly = defineSecret("RAZORPAY_TEST_PLAN_PRO_YEARLY");
 const razorpayTestPlanPowerMonthly = defineSecret("RAZORPAY_TEST_PLAN_POWER_MONTHLY");
 const razorpayTestPlanPowerYearly = defineSecret("RAZORPAY_TEST_PLAN_POWER_YEARLY");
+const razorpayLiveKeyId = defineSecret("RAZORPAY_LIVE_KEY_ID");
+const razorpayLiveKeySecret = defineSecret("RAZORPAY_LIVE_KEY_SECRET");
+const razorpayLiveWebhookSecret = defineSecret("RAZORPAY_LIVE_WEBHOOK_SECRET");
 
 export const getOrCreateUserProfile = onCall(
   callableOptions,
@@ -67,12 +78,19 @@ export const getOrCreateUserProfile = onCall(
 export const deleteAccount = onCall(
   {
     ...callableOptions,
-    secrets: [razorpayTestKeyId, razorpayTestKeySecret],
+    secrets: [
+      razorpayTestKeyId,
+      razorpayTestKeySecret,
+      razorpayLiveKeyId,
+      razorpayLiveKeySecret,
+    ],
   },
   (request) =>
     deleteAccountController(request, {
       razorpayTestKeyId: razorpayTestKeyId.value(),
       razorpayTestKeySecret: razorpayTestKeySecret.value(),
+      razorpayLiveKeyId: razorpayLiveKeyId.value(),
+      razorpayLiveKeySecret: razorpayLiveKeySecret.value(),
     })
 );
 
@@ -131,6 +149,98 @@ export const cancelRazorpayTestSubscription = onCall(
     })
 );
 
+export const createRazorpayLiveSubscription = onCall(
+  {
+    ...callableOptions,
+    secrets: [
+      razorpayLiveKeyId,
+      razorpayLiveKeySecret,
+    ],
+  },
+  (request) =>
+    createRazorpayLiveSubscriptionController(request, {
+      keyId: razorpayLiveKeyId.value(),
+      keySecret: razorpayLiveKeySecret.value(),
+      plans: {
+        inr: {
+          proMonthly: "",
+          proYearly: "",
+          powerMonthly: "",
+          powerYearly: "",
+        },
+      },
+    })
+);
+
+export const createRazorpayLiveTestOrder = onCall(
+  {
+    ...callableOptions,
+    secrets: [razorpayLiveKeyId, razorpayLiveKeySecret],
+  },
+  (request) =>
+    createRazorpayLiveTestOrderController(request, {
+      keyId: razorpayLiveKeyId.value(),
+      keySecret: razorpayLiveKeySecret.value(),
+    })
+);
+
+export const createRazorpayLiveOrder = onCall(
+  {
+    ...callableOptions,
+    secrets: [razorpayLiveKeyId, razorpayLiveKeySecret],
+  },
+  (request) =>
+    createRazorpayLiveOrderController(request, {
+      keyId: razorpayLiveKeyId.value(),
+      keySecret: razorpayLiveKeySecret.value(),
+    })
+);
+
+export const verifyRazorpayLiveTestOrderPayment = onCall(
+  {
+    ...callableOptions,
+    secrets: [razorpayLiveKeySecret],
+  },
+  (request) =>
+    verifyRazorpayLiveTestOrderPaymentController(request, {
+      keySecret: razorpayLiveKeySecret.value(),
+    })
+);
+
+export const verifyRazorpayLiveOrderPayment = onCall(
+  {
+    ...callableOptions,
+    secrets: [razorpayLiveKeySecret],
+  },
+  (request) =>
+    verifyRazorpayLiveOrderPaymentController(request, {
+      keySecret: razorpayLiveKeySecret.value(),
+    })
+);
+
+export const verifyRazorpayLivePayment = onCall(
+  {
+    ...callableOptions,
+    secrets: [razorpayLiveKeySecret],
+  },
+  (request) =>
+    verifyRazorpayLivePaymentController(request, {
+      keySecret: razorpayLiveKeySecret.value(),
+    })
+);
+
+export const cancelRazorpayLiveSubscription = onCall(
+  {
+    ...callableOptions,
+    secrets: [razorpayLiveKeyId, razorpayLiveKeySecret],
+  },
+  (request) =>
+    cancelRazorpayLiveSubscriptionController(request, {
+      keyId: razorpayLiveKeyId.value(),
+      keySecret: razorpayLiveKeySecret.value(),
+    })
+);
+
 export const checkUsageBeforeAction = onCall(
   callableOptions,
   checkUsageBeforeActionController
@@ -175,6 +285,29 @@ export const razorpayTestWebhook = onRequest(
         proYearly: razorpayTestPlanProYearly.value(),
         powerMonthly: razorpayTestPlanPowerMonthly.value(),
         powerYearly: razorpayTestPlanPowerYearly.value(),
+      },
+    })
+);
+
+export const razorpayLiveWebhook = onRequest(
+  {
+    region: "us-central1",
+    cors: true,
+    invoker: "public",
+    secrets: [
+      razorpayLiveWebhookSecret,
+    ],
+  },
+  async (request, response) =>
+    razorpayLiveWebhookController(request, response, {
+      webhookSecret: razorpayLiveWebhookSecret.value(),
+      plans: {
+        inr: {
+          proMonthly: "",
+          proYearly: "",
+          powerMonthly: "",
+          powerYearly: "",
+        },
       },
     })
 );
