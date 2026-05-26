@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Cluegent Listening Mode</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="compositions/styles.css" />
+  </head>
+  <body>
+    <main class="root" data-composition-id="main" data-start="0" data-duration="13" data-width="1920" data-height="1080">
+      <section id="listen-a" class="scene">
+        <div class="title-card">
+          <p class="eyebrow">Listening mode</p>
+          <h1 class="title">Start listening. Let Cluegent follow the conversation.</h1>
+          <p class="sub">The floating assistant can be moved anywhere on screen while the transcript rolls.</p>
+        </div>
+        <div class="shot-wrap compact"><img class="shot" src="assets/image3.png" alt="" /></div>
+        <div class="badge" id="move-badge" style="right: 350px; bottom: 275px;"><span class="badge-dot"></span>Movable anywhere on screen</div>
+        <div class="move-trail" style="right: 275px; bottom: 250px;"></div>
+        <div class="caption">Click Start listening</div>
+      </section>
+
+      <section id="listen-b" class="scene">
+        <div class="title-card">
+          <p class="eyebrow">Live answer</p>
+          <h2 class="title">Press Ctrl + Enter. Get the answer.</h2>
+          <p class="sub">Cluegent converts the rolling transcript into an AI response without leaving the overlay.</p>
+          <div class="shortcut"><span class="kbd">Ctrl</span><span>+</span><span class="kbd">Enter</span></div>
+        </div>
+        <div class="shot-wrap compact"><img class="shot" src="assets/image4.png" alt="" /></div>
+        <div class="caption">Transcript to AI response</div>
+      </section>
+
+      <div class="cursor" id="cursor"></div>
+      <div class="click-ring" id="ring"></div>
+    </main>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      gsap.set(["#listen-a", "#listen-b"], { opacity: 0 });
+      function show(scene, at) {
+        tl.to(scene, { opacity: 1, duration: 0.45, ease: "power2.out" }, at);
+        tl.from(`${scene} .title-card`, { y: 38, opacity: 0, duration: 0.62, ease: "power3.out" }, at + 0.1);
+        tl.from(`${scene} .shot`, { y: 54, scale: 0.965, opacity: 0, duration: 0.76, ease: "expo.out" }, at + 0.15);
+        tl.from(`${scene} .caption`, { x: -26, opacity: 0, duration: 0.45 }, at + 0.5);
+      }
+      function hide(scene, at) {
+        tl.to(scene, { opacity: 0, scale: 0.985, filter: "blur(8px)", duration: 0.42, ease: "power2.in" }, at);
+      }
+      function cursorTo(x, y, at, click = false) {
+        tl.to("#cursor", { opacity: 1, left: x, top: y, duration: 0.45, ease: "power3.out" }, at);
+        if (click) {
+          tl.set("#ring", { left: x, top: y, scale: 0.45, opacity: 0.9 }, at + 0.45);
+          tl.to("#ring", { scale: 1.4, opacity: 0, duration: 0.55, ease: "power2.out" }, at + 0.45);
+        }
+      }
+      show("#listen-a", 0);
+      cursorTo(831, 437, 1.15, true);
+      tl.from("#move-badge", { y: 24, opacity: 0, duration: 0.42 }, 2.0);
+      tl.fromTo(".move-trail", { opacity: 0, x: -160 }, { opacity: 1, x: 120, duration: 1.1, yoyo: true, repeat: 1 }, 2.1);
+      tl.to("#listen-a .shot-wrap", { x: -130, y: -35, duration: 1.15, ease: "power2.inOut" }, 2.1);
+      hide("#listen-a", 5.6);
+      show("#listen-b", 5.95);
+      tl.from("#listen-b .shortcut .kbd", { y: 16, opacity: 0, duration: 0.3, stagger: 0.08 }, 6.8);
+      cursorTo(760, 650, 7.65, false);
+      tl.to("#cursor", { opacity: 0, duration: 0.3 }, 11.8);
+    </script>
+  </body>
+</html>

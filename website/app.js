@@ -26,6 +26,28 @@ navLinks.forEach((link) => {
   });
 });
 
+document.querySelectorAll("[data-video-play]").forEach((button) => {
+  const targetId = button.getAttribute("aria-controls");
+  const video = targetId ? document.getElementById(targetId) : null;
+  if (!(video instanceof HTMLVideoElement)) return;
+
+  button.addEventListener("click", async () => {
+    try {
+      await video.play();
+      button.classList.add("is-hidden");
+    } catch {
+      video.controls = true;
+    }
+  });
+
+  video.addEventListener("play", () => button.classList.add("is-hidden"));
+  video.addEventListener("pause", () => {
+    if (video.currentTime === 0 || video.ended) {
+      button.classList.remove("is-hidden");
+    }
+  });
+});
+
 const observer = new IntersectionObserver(
   (entries) => {
     entries.forEach((entry) => {

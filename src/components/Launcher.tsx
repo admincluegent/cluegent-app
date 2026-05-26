@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import packageJson from '../../package.json';
-import { ToggleLeft, ToggleRight, Zap, Calendar, ArrowRight, ArrowLeft, MoreHorizontal, Clock, Settings, RefreshCw, Ghost, Link as LinkIcon, ChevronDown, Trash2, Check, Download, AlertCircle, User } from 'lucide-react';
+import { ToggleLeft, ToggleRight, Zap, Calendar, ArrowRight, ArrowLeft, MoreHorizontal, Clock, Settings, RefreshCw, Ghost, Link as LinkIcon, ChevronDown, Trash2, Check, Download, AlertCircle, User, Mail } from 'lucide-react';
 import { generateMeetingPDF } from '../utils/pdfGenerator';
 import icon from "./icon.png";
 import MeetingDetails from './MeetingDetails';
@@ -531,17 +531,9 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                                 title="Account"
                                 className={`flex items-center justify-center rounded-full border border-border-subtle bg-bg-item-surface p-1.5 text-text-secondary transition-all duration-300 hover:text-text-primary ${isLight ? 'hover:drop-shadow-[0_0_6px_rgba(0,0,0,0.2)]' : 'hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.35)]'}`}
                             >
-                                {profile.photoURL ? (
-                                    <img
-                                        src={profile.photoURL}
-                                        alt={profile.displayName}
-                                        className="h-7 w-7 rounded-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-400/15 text-xs font-semibold text-amber-500">
-                                        {(profile.displayName || profile.email || 'U').slice(0, 1).toUpperCase()}
-                                    </div>
-                                )}
+                                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-400/15 text-amber-500">
+                                    <Mail size={15} strokeWidth={2.4} />
+                                </div>
                             </button>
 
                             <AnimatePresence>

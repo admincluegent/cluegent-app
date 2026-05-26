@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Cluegent Screenshot Mode</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="compositions/styles.css" />
+  </head>
+  <body>
+    <main class="root" data-composition-id="main" data-start="0" data-duration="15" data-width="1920" data-height="1080">
+      <section id="screen-a" class="scene">
+        <div class="title-card">
+          <p class="eyebrow">Screenshot mode</p>
+          <h1 class="title">Attach a coding problem from the screen.</h1>
+          <p class="sub">Use Ctrl + [ to give Cluegent visual context.</p>
+          <div class="shortcut"><span class="kbd">Ctrl</span><span>+</span><span class="kbd">[</span></div>
+        </div>
+        <div class="shot-wrap wide"><img class="shot soft" src="assets/image7.png" alt="" /></div>
+        <div class="caption">Capture visual context</div>
+      </section>
+
+      <section id="screen-b" class="scene">
+        <div class="title-card">
+          <p class="eyebrow">AI coding solution</p>
+          <h2 class="title">Cluegent explains and writes the solution.</h2>
+          <p class="sub">The answer stays layered over your coding workspace.</p>
+        </div>
+        <div class="shot-wrap wide"><img class="shot soft" src="assets/image8.png" alt="" /></div>
+        <div class="caption">Screenshot attached</div>
+      </section>
+
+      <section id="screen-c" class="scene">
+        <div class="title-card">
+          <p class="eyebrow">Accepted</p>
+          <h2 class="title">Apply the solution and move forward.</h2>
+          <p class="sub">Cluegent remains movable while the editor and result stay visible.</p>
+        </div>
+        <div class="shot-wrap wide"><img class="shot soft" src="assets/image9.png" alt="" /></div>
+        <div class="caption">Problem to accepted result</div>
+      </section>
+
+      <div class="cursor" id="cursor"></div>
+      <div class="click-ring" id="ring"></div>
+    </main>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      gsap.set(["#screen-a", "#screen-b", "#screen-c"], { opacity: 0 });
+      function show(scene, at) {
+        tl.to(scene, { opacity: 1, duration: 0.45, ease: "power2.out" }, at);
+        tl.from(`${scene} .title-card`, { y: 38, opacity: 0, duration: 0.62, ease: "power3.out" }, at + 0.1);
+        tl.from(`${scene} .shot`, { y: 54, scale: 0.965, opacity: 0, duration: 0.76, ease: "expo.out" }, at + 0.15);
+        tl.from(`${scene} .caption`, { x: -26, opacity: 0, duration: 0.45 }, at + 0.5);
+      }
+      function hide(scene, at) {
+        tl.to(scene, { opacity: 0, scale: 0.985, filter: "blur(8px)", duration: 0.42, ease: "power2.in" }, at);
+      }
+      function cursorTo(x, y, at, click = false) {
+        tl.to("#cursor", { opacity: 1, left: x, top: y, duration: 0.45, ease: "power3.out" }, at);
+        if (click) {
+          tl.set("#ring", { left: x, top: y, scale: 0.45, opacity: 0.9 }, at + 0.45);
+          tl.to("#ring", { scale: 1.4, opacity: 0, duration: 0.55, ease: "power2.out" }, at + 0.45);
+        }
+      }
+      show("#screen-a", 0);
+      tl.from("#screen-a .shortcut .kbd", { y: 16, opacity: 0, duration: 0.3, stagger: 0.08 }, 0.9);
+      cursorTo(1008, 286, 1.85, false);
+      hide("#screen-a", 4.5);
+      show("#screen-b", 4.85);
+      cursorTo(1285, 330, 6.1, false);
+      hide("#screen-b", 9.4);
+      show("#screen-c", 9.75);
+      cursorTo(930, 760, 10.75, false);
+      tl.to("#screen-c .shot-wrap", { x: -100, y: -25, duration: 1.15, yoyo: true, repeat: 1, ease: "power2.inOut" }, 11.0);
+      tl.to("#cursor", { opacity: 0, duration: 0.3 }, 13.8);
+    </script>
+  </body>
+</html>

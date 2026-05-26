@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Cluegent Full Modes Product Video</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="compositions/styles.css" />
+  </head>
+  <body>
+    <main class="root" data-composition-id="main" data-start="0" data-duration="36" data-width="1920" data-height="1080">
+      <section id="launch" class="scene">
+        <div class="title-card">
+          <p class="eyebrow">Launch</p>
+          <h1 class="title">Go from detectable to private in one click.</h1>
+          <p class="sub">Toggle Undetectable, start Cluegent, and move the assistant anywhere on your screen.</p>
+        </div>
+        <div class="shot-wrap wide"><img class="shot soft" src="assets/image1.png" alt="" /></div>
+        <img class="floating-app" src="assets/image2.png" alt="" />
+        <div class="callout gold" id="toggle-callout" style="left: 980px; top: 154px;">Detectable toggle <small>Click to switch to Undetectable</small></div>
+        <div class="callout blue" id="start-callout" style="right: 230px; top: 198px;">Start Cluegent <small>Open the floating assistant</small></div>
+        <div class="badge" id="move-badge" style="right: 520px; bottom: 405px;"><span class="badge-dot"></span>Movable anywhere on screen</div>
+        <div class="move-trail" style="right: 432px; bottom: 378px;"></div>
+        <div class="caption">Start in undetectable mode</div>
+      </section>
+
+      <section id="listen-a" class="scene">
+        <div class="title-card">
+          <p class="eyebrow">Listening mode</p>
+          <h2 class="title">Start listening. Capture the room.</h2>
+          <p class="sub">The rolling transcript appears as the conversation happens.</p>
+        </div>
+        <div class="shot-wrap compact"><img class="shot" src="assets/image3.png" alt="" /></div>
+        <div class="callout" style="right: 305px; top: 234px;">Rolling transcript <small>Speech appears live while Cluegent listens</small></div>
+        <div class="caption">Click Start listening</div>
+      </section>
+
+      <section id="listen-b" class="scene">
+        <div class="title-card">
+          <p class="eyebrow">Listening mode</p>
+          <h2 class="title">Press Ctrl + Enter for an answer.</h2>
+          <p class="sub">Cluegent turns the transcript into a direct response you can use immediately.</p>
+          <div class="shortcut"><span class="kbd">Ctrl</span><span>+</span><span class="kbd">Enter</span></div>
+        </div>
+        <div class="shot-wrap compact"><img class="shot" src="assets/image4.png" alt="" /></div>
+        <div class="caption">AI response from live context</div>
+      </section>
+
+      <section id="type-a" class="scene">
+        <div class="title-card">
+          <p class="eyebrow">Type mode</p>
+          <h2 class="title">Type a prompt into Cluegent.</h2>
+          <p class="sub">Ask directly without leaving your current screen.</p>
+        </div>
+        <div class="shot-wrap compact"><img class="shot" src="assets/image5.png" alt="" /></div>
+        <div class="callout" style="left: 350px; bottom: 250px;">Typed prompt <small>Submit with Ctrl + Enter</small></div>
+        <div class="caption">Prompt inside the overlay</div>
+      </section>
+
+      <section id="type-b" class="scene">
+        <div class="title-card">
+          <p class="eyebrow">Type mode</p>
+          <h2 class="title">Receive a structured answer.</h2>
+          <p class="sub">Questions, explanations, and follow-ups stay in the same floating workspace.</p>
+        </div>
+        <div class="shot-wrap compact"><img class="shot" src="assets/image6.png" alt="" /></div>
+        <div class="caption">Prompt to answer</div>
+      </section>
+
+      <section id="screen-a" class="scene">
+        <div class="title-card">
+          <p class="eyebrow">Screenshot mode</p>
+          <h2 class="title">Attach the coding problem on screen.</h2>
+          <p class="sub">Use the screenshot shortcut and Cluegent reads the visual context.</p>
+          <div class="shortcut"><span class="kbd">Ctrl</span><span>+</span><span class="kbd">[</span></div>
+        </div>
+        <div class="shot-wrap wide"><img class="shot soft" src="assets/image7.png" alt="" /></div>
+        <div class="caption">Screenshot attached</div>
+      </section>
+
+      <section id="screen-b" class="scene">
+        <div class="title-card">
+          <p class="eyebrow">Screenshot mode</p>
+          <h2 class="title">Get the solution with code.</h2>
+          <p class="sub">Cluegent explains the approach and drafts the implementation.</p>
+        </div>
+        <div class="shot-wrap wide"><img class="shot soft" src="assets/image8.png" alt="" /></div>
+        <div class="caption">AI coding solution</div>
+      </section>
+
+      <section id="screen-c" class="scene">
+        <div class="title-card">
+          <p class="eyebrow">Accepted</p>
+          <h2 class="title">Move from problem to accepted result.</h2>
+          <p class="sub">The assistant stays movable while you work through the answer.</p>
+        </div>
+        <div class="shot-wrap wide"><img class="shot soft" src="assets/image9.png" alt="" /></div>
+        <div class="caption">Solution applied</div>
+      </section>
+
+      <section id="final" class="scene">
+        <div class="title-card" style="left: 50%; top: 50%; width: 980px; max-width: 980px; text-align: center; transform: translate(-50%, -50%);">
+          <p class="eyebrow">Cluegent</p>
+          <h2 class="title">Listening, typing, screenshots. One floating AI copilot.</h2>
+          <p class="sub" style="margin-left: auto; margin-right: auto;">Move it anywhere on screen and get help without breaking your flow.</p>
+        </div>
+        <div class="brand-mark"><img src="assets/icon.png" alt="" />Cluegent</div>
+      </section>
+
+      <div class="cursor" id="cursor"></div>
+      <div class="click-ring" id="ring"></div>
+    </main>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      const scenes = ["#launch", "#listen-a", "#listen-b", "#type-a", "#type-b", "#screen-a", "#screen-b", "#screen-c", "#final"];
+      gsap.set(scenes, { opacity: 0 });
+
+      function show(scene, at) {
+        tl.to(scene, { opacity: 1, duration: 0.45, ease: "power2.out" }, at);
+        tl.from(`${scene} .title-card`, { y: 40, opacity: 0, duration: 0.62, ease: "power3.out" }, at + 0.08);
+        tl.from(`${scene} .shot`, { y: 54, scale: 0.965, opacity: 0, duration: 0.76, ease: "expo.out" }, at + 0.15);
+        tl.from(`${scene} .caption`, { x: -28, opacity: 0, duration: 0.48, ease: "power2.out" }, at + 0.5);
+      }
+
+      function hide(scene, at) {
+        tl.to(scene, { opacity: 0, scale: 0.985, filter: "blur(8px)", duration: 0.42, ease: "power2.in" }, at);
+        tl.set(scene, { scale: 1, filter: "blur(0px)" }, at + 0.45);
+      }
+
+      function cursorTo(x, y, at, click = false) {
+        tl.to("#cursor", { opacity: 1, left: x, top: y, duration: 0.45, ease: "power3.out" }, at);
+        if (click) {
+          tl.set("#ring", { left: x, top: y, scale: 0.45, opacity: 0.9 }, at + 0.45);
+          tl.to("#ring", { scale: 1.4, opacity: 0, duration: 0.55, ease: "power2.out" }, at + 0.45);
+          tl.to("#cursor", { scale: 0.86, duration: 0.08, yoyo: true, repeat: 1 }, at + 0.44);
+        }
+      }
+
+      show("#launch", 0);
+      tl.from("#toggle-callout", { y: -20, opacity: 0, duration: 0.4 }, 0.9);
+      cursorTo(774, 239, 1.2, true);
+      tl.set("#toggle-callout", { innerHTML: "Undetectable enabled <small>Private overlay mode is active</small>" }, 2.1);
+      cursorTo(1407, 243, 2.6, true);
+      tl.from("#start-callout", { y: -20, opacity: 0, duration: 0.4 }, 2.6);
+      tl.from("#launch .floating-app", { y: 90, scale: 0.88, opacity: 0, duration: 0.82, ease: "expo.out" }, 3.4);
+      tl.from("#move-badge", { y: 24, opacity: 0, duration: 0.42 }, 4.1);
+      tl.fromTo(".move-trail", { opacity: 0, x: -160 }, { opacity: 1, x: 110, duration: 1.2, yoyo: true, repeat: 1, ease: "sine.inOut" }, 4.2);
+      tl.to("#launch .floating-app", { x: -230, y: -60, duration: 1.3, ease: "power2.inOut" }, 4.35);
+      hide("#launch", 6.2);
+
+      show("#listen-a", 6.55);
+      cursorTo(831, 437, 7.4, true);
+      tl.from("#listen-a .callout", { x: 34, opacity: 0, duration: 0.48 }, 8.0);
+      hide("#listen-a", 10.1);
+
+      show("#listen-b", 10.45);
+      tl.from("#listen-b .shortcut .kbd", { y: 16, opacity: 0, duration: 0.3, stagger: 0.08 }, 11.2);
+      cursorTo(760, 650, 11.95, false);
+      hide("#listen-b", 14.25);
+
+      show("#type-a", 14.6);
+      cursorTo(940, 653, 15.55, true);
+      tl.from("#type-a .callout", { y: 24, opacity: 0, duration: 0.4 }, 16.1);
+      cursorTo(1375, 633, 17.2, true);
+      hide("#type-a", 18.15);
+
+      show("#type-b", 18.5);
+      hide("#type-b", 22.1);
+
+      show("#screen-a", 22.45);
+      tl.from("#screen-a .shortcut .kbd", { y: 16, opacity: 0, duration: 0.3, stagger: 0.08 }, 23.2);
+      cursorTo(1008, 286, 24.15, false);
+      hide("#screen-a", 25.9);
+
+      show("#screen-b", 26.25);
+      cursorTo(1285, 330, 27.2, false);
+      hide("#screen-b", 29.7);
+
+      show("#screen-c", 30.05);
+      cursorTo(930, 760, 31.1, false);
+      hide("#screen-c", 33.1);
+
+      tl.to("#final", { opacity: 1, duration: 0.45, ease: "power2.out" }, 33.45);
+      tl.from("#final .title-card", { y: 40, opacity: 0, duration: 0.62, ease: "power3.out" }, 33.55);
+      tl.from("#final .brand-mark", { y: 20, opacity: 0, duration: 0.45 }, 34.0);
+      tl.to("#cursor", { opacity: 0, duration: 0.3 }, 33.6);
+    </script>
+  </body>
+</html>

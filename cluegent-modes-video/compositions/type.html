@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Cluegent Type Mode</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="compositions/styles.css" />
+  </head>
+  <body>
+    <main class="root" data-composition-id="main" data-start="0" data-duration="11" data-width="1920" data-height="1080">
+      <section id="type-a" class="scene">
+        <div class="title-card">
+          <p class="eyebrow">Type mode</p>
+          <h1 class="title">Type a prompt directly into Cluegent.</h1>
+          <p class="sub">Ask questions from the floating input, then submit with Ctrl + Enter.</p>
+          <div class="shortcut"><span class="kbd">Ctrl</span><span>+</span><span class="kbd">Enter</span></div>
+        </div>
+        <div class="shot-wrap compact"><img class="shot" src="assets/image5.png" alt="" /></div>
+        <div class="caption">Prompt without switching windows</div>
+      </section>
+
+      <section id="type-b" class="scene">
+        <div class="title-card">
+          <p class="eyebrow">AI response</p>
+          <h2 class="title">The answer appears inside the same movable overlay.</h2>
+          <p class="sub">Keep the response visible anywhere on the screen while you work.</p>
+        </div>
+        <div class="shot-wrap compact"><img class="shot" src="assets/image6.png" alt="" /></div>
+        <div class="badge" id="move-badge" style="right: 385px; bottom: 240px;"><span class="badge-dot"></span>Drag it anywhere</div>
+        <div class="caption">Typed prompt to answer</div>
+      </section>
+
+      <div class="cursor" id="cursor"></div>
+      <div class="click-ring" id="ring"></div>
+    </main>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      gsap.set(["#type-a", "#type-b"], { opacity: 0 });
+      function show(scene, at) {
+        tl.to(scene, { opacity: 1, duration: 0.45, ease: "power2.out" }, at);
+        tl.from(`${scene} .title-card`, { y: 38, opacity: 0, duration: 0.62, ease: "power3.out" }, at + 0.1);
+        tl.from(`${scene} .shot`, { y: 54, scale: 0.965, opacity: 0, duration: 0.76, ease: "expo.out" }, at + 0.15);
+        tl.from(`${scene} .caption`, { x: -26, opacity: 0, duration: 0.45 }, at + 0.5);
+      }
+      function hide(scene, at) {
+        tl.to(scene, { opacity: 0, scale: 0.985, filter: "blur(8px)", duration: 0.42, ease: "power2.in" }, at);
+      }
+      function cursorTo(x, y, at, click = false) {
+        tl.to("#cursor", { opacity: 1, left: x, top: y, duration: 0.45, ease: "power3.out" }, at);
+        if (click) {
+          tl.set("#ring", { left: x, top: y, scale: 0.45, opacity: 0.9 }, at + 0.45);
+          tl.to("#ring", { scale: 1.4, opacity: 0, duration: 0.55, ease: "power2.out" }, at + 0.45);
+        }
+      }
+      show("#type-a", 0);
+      tl.from("#type-a .shortcut .kbd", { y: 16, opacity: 0, duration: 0.3, stagger: 0.08 }, 0.9);
+      cursorTo(940, 653, 1.5, true);
+      cursorTo(1375, 633, 3.25, true);
+      hide("#type-a", 4.65);
+      show("#type-b", 5.0);
+      tl.from("#move-badge", { y: 24, opacity: 0, duration: 0.42 }, 6.2);
+      tl.to("#type-b .shot-wrap", { x: 130, y: -30, duration: 1.1, yoyo: true, repeat: 1, ease: "power2.inOut" }, 6.4);
+      tl.to("#cursor", { opacity: 0, duration: 0.3 }, 9.8);
+    </script>
+  </body>
+</html>
