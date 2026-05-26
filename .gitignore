@@ -207,6 +207,9 @@ native-audio-service/Sources/CopilotAudioService/Protos/
 release/
 release-*/
 18-05 release-github/
+26-05-2026/
+26-05-2026-*/
+artifacts/
 website/downloads/*.exe
 
 # Rust

@@ -13,4 +13,7 @@
 export const FEATURES = {
   /** Set to false to completely hide premium UI elements */
   PREMIUM_ENABLED: true,
+  /** Hide Power yearly while Razorpay's domestic transaction limit is below the plan amount. */
+  POWER_YEARLY_ENABLED:
+    String(import.meta.env.VITE_POWER_YEARLY_ENABLED ?? "").trim().toLowerCase() === "true",
 } as const;

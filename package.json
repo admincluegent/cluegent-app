@@ -1,6 +1,6 @@
 {
   "name": "cluegent",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "main": "dist-electron/electron/main.js",
   "description": "Cluegent is an AI copilot that helps with live conversation, screen context, and meeting assistance.",
   "scripts": {
@@ -16,6 +16,7 @@
     "electron:build": "npm run build:electron && cross-env NODE_ENV=production electron .",
     "app:dev": "concurrently \"npm run dev -- --port 5180 --strictPort\" \"wait-on http://localhost:5180 && npm run electron:dev\"",
     "app:build": "npm run build && npm run build:electron && cross-env NATIVELY_BUILD_ALL_MAC_ARCHES=1 npm run build:native && electron-builder",
+    "app:build:store": "npm run build && npm run build:electron && npm run build:native && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win appx --x64",
     "watch": "tsc -p electron/tsconfig.json --watch",
     "start": "npm run app:dev",
     "dist": "npm run app:build",
@@ -43,6 +44,9 @@
     "directories": {
       "output": "release",
       "buildResources": "assets"
+    },
+    "toolsets": {
+      "winCodeSign": "1.1.0"
     },
     "extraResources": [
       {
@@ -116,6 +120,23 @@
       ],
       "icon": "assets/icons/png/",
       "category": "Office"
+    },
+    "appx": {
+      "identityName": "PrithiviRaj.Cluegent",
+      "publisher": "CN=55E259BD-3714-4A3C-9E96-08C741D7BEE8",
+      "publisherDisplayName": "PrithiviRaj",
+      "displayName": "Cluegent",
+      "applicationId": "PrithiviRaj.Cluegent",
+      "backgroundColor": "#111111",
+      "languages": [
+        "en-US"
+      ],
+      "capabilities": [
+        "runFullTrust",
+        "internetClient",
+        "microphone"
+      ],
+      "artifactName": "${productName}-Store-${version}-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,

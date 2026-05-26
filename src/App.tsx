@@ -8,7 +8,6 @@ import SettingsOverlay from "./components/SettingsOverlay"
 import StartupSequence from "./components/StartupSequence"
 import { AnimatePresence, motion } from "framer-motion"
 import UpdateBanner from "./components/UpdateBanner"
-import { PermissionsToaster }   from "./components/onboarding/PermissionsToaster"
 import { AlertCircle } from "lucide-react"
 import { ConsentNotice } from "./components/ConsentNotice"
 import { clampOverlayOpacity, OVERLAY_OPACITY_DEFAULT, getDefaultOverlayOpacity } from "./lib/overlayAppearance"
@@ -98,9 +97,6 @@ const App: React.FC = () => {
   // Re-index State
   const [incompatibleWarning, setIncompatibleWarning] = useState<{count: number; oldProvider: string; newProvider: string} | null>(null);
 
-  // ── Onboarding / promo toasters ───────────────────────────
-  const [showPermissionsToaster, setShowPermissionsToaster] = useState(false);
-
   useEffect(() => {
     // Clean up old local storage
     localStorage.removeItem('useLegacyAudioBackend');
@@ -124,17 +120,6 @@ const App: React.FC = () => {
         }
       });
 
-
-    // ── Onboarding toasters ──────────────────────────────────
-    if (isLauncherWindow || isDefault) {
-      const permsShown = localStorage.getItem('natively_perms_shown_v1');
-      if (!permsShown) {
-        // First ever launch — show permissions toaster
-        setShowPermissionsToaster(true);
-      }
-    }
-
-    // Listen for open-settings-tab events from other windows (e.g. overlay Modes button)
     const removeOpenSettingsTab = window.electronAPI?.onOpenSettingsTab?.((tab: string) => {
       setSettingsInitialTab(tab);
       setIsSettingsOpen(true);
@@ -434,16 +419,6 @@ const App: React.FC = () => {
       <UpdateBanner />
 
 
-
-      {/* Free trial countdown banner — only in launcher window while trial is active */}
-      {/* Permissions toaster — first ever launch */}
-      <PermissionsToaster
-        isOpen={showPermissionsToaster}
-        onDismiss={() => {
-          localStorage.setItem('natively_perms_shown_v1', '1');
-          setShowPermissionsToaster(false);
-        }}
-      />
 
     </div>
     </ErrorBoundary>

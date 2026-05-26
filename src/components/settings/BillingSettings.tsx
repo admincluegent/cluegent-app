@@ -12,6 +12,7 @@ import {
   verifyRazorpayTestPayment,
 } from "@/services/backendApi";
 import { useAuth } from "@/contexts/auth.context";
+import { FEATURES } from "@/lib/featureFlags";
 import type { BillingInterval } from "@/types/firebase";
 
 const BILLING_CHECKOUT_SYNC_WINDOW_MS = 60_000;
@@ -205,6 +206,10 @@ const FREE_PLAN_CARD = {
   ],
 };
 
+function isCheckoutCardEnabled(plan: CheckoutCard) {
+  return FEATURES.POWER_YEARLY_ENABLED || plan.id !== "power" || plan.interval !== "year";
+}
+
 function getCheckoutCardPricing(plan: CheckoutCard, currency: BillingCurrency) {
   if (currency === "INR") {
     return {
@@ -367,6 +372,12 @@ export const BillingSettings: React.FC = () => {
     interval: BillingInterval,
     providerMode: BillingProviderMode = "test"
   ) => {
+    if (!FEATURES.POWER_YEARLY_ENABLED && planId === "power" && interval === "year") {
+      setMessage(null);
+      setError("Power yearly checkout is temporarily unavailable. Please choose Power monthly or contact support for manual yearly billing.");
+      return;
+    }
+
     const requestKey = `${providerMode}-${planId}-${interval}`;
     setBusyKey(requestKey);
     setMessage(null);
@@ -477,7 +488,10 @@ export const BillingSettings: React.FC = () => {
   const visiblePaidCards = useMemo(
     () =>
       CHECKOUT_CARDS.filter(
-        (plan) => plan.interval === selectedInterval && (plan.id === "pro" || plan.id === "power")
+        (plan) =>
+          plan.interval === selectedInterval &&
+          (plan.id === "pro" || plan.id === "power") &&
+          isCheckoutCardEnabled(plan)
       ),
     [selectedInterval]
   );
@@ -504,7 +518,7 @@ export const BillingSettings: React.FC = () => {
     <div className="-m-6 min-h-full bg-white p-6 text-slate-950 animated fadeIn">
       <section className="space-y-5">
         <div className="flex flex-col items-center gap-4 text-center">
-          <div>
+          <div className="w-full max-w-[980px]">
             <h2 className="text-[2.75rem] font-semibold leading-none tracking-[-0.06em] text-slate-950">
               Choose your plan
             </h2>
@@ -538,35 +552,37 @@ export const BillingSettings: React.FC = () => {
             })}
           </div>
 
-          <div className="inline-flex rounded-[18px] border border-slate-200 bg-slate-100/90 p-0.5 shadow-[0_14px_38px_-30px_rgba(15,23,42,0.35)]">
-            {(["INR", "USD"] as BillingCurrency[]).map((currency) => {
-              const isSelected = selectedCurrency === currency;
-
-              return (
-                <button
-                  key={currency}
-                  type="button"
-                  onClick={() => {
-                    setSelectedCurrency(currency);
-                  }}
-                  className={`min-w-[82px] rounded-[14px] px-3 py-2 text-sm font-semibold transition active:scale-[0.98] ${
-                    isSelected
-                      ? "bg-white text-slate-950 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.42)]"
-                      : "text-slate-500 hover:text-slate-950"
-                  }`}
-                >
-                  <span className="inline-flex items-center justify-center gap-1.5">
-                    <BillingCurrencyFlag currency={currency} />
-                    {currency}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
         </div>
 
         <div className="space-y-4">
+          <div className="mx-auto flex w-full max-w-[980px] justify-end">
+            <div className="inline-flex rounded-[18px] border border-slate-200 bg-slate-100/90 p-0.5 shadow-[0_14px_38px_-30px_rgba(15,23,42,0.35)]">
+              {(["INR", "USD"] as BillingCurrency[]).map((currency) => {
+                const isSelected = selectedCurrency === currency;
+
+                return (
+                  <button
+                    key={currency}
+                    type="button"
+                    onClick={() => {
+                      setSelectedCurrency(currency);
+                    }}
+                    className={`min-w-[82px] rounded-[14px] px-3 py-2 text-sm font-semibold transition active:scale-[0.98] ${
+                      isSelected
+                        ? "bg-white text-slate-950 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.42)]"
+                        : "text-slate-500 hover:text-slate-950"
+                    }`}
+                  >
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <BillingCurrencyFlag currency={currency} />
+                      {currency}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="mx-auto grid w-full max-w-[980px] gap-4 lg:grid-cols-2">
             {visiblePaidCards.map((plan) => {
               const accent = getAccentClasses(plan.accent);

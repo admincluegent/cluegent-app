@@ -155,6 +155,8 @@ export async function createRazorpayTestSubscriptionController(
     );
   }
 
+  assertPowerYearlyCheckoutEnabled(planId, interval);
+
   await ensureUsageDocuments(authUser.uid, authUser);
 
   const razorpayPlanId = resolveRazorpayPlanId(planId, interval, env.plans);
@@ -412,6 +414,8 @@ export async function createRazorpayLiveOrderController(
     );
   }
 
+  assertPowerYearlyCheckoutEnabled(planId as PaidPlanId, interval as BillingInterval);
+
   return createRazorpayLiveOrderForPlan({
     authUser,
     env,
@@ -647,6 +651,8 @@ export async function createRazorpayLiveSubscriptionController(
       "Razorpay live subscription checkout supports Pro and Power monthly/yearly plans."
     );
   }
+
+  assertPowerYearlyCheckoutEnabled(planId, interval);
 
   await ensureUsageDocuments(authUser.uid, authUser);
 
@@ -1818,6 +1824,21 @@ function isSupportedPaidPlan(planId: PaidPlanId, interval: BillingInterval) {
     (planId === "pro" && (interval === "month" || interval === "year")) ||
     (planId === "power" && (interval === "month" || interval === "year")) ||
     (planId === LIVE_TEST_PLAN_ID && interval === "month")
+  );
+}
+
+function assertPowerYearlyCheckoutEnabled(planId: unknown, interval: unknown) {
+  if (planId !== "power" || interval !== "year") {
+    return;
+  }
+
+  if (String(process.env.POWER_YEARLY_ENABLED ?? "").trim().toLowerCase() === "true") {
+    return;
+  }
+
+  throw new HttpsError(
+    "failed-precondition",
+    "Power yearly checkout is temporarily unavailable. Please choose Power monthly or contact support for manual yearly billing."
   );
 }
 

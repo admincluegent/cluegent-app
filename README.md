@@ -56,6 +56,15 @@ Power plan:
 
 ## Local Development
 
+Copy the environment template and fill in your own Firebase web config:
+
+```bash
+cp .env.example .env
+```
+
+The root `.env` is for local desktop/renderer development. It is ignored by Git.
+Do not commit real API keys, Razorpay secrets, service-account JSON files, or webhook secrets.
+
 Install dependencies:
 
 ```bash
@@ -94,6 +103,9 @@ Required backend secrets include:
 - `DEEPSEEK_AI_API_KEY`
 - `OPENAI_API_KEY`
 - `ASSEMBLY_AI_API_KEY`
+- `RAZORPAY_LIVE_KEY_ID`
+- `RAZORPAY_LIVE_KEY_SECRET`
+- `RAZORPAY_LIVE_WEBHOOK_SECRET`
 - `RAZORPAY_TEST_KEY_ID`
 - `RAZORPAY_TEST_KEY_SECRET`
 - `RAZORPAY_TEST_WEBHOOK_SECRET`
@@ -108,6 +120,10 @@ Set secrets with:
 ```bash
 firebase functions:secrets:set SECRET_NAME --project YOUR_FIREBASE_PROJECT_ID
 ```
+
+For local function emulator testing only, you can copy `functions/.env.example` to
+`functions/.env` and fill in dummy or test values. Deployed functions should use
+Firebase Secret Manager, not committed env files.
 
 Deploy functions:
 
