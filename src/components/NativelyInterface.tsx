@@ -2711,7 +2711,18 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
             setListeningSeconds(0);
             setSttInterviewerStatus('reconnecting');
             setSttInterviewerError('');
-            const result = await window.electronAPI.startListening();
+            const inputDeviceId = localStorage.getItem('preferredInputDeviceId');
+            let outputDeviceId = localStorage.getItem('preferredOutputDeviceId');
+            const shouldUseScreenCaptureKit =
+                window.electronAPI?.platform === 'darwin' ||
+                localStorage.getItem('useExperimentalSckBackend') === 'true';
+            if (shouldUseScreenCaptureKit) {
+                outputDeviceId = 'sck';
+            }
+
+            const result = await window.electronAPI.startListening({
+                audio: { inputDeviceId, outputDeviceId }
+            });
             if (!result?.success && result?.error) {
                 setIsListening(false);
                 isListeningRef.current = false;
