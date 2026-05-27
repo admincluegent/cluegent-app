@@ -161,7 +161,7 @@ export class WindowHelper {
       ...(isMac ? { vibrancy: 'under-window' as const, visualEffectState: 'followWindow' as const } : {}),
       transparent: isMac,
       hasShadow: true,
-      backgroundColor: isMac ? "#00000000" : "#000000",
+      backgroundColor: isMac ? "#00000000" : "#f7f7f8",
       focusable: true,
       resizable: true,
       movable: true,

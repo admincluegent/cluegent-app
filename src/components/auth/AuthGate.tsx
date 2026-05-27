@@ -1,8 +1,11 @@
 import type React from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ArrowLeft,
   ArrowRight,
   Check,
+  Eye,
+  EyeOff,
   KeyRound,
   LoaderCircle,
   Mail,
@@ -198,7 +201,7 @@ function AuthShell({
               ) : (
                 <div className="flex h-14 items-center justify-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-5 text-sm font-semibold text-slate-500">
                   <LoaderCircle className="h-4 w-4 animate-spin" />
-                  Restoring your session
+                  Opening Cluegent
                 </div>
               )}
             </div>
@@ -233,6 +236,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     sendPasswordReset,
     resendVerificationEmail,
     refreshAuthUser,
+    logoutUser,
     clearError,
   } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup" | "reset">("signin");
@@ -240,16 +244,43 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isCheckingVerification, setIsCheckingVerification] = useState(false);
+  const overlayVerificationRefreshUserRef = useRef<string | null>(null);
 
   const isPasswordUser = useMemo(
     () => Boolean(user?.providerData?.some((provider) => provider.providerId === "password")),
     [user]
   );
 
+  useEffect(() => {
+    if (!isOverlayWindow || !isPasswordUser || !user || user.emailVerified) {
+      return;
+    }
+
+    if (overlayVerificationRefreshUserRef.current === user.uid) {
+      return;
+    }
+
+    overlayVerificationRefreshUserRef.current = user.uid;
+    void refreshAuthUser();
+  }, [isOverlayWindow, isPasswordUser, refreshAuthUser, user]);
+
   const switchMode = (nextMode: "signin" | "signup" | "reset") => {
     setMode(nextMode);
     setNotice(null);
     clearError();
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  };
+
+  const handleBackToSignIn = async () => {
+    setNotice(null);
+    clearError();
+    setIsCheckingVerification(false);
+    await logoutUser();
+    switchMode("signin");
   };
 
   const handleEmailAuth = async () => {
@@ -298,22 +329,28 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const isRestoringSession = isLoading || (user && !profile && !error);
+  if (isOverlayWindow) {
+    if (user && (!isPasswordUser || user.emailVerified)) {
+      return <>{children}</>;
+    }
 
-  if (isOverlayWindow && isRestoringSession) {
     return (
       <div
         className="min-h-screen bg-transparent"
-        aria-label="Restoring Cluegent session"
+        aria-label={
+          user ? "Refreshing Cluegent email verification" : "Restoring Cluegent session"
+        }
       />
     );
   }
 
+  const isRestoringSession = isLoading || (user && !profile && !error);
+
   if (isLoading || (user && !profile)) {
     return (
       <AuthShell
-        title="Restoring your workspace"
-        body="Cluegent is waiting for your Firebase session and profile bootstrap to finish before it loads the main app."
+        title="Please wait"
+        body="Opening Cluegent."
         error={error}
       />
     );
@@ -401,13 +438,21 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
                 <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-blue-300 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-100">
                   <KeyRound className="h-4 w-4 text-slate-400" />
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     autoComplete={mode === "signup" ? "new-password" : "current-password"}
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
-                    className="w-full bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400"
+                    className="min-w-0 flex-1 bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400"
                     placeholder={mode === "signup" ? "Create a password" : "Enter your password"}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((value) => !value)}
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </label>
             ) : null}
@@ -418,13 +463,21 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
                 <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-blue-300 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-100">
                   <ShieldCheck className="h-4 w-4 text-slate-400" />
                   <input
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     autoComplete="new-password"
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
-                    className="w-full bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400"
+                    className="min-w-0 flex-1 bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400"
                     placeholder="Repeat your password"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((value) => !value)}
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </label>
             ) : null}
@@ -511,6 +564,24 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
         error={error}
       >
         <div className="space-y-4">
+          <button
+            type="button"
+            onClick={() => {
+              void handleBackToSignIn();
+            }}
+            disabled={isAuthenticating || isSyncing || isCheckingVerification}
+            className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to sign in
+          </button>
+
+          {notice ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+              {notice}
+            </div>
+          ) : null}
+
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
             Signed in as <span className="font-semibold text-slate-950">{user.email}</span>
           </div>
@@ -520,7 +591,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             onClick={() => {
               void resendVerificationEmail();
             }}
-            disabled={isAuthenticating || isSyncing}
+            disabled={isAuthenticating || isSyncing || isCheckingVerification}
             className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-xl bg-[#6aa2ff] px-5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(80,142,240,0.28)] transition hover:bg-[#5b95f3] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
           >
             <Mail className="h-4 w-4" />
@@ -530,12 +601,26 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
           <button
             type="button"
             onClick={() => {
-              void refreshAuthUser();
+              setNotice(null);
+              setIsCheckingVerification(true);
+              void refreshAuthUser().then((refreshedUser) => {
+                if (!refreshedUser?.emailVerified) {
+                  setNotice("Email is not verified yet. Open the inbox link, then click this again.");
+                  setIsCheckingVerification(false);
+                }
+              }).catch(() => {
+                setIsCheckingVerification(false);
+              });
             }}
-            className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-800 transition hover:border-slate-300 hover:bg-slate-50 active:scale-[0.99]"
+            disabled={isCheckingVerification || isAuthenticating || isSyncing}
+            className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-800 transition hover:border-slate-300 hover:bg-slate-50 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
           >
-            <RefreshCcw className="h-4 w-4" />
-            I already verified
+            {isCheckingVerification ? (
+              <LoaderCircle className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCcw className="h-4 w-4" />
+            )}
+            {isCheckingVerification ? "Checking verification..." : "I already verified"}
           </button>
         </div>
       </AuthShell>

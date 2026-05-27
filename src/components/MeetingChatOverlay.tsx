@@ -11,6 +11,7 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { ReportAiContentButton } from './ReportAiContentButton';
 
 // ============================================
 // Types 
@@ -166,13 +167,19 @@ const AssistantMessage: React.FC<{ content: string; isStreaming?: boolean }> = (
                 )}
             </div>
             {!isStreaming && content && (
-                <button
-                    onClick={handleCopy}
-                    className="flex items-center gap-2 mt-3 text-[13px] text-text-tertiary hover:text-text-secondary transition-colors"
-                >
-                    {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
-                    {copied ? 'Copied' : 'Copy message'}
-                </button>
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <button
+                        onClick={handleCopy}
+                        className="flex items-center gap-2 text-[13px] text-text-tertiary hover:text-text-secondary transition-colors"
+                    >
+                        {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                        {copied ? 'Copied' : 'Copy message'}
+                    </button>
+                    <ReportAiContentButton
+                        source="Meeting search response"
+                        response={content}
+                    />
+                </div>
             )}
         </motion.div>
     );

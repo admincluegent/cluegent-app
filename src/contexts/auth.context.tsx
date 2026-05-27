@@ -48,7 +48,7 @@ type AuthContextValue = {
   ) => Promise<{ success: boolean; verificationSent: boolean }>;
   sendPasswordReset: (email: string) => Promise<boolean>;
   resendVerificationEmail: () => Promise<boolean>;
-  refreshAuthUser: () => Promise<void>;
+  refreshAuthUser: () => Promise<User | null>;
   clearError: () => void;
   logoutUser: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -227,6 +227,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const handleRefreshAuthUser = useCallback(async () => {
     const refreshedUser = await refreshCurrentUser();
     setUser(refreshedUser);
+    return refreshedUser;
   }, []);
 
   const logoutUser = useCallback(async () => {

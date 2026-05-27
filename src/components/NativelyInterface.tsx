@@ -32,6 +32,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 // import { ModelSelector } from './ui/ModelSelector'; // REMOVED
 import TopPill from './ui/TopPill';
 import RollingTranscript from './ui/RollingTranscript';
+import { ReportAiContentButton } from './ReportAiContentButton';
 import { NegotiationCoachingCard } from '../premium';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -2328,6 +2329,16 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
         );
     };
 
+    const getReportableAiResponse = (msg: Message) => {
+        if (msg.negotiationCoachingData) {
+            return [
+                msg.negotiationCoachingData.tacticalNote,
+                msg.negotiationCoachingData.exactScript,
+            ].filter(Boolean).join('\n\n');
+        }
+        return msg.text;
+    };
+
 
     // We use a ref to hold the latest handlers to avoid re-binding the event listener on every render
     const handlersRef = useRef({
@@ -2903,6 +2914,15 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                                     </button>
                                                 )}
                                                 {renderMessageText(msg)}
+                                                {msg.role === 'system' && !msg.isStreaming && (
+                                                    <div className="mt-2 flex justify-end">
+                                                        <ReportAiContentButton
+                                                            source="Live overlay response"
+                                                            response={getReportableAiResponse(msg)}
+                                                            meetingId={localMeetingIdRef.current}
+                                                        />
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     ))}

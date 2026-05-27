@@ -3,6 +3,7 @@ import { useStreamBuffer } from '../hooks/useStreamBuffer';
 import { X, Copy, Check, Globe, ArrowUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import nativelyIcon from './icon.png';
+import { ReportAiContentButton } from './ReportAiContentButton';
 
 // ============================================
 // Types
@@ -93,13 +94,19 @@ const AssistantMessage: React.FC<{ content: string; isStreaming?: boolean }> = (
                 )}
             </div>
             {!isStreaming && content && (
-                <button
-                    onClick={handleCopy}
-                    className="flex items-center gap-2 mt-3 text-[13px] text-text-tertiary hover:text-text-secondary transition-colors"
-                >
-                    {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
-                    {copied ? 'Copied' : 'Copy message'}
-                </button>
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <button
+                        onClick={handleCopy}
+                        className="flex items-center gap-2 text-[13px] text-text-tertiary hover:text-text-secondary transition-colors"
+                    >
+                        {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                        {copied ? 'Copied' : 'Copy message'}
+                    </button>
+                    <ReportAiContentButton
+                        source="Search all meetings response"
+                        response={content}
+                    />
+                </div>
             )}
         </motion.div>
     );

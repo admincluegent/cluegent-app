@@ -103,7 +103,7 @@ const localMeetingToMeeting = (meeting: LocalMeetingRecord): Meeting => {
 };
 
 interface LauncherProps {
-    onStartMeeting: () => void;
+    onStartMeeting: () => void | Promise<void>;
     onOpenSettings: (tab?: string) => void;
     onOpenModes?: () => void;
     onPageChange?: (isMain: boolean) => void;
@@ -147,6 +147,8 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
     const [showNotification, setShowNotification] = useState(false);
     const [showProfileCard, setShowProfileCard] = useState(false);
     const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'uptodate' | 'error'>('idle');
+    const [isStartingCluegent, setIsStartingCluegent] = useState(false);
+    const [startupProgress, setStartupProgress] = useState(0);
 
     const [isGuideSectionOpen, setIsGuideSectionOpen] = useState(true);
     const [isRecentMeetingsOpen, setIsRecentMeetingsOpen] = useState(true);
@@ -200,6 +202,60 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
     // Keybinds
     const { isShortcutPressed } = useShortcuts();
     const isLight = useResolvedTheme() === 'light';
+
+    useEffect(() => {
+        if (!isStartingCluegent) {
+            return;
+        }
+
+        setStartupProgress(8);
+
+        const intervalId = window.setInterval(() => {
+            setStartupProgress(current => {
+                if (current >= 94) {
+                    return current;
+                }
+
+                const nextStep = Math.max(1, Math.round((96 - current) * 0.14));
+                return Math.min(94, current + nextStep);
+            });
+        }, 260);
+
+        return () => {
+            window.clearInterval(intervalId);
+        };
+    }, [isStartingCluegent]);
+
+    const handleStartCluegent = async () => {
+        if (isStartingCluegent) {
+            return;
+        }
+
+        if (isMeetingActive) {
+            // inactive=true: overlay appears on top but doesn't activate
+            // the Natively app or steal OS focus, preserving stealth.
+            window.electronAPI?.setWindowMode?.('overlay', true);
+            analytics.trackCommandExecuted('resume_meeting_from_launcher');
+            return;
+        }
+
+        setIsStartingCluegent(true);
+        setStartupProgress(8);
+        analytics.trackCommandExecuted('start_cluegent_cta');
+
+        try {
+            await onStartMeeting();
+            setStartupProgress(100);
+        } catch (error) {
+            console.error('[Launcher] Failed to start Cluegent:', error);
+        } finally {
+            window.setTimeout(() => {
+                setIsStartingCluegent(false);
+                setStartupProgress(0);
+            }, 600);
+        }
+    };
+
     useEffect(() => {
         let mounted = true;
         console.log("Launcher mounted");
@@ -481,7 +537,7 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
     };
 
     return (
-        <div className="h-full w-full flex flex-col bg-bg-primary text-text-primary font-sans overflow-hidden selection:bg-accent-secondary/30">
+        <div className="h-screen w-screen flex flex-col bg-bg-primary text-text-primary font-sans overflow-hidden selection:bg-accent-secondary/30">
             {/* 1. Header (Static) */}
             <header className="relative w-full h-[40px] shrink-0 flex items-center justify-between pl-0 drag-region select-none bg-bg-secondary border-b border-border-subtle z-[200]">
                 {/* Left: Spacing for Traffic Lights + Navigation Arrows */}
@@ -711,16 +767,16 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                                                     window.electronAPI?.setWindowMode?.('overlay', true);
                                                     analytics.trackCommandExecuted('resume_meeting_from_launcher');
                                                 } else {
-                                                    onStartMeeting();
-                                                    analytics.trackCommandExecuted('start_cluegent_cta');
+                                                    void handleStartCluegent();
                                                 }
                                             }}
+                                            disabled={isStartingCluegent}
                                             whileHover={{ scale: 1.01, filter: 'brightness(1.1)' }}
                                             whileTap={{ scale: 0.99 }}
                                             transition={{ duration: 0.18, ease: 'easeOut' }}
-                                            className="group relative overflow-hidden text-white px-6 py-3 rounded-full font-celeb font-medium tracking-normal flex items-center justify-center gap-3 backdrop-blur-xl shrink-0"
+                                            className="group relative min-w-[286px] overflow-hidden text-white px-6 py-3 rounded-full font-celeb font-medium tracking-normal flex items-center justify-center gap-3 backdrop-blur-xl shrink-0 disabled:cursor-wait"
                                             style={{
-                                                boxShadow: isMeetingActive
+                                                boxShadow: isMeetingActive || isStartingCluegent
                                                     ? 'inset 0 1px 1px rgba(255,255,255,0.7), inset 0 -1px 2px rgba(0,0,0,0.1), 0 2px 10px rgba(16,185,129,0.45), 0 0 0 1px rgba(255,255,255,0.15)'
                                                     : 'inset 0 1px 1px rgba(255,255,255,0.7), inset 0 -1px 2px rgba(0,0,0,0.1), 0 2px 10px rgba(14,165,233,0.4), 0 0 0 1px rgba(255,255,255,0.15)',
                                                 transition: 'box-shadow 0.5s ease-out',
@@ -729,13 +785,19 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                                             {/* Blue gradient layer (idle) */}
                                             <div
                                                 className="absolute inset-0 bg-gradient-to-b from-sky-400 via-sky-500 to-blue-600 transition-opacity duration-500 ease-out"
-                                                style={{ opacity: isMeetingActive ? 0 : 1 }}
+                                                style={{ opacity: isMeetingActive || isStartingCluegent ? 0 : 1 }}
                                             />
                                             {/* Green gradient layer (meeting active) */}
                                             <div
                                                 className="absolute inset-0 bg-gradient-to-b from-emerald-400 via-emerald-500 to-green-600 transition-opacity duration-500 ease-out"
-                                                style={{ opacity: isMeetingActive ? 1 : 0 }}
+                                                style={{ opacity: isMeetingActive || isStartingCluegent ? 1 : 0 }}
                                             />
+                                            {isStartingCluegent ? (
+                                                <div
+                                                    className="absolute inset-y-0 left-0 z-10 bg-white/20 transition-[width] duration-300 ease-out"
+                                                    style={{ width: `${startupProgress}%` }}
+                                                />
+                                            ) : null}
 
                                             {/* Top highlight band — shared between both states */}
                                             <div className="absolute inset-x-3 top-0 h-[40%] bg-gradient-to-b from-white/40 to-transparent blur-[2px] rounded-b-lg opacity-80 pointer-events-none z-10" />
@@ -745,7 +807,21 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                                             {/* Button content — crossfade between idle and meeting states */}
                                             <div className="relative z-20 flex items-center gap-3">
                                                 <AnimatePresence mode="wait" initial={false}>
-                                                    {isMeetingActive ? (
+                                                    {isStartingCluegent ? (
+                                                        <motion.div
+                                                            key="starting"
+                                                            initial={{ opacity: 0, y: 6 }}
+                                                            animate={{ opacity: 1, y: 0 }}
+                                                            exit={{ opacity: 0, y: -6 }}
+                                                            transition={{ duration: 0.22, ease: 'easeOut' }}
+                                                            className="flex min-w-[230px] items-center justify-center gap-3"
+                                                        >
+                                                            <RefreshCw size={18} className="animate-spin drop-shadow-[0_1px_1px_rgba(0,0,0,0.1)]" />
+                                                            <span className="drop-shadow-[0_1px_1px_rgba(0,0,0,0.1)] text-[20px] leading-none">
+                                                                Opening {startupProgress}%
+                                                            </span>
+                                                        </motion.div>
+                                                    ) : isMeetingActive ? (
                                                         <motion.div
                                                             key="meeting"
                                                             initial={{ opacity: 0, y: 6 }}
@@ -1067,10 +1143,13 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                                                             Prepare
                                                         </button>
                                                         <button
-                                                            onClick={onStartMeeting}
-                                                            className={`px-4 py-2 rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary transition-all ${isLight ? 'hover:bg-bg-item-surface' : 'hover:bg-white/5'}`}
+                                                            onClick={() => {
+                                                                void handleStartCluegent();
+                                                            }}
+                                                            disabled={isStartingCluegent}
+                                                            className={`px-4 py-2 rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary transition-all disabled:cursor-wait disabled:opacity-70 ${isLight ? 'hover:bg-bg-item-surface' : 'hover:bg-white/5'}`}
                                                         >
-                                                            Start now
+                                                            {isStartingCluegent ? `Opening ${startupProgress}%` : 'Start now'}
                                                         </button>
                                                     </div>
 

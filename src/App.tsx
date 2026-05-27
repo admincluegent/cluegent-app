@@ -203,17 +203,16 @@ const App: React.FC = () => {
       if (result.success) {
         beginLocalMeeting();
         analytics.trackMeetingStarted();
-        // Switch to Overlay Mode via IPC
-        // The main process handles window switching, but we can reinforce it or just trust main.
-        // Actually, main process startMeeting triggers nothing UI-wise unless we tell it to switch window
-        // But we configured main.ts to not auto-switch?
-        // Let's explicitly request mode change.
         await window.electronAPI.setWindowMode('overlay');
       } else {
         console.error("Failed to start meeting:", result.error);
+        await window.electronAPI.setWindowMode('launcher');
+        throw new Error(result.error || 'Failed to start Cluegent');
       }
     } catch (err) {
       console.error("Failed to start meeting:", err);
+      await window.electronAPI.setWindowMode('launcher');
+      throw err;
     }
   };
 
@@ -294,7 +293,7 @@ const App: React.FC = () => {
   // Renders if window=launcher OR no param
   return (
     <ErrorBoundary context="Launcher">
-    <div className="h-full min-h-0 w-full relative bg-[#000000]">
+    <div className="h-screen w-screen overflow-hidden relative bg-bg-primary">
       <AnimatePresence>
         {showStartup ? (
           <motion.div
@@ -307,7 +306,7 @@ const App: React.FC = () => {
         ) : (
           <motion.div
             key="main"
-            className="h-full w-full"
+            className="h-screen w-screen"
             initial={{ opacity: 0, scale: 0.98, y: 15 }} // "Linear" style entry: slightly down and scaled down
             animate={{ opacity: 1, scale: 1, y: 0 }}      // Slide up and snap to place
             transition={{
@@ -318,7 +317,7 @@ const App: React.FC = () => {
           >
             <QueryClientProvider client={queryClient}>
               <ToastProvider>
-                <div id="launcher-container" className="h-full w-full relative">
+                <div id="launcher-container" className="h-screen w-screen relative overflow-hidden bg-bg-primary">
                   <Launcher
                     onStartMeeting={handleStartMeeting}
                     onOpenSettings={(tab = 'general') => {

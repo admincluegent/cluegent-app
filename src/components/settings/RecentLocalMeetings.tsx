@@ -7,6 +7,7 @@ import {
     subscribeLocalMeetings,
     type LocalMeetingRecord,
 } from '../../lib/localMeetingStorage';
+import { ReportAiContentButton } from '../ReportAiContentButton';
 
 const formatMeetingDate = (timestamp: number) =>
     new Date(timestamp).toLocaleString([], {
@@ -115,6 +116,15 @@ export const RecentLocalMeetings: React.FC = () => {
                                         {event.hasScreenshot && <span>- Screenshot</span>}
                                     </div>
                                     <p className="whitespace-pre-wrap text-sm leading-6">{event.text}</p>
+                                    {event.type === 'response' && (
+                                        <div className="mt-3 flex justify-end">
+                                            <ReportAiContentButton
+                                                source="Saved meeting response"
+                                                response={event.text}
+                                                meetingId={selectedMeeting.id}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))}
