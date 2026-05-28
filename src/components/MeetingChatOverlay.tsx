@@ -43,6 +43,19 @@ interface MeetingChatOverlayProps {
 
 type ChatState = 'idle' | 'opening' | 'waiting_for_llm' | 'streaming_response' | 'error' | 'closing';
 
+const compactOrderedListClass = 'my-0.5 list-decimal list-inside space-y-0.5 pl-0 marker:font-semibold';
+const compactUnorderedListClass = 'my-0.5 list-disc list-inside space-y-0.5 pl-0';
+const compactListItemClass = 'leading-snug [&>p]:inline [&>p]:m-0 [&>ul]:mt-0.5 [&>ol]:mt-0.5';
+
+const normalizeMarkdownLists = (text: string) => (
+    text
+        .replace(/(^|\n)([ \t]*)(\d+)\.[ \t]*(?:\r?\n)+[ \t]*(?=\S)/g, '$1$2$3. ')
+        .replace(/(^|\n)([ \t]*)([-*+])[ \t]*(?:\r?\n)+[ \t]*(?=\S)/g, '$1$2$3 ')
+        .replace(/\n{2,}(?=[ \t]*(?:\d+\.|[-*+])\s+)/g, '\n')
+        .replace(/(:|\.)\n{2,}(?=[ \t]*[-*+]\s+)/g, '$1\n')
+        .replace(/\n{3,}/g, '\n\n')
+);
+
 // ============================================
 // Typing Indicator Component
 // ============================================
@@ -111,6 +124,9 @@ const AssistantMessage: React.FC<{ content: string; isStreaming?: boolean }> = (
                         rehypePlugins={[rehypeKatex]}
                         components={{
                             p: ({ node, ...props }: any) => <p className="mb-2 last:mb-0 whitespace-pre-wrap" {...props} />,
+                            ul: ({ node, ...props }: any) => <ul className={compactUnorderedListClass} {...props} />,
+                            ol: ({ node, ...props }: any) => <ol className={compactOrderedListClass} {...props} />,
+                            li: ({ node, ...props }: any) => <li className={compactListItemClass} {...props} />,
                             a: ({ node, ...props }: any) => <a className="text-blue-500 hover:underline" {...props} />,
                             pre: ({ children }: any) => <div className="not-prose mb-4">{children}</div>,
                             code: ({ node, inline, className, children, ...props }: any) => {
@@ -155,7 +171,7 @@ const AssistantMessage: React.FC<{ content: string; isStreaming?: boolean }> = (
                             },
                         }}
                     >
-                        {content}
+                        {normalizeMarkdownLists(content)}
                     </ReactMarkdown>
                 </div>
                 {isStreaming && (

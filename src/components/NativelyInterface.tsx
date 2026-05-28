@@ -111,6 +111,19 @@ const formatAssistantError = (error: string) => (
     isPlanLimitMessage(error) ? FREE_PLAN_LIMIT_REACHED_MESSAGE : error
 );
 
+const compactOrderedListClass = 'my-0.5 list-decimal list-inside space-y-0.5 pl-0 marker:font-semibold marker:text-white/90';
+const compactUnorderedListClass = 'my-0.5 list-disc list-inside space-y-0.5 pl-0 marker:text-white/90';
+const compactListItemClass = 'leading-snug [&>p]:inline [&>p]:m-0 [&>ul]:mt-0.5 [&>ol]:mt-0.5';
+
+const normalizeMarkdownLists = (text: string) => (
+    text
+        .replace(/(^|\n)([ \t]*)(\d+)\.[ \t]*(?:\r?\n)+[ \t]*(?=\S)/g, '$1$2$3. ')
+        .replace(/(^|\n)([ \t]*)([-*+])[ \t]*(?:\r?\n)+[ \t]*(?=\S)/g, '$1$2$3 ')
+        .replace(/\n{2,}(?=[ \t]*(?:\d+\.|[-*+])\s+)/g, '\n')
+        .replace(/(:|\.)\n{2,}(?=[ \t]*[-*+]\s+)/g, '$1\n')
+        .replace(/\n{3,}/g, '\n\n')
+);
+
 const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, overlayOpacity = OVERLAY_OPACITY_DEFAULT }) => {
     const isLightTheme = useResolvedTheme() === 'light';
     const { planStatus, refreshProfile, isSyncing } = useAuth();
@@ -2165,9 +2178,9 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                             p: ({ node, ...props }: any) => <p className="mb-1 last:mb-0 whitespace-pre-wrap" {...props} />,
                                             strong: ({ node, ...props }: any) => <strong className="font-bold text-white" {...props} />,
                                             em: ({ node, ...props }: any) => <em className="italic text-white" {...props} />,
-                                            ul: ({ node, ...props }: any) => <ul className="list-disc ml-4 my-1 space-y-0.5" {...props} />,
-                                            ol: ({ node, ...props }: any) => <ol className="list-decimal ml-4 my-1 space-y-0.5" {...props} />,
-                                            li: ({ node, ...props }: any) => <li className="pl-1 leading-snug [&>p]:m-0" {...props} />,
+                                            ul: ({ node, ...props }: any) => <ul className={compactUnorderedListClass} {...props} />,
+                                            ol: ({ node, ...props }: any) => <ol className={compactOrderedListClass} {...props} />,
+                                            li: ({ node, ...props }: any) => <li className={compactListItemClass} {...props} />,
                                             h1: ({ node, ...props }: any) => <h1 className="text-lg font-bold mb-1 mt-2 text-white" {...props} />,
                                             h2: ({ node, ...props }: any) => <h2 className="text-base font-bold mb-1 mt-2 text-white" {...props} />,
                                             h3: ({ node, ...props }: any) => <h3 className="text-sm font-bold mb-1 mt-1.5 text-white" {...props} />,
@@ -2176,7 +2189,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                             a: ({ node, ...props }: any) => <a className="text-white underline hover:opacity-80" target="_blank" rel="noopener noreferrer" {...props} />,
                                         }}
                                     >
-                                        {part}
+                                        {normalizeMarkdownLists(part)}
                                     </ReactMarkdown>
                                 </div>
                             );
@@ -2198,10 +2211,11 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                         <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={{
                             p: ({ node, ...props }: any) => <p className="mb-1 last:mb-0" {...props} />,
                             strong: ({ node, ...props }: any) => <strong className="font-bold text-white" {...props} />,
-                            ul: ({ node, ...props }: any) => <ul className="list-disc ml-4 my-1 space-y-0.5" {...props} />,
-                            li: ({ node, ...props }: any) => <li className="pl-1 leading-snug [&>p]:m-0" {...props} />,
+                            ul: ({ node, ...props }: any) => <ul className={compactUnorderedListClass} {...props} />,
+                            ol: ({ node, ...props }: any) => <ol className={compactOrderedListClass} {...props} />,
+                            li: ({ node, ...props }: any) => <li className={compactListItemClass} {...props} />,
                         }}>
-                            {msg.text}
+                            {normalizeMarkdownLists(msg.text)}
                         </ReactMarkdown>
                     </div>
                 </div>
@@ -2219,10 +2233,11 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                         <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={{
                             p: ({ node, ...props }: any) => <p className="mb-1 last:mb-0" {...props} />,
                             strong: ({ node, ...props }: any) => <strong className="font-bold text-white" {...props} />,
-                            ul: ({ node, ...props }: any) => <ul className="list-disc ml-4 my-1 space-y-0.5" {...props} />,
-                            li: ({ node, ...props }: any) => <li className="pl-1 leading-snug [&>p]:m-0" {...props} />,
+                            ul: ({ node, ...props }: any) => <ul className={compactUnorderedListClass} {...props} />,
+                            ol: ({ node, ...props }: any) => <ol className={compactOrderedListClass} {...props} />,
+                            li: ({ node, ...props }: any) => <li className={compactListItemClass} {...props} />,
                         }}>
-                            {msg.text}
+                            {normalizeMarkdownLists(msg.text)}
                         </ReactMarkdown>
                     </div>
                 </div>
@@ -2240,10 +2255,11 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                         <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={{
                             p: ({ node, ...props }: any) => <p className="mb-1 last:mb-0" {...props} />,
                             strong: ({ node, ...props }: any) => <strong className="font-bold text-white" {...props} />,
-                            ul: ({ node, ...props }: any) => <ul className="list-disc ml-4 my-1 space-y-0.5" {...props} />,
-                            li: ({ node, ...props }: any) => <li className="pl-1 leading-snug [&>p]:m-0" {...props} />,
+                            ul: ({ node, ...props }: any) => <ul className={compactUnorderedListClass} {...props} />,
+                            ol: ({ node, ...props }: any) => <ol className={compactOrderedListClass} {...props} />,
+                            li: ({ node, ...props }: any) => <li className={compactListItemClass} {...props} />,
                         }}>
-                            {msg.text}
+                            {normalizeMarkdownLists(msg.text)}
                         </ReactMarkdown>
                     </div>
                 </div>
@@ -2290,12 +2306,12 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                             p: ({ node, ...props }: any) => <p className="mb-1 last:mb-0" {...props} />,
                                             strong: ({ node, ...props }: any) => <strong className="font-bold text-white" {...props} />,
                                             em: ({ node, ...props }: any) => <em className="italic text-white" {...props} />,
-                                            ul: ({ node, ...props }: any) => <ul className="list-disc ml-4 my-1 space-y-0.5" {...props} />,
-                                            ol: ({ node, ...props }: any) => <ol className="list-decimal ml-4 my-1 space-y-0.5" {...props} />,
-                                            li: ({ node, ...props }: any) => <li className="pl-1 leading-snug [&>p]:m-0" {...props} />,
+                                            ul: ({ node, ...props }: any) => <ul className={compactUnorderedListClass} {...props} />,
+                                            ol: ({ node, ...props }: any) => <ol className={compactOrderedListClass} {...props} />,
+                                            li: ({ node, ...props }: any) => <li className={compactListItemClass} {...props} />,
                                         }}
                                     >
-                                        {part}
+                                        {normalizeMarkdownLists(part)}
                                     </ReactMarkdown>
                                 </div>
                             );
@@ -2316,14 +2332,14 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                         p: ({ node, ...props }: any) => <p className="mb-1 last:mb-0 whitespace-pre-wrap" {...props} />,
                         strong: ({ node, ...props }: any) => <strong className="font-bold opacity-100 text-white" {...props} />,
                         em: ({ node, ...props }: any) => <em className="italic opacity-90 text-white" {...props} />,
-                        ul: ({ node, ...props }: any) => <ul className="list-disc ml-4 my-1 space-y-0.5" {...props} />,
-                        ol: ({ node, ...props }: any) => <ol className="list-decimal ml-4 my-1 space-y-0.5" {...props} />,
-                        li: ({ node, ...props }: any) => <li className="pl-1 leading-snug [&>p]:m-0" {...props} />,
+                        ul: ({ node, ...props }: any) => <ul className={compactUnorderedListClass} {...props} />,
+                        ol: ({ node, ...props }: any) => <ol className={compactOrderedListClass} {...props} />,
+                        li: ({ node, ...props }: any) => <li className={compactListItemClass} {...props} />,
                         code: ({ node, ...props }: any) => <code className="overlay-inline-code-surface rounded px-1 py-0.5 text-xs font-mono text-white" {...props} />,
                         a: ({ node, ...props }: any) => <a className="text-white underline hover:opacity-80" target="_blank" rel="noopener noreferrer" {...props} />,
                     }}
                 >
-                    {msg.text}
+                    {normalizeMarkdownLists(msg.text)}
                 </ReactMarkdown>
             </div>
         );

@@ -126,15 +126,15 @@ const SettingsPopup = () => {
 
     return (
         <div
-            className="w-[216px] h-fit flex flex-col text-white"
+            className="w-[216px] inline-flex flex-col text-white"
             style={{ backgroundColor: '#05070c' }}
         >
             <div
                 ref={contentRef}
-                className={`w-[216px] max-h-[320px] border rounded-[18px] overflow-hidden p-2 flex flex-col animate-scale-in origin-top-left text-white ${popupPanelClass}`}
+                className={`w-[216px] border rounded-[18px] overflow-hidden p-2 inline-flex flex-col animate-scale-in origin-top-left text-white ${popupPanelClass}`}
                 style={{ backgroundColor: '#05070c' }}
             >
-                <div className="flex-1 overflow-y-auto scrollbar-hide flex flex-col min-h-0">
+                <div className="flex flex-col">
 
                 {/* Undetectability */}
                 <div className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors duration-200 group cursor-default ${itemHoverClass}`}>

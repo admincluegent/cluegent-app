@@ -16,7 +16,7 @@ const InfoRow = ({ icon, title, children }: InfoRowProps) => {
                     {icon}
                 </span>
                 <div className="min-w-0">
-                    <h5 className="text-sm font-bold text-text-primary">{title}</h5>
+                    <h5 className="text-[13px] font-bold text-text-primary">{title}</h5>
                     {children}
                 </div>
             </div>
@@ -35,7 +35,7 @@ const LinkPill = ({ href, icon, label, onOpen }: LinkPillProps) => (
     <a
         href={href}
         onClick={(e) => onOpen(e, href)}
-        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-border-subtle bg-bg-input px-3.5 py-2 text-sm font-bold text-text-primary transition-colors hover:bg-bg-item-active"
+        className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl border border-border-subtle bg-bg-input px-3 py-1.5 text-xs font-bold text-text-primary transition-colors hover:bg-bg-item-active"
     >
         {icon}
         <span>{label}</span>
@@ -59,8 +59,8 @@ export const AboutSection: React.FC = () => {
     return (
         <div className="space-y-5 animated fadeIn pb-10">
             <div>
-                <h3 className="text-lg font-bold text-text-primary mb-1">About</h3>
-                <p className="text-sm text-text-secondary">
+                <h3 className="text-base font-bold text-text-primary mb-1">About</h3>
+                <p className="text-xs text-text-secondary">
                     Product information, privacy, license, and support.
                 </p>
             </div>
@@ -72,15 +72,15 @@ export const AboutSection: React.FC = () => {
                             <img src={CluegentIcon} alt="Cluegent" className="h-10 w-10 object-contain" />
                         </div>
                         <div>
-                            <h4 className="text-2xl font-black tracking-tight text-text-primary">Cluegent</h4>
-                            <p className="text-sm text-text-secondary">Version {appVersion}</p>
+                            <h4 className="text-xl font-black tracking-tight text-text-primary">Cluegent</h4>
+                            <p className="text-xs text-text-secondary">Version {appVersion}</p>
                         </div>
                     </div>
 
                     <a
                         href="https://www.cluegent.com"
                         onClick={(e) => handleOpenLink(e, 'https://www.cluegent.com')}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-text-primary px-4 py-2.5 text-sm font-bold text-bg-main transition-all hover:-translate-y-0.5 hover:shadow-lg"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-text-primary px-3.5 py-2 text-xs font-bold text-bg-main transition-all hover:-translate-y-0.5 hover:shadow-lg"
                     >
                         <Globe size={16} />
                         Visit Website
@@ -91,7 +91,7 @@ export const AboutSection: React.FC = () => {
 
             <div className="space-y-3">
                 <InfoRow icon={<Sparkles size={18} className="text-blue-500" />} title="What Cluegent does">
-                    <p className="mt-1 text-sm leading-relaxed text-text-secondary">
+                    <p className="mt-1 text-xs leading-5 text-text-secondary">
                         Cluegent is a real-time AI assistant for meetings, coding conversations, and
                         screen-based questions. It can listen when you start listening, answer typed prompts,
                         and analyze screenshots to produce useful responses.
@@ -99,7 +99,7 @@ export const AboutSection: React.FC = () => {
                 </InfoRow>
 
                 <InfoRow icon={<ShieldCheck size={18} className="text-emerald-500" />} title="Privacy statement">
-                    <p className="mt-1 text-sm leading-relaxed text-text-secondary">
+                    <p className="mt-1 text-xs leading-5 text-text-secondary">
                         Cluegent does not start listening until you choose to start listening. Screenshots are sent
                         only when you explicitly attach a screenshot. Local meeting history and customization data
                         stay on this device unless a backend feature needs usage or entitlement sync.
@@ -112,8 +112,8 @@ export const AboutSection: React.FC = () => {
                             <Scale size={18} />
                         </span>
                         <div className="min-w-0 flex-1">
-                            <h5 className="text-sm font-bold text-text-primary">Legal links</h5>
-                            <p className="mt-1 text-sm leading-relaxed text-text-secondary">
+                            <h5 className="text-[13px] font-bold text-text-primary">Legal links</h5>
+                            <p className="mt-1 text-xs leading-5 text-text-secondary">
                                 Cluegent is distributed under AGPL-3.0 and includes open-source attribution.
                             </p>
                             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -153,7 +153,7 @@ export const AboutSection: React.FC = () => {
                 </section>
 
                 <InfoRow icon={<LockKeyhole size={18} />} title="Contact and support">
-                    <p className="mt-1 text-sm leading-relaxed text-text-secondary">
+                    <p className="mt-1 text-xs leading-5 text-text-secondary">
                         For support, privacy, or billing questions, contact admincluegent@gmail.com or visit the
                         official Cluegent website.
                     </p>
@@ -161,7 +161,7 @@ export const AboutSection: React.FC = () => {
                         <a
                             href="mailto:admincluegent@gmail.com"
                             onClick={(e) => handleOpenLink(e, 'mailto:admincluegent@gmail.com')}
-                            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-border-subtle bg-bg-input px-3.5 py-2 text-sm font-bold text-text-primary transition-colors hover:bg-bg-item-active"
+                            className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-border-subtle bg-bg-input px-3 py-1.5 text-xs font-bold text-text-primary transition-colors hover:bg-bg-item-active"
                         >
                             <Mail size={16} />
                             admincluegent@gmail.com
@@ -169,7 +169,7 @@ export const AboutSection: React.FC = () => {
                         <a
                             href="https://www.cluegent.com"
                             onClick={(e) => handleOpenLink(e, 'https://www.cluegent.com')}
-                            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-border-subtle bg-bg-input px-3.5 py-2 text-sm font-bold text-text-primary transition-colors hover:bg-bg-item-active"
+                            className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-border-subtle bg-bg-input px-3 py-1.5 text-xs font-bold text-text-primary transition-colors hover:bg-bg-item-active"
                         >
                             <Globe size={16} />
                             cluegent.com
@@ -179,13 +179,13 @@ export const AboutSection: React.FC = () => {
                 </InfoRow>
 
                 <InfoRow icon={<MessageSquare size={18} className="text-blue-500" />} title="Report bug or suggestions">
-                    <p className="mt-1 text-sm leading-relaxed text-text-secondary">
+                    <p className="mt-1 text-xs leading-5 text-text-secondary">
                         Send bug reports, UI issues, or feature suggestions to admincluegent@gmail.com.
                     </p>
                     <a
                         href="mailto:admincluegent@gmail.com"
                         onClick={(e) => handleOpenLink(e, 'mailto:admincluegent@gmail.com')}
-                        className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-xl border border-border-subtle bg-bg-input px-3.5 py-2 text-sm font-bold text-text-primary transition-colors hover:bg-bg-item-active"
+                        className="mt-3 inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-border-subtle bg-bg-input px-3 py-1.5 text-xs font-bold text-text-primary transition-colors hover:bg-bg-item-active"
                     >
                         <Mail size={16} />
                         admincluegent@gmail.com

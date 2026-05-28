@@ -153,7 +153,7 @@ export class SettingsWindowHelper {
     private createWindow(x?: number, y?: number, showWhenReady: boolean = true): void {
         const windowSettings: Electron.BrowserWindowConstructorOptions = {
             width: 216,
-            height: 320,
+            height: 236,
             frame: false,
             transparent: false,
             resizable: false,

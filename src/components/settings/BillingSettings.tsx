@@ -602,7 +602,7 @@ export const BillingSettings: React.FC = () => {
 
                   <div className="relative">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h4 className="text-[2.25rem] font-semibold leading-none tracking-[-0.05em] text-white">
+                      <h4 className="text-[1.75rem] font-semibold leading-none tracking-[-0.04em] text-white">
                         {plan.name}
                       </h4>
                       {plan.id === "power" && (
@@ -612,11 +612,11 @@ export const BillingSettings: React.FC = () => {
                       )}
                     </div>
                     <div className="mt-4 flex flex-wrap items-end gap-2">
-                      <span className="text-[2.15rem] font-semibold leading-none tracking-[-0.04em] text-white sm:text-[2.35rem]">
+                      <span className="text-[1.65rem] font-semibold leading-none tracking-[-0.03em] text-white sm:text-[1.85rem]">
                         {plan.interval === "year" ? (
                           <>
                             {pricing.price}
-                            <span className="ml-1 text-sm font-medium tracking-normal text-white/85">
+                            <span className="ml-1 text-xs font-medium tracking-normal text-white/85">
                               /month
                             </span>
                           </>
@@ -625,7 +625,7 @@ export const BillingSettings: React.FC = () => {
                         )}
                       </span>
                       {plan.interval === "month" && (
-                        <span className="whitespace-nowrap pb-0.5 text-sm font-medium leading-snug text-white/85">
+                        <span className="whitespace-nowrap pb-0.5 text-xs font-medium leading-snug text-white/85">
                           {plan.priceSuffix}
                         </span>
                       )}
@@ -685,7 +685,7 @@ export const BillingSettings: React.FC = () => {
             <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
               <div className="max-w-[280px]">
                 <p className="text-sm font-semibold text-slate-500">{FREE_PLAN_CARD.eyebrow}</p>
-                <h4 className="mt-2 text-[2.85rem] font-semibold leading-none tracking-[-0.05em] text-slate-950">
+                <h4 className="mt-2 text-[2rem] font-semibold leading-none tracking-[-0.04em] text-slate-950">
                   {FREE_PLAN_CARD.name}
                 </h4>
                 <p className="mt-3 text-sm leading-6 text-slate-500">{FREE_PLAN_CARD.tagline}</p>
