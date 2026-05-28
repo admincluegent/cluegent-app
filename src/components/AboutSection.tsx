@@ -1,45 +1,47 @@
-import React, { useState } from 'react';
-import { ChevronDown, ExternalLink, Github, Globe, Info, LockKeyhole, Mail, MessageSquare, Scale, ShieldCheck, Sparkles } from 'lucide-react';
+import React from 'react';
+import { ExternalLink, Github, Globe, Info, LockKeyhole, Mail, MessageSquare, Scale, ShieldCheck, Sparkles } from 'lucide-react';
 import CluegentIcon from './icon.png';
 
-type AccordionItemProps = {
+type InfoRowProps = {
     icon: React.ReactNode;
     title: string;
-    defaultOpen?: boolean;
     children: React.ReactNode;
 };
 
-const AccordionItem = ({ icon, title, defaultOpen = false, children }: AccordionItemProps) => {
-    const [open, setOpen] = useState(defaultOpen);
-
+const InfoRow = ({ icon, title, children }: InfoRowProps) => {
     return (
-        <section className="overflow-hidden rounded-2xl border border-border-subtle bg-bg-card shadow-sm">
-            <button
-                type="button"
-                onClick={() => setOpen(current => !current)}
-                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-bg-item-active/50"
-                aria-expanded={open}
-            >
-                <span className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-bg-input text-text-primary">
-                        {icon}
-                    </span>
-                    <span className="truncate text-sm font-bold text-text-primary">{title}</span>
+        <section className="rounded-2xl border border-border-subtle bg-bg-card px-5 py-4 shadow-sm">
+            <div className="flex gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-bg-input text-text-primary">
+                    {icon}
                 </span>
-                <ChevronDown
-                    size={18}
-                    className={`shrink-0 text-text-secondary transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-                />
-            </button>
-
-            {open && (
-                <div className="border-t border-border-subtle px-5 py-4">
+                <div className="min-w-0">
+                    <h5 className="text-sm font-bold text-text-primary">{title}</h5>
                     {children}
                 </div>
-            )}
+            </div>
         </section>
     );
 };
+
+type LinkPillProps = {
+    href: string;
+    icon: React.ReactNode;
+    label: string;
+    onOpen: (e: React.MouseEvent<HTMLAnchorElement>, url: string) => void;
+};
+
+const LinkPill = ({ href, icon, label, onOpen }: LinkPillProps) => (
+    <a
+        href={href}
+        onClick={(e) => onOpen(e, href)}
+        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-border-subtle bg-bg-input px-3.5 py-2 text-sm font-bold text-text-primary transition-colors hover:bg-bg-item-active"
+    >
+        {icon}
+        <span>{label}</span>
+        <ExternalLink size={13} className="text-text-secondary" />
+    </a>
+);
 
 export const AboutSection: React.FC = () => {
     const appVersion = import.meta.env.VITE_APP_VERSION || '1.0.0';
@@ -88,71 +90,78 @@ export const AboutSection: React.FC = () => {
             </section>
 
             <div className="space-y-3">
-                <AccordionItem icon={<Sparkles size={18} className="text-blue-500" />} title="What Cluegent does" defaultOpen>
-                    <p className="text-sm leading-relaxed text-text-secondary">
+                <InfoRow icon={<Sparkles size={18} className="text-blue-500" />} title="What Cluegent does">
+                    <p className="mt-1 text-sm leading-relaxed text-text-secondary">
                         Cluegent is a real-time AI assistant for meetings, coding conversations, and
                         screen-based questions. It can listen when you start listening, answer typed prompts,
                         and analyze screenshots to produce useful responses.
                     </p>
-                </AccordionItem>
+                </InfoRow>
 
-                <AccordionItem icon={<ShieldCheck size={18} className="text-emerald-500" />} title="Privacy statement">
-                    <p className="text-sm leading-relaxed text-text-secondary">
+                <InfoRow icon={<ShieldCheck size={18} className="text-emerald-500" />} title="Privacy statement">
+                    <p className="mt-1 text-sm leading-relaxed text-text-secondary">
                         Cluegent does not start listening until you choose to start listening. Screenshots are sent
                         only when you explicitly attach a screenshot. Local meeting history and customization data
                         stay on this device unless a backend feature needs usage or entitlement sync.
                     </p>
-                </AccordionItem>
+                </InfoRow>
 
-                <AccordionItem icon={<Scale size={18} className="text-amber-500" />} title="License and source">
-                    <p className="text-sm leading-relaxed text-text-secondary">
-                        Cluegent is distributed under AGPL-3.0. 
-                    </p>
-                    <p className="mt-3 text-sm leading-relaxed text-text-secondary">
-                        Cluegent is based on the open-source Natively desktop assistant project and modified
-                        for Cluegent branding, backend services, billing, and deployment.
-                    </p>
-                    <div className="mt-4 flex flex-wrap items-center gap-2">
-                        <a
-                            href="https://github.com/admincluegent/cluegent-app/blob/development/LICENSE"
-                            onClick={(e) => handleOpenLink(e, 'https://github.com/admincluegent/cluegent-app/blob/development/LICENSE')}
-                            className="inline-flex items-center gap-2 rounded-xl border border-border-subtle bg-bg-input px-4 py-2 text-sm font-bold text-text-primary transition-colors hover:bg-bg-item-active"
-                        >
-                            <Info size={16} />
-                            License
-                            <ExternalLink size={14} />
-                        </a>
-                        <a
-                            href="https://github.com/admincluegent/cluegent-app"
-                            onClick={(e) => handleOpenLink(e, 'https://github.com/admincluegent/cluegent-app')}
-                            aria-label="Open Cluegent source code on GitHub"
-                            title="Source code"
-                            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border-subtle bg-bg-input text-text-primary transition-colors hover:bg-bg-item-active"
-                        >
-                            <Github size={18} />
-                        </a>
-                        <a
-                            href="https://github.com/admincluegent/cluegent-app/blob/development/ATTRIBUTION.md"
-                            onClick={(e) => handleOpenLink(e, 'https://github.com/admincluegent/cluegent-app/blob/development/ATTRIBUTION.md')}
-                            className="inline-flex items-center gap-2 rounded-xl border border-border-subtle bg-bg-input px-4 py-2 text-sm font-bold text-text-primary transition-colors hover:bg-bg-item-active"
-                        >
-                            <Scale size={16} />
-                            Attribution
-                            <ExternalLink size={14} />
-                        </a>
+                <section className="rounded-2xl border border-border-subtle bg-bg-card px-5 py-4 shadow-sm">
+                    <div className="flex gap-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-bg-input text-amber-500">
+                            <Scale size={18} />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                            <h5 className="text-sm font-bold text-text-primary">Legal links</h5>
+                            <p className="mt-1 text-sm leading-relaxed text-text-secondary">
+                                Cluegent is distributed under AGPL-3.0 and includes open-source attribution.
+                            </p>
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
+                                <LinkPill
+                                    href="https://www.cluegent.com/privacy.html"
+                                    icon={<ShieldCheck size={15} />}
+                                    label="Privacy"
+                                    onOpen={handleOpenLink}
+                                />
+                                <LinkPill
+                                    href="https://www.cluegent.com/terms.html"
+                                    icon={<Scale size={15} />}
+                                    label="Terms"
+                                    onOpen={handleOpenLink}
+                                />
+                                <LinkPill
+                                    href="https://github.com/admincluegent/cluegent-app/blob/development/LICENSE"
+                                    icon={<Info size={15} />}
+                                    label="License"
+                                    onOpen={handleOpenLink}
+                                />
+                                <LinkPill
+                                    href="https://github.com/admincluegent/cluegent-app"
+                                    icon={<Github size={15} />}
+                                    label="Source"
+                                    onOpen={handleOpenLink}
+                                />
+                                <LinkPill
+                                    href="https://github.com/admincluegent/cluegent-app/blob/development/ATTRIBUTION.md"
+                                    icon={<Scale size={15} />}
+                                    label="Attribution"
+                                    onOpen={handleOpenLink}
+                                />
+                            </div>
+                        </div>
                     </div>
-                </AccordionItem>
+                </section>
 
-                <AccordionItem icon={<LockKeyhole size={18} />} title="Contact and support">
-                    <p className="text-sm leading-relaxed text-text-secondary">
+                <InfoRow icon={<LockKeyhole size={18} />} title="Contact and support">
+                    <p className="mt-1 text-sm leading-relaxed text-text-secondary">
                         For support, privacy, or billing questions, contact admincluegent@gmail.com or visit the
                         official Cluegent website.
                     </p>
-                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
                         <a
                             href="mailto:admincluegent@gmail.com"
                             onClick={(e) => handleOpenLink(e, 'mailto:admincluegent@gmail.com')}
-                            className="inline-flex items-center gap-2 rounded-xl border border-border-subtle bg-bg-input px-4 py-2 text-sm font-bold text-text-primary transition-colors hover:bg-bg-item-active"
+                            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-border-subtle bg-bg-input px-3.5 py-2 text-sm font-bold text-text-primary transition-colors hover:bg-bg-item-active"
                         >
                             <Mail size={16} />
                             admincluegent@gmail.com
@@ -160,28 +169,28 @@ export const AboutSection: React.FC = () => {
                         <a
                             href="https://www.cluegent.com"
                             onClick={(e) => handleOpenLink(e, 'https://www.cluegent.com')}
-                            className="inline-flex items-center gap-2 rounded-xl border border-border-subtle bg-bg-input px-4 py-2 text-sm font-bold text-text-primary transition-colors hover:bg-bg-item-active"
+                            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-border-subtle bg-bg-input px-3.5 py-2 text-sm font-bold text-text-primary transition-colors hover:bg-bg-item-active"
                         >
                             <Globe size={16} />
                             cluegent.com
                             <ExternalLink size={14} />
                         </a>
                     </div>
-                </AccordionItem>
+                </InfoRow>
 
-                <AccordionItem icon={<MessageSquare size={18} className="text-blue-500" />} title="Report bug or suggestions">
-                    <p className="text-sm leading-relaxed text-text-secondary">
+                <InfoRow icon={<MessageSquare size={18} className="text-blue-500" />} title="Report bug or suggestions">
+                    <p className="mt-1 text-sm leading-relaxed text-text-secondary">
                         Send bug reports, UI issues, or feature suggestions to admincluegent@gmail.com.
                     </p>
                     <a
                         href="mailto:admincluegent@gmail.com"
                         onClick={(e) => handleOpenLink(e, 'mailto:admincluegent@gmail.com')}
-                        className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border-subtle bg-bg-input px-4 py-2 text-sm font-bold text-text-primary transition-colors hover:bg-bg-item-active"
+                        className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-xl border border-border-subtle bg-bg-input px-3.5 py-2 text-sm font-bold text-text-primary transition-colors hover:bg-bg-item-active"
                     >
                         <Mail size={16} />
                         admincluegent@gmail.com
                     </a>
-                </AccordionItem>
+                </InfoRow>
             </div>
         </div>
     );

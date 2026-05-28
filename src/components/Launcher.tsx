@@ -774,7 +774,7 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                                             whileHover={{ scale: 1.01, filter: 'brightness(1.1)' }}
                                             whileTap={{ scale: 0.99 }}
                                             transition={{ duration: 0.18, ease: 'easeOut' }}
-                                            className="group relative min-w-[286px] overflow-hidden text-white px-6 py-3 rounded-full font-celeb font-medium tracking-normal flex items-center justify-center gap-3 backdrop-blur-xl shrink-0 disabled:cursor-wait"
+                                            className="group relative w-[238px] overflow-hidden text-white px-5 py-3 rounded-full font-celeb font-medium tracking-normal flex items-center justify-center gap-3 backdrop-blur-xl shrink-0 disabled:cursor-wait"
                                             style={{
                                                 boxShadow: isMeetingActive || isStartingCluegent
                                                     ? 'inset 0 1px 1px rgba(255,255,255,0.7), inset 0 -1px 2px rgba(0,0,0,0.1), 0 2px 10px rgba(16,185,129,0.45), 0 0 0 1px rgba(255,255,255,0.15)'
@@ -814,7 +814,7 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                                                             animate={{ opacity: 1, y: 0 }}
                                                             exit={{ opacity: 0, y: -6 }}
                                                             transition={{ duration: 0.22, ease: 'easeOut' }}
-                                                            className="flex min-w-[230px] items-center justify-center gap-3"
+                                                            className="flex min-w-[196px] items-center justify-center gap-3"
                                                         >
                                                             <RefreshCw size={18} className="animate-spin drop-shadow-[0_1px_1px_rgba(0,0,0,0.1)]" />
                                                             <span className="drop-shadow-[0_1px_1px_rgba(0,0,0,0.1)] text-[20px] leading-none">
