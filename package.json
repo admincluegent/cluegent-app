@@ -26,6 +26,7 @@
     "generateUpdatesFilesForAllChannels": true,
     "appId": "com.cluegent.desktop",
     "afterPack": "./scripts/ad-hoc-sign.js",
+    "afterSign": "./scripts/notarize-mac.js",
     "productName": "Cluegent",
     "files": [
       "dist",
@@ -54,8 +55,8 @@
         "to": "assets/"
       },
       {
-        "from": "assets/natively.icns",
-        "to": "natively.icns"
+        "from": "assets/icon.icns",
+        "to": "icon.icns"
       }
     ],
     "mac": {
@@ -76,9 +77,12 @@
           ]
         }
       ],
-      "icon": "assets/natively.icns",
-      "identity": null,
-      "hardenedRuntime": false,
+      "icon": "assets/icon.icns",
+      "identity": "Prithivi Raj (N527762S68)",
+      "hardenedRuntime": true,
+      "entitlements": "assets/entitlements.mac.plist",
+      "entitlementsInherit": "assets/entitlements.mac.plist",
+      "gatekeeperAssess": false,
       "extendInfo": {
         "NSScreenCaptureUsageDescription": "Cluegent needs Screen Recording permission to capture system audio for meeting transcription.",
         "NSMicrophoneUsageDescription": "Cluegent needs microphone access to transcribe your voice during meetings."

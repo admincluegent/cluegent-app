@@ -69,6 +69,13 @@ exports.default = async function (context) {
         // Non-fatal: continue to signing
     }
 
+    const macConfig = context.packager.config.mac || {};
+    const configuredIdentity = macConfig.identity || process.env.CSC_NAME || '';
+    if (typeof configuredIdentity === 'string' && configuredIdentity.includes('Developer ID Application')) {
+        console.log('[Ad-Hoc Signing] Developer ID signing is configured; skipping ad-hoc signing.');
+        return;
+    }
+
     // ── Step 2: Ad-hoc sign the application ──
     // Resolve the path to the entitlements file so V8 gets JIT memory permissions
     const entitlementsPath = path.join(context.packager.info.projectDir, 'assets', 'entitlements.mac.plist');

@@ -2309,8 +2309,8 @@ export class AppState {
         appName = "Cluegent";
         if (isMac) {
           iconPath = app.isPackaged
-            ? path.join(process.resourcesPath, "natively.icns")
-            : path.join(app.getAppPath(), "assets/natively.icns");
+            ? path.join(process.resourcesPath, "icon.icns")
+            : path.join(app.getAppPath(), "assets/icon.icns");
         } else if (isWin) {
           iconPath = app.isPackaged
             ? path.join(process.resourcesPath, "assets/icons/win/icon.ico")
