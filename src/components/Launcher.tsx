@@ -146,7 +146,7 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [showNotification, setShowNotification] = useState(false);
     const [showProfileCard, setShowProfileCard] = useState(false);
-    const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'uptodate' | 'error'>('idle');
+    const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'uptodate' | 'store' | 'error'>('idle');
     const [isStartingCluegent, setIsStartingCluegent] = useState(false);
     const [startupProgress, setStartupProgress] = useState(0);
 
@@ -312,6 +312,9 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
             }),
             window.electronAPI?.onUpdateNotAvailable?.(() => {
                 setUpdateStatus('uptodate');
+            }),
+            window.electronAPI?.onUpdateManagedByStore?.(() => {
+                setUpdateStatus('store');
             }),
             window.electronAPI?.onUpdateError?.(() => {
                 setUpdateStatus('error');
@@ -718,6 +721,8 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                                                             ? 'border-blue-500/30 bg-blue-500 text-white hover:bg-blue-600'
                                                             : updateStatus === 'uptodate'
                                                                 ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/15'
+                                                                : updateStatus === 'store'
+                                                                    ? 'border-blue-500/20 bg-blue-500/10 text-blue-400 hover:bg-blue-500/15'
                                                                 : updateStatus === 'error'
                                                                     ? 'border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/15'
                                                                     : 'border-border-subtle bg-bg-elevated text-text-primary hover:bg-bg-item-active'
@@ -737,6 +742,11 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                                                     <>
                                                         <Check size={14} />
                                                         Already up to date
+                                                    </>
+                                                ) : updateStatus === 'store' ? (
+                                                    <>
+                                                        <RefreshCw size={14} />
+                                                        Open Microsoft Store
                                                     </>
                                                 ) : updateStatus === 'error' ? (
                                                     <>

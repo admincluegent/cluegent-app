@@ -71,7 +71,7 @@ exports.default = async function (context) {
 
     const macConfig = context.packager.config.mac || {};
     const configuredIdentity = macConfig.identity || process.env.CSC_NAME || '';
-    if (typeof configuredIdentity === 'string' && configuredIdentity.includes('Developer ID Application')) {
+    if (typeof configuredIdentity === 'string' && configuredIdentity.trim() && configuredIdentity !== '-') {
         console.log('[Ad-Hoc Signing] Developer ID signing is configured; skipping ad-hoc signing.');
         return;
     }

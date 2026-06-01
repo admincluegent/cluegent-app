@@ -195,6 +195,7 @@ interface ElectronAPI {
   onUpdateDownloaded: (callback: (info: any) => void) => () => void
   onUpdateChecking: (callback: () => void) => () => void
   onUpdateNotAvailable: (callback: (info: any) => void) => () => void
+  onUpdateManagedByStore: (callback: (info: any) => void) => () => void
   onUpdateError: (callback: (err: string) => void) => () => void
   onDownloadProgress: (callback: (progressObj: any) => void) => () => void
   restartAndInstall: () => Promise<void>
@@ -919,6 +920,13 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.on("update-not-available", subscription)
     return () => {
       ipcRenderer.removeListener("update-not-available", subscription)
+    }
+  },
+  onUpdateManagedByStore: (callback: (info: any) => void) => {
+    const subscription = (_: any, info: any) => callback(info)
+    ipcRenderer.on("update-managed-by-store", subscription)
+    return () => {
+      ipcRenderer.removeListener("update-managed-by-store", subscription)
     }
   },
   onUpdateError: (callback: (err: string) => void) => {

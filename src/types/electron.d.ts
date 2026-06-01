@@ -247,6 +247,7 @@ export interface ElectronAPI {
   onUpdateDownloaded: (callback: (info: any) => void) => () => void
   onUpdateChecking: (callback: () => void) => () => void
   onUpdateNotAvailable: (callback: (info: any) => void) => () => void
+  onUpdateManagedByStore: (callback: (info: any) => void) => () => void
   onUpdateError: (callback: (err: string) => void) => () => void
   onDownloadProgress: (callback: (progressObj: any) => void) => () => void
   restartAndInstall: () => Promise<void>

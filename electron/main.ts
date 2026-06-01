@@ -502,6 +502,11 @@ export class AppState {
   }
 
   private setupAutoUpdater(): void {
+    if (this.isMicrosoftStoreBuild()) {
+      console.log("[AutoUpdater] Microsoft Store build detected; Store manages updates.")
+      return
+    }
+
     autoUpdater.autoDownload = false
     autoUpdater.autoInstallOnAppQuit = false  // Manual install only via button
 
@@ -567,6 +572,25 @@ export class AppState {
     }, 10000);
   }
 
+  private isMicrosoftStoreBuild(): boolean {
+    return process.platform === "win32" && Boolean(process.windowsStore)
+  }
+
+  private async openMicrosoftStoreUpdates(): Promise<void> {
+    try {
+      await shell.openExternal("ms-windows-store://downloadsandupdates")
+    } catch (err) {
+      console.warn("[AutoUpdater] Failed to open Microsoft Store updates page:", err)
+    }
+  }
+
+  private notifyMicrosoftStoreManagedUpdates(): void {
+    this.broadcast("update-managed-by-store", {
+      source: "microsoft-store",
+      message: "Updates are managed by Microsoft Store."
+    })
+  }
+
   private async checkForUpdatesManual(): Promise<void> {
     try {
       console.log('[AutoUpdater] Checking for updates manually via GitHub API...');
@@ -630,6 +654,12 @@ export class AppState {
   public async quitAndInstallUpdate(): Promise<void> {
     console.log('[AutoUpdater] quitAndInstall called - applying update...')
 
+    if (this.isMicrosoftStoreBuild()) {
+      this.notifyMicrosoftStoreManagedUpdates()
+      await this.openMicrosoftStoreUpdates()
+      return
+    }
+
     // On macOS, unsigned apps can't auto-restart via quitAndInstall
     // Workaround: Open the folder containing the downloaded update so user can install manually
     if (process.platform === 'darwin') {
@@ -667,6 +697,13 @@ export class AppState {
   public async checkForUpdates(): Promise<void> {
     console.log('[AutoUpdater] Manual check for updates requested')
     try {
+      if (this.isMicrosoftStoreBuild()) {
+        console.log("[AutoUpdater] Opening Microsoft Store updates page for Store build")
+        this.notifyMicrosoftStoreManagedUpdates()
+        await this.openMicrosoftStoreUpdates()
+        return
+      }
+
       // In development mode, use manual GitHub API check (electron-updater skips in dev)
       if (process.env.NODE_ENV === "development") {
         await this.checkForUpdatesManual()
@@ -683,6 +720,12 @@ export class AppState {
   public downloadUpdate(): void {
     console.log('[AutoUpdater] Starting download...')
     try {
+      if (this.isMicrosoftStoreBuild()) {
+        this.notifyMicrosoftStoreManagedUpdates()
+        void this.openMicrosoftStoreUpdates()
+        return
+      }
+
       // Errors during download are surfaced via autoUpdater.on("error") which
       // already broadcasts "update-error". Do not broadcast here to avoid duplicates.
       autoUpdater.downloadUpdate().catch(err => {

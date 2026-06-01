@@ -515,7 +515,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
     const [themeMode, setThemeMode] = useState<'system' | 'light' | 'dark'>('system');
     const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
     const [isAiLangDropdownOpen, setIsAiLangDropdownOpen] = useState(false);
-    const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'uptodate' | 'error'>('idle');
+    const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'uptodate' | 'store' | 'error'>('idle');
     const themeDropdownRef = React.useRef<HTMLDivElement>(null);
     const aiLangDropdownRef = React.useRef<HTMLDivElement>(null);
 
@@ -1061,6 +1061,9 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
             window.electronAPI.onUpdateNotAvailable(() => {
                 setUpdateStatus('uptodate');
                 setTimeout(() => setUpdateStatus('idle'), 3000);
+            }),
+            window.electronAPI.onUpdateManagedByStore(() => {
+                setUpdateStatus('store');
             }),
             window.electronAPI.onUpdateError((err) => {
                 console.error('[Settings] Update error:', err);
@@ -1869,8 +1872,9 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                         className={`px-5 py-2 rounded-lg text-[13px] font-bold transition-all flex items-center gap-2 shrink-0 ${updateStatus === 'checking' ? 'bg-bg-input text-text-tertiary cursor-wait' :
                                                             updateStatus === 'available' ? 'bg-accent-primary text-white hover:bg-accent-secondary shadow-lg shadow-blue-500/20' :
                                                                 updateStatus === 'uptodate' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
-                                                                    updateStatus === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
-                                                                        'bg-bg-component hover:bg-bg-input text-text-primary'
+                                                                    updateStatus === 'store' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                                                                        updateStatus === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                                                                            'bg-bg-component hover:bg-bg-input text-text-primary'
                                                             }`}
                                                     >
                                                         {updateStatus === 'checking' ? (
@@ -1887,6 +1891,11 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                             <>
                                                                 <Check size={14} />
                                                                 Up to date
+                                                            </>
+                                                        ) : updateStatus === 'store' ? (
+                                                            <>
+                                                                <RefreshCw size={14} />
+                                                                Microsoft Store
                                                             </>
                                                         ) : updateStatus === 'error' ? (
                                                             <>
