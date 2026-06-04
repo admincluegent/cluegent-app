@@ -60,6 +60,21 @@ exports.default = async function (context) {
     const appOutDir = context.appOutDir;
     const appName = context.packager.appInfo.productFilename;
     const appPath = path.join(appOutDir, `${appName}.app`);
+    const nativeDir = path.join(appPath, 'Contents', 'Resources', 'app.asar.unpacked', 'native-module');
+
+    if (process.env.PRUNE_UNIVERSAL_NATIVE === '1' && appOutDir.includes('mac-universal-x64-temp')) {
+        const arm64Native = path.join(nativeDir, 'index.darwin-arm64.node');
+        if (fs.existsSync(arm64Native)) {
+            fs.rmSync(arm64Native);
+            console.log('[Universal Build] Removed arm64 native module from x64 temp app.');
+        }
+    } else if (process.env.PRUNE_UNIVERSAL_NATIVE === '1' && appOutDir.includes('mac-universal-arm64-temp')) {
+        const x64Native = path.join(nativeDir, 'index.darwin-x64.node');
+        if (fs.existsSync(x64Native)) {
+            fs.rmSync(x64Native);
+            console.log('[Universal Build] Removed x64 native module from arm64 temp app.');
+        }
+    }
 
     // ── Step 1: Disguise helper display names (before signing) ──
     try {

@@ -166,6 +166,9 @@ async function createFirebaseGoogleAuthUri(apiKey: string, continueUri: string) 
       body: JSON.stringify({
         providerId: "google.com",
         continueUri,
+        customParameter: {
+          prompt: "select_account",
+        },
       }),
     }
   );

@@ -40,6 +40,9 @@ export const auth = isElectronDesktop()
   : getAuth(app);
 
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: "select_account",
+});
 export const db = getFirestore(app, firestoreDatabaseId);
 export const functions = getFunctions(app, "us-central1");
 

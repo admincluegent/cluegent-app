@@ -27,6 +27,21 @@ function toIsoAuthTime(value: unknown): string | null {
   return new Date(value * 1000).toISOString();
 }
 
+function getDisplayNameFromToken(name: unknown, email: unknown): string {
+  if (typeof name === "string" && name.trim()) {
+    return name.trim();
+  }
+
+  if (typeof email === "string" && email.includes("@")) {
+    const prefix = email.split("@")[0]?.trim();
+    if (prefix) {
+      return prefix;
+    }
+  }
+
+  return "Signed-in user";
+}
+
 function toAuthenticatedUser(decodedToken: DecodedIdToken): AuthenticatedUser {
   return {
     uid:
@@ -37,8 +52,7 @@ function toAuthenticatedUser(decodedToken: DecodedIdToken): AuthenticatedUser {
           : "",
     email: typeof decodedToken.email === "string" ? decodedToken.email : "",
     emailVerified: decodedToken.email_verified === true,
-    displayName:
-      typeof decodedToken.name === "string" ? decodedToken.name : "Aura User",
+    displayName: getDisplayNameFromToken(decodedToken.name, decodedToken.email),
     photoURL:
       typeof decodedToken.picture === "string" ? decodedToken.picture : "",
     authTime: toIsoAuthTime(decodedToken.auth_time),
@@ -59,7 +73,7 @@ export function requireAuth(request: CallableRequest<unknown>): AuthenticatedUse
     uid: request.auth.uid,
     email: typeof token.email === "string" ? token.email : "",
     emailVerified: token.email_verified === true,
-    displayName: typeof token.name === "string" ? token.name : "Aura User",
+    displayName: getDisplayNameFromToken(token.name, token.email),
     photoURL: typeof token.picture === "string" ? token.picture : "",
     authTime: toIsoAuthTime(token.auth_time),
   };
