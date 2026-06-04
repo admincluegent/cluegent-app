@@ -316,6 +316,12 @@ export class WindowHelper {
           e.preventDefault();
           this.launcherWindow?.hide();
           this.isWindowVisible = false;
+          return;
+        }
+
+        if (!this.appState.isQuitting()) {
+          this.appState.setQuitting(true);
+          app.quit();
         }
       });
 
@@ -522,6 +528,15 @@ export class WindowHelper {
   }
 
   public centerAndShowWindow(): void {
+    if (!this.launcherWindow || this.launcherWindow.isDestroyed()) {
+      this.launcherWindow = null;
+      this.overlayWindow = null;
+      this.currentWindowMode = 'launcher';
+      this.isWindowVisible = false;
+      this.createWindow();
+      return;
+    }
+
     // If a meeting is active (overlay mode), bring the overlay up instead of the
     // launcher — switching to the launcher during a meeting would expose it in the
     // taskbar/dock and break stealth.

@@ -1,10 +1,11 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { type CallableRequest, HttpsError } from "firebase-functions/v2/https";
-import { PLAN_CONFIGS, type PlanId } from "../config/plans.js";
+import { type PlanId } from "../config/plans.js";
 import { db, requireAuth } from "../utils/auth.js";
 import { getMonthKey } from "../utils/monthKey.js";
 import {
   assertUsageAvailable,
+  buildPlanLimitRefresh,
   buildPlanStatus,
   buildSubscriptionDoc,
   buildUsageBaseline,
@@ -45,11 +46,7 @@ export async function ensureUsageDocuments(
   ]);
   const userData = userSnap.data();
   const subscriptionData = subscriptionSnap.data();
-  const freeLimitsNeedRefresh =
-    subscriptionData?.plan === "free" &&
-    (subscriptionData.promptLimit !== PLAN_CONFIGS.free.promptLimit ||
-      subscriptionData.screenshotLimit !== PLAN_CONFIGS.free.screenshotLimit ||
-      subscriptionData.sttSecondsLimit !== PLAN_CONFIGS.free.sttSecondsLimit);
+  const planLimitRefresh = buildPlanLimitRefresh(subscriptionData);
   const liveOrderExpired = isExpiredLiveOrderEntitlement(subscriptionData);
   const paidBaselineNeedRefresh =
     subscriptionSnap.exists &&
@@ -72,7 +69,7 @@ export async function ensureUsageDocuments(
   if (
     subscriptionSnap.exists &&
     usageSnap.exists &&
-    !freeLimitsNeedRefresh &&
+    !planLimitRefresh &&
     !liveOrderExpired &&
     !paidBaselineNeedRefresh &&
     !freeTrialFieldsNeedRefresh
@@ -162,17 +159,6 @@ export async function ensureUsageDocuments(
           },
           { merge: true }
         );
-      } else if (latestSubscriptionData?.plan === "free" && freeLimitsNeedRefresh) {
-        transaction.set(
-          subscriptionRef,
-          {
-            promptLimit: PLAN_CONFIGS.free.promptLimit,
-            screenshotLimit: PLAN_CONFIGS.free.screenshotLimit,
-            sttSecondsLimit: PLAN_CONFIGS.free.sttSecondsLimit,
-            updatedAt: FieldValue.serverTimestamp(),
-          },
-          { merge: true }
-        );
       } else {
         const latestSubscription = materializeSubscription(
           latestSubscriptionData as ReturnType<typeof materializeSubscription>
@@ -181,12 +167,21 @@ export async function ensureUsageDocuments(
           latestUsageSnap.data() as ReturnType<typeof materializeUsage>,
           monthKey
         );
+        const latestPlanLimitRefresh =
+          buildPlanLimitRefresh(latestSubscriptionData);
+        const shouldRefreshPaidBaseline = needsPaidUsageBaseline(
+          latestSubscription,
+          latestUsage
+        );
 
-        if (needsPaidUsageBaseline(latestSubscription, latestUsage)) {
+        if (latestPlanLimitRefresh || shouldRefreshPaidBaseline) {
           transaction.set(
             subscriptionRef,
             {
-              usageBaseline: buildUsageBaseline(latestUsage),
+              ...(latestPlanLimitRefresh ?? {}),
+              ...(shouldRefreshPaidBaseline
+                ? { usageBaseline: buildUsageBaseline(latestUsage) }
+                : {}),
               updatedAt: FieldValue.serverTimestamp(),
             },
             { merge: true }

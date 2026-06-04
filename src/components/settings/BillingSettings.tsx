@@ -18,6 +18,7 @@ import type { BillingInterval } from "@/types/firebase";
 const BILLING_CHECKOUT_SYNC_WINDOW_MS = 60_000;
 const BILLING_PENDING_POLL_MS = 4_000;
 const RAZORPAY_CHECKOUT_SCRIPT_URL = "https://checkout.razorpay.com/v1/checkout.js";
+const UNLIMITED_USAGE_LIMIT = Number.MAX_SAFE_INTEGER;
 
 type RazorpayPaymentResponse = {
   razorpay_payment_id: string;
@@ -126,12 +127,12 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
     price: "₹6,499",
     priceSuffix: "/month",
     tagline: "For heavy users who need more assistant capacity and faster responses.",
-    sttSecondsLimit: 180000,
-    promptLimit: Number.MAX_SAFE_INTEGER,
-    screenshotLimit: Number.MAX_SAFE_INTEGER,
+    sttSecondsLimit: UNLIMITED_USAGE_LIMIT,
+    promptLimit: UNLIMITED_USAGE_LIMIT,
+    screenshotLimit: UNLIMITED_USAGE_LIMIT,
     highlights: [
       "Undetectability - Cluegent stays invisible during screen sharing",
-      "50 hours listening",
+      "Unlimited listening",
       "Unlimited AI requests",
       "Unlimited screenshot analyses",
       "Real-time assistant",
@@ -150,12 +151,12 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
     priceSuffix: "/month, billed yearly",
     savings: "Save ₹12,998",
     tagline: "Annual Power access for high-volume meetings, coding support, and screenshots.",
-    sttSecondsLimit: 180000,
-    promptLimit: Number.MAX_SAFE_INTEGER,
-    screenshotLimit: Number.MAX_SAFE_INTEGER,
+    sttSecondsLimit: UNLIMITED_USAGE_LIMIT,
+    promptLimit: UNLIMITED_USAGE_LIMIT,
+    screenshotLimit: UNLIMITED_USAGE_LIMIT,
     highlights: [
       "Undetectability - Cluegent stays invisible during screen sharing",
-      "50 hours/month listening",
+      "Unlimited listening/month",
       "Unlimited AI requests/month",
       "Unlimited screenshot analyses/month",
       "Real-time assistant",

@@ -120,6 +120,37 @@ export interface UsageBaseline {
   openAiScreenshotCount: number;
 }
 
+export function buildPlanLimitRefresh(
+  raw?: Record<string, unknown>
+): Pick<
+  SubscriptionDoc,
+  "promptLimit" | "screenshotLimit" | "sttSecondsLimit"
+> | null {
+  if (!raw) {
+    return null;
+  }
+
+  const planId = raw?.plan;
+  if (typeof planId !== "string" || !(planId in PLAN_CONFIGS)) {
+    return null;
+  }
+
+  const plan = PLAN_CONFIGS[planId as PlanId];
+  if (
+    raw.promptLimit === plan.promptLimit &&
+    raw.screenshotLimit === plan.screenshotLimit &&
+    raw.sttSecondsLimit === plan.sttSecondsLimit
+  ) {
+    return null;
+  }
+
+  return {
+    promptLimit: plan.promptLimit,
+    screenshotLimit: plan.screenshotLimit,
+    sttSecondsLimit: plan.sttSecondsLimit,
+  };
+}
+
 export function getUserRefs(uid: string, monthKey = getMonthKey()) {
   return {
     userPath: `users/${uid}`,

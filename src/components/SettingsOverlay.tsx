@@ -431,6 +431,26 @@ const formatAccountDate = (value?: string | null) => {
     });
 };
 
+const formatPlanUsageLimit = (value?: number | null, unit = '') => {
+    const limit = value ?? 0;
+    if (limit >= Number.MAX_SAFE_INTEGER) {
+        return `Unlimited${unit ? ` ${unit}` : ''}`;
+    }
+
+    return `${limit.toLocaleString()}${unit ? ` ${unit}` : ''}`;
+};
+
+const formatListeningLimit = (value?: number | null) => {
+    const limit = value ?? 0;
+    if (limit >= Number.MAX_SAFE_INTEGER) {
+        return 'Unlimited listening';
+    }
+
+    return limit >= 3600
+        ? `${Math.round(limit / 3600)}h listening`
+        : `${Math.round(limit / 60)} min listening`;
+};
+
 const getResumeFileIcon = (fileName?: string | null) => {
     const ext = (fileName?.split('.').pop() || '').toLowerCase();
     if (ext === 'pdf') {
@@ -1594,17 +1614,15 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                 <div className="mt-4 grid gap-3 text-sm text-text-secondary md:grid-cols-3">
                                                     <div className="rounded-xl border border-border-subtle bg-bg-card p-3">
                                                         <Sparkles size={16} className="mb-2 text-sky-300" />
-                                                        {subscription?.promptLimit ?? 0} AI requests
+                                                        {formatPlanUsageLimit(subscription?.promptLimit, 'AI requests')}
                                                     </div>
                                                     <div className="rounded-xl border border-border-subtle bg-bg-card p-3">
                                                         <Mic size={16} className="mb-2 text-emerald-300" />
-                                                        {(subscription?.sttSecondsLimit ?? 0) >= 3600
-                                                            ? `${Math.round((subscription?.sttSecondsLimit ?? 0) / 3600)}h listening`
-                                                            : `${Math.round((subscription?.sttSecondsLimit ?? 0) / 60)} min listening`}
+                                                        {formatListeningLimit(subscription?.sttSecondsLimit)}
                                                     </div>
                                                     <div className="rounded-xl border border-border-subtle bg-bg-card p-3">
                                                         <Camera size={16} className="mb-2 text-violet-300" />
-                                                        {subscription?.screenshotLimit ?? 0} screenshot analyses
+                                                        {formatPlanUsageLimit(subscription?.screenshotLimit, 'screenshot analyses')}
                                                     </div>
                                                 </div>
                                             </div>

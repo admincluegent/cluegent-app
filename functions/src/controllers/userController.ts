@@ -5,6 +5,7 @@ import { cancelRazorpayTestSubscription } from "../services/razorpayTestService.
 import { adminAuth, db, requireAuth } from "../utils/auth.js";
 import { getMonthKey } from "../utils/monthKey.js";
 import {
+  buildPlanLimitRefresh,
   buildPlanStatus,
   buildSubscriptionDoc,
   buildUsageBaseline,
@@ -111,12 +112,17 @@ export async function getOrCreateUserProfileController(
         usageSnap.data() as ReturnType<typeof materializeUsage>,
         monthKey
       );
+      const planLimitRefresh = buildPlanLimitRefresh(subscriptionSnap.data());
+      const shouldRefreshPaidBaseline = needsPaidUsageBaseline(subscription, usage);
 
-      if (needsPaidUsageBaseline(subscription, usage)) {
+      if (planLimitRefresh || shouldRefreshPaidBaseline) {
         transaction.set(
           subscriptionRef,
           {
-            usageBaseline: buildUsageBaseline(usage),
+            ...(planLimitRefresh ?? {}),
+            ...(shouldRefreshPaidBaseline
+              ? { usageBaseline: buildUsageBaseline(usage) }
+              : {}),
             updatedAt: FieldValue.serverTimestamp(),
           },
           { merge: true }

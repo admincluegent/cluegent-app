@@ -43,7 +43,7 @@ export const PLAN_CONFIGS: Record<PlanId, PlanConfig> = {
   power: {
     id: "power",
     label: "Power",
-    sttSecondsLimit: 180000,
+    sttSecondsLimit: UNLIMITED_USAGE_LIMIT,
     promptLimit: UNLIMITED_USAGE_LIMIT,
     screenshotLimit: UNLIMITED_USAGE_LIMIT,
   },
