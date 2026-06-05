@@ -53,6 +53,18 @@ interface VerifyRazorpayLiveOrderPaymentData {
   razorpay_signature?: string;
 }
 
+interface LiveBillingPlanPrice {
+  providerMode: "live";
+  planId: Extract<PaidPlanId, "pro" | "power">;
+  interval: BillingInterval;
+  currency: RazorpayCurrency;
+  amountSubunits: number;
+  displayPrice: string;
+  displayMonthlyPrice: string;
+  savingsLabel?: string;
+  description: string;
+}
+
 interface RazorpayTestEnv {
   keyId: string;
   keySecret: string;
@@ -113,8 +125,8 @@ const LIVE_ORDER_PRICES_SUBUNITS: Record<
       month: 500,
     },
     pro: {
-      month: 349_900,
-      year: 3_499_000,
+      month: 249_900,
+      year: 2_499_000,
     },
     power: {
       month: 649_900,
@@ -124,8 +136,8 @@ const LIVE_ORDER_PRICES_SUBUNITS: Record<
   USD: {
     livetest: {},
     pro: {
-      month: 3_900,
-      year: 39_000,
+      month: 2_900,
+      year: 29_000,
     },
     power: {
       month: 6_900,
@@ -133,6 +145,20 @@ const LIVE_ORDER_PRICES_SUBUNITS: Record<
     },
   },
 };
+
+export function getLiveBillingPlansController() {
+  const prices = buildLiveBillingPlanPrices();
+
+  return {
+    success: true,
+    data: {
+      providerMode: "live" as const,
+      currencies: ["INR", "USD"] as RazorpayCurrency[],
+      prices,
+      generatedAt: new Date().toISOString(),
+    },
+  };
+}
 
 export async function createRazorpayTestSubscriptionController(
   request: CallableRequest<CreateRazorpayTestSubscriptionData>,
@@ -1875,6 +1901,85 @@ function getLiveOrderPricing(
     durationMs,
     description: `Cluegent ${PLAN_CONFIGS[planId].label} - ${intervalLabel}`,
   };
+}
+
+function buildLiveBillingPlanPrices(): LiveBillingPlanPrice[] {
+  const currencies: RazorpayCurrency[] = ["INR", "USD"];
+  const planIds: Array<Extract<PaidPlanId, "pro" | "power">> = ["pro", "power"];
+  const intervals: BillingInterval[] = ["month", "year"];
+
+  return currencies.flatMap((currency) =>
+    planIds.flatMap((planId) =>
+      intervals.flatMap((interval) => {
+        const pricing = getLiveOrderPricing(planId, interval, currency);
+        if (!pricing) {
+          return [];
+        }
+
+        const monthlyAmountSubunits = LIVE_ORDER_PRICES_SUBUNITS[currency][planId]?.month;
+        const yearlySavingsSubunits =
+          interval === "year" && monthlyAmountSubunits
+            ? monthlyAmountSubunits * 12 - pricing.amount
+            : 0;
+
+        return [
+          {
+            providerMode: "live" as const,
+            planId,
+            interval,
+            currency,
+            amountSubunits: pricing.amount,
+            displayPrice: formatCurrencySubunits(pricing.amount, currency, 0),
+            displayMonthlyPrice:
+              interval === "year"
+                ? formatCurrencyMajor(
+                    pricing.amount / getCurrencySubunitFactor(currency) / 12,
+                    currency,
+                    currency === "USD" ? 2 : 0,
+                    currency === "USD" ? 2 : 0
+                  )
+                : formatCurrencySubunits(pricing.amount, currency, 0),
+            savingsLabel:
+              yearlySavingsSubunits > 0
+                ? `Save ${formatCurrencySubunits(yearlySavingsSubunits, currency, 0)}`
+                : undefined,
+            description: pricing.description,
+          },
+        ];
+      })
+    )
+  );
+}
+
+function formatCurrencySubunits(
+  amountSubunits: number,
+  currency: RazorpayCurrency,
+  maximumFractionDigits: number
+) {
+  return formatCurrencyMajor(
+    amountSubunits / getCurrencySubunitFactor(currency),
+    currency,
+    0,
+    maximumFractionDigits
+  );
+}
+
+function formatCurrencyMajor(
+  amount: number,
+  currency: RazorpayCurrency,
+  minimumFractionDigits: number,
+  maximumFractionDigits: number
+) {
+  return new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits,
+    maximumFractionDigits,
+  }).format(amount);
+}
+
+function getCurrencySubunitFactor(currency: RazorpayCurrency) {
+  return currency === "INR" || currency === "USD" ? 100 : 1;
 }
 
 function readRazorpayCurrency(value: unknown): RazorpayCurrency | null {

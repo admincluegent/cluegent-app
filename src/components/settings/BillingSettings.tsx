@@ -8,11 +8,13 @@ import {
 import {
   createRazorpayLiveOrder,
   createRazorpayTestSubscription,
+  getLiveBillingPlans,
   verifyRazorpayLiveOrderPayment,
   verifyRazorpayTestPayment,
 } from "@/services/backendApi";
 import { useAuth } from "@/contexts/auth.context";
 import { FEATURES } from "@/lib/featureFlags";
+import type { BillingCurrency, LiveBillingPlanPrice } from "@/types/backend";
 import type { BillingInterval } from "@/types/firebase";
 
 const BILLING_CHECKOUT_SYNC_WINDOW_MS = 60_000;
@@ -72,7 +74,6 @@ type CheckoutCard = {
 };
 
 type BillingProviderMode = "test" | "live";
-type BillingCurrency = "INR" | "USD";
 
 const CHECKOUT_CARDS: CheckoutCard[] = [
   {
@@ -81,7 +82,7 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
     name: "Pro",
     accent: "sky",
     eyebrow: "Pro",
-    price: "₹3,499",
+    price: "₹2,499",
     priceSuffix: "/month",
     tagline: "For regular meetings, technical conversations, and real-time assistant support.",
     sttSecondsLimit: 108000,
@@ -102,9 +103,9 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
     name: "Pro",
     accent: "sky",
     eyebrow: "Pro",
-    price: "₹2,916",
+    price: "₹2,083",
     priceSuffix: "/month, billed yearly",
-    savings: "Save ₹6,998",
+    savings: "Save ₹4,998",
     tagline: "Annual Pro access with the same core assistant limits at a lower yearly price.",
     sttSecondsLimit: 108000,
     promptLimit: 5000,
@@ -173,11 +174,11 @@ const USD_CHECKOUT_PRICING: Record<
 > = {
   pro: {
     month: {
-      price: "$39",
+      price: "$29",
     },
     year: {
-      price: "$32.50",
-      savings: "Save $78",
+      price: "$24.17",
+      savings: "Save $58",
     },
   },
   power: {
@@ -211,7 +212,22 @@ function isCheckoutCardEnabled(plan: CheckoutCard) {
   return FEATURES.POWER_YEARLY_ENABLED || plan.id !== "power" || plan.interval !== "year";
 }
 
-function getCheckoutCardPricing(plan: CheckoutCard, currency: BillingCurrency) {
+function getCheckoutPricingKey(
+  planId: "pro" | "power",
+  interval: BillingInterval,
+  currency: BillingCurrency
+) {
+  return `${currency}-${planId}-${interval}`;
+}
+
+function indexLivePricing(prices: LiveBillingPlanPrice[]) {
+  return prices.reduce<Record<string, LiveBillingPlanPrice>>((indexed, price) => {
+    indexed[getCheckoutPricingKey(price.planId, price.interval, price.currency)] = price;
+    return indexed;
+  }, {});
+}
+
+function getFallbackCheckoutCardPricing(plan: CheckoutCard, currency: BillingCurrency) {
   if (currency === "INR") {
     return {
       price: plan.price,
@@ -220,6 +236,23 @@ function getCheckoutCardPricing(plan: CheckoutCard, currency: BillingCurrency) {
   }
 
   return USD_CHECKOUT_PRICING[plan.id][plan.interval];
+}
+
+function getCheckoutCardPricing(
+  plan: CheckoutCard,
+  currency: BillingCurrency,
+  livePricingByKey: Record<string, LiveBillingPlanPrice>
+) {
+  const livePricing = livePricingByKey[getCheckoutPricingKey(plan.id, plan.interval, currency)];
+
+  if (livePricing) {
+    return {
+      price: livePricing.displayMonthlyPrice,
+      savings: livePricing.savingsLabel,
+    };
+  }
+
+  return getFallbackCheckoutCardPricing(plan, currency);
 }
 
 function BillingCurrencyFlag({ currency }: { currency: BillingCurrency }) {
@@ -322,6 +355,9 @@ export const BillingSettings: React.FC = () => {
   const [checkoutStartedAt, setCheckoutStartedAt] = useState<number | null>(null);
   const [selectedInterval, setSelectedInterval] = useState<BillingInterval>("month");
   const [selectedCurrency, setSelectedCurrency] = useState<BillingCurrency>("INR");
+  const [livePricingByKey, setLivePricingByKey] = useState<
+    Record<string, LiveBillingPlanPrice>
+  >({});
 
   useEffect(() => {
     void refreshProfile();
@@ -345,6 +381,24 @@ export const BillingSettings: React.FC = () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [refreshProfile]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getLiveBillingPlans()
+      .then((pricing) => {
+        if (isMounted) {
+          setLivePricingByKey(indexLivePricing(pricing.prices));
+        }
+      })
+      .catch((pricingError) => {
+        console.warn("Failed to load live billing pricing; using bundled fallback.", pricingError);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!pendingCheckoutKey || !checkoutStartedAt) {
@@ -587,7 +641,11 @@ export const BillingSettings: React.FC = () => {
           <div className="mx-auto grid w-full max-w-[980px] gap-4 lg:grid-cols-2">
             {visiblePaidCards.map((plan) => {
               const accent = getAccentClasses(plan.accent);
-              const pricing = getCheckoutCardPricing(plan, selectedCurrency);
+              const pricing = getCheckoutCardPricing(
+                plan,
+                selectedCurrency,
+                livePricingByKey
+              );
               const cardKey = `${plan.id}-${plan.interval}`;
               const liveCardKey = `live-${cardKey}`;
               const isBusy = busyKey === cardKey || busyKey === liveCardKey;

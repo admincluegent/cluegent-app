@@ -31,6 +31,27 @@ export interface GetPlanStatusResponse {
   planStatus: PlanStatus;
 }
 
+export type BillingCurrency = "INR" | "USD";
+
+export interface LiveBillingPlanPrice {
+  providerMode: "live";
+  planId: Extract<UserPlan, "pro" | "power">;
+  interval: BillingInterval;
+  currency: BillingCurrency;
+  amountSubunits: number;
+  displayPrice: string;
+  displayMonthlyPrice: string;
+  savingsLabel?: string;
+  description: string;
+}
+
+export interface GetLiveBillingPlansResponse {
+  providerMode: "live";
+  currencies: BillingCurrency[];
+  prices: LiveBillingPlanPrice[];
+  generatedAt: string;
+}
+
 export interface CreateRazorpayTestSubscriptionResponse {
   providerMode: "test" | "live";
   keyId: string;

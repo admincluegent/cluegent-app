@@ -8,6 +8,7 @@ import type {
   CreateRazorpayLiveSubscriptionResponse,
   CreateRazorpayTestSubscriptionResponse,
   DeleteAccountResponse,
+  GetLiveBillingPlansResponse,
   GetOrCreateUserProfileResponse,
   GetPlanStatusResponse,
   VerifyRazorpayLiveOrderPaymentResponse,
@@ -39,6 +40,15 @@ export async function getPlanStatus() {
     Record<string, never>,
     BackendEnvelope<GetPlanStatusResponse>
   >(functions, "getPlanStatus");
+  const result = await callable({});
+  return result.data.data;
+}
+
+export async function getLiveBillingPlans() {
+  const callable = httpsCallable<
+    Record<string, never>,
+    BackendEnvelope<GetLiveBillingPlansResponse>
+  >(functions, "getLiveBillingPlans");
   const result = await callable({});
   return result.data.data;
 }

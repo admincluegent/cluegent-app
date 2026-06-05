@@ -14,6 +14,7 @@ import {
   createRazorpayLiveOrderController,
   createRazorpayLiveSubscriptionController,
   createRazorpayTestSubscriptionController,
+  getLiveBillingPlansController,
   razorpayLiveWebhookController,
   razorpayTestWebhookController,
   verifyRazorpayLiveOrderPaymentController,
@@ -95,6 +96,11 @@ export const deleteAccount = onCall(
 export const getPlanStatus = onCall(
   callableOptions,
   getPlanStatusController
+);
+
+export const getLiveBillingPlans = onCall(
+  callableOptions,
+  getLiveBillingPlansController
 );
 
 export const createRazorpayTestSubscription = onCall(
