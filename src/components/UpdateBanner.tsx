@@ -8,7 +8,7 @@ const UpdateBanner: React.FC = () => {
     const [downloadProgress, setDownloadProgress] = useState(0);
     const [status, setStatus] = useState<'idle' | 'downloading' | 'ready' | 'error' | 'instructions'>('idle');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const [instructionsArch, setInstructionsArch] = useState<'arm64' | 'x64' | null>(null);
+    const [instructionsArch, setInstructionsArch] = useState<'arm64' | 'intel' | null>(null);
 
     useEffect(() => {
         // Listen for update available
@@ -86,16 +86,19 @@ const UpdateBanner: React.FC = () => {
             try {
                 const arch = await window.electronAPI.getArch();
                 const isArm = arch === 'arm64';
-                const dmgSuffix = isArm ? 'arm64' : 'x64';
-                setInstructionsArch(dmgSuffix);
-                const version = updateInfo?.version ? updateInfo.version.replace('v', '') : '1.0.0';
-                const url = `https://github.com/admincluegent/cluegent-app/releases/download/v${version}/Cluegent-${version}-${dmgSuffix}.dmg`;
-                window.electronAPI.openExternal(url);
+                const macArch = isArm ? 'arm64' : 'intel';
+                setInstructionsArch(macArch);
+                const version = updateInfo?.version ? updateInfo.version.replace(/^v/, '') : '1.0.0';
+                const fileName = isArm
+                    ? `Cluegent-${version}-arm64-mac.zip`
+                    : `Cluegent-${version}-mac.zip`;
+                const url = `https://github.com/admincluegent/cluegent-app/releases/download/v${version}/${fileName}`;
+                await window.electronAPI.openExternal(url);
                 setStatus('instructions');
             } catch (err) {
-                console.error("Failed to get arch", err);
-                setStatus('downloading');
-                window.electronAPI.downloadUpdate();
+                console.error("Failed to open macOS update download", err);
+                setStatus('error');
+                setErrorMessage('Could not open the macOS update download.');
             }
         } else {
             setStatus('downloading');

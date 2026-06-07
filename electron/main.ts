@@ -564,6 +564,10 @@ export class AppState {
     setTimeout(() => {
       if (process.env.NODE_ENV === "development") {
         console.log("[AutoUpdater] Development mode: Skipping auto check (use manual button)");
+      } else if (process.platform === 'darwin') {
+        this.checkForUpdatesManual().catch(err => {
+          console.error("[AutoUpdater] Failed to check for macOS updates:", err);
+        });
       } else {
         autoUpdater.checkForUpdatesAndNotify().catch(err => {
           console.error("[AutoUpdater] Failed to check for updates:", err);
@@ -598,39 +602,45 @@ export class AppState {
       // Fetch latest release
       const notes = await releaseManager.fetchReleaseNotes('latest');
 
-      if (notes) {
-        const currentVersion = app.getVersion();
-        const latestVersionTag = notes.version; // e.g., "v1.2.0" or "1.2.0"
-        const latestVersion = latestVersionTag.replace(/^v/, '');
+      if (!notes) {
+        const errorMessage = 'Could not fetch latest release from GitHub';
+        throw new Error(errorMessage);
+      }
 
-        console.log(`[AutoUpdater] Manual Check: Current=${currentVersion}, Latest=${latestVersion}`);
+      const currentVersion = app.getVersion();
+      const latestVersionTag = notes.version; // e.g., "v1.2.0" or "1.2.0"
+      const latestVersion = latestVersionTag.replace(/^v/, '');
 
-        if (this.isVersionNewer(currentVersion, latestVersion)) {
-          console.log('[AutoUpdater] Manual Check: New version found!');
-          this.updateAvailable = true;
+      console.log(`[AutoUpdater] Manual Check: Current=${currentVersion}, Latest=${latestVersion}`);
 
-          // Mock an info object compatible with electron-updater
-          const info = {
-            version: latestVersion,
-            files: [] as any[],
-            path: '',
-            sha512: '',
-            releaseName: notes.summary,
-            releaseNotes: notes.fullBody
-          };
+      if (this.isVersionNewer(currentVersion, latestVersion)) {
+        console.log('[AutoUpdater] Manual Check: New version found!');
+        this.updateAvailable = true;
 
-          // Notify renderer
-          this.broadcast("update-available", {
-            ...info,
-            parsedNotes: notes
-          });
-        } else {
-          console.log('[AutoUpdater] Manual Check: App is up to date.');
-          this.broadcast("update-not-available", { version: currentVersion });
-        }
+        // Mock an info object compatible with electron-updater
+        const info = {
+          version: latestVersion,
+          files: [] as any[],
+          path: '',
+          sha512: '',
+          releaseName: notes.summary,
+          releaseNotes: notes.fullBody
+        };
+
+        // Notify renderer
+        this.broadcast("update-available", {
+          ...info,
+          parsedNotes: notes
+        });
+      } else {
+        console.log('[AutoUpdater] Manual Check: App is up to date.');
+        this.broadcast("update-not-available", { version: currentVersion });
       }
     } catch (err) {
       console.error('[AutoUpdater] Manual update check failed:', err);
+      const errorMessage = err instanceof Error ? err.message : String(err || 'Update check failed');
+      this.broadcast("update-error", errorMessage);
+      throw err;
     }
   }
 
@@ -704,16 +714,19 @@ export class AppState {
         return
       }
 
-      // In development mode, use manual GitHub API check (electron-updater skips in dev)
-      if (process.env.NODE_ENV === "development") {
+      // In development and macOS builds, use GitHub Releases directly.
+      // macOS release assets are ZIP downloads, not electron-updater latest-mac.yml metadata.
+      if (process.env.NODE_ENV === "development" || process.platform === 'darwin') {
         await this.checkForUpdatesManual()
       } else {
         await autoUpdater.checkForUpdatesAndNotify()
       }
     } catch (err: any) {
       console.error('[AutoUpdater] checkForUpdates failed:', err)
-      const errorMessage = err.message || err.toString() || 'Update check failed'
-      this.broadcast("update-error", errorMessage)
+      if (process.env.NODE_ENV !== "development" && process.platform !== 'darwin') {
+        const errorMessage = err.message || err.toString() || 'Update check failed'
+        this.broadcast("update-error", errorMessage)
+      }
     }
   }
 

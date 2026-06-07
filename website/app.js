@@ -26,6 +26,48 @@ navLinks.forEach((link) => {
   });
 });
 
+const downloadMenus = Array.from(document.querySelectorAll("[data-download-menu]"));
+
+const closeDownloadMenus = (exceptMenu = null) => {
+  downloadMenus.forEach((menu) => {
+    if (menu === exceptMenu) return;
+    menu.classList.remove("is-open");
+    menu.querySelector("[data-download-trigger]")?.setAttribute("aria-expanded", "false");
+    const options = menu.querySelector("[data-download-options]");
+    if (options instanceof HTMLElement) {
+      options.hidden = true;
+    }
+  });
+};
+
+downloadMenus.forEach((menu) => {
+  const trigger = menu.querySelector("[data-download-trigger]");
+  if (!(trigger instanceof HTMLButtonElement)) return;
+
+  trigger.addEventListener("click", () => {
+    const isOpen = menu.classList.toggle("is-open");
+    trigger.setAttribute("aria-expanded", String(isOpen));
+    const options = menu.querySelector("[data-download-options]");
+    if (options instanceof HTMLElement) {
+      options.hidden = !isOpen;
+    }
+    closeDownloadMenus(menu);
+  });
+});
+
+document.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof Node)) return;
+  if (downloadMenus.some((menu) => menu.contains(target))) return;
+  closeDownloadMenus();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    closeDownloadMenus();
+  }
+});
+
 document.querySelectorAll("[data-video-play]").forEach((button) => {
   const targetId = button.getAttribute("aria-controls");
   const video = targetId ? document.getElementById(targetId) : null;

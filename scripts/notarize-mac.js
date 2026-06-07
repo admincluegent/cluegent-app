@@ -6,6 +6,11 @@ exports.default = async function notarizeMac(context) {
         return;
     }
 
+    if (process.env.SKIP_NOTARIZE === '1') {
+        console.log('[Notarize] SKIP_NOTARIZE=1; skipping automatic notarization.');
+        return;
+    }
+
     const appName = context.packager.appInfo.productFilename;
     const appPath = path.join(context.appOutDir, `${appName}.app`);
     const keychainProfile = process.env.APPLE_KEYCHAIN_PROFILE || 'cluegent-notary';

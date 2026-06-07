@@ -23,7 +23,7 @@ interface UpdateModalProps {
     downloadProgress: number;
     status: 'idle' | 'downloading' | 'ready' | 'error' | 'instructions';
     errorMessage?: string | null;
-    instructionsArch?: 'arm64' | 'x64' | null;
+    instructionsArch?: 'arm64' | 'intel' | null;
 }
 
 const CopyBlock = ({ command }: { command: string }) => {
@@ -73,6 +73,10 @@ const UpdateModal: React.FC<UpdateModalProps> = ({
     };
 
     const displayVersion = formatVersion(updateInfo?.version);
+    const normalizedVersion = displayVersion.replace(/^v/, '');
+    const downloadFileName = instructionsArch === 'intel'
+        ? `Cluegent-${normalizedVersion}-mac.zip`
+        : `Cluegent-${normalizedVersion}-arm64-mac.zip`;
 
     const showFallback = !parsedNotes || (!parsedNotes.summary && (!parsedNotes.sections || parsedNotes.sections.length === 0));
 
@@ -191,10 +195,10 @@ const UpdateModal: React.FC<UpdateModalProps> = ({
                                 <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 mb-4 space-y-2 w-full">
                                     <div className="space-y-1 w-full">
                                         <p className="text-[12px] font-medium text-white/80">1. Clear quarantine on the downloaded file:</p>
-                      <CopyBlock command={`xattr -cr ~/Downloads/Cluegent-${displayVersion.replace('v', '')}-${instructionsArch || 'arm64'}.dmg`} />
+                      <CopyBlock command={`xattr -cr ~/Downloads/${downloadFileName}`} />
                                     </div>
                                     <div className="space-y-1 mt-1 pl-0.5">
-                      <p className="text-[12px] font-medium text-white/80">2. Open the file and install Cluegent.</p>
+                      <p className="text-[12px] font-medium text-white/80">2. Open the ZIP, then move Cluegent.app to Applications.</p>
                                     </div>
                                     <div className="space-y-1 mt-3 w-full">
                                         <p className="text-[12px] font-medium text-white/80">3. Clear quarantine on the installed app:</p>
