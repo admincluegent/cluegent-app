@@ -113,6 +113,7 @@ export class FirebaseManagedSTT extends EventEmitter {
   private sentAudioSeconds = 0;
   private reportedAudioSeconds = 0;
   private usageReportInFlight: Promise<void> | null = null;
+  private usageReportingEnabled = true;
   private lastTurnOrder: number | null = null;
   private lastTurnTranscript = "";
   private readonly tokenEndpoint: string;
@@ -157,6 +158,10 @@ export class FirebaseManagedSTT extends EventEmitter {
   }
 
   public setCredentials(_path: string): void {}
+
+  public setUsageReportingEnabled(enabled: boolean): void {
+    this.usageReportingEnabled = enabled;
+  }
 
   public start(): void {
     if (this.isActive) return;
@@ -203,7 +208,9 @@ export class FirebaseManagedSTT extends EventEmitter {
 
     this.sentAudioSeconds +=
       chunk.length / Math.max(this.sampleRate * this.numChannels * 2, 1);
-    void this.flushUsage(false);
+    if (this.usageReportingEnabled) {
+      void this.flushUsage(false);
+    }
 
     if (!this.isOpen) {
       this.buffer.push(chunk);
@@ -564,6 +571,10 @@ export class FirebaseManagedSTT extends EventEmitter {
   }
 
   private async flushUsage(force: boolean): Promise<void> {
+    if (!this.usageReportingEnabled) {
+      return;
+    }
+
     const unreportedSeconds = this.sentAudioSeconds - this.reportedAudioSeconds;
     if (unreportedSeconds < REPORT_USAGE_INTERVAL_SECONDS && !force) {
       return;

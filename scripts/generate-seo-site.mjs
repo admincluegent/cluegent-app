@@ -6,6 +6,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, "..");
 const websiteDir = join(rootDir, "website");
 const siteUrl = "https://www.cluegent.com";
+const ga4MeasurementId = "G-CCH0Y2SN4G";
 const downloadUrl = "https://apps.microsoft.com/detail/9NXWZPN07THN";
 const generatedDate = "2026-06-04";
 const defaultImage = "/assets/how-to-use-01.png";
@@ -685,6 +686,13 @@ function head({ title, description, canonical, image = defaultImage, type = "web
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500;600&family=Geist:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/styles.css?v=20260604-seo" />
+    <script async src="https://www.googletagmanager.com/gtag/js?id=${ga4MeasurementId}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag("js", new Date());
+      gtag("config", "${ga4MeasurementId}");
+    </script>
     ${schemaList
       .filter(Boolean)
       .map((item) => `<script type="application/ld+json">${JSON.stringify(item)}</script>`)

@@ -431,26 +431,6 @@ const formatAccountDate = (value?: string | null) => {
     });
 };
 
-const formatPlanUsageLimit = (value?: number | null, unit = '') => {
-    const limit = value ?? 0;
-    if (limit >= Number.MAX_SAFE_INTEGER) {
-        return `Unlimited${unit ? ` ${unit}` : ''}`;
-    }
-
-    return `${limit.toLocaleString()}${unit ? ` ${unit}` : ''}`;
-};
-
-const formatListeningLimit = (value?: number | null) => {
-    const limit = value ?? 0;
-    if (limit >= Number.MAX_SAFE_INTEGER) {
-        return 'Unlimited listening';
-    }
-
-    return limit >= 3600
-        ? `${Math.round(limit / 3600)}h listening`
-        : `${Math.round(limit / 60)} min listening`;
-};
-
 const getResumeFileIcon = (fileName?: string | null) => {
     const ext = (fileName?.split('.').pop() || '').toLowerCase();
     if (ext === 'pdf') {
@@ -1384,7 +1364,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                             damping: 32,
                             mass: 1
                         }}
-                        className="bg-bg-elevated w-full max-w-4xl h-[80vh] rounded-2xl border border-border-subtle shadow-2xl overflow-hidden relative"
+                        className="bg-bg-elevated h-[88vh] w-[min(96vw,1320px)] rounded-2xl border border-border-subtle shadow-2xl overflow-hidden relative"
                     >
                         <button
                             onClick={onClose}
@@ -1400,7 +1380,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                             style={{ visibility: isPreviewingOpacity ? 'hidden' : 'visible' }}
                         >
                         {/* Sidebar */}
-                        <div className="w-64 bg-bg-sidebar flex min-h-0 flex-col border-r border-border-subtle">
+                        <div className="w-72 bg-bg-sidebar flex min-h-0 flex-col border-r border-border-subtle">
                             <div className="min-h-0 flex-1 overflow-y-auto p-6 pb-4">
                                 <h2 className="font-semibold text-gray-400 text-xs uppercase tracking-wider mb-2">Settings</h2>
                                 <nav className="space-y-1">
@@ -1494,7 +1474,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                         </div>
 
                         {/* Content */}
-                        <div className="flex-1 bg-bg-main overflow-y-auto p-8">
+                        <div className="flex-1 bg-bg-main overflow-y-auto p-9">
                             {activeTab === 'account' && (
                                 <div className="space-y-6 animated fadeIn">
                                     <div>
@@ -1606,27 +1586,6 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                             </div>
                                         </div>
 
-                                        {subscription?.plan !== 'free' && (
-                                            <div className="mt-6 rounded-2xl border border-border-subtle bg-bg-item-surface p-5">
-                                                <p className="text-sm font-semibold text-text-primary">
-                                                    Thanks for subscribing to Cluegent {currentPlanLabel}. Your plan includes:
-                                                </p>
-                                                <div className="mt-4 grid gap-3 text-sm text-text-secondary md:grid-cols-3">
-                                                    <div className="rounded-xl border border-border-subtle bg-bg-card p-3">
-                                                        <Sparkles size={16} className="mb-2 text-sky-300" />
-                                                        {formatPlanUsageLimit(subscription?.promptLimit, 'AI requests')}
-                                                    </div>
-                                                    <div className="rounded-xl border border-border-subtle bg-bg-card p-3">
-                                                        <Mic size={16} className="mb-2 text-emerald-300" />
-                                                        {formatListeningLimit(subscription?.sttSecondsLimit)}
-                                                    </div>
-                                                    <div className="rounded-xl border border-border-subtle bg-bg-card p-3">
-                                                        <Camera size={16} className="mb-2 text-violet-300" />
-                                                        {formatPlanUsageLimit(subscription?.screenshotLimit, 'screenshot analyses')}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             )}

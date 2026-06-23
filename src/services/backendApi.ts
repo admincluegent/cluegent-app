@@ -11,6 +11,7 @@ import type {
   GetLiveBillingPlansResponse,
   GetOrCreateUserProfileResponse,
   GetPlanStatusResponse,
+  TrackSttUsageResponse,
   VerifyRazorpayLiveOrderPaymentResponse,
   VerifyRazorpayLivePaymentResponse,
   VerifyRazorpayTestPaymentResponse,
@@ -44,6 +45,18 @@ export async function getPlanStatus() {
   return result.data.data;
 }
 
+export async function trackSttUsage(durationSeconds: number) {
+  const callable = httpsCallable<
+    { durationSeconds: number },
+    TrackSttUsageResponse
+  >(functions, "trackSttUsage");
+  const result = await callable({ durationSeconds });
+  if (!result.data.success) {
+    throw new Error(result.data.message);
+  }
+  return result.data;
+}
+
 export async function getLiveBillingPlans() {
   const callable = httpsCallable<
     Record<string, never>,
@@ -54,11 +67,11 @@ export async function getLiveBillingPlans() {
 }
 
 export async function createRazorpayTestSubscription(
-  planId: Extract<UserPlan, "pro" | "power">,
+  planId: Extract<UserPlan, "plus" | "pro" | "power">,
   interval: BillingInterval
 ) {
   const callable = httpsCallable<
-    { planId: Extract<UserPlan, "pro" | "power">; interval: BillingInterval },
+    { planId: Extract<UserPlan, "plus" | "pro" | "power">; interval: BillingInterval },
     BackendEnvelope<CreateRazorpayTestSubscriptionResponse>
   >(functions, "createRazorpayTestSubscription");
   const result = await callable({ planId, interval });
@@ -66,13 +79,13 @@ export async function createRazorpayTestSubscription(
 }
 
 export async function createRazorpayLiveSubscription(
-  planId: Extract<UserPlan, "pro" | "power">,
+  planId: Extract<UserPlan, "plus" | "pro" | "power">,
   interval: BillingInterval,
   currency: "INR" | "USD"
 ) {
   const callable = httpsCallable<
     {
-      planId: Extract<UserPlan, "pro" | "power">;
+      planId: Extract<UserPlan, "plus" | "pro" | "power">;
       interval: BillingInterval;
       currency: "INR" | "USD";
     },
@@ -83,13 +96,13 @@ export async function createRazorpayLiveSubscription(
 }
 
 export async function createRazorpayLiveOrder(
-  planId: Extract<UserPlan, "pro" | "power">,
+  planId: Extract<UserPlan, "plus" | "pro" | "power">,
   interval: BillingInterval,
   currency: "INR" | "USD" = "INR"
 ) {
   const callable = httpsCallable<
     {
-      planId: Extract<UserPlan, "pro" | "power">;
+      planId: Extract<UserPlan, "plus" | "pro" | "power">;
       interval: BillingInterval;
       currency: "INR" | "USD";
     },

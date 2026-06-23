@@ -1,4 +1,4 @@
-import { ChevronUp, ChevronDown, SlidersHorizontal } from "lucide-react";
+import { Camera, ChevronUp, ChevronDown, MessageSquare, SlidersHorizontal, Sparkles } from "lucide-react";
 import icon from "../icon.png";
 import type { OverlayAppearance } from "../../lib/overlayAppearance";
 import type { MouseEvent } from "react";
@@ -11,7 +11,13 @@ interface TopPillProps {
     onLogoClick?: () => void;
     isListening?: boolean;
     listeningDuration?: string;
+    trialRemainingLabel?: string;
     onToggleListening?: () => void;
+    onAnswer?: () => void;
+    onScreenshot?: () => void;
+    onChat?: () => void;
+    answerShortcut?: string[];
+    screenshotShortcut?: string[];
     isOptionsOpen?: boolean;
     onOptionsClick?: (event: MouseEvent<HTMLButtonElement>) => void;
 }
@@ -24,16 +30,40 @@ export default function TopPill({
     onLogoClick,
     isListening = false,
     listeningDuration = "00:00",
+    trialRemainingLabel,
     onToggleListening,
+    onAnswer,
+    onScreenshot,
+    onChat,
+    answerShortcut,
+    screenshotShortcut,
     isOptionsOpen = false,
     onOptionsClick,
 }: TopPillProps) {
+    const shortcutLabel = (keys?: string[]) => (
+        keys?.length ? keys.map(key => key === 'Enter' ? '↵' : key).join(' ') : ''
+    );
+
+    const actionButtonClass = `
+            flex items-center gap-1.5
+            px-3 py-1.5
+            rounded-full
+            backdrop-blur-md
+            overlay-chip-surface
+            text-white
+            text-[12px]
+            font-semibold
+            border
+            transition-all duration-200 ease-sculpted
+            interaction-base interaction-hover interaction-press
+          `;
+
     return (
         <div className="flex justify-center mt-2 select-none z-50">
             <div
                 className="
           draggable-area
-          flex items-center gap-2
+          flex w-fit max-w-full items-center gap-2
           rounded-full
           overlay-pill-surface
           backdrop-blur-md
@@ -51,6 +81,7 @@ export default function TopPill({
             overlay-icon-surface
             overlay-icon-surface-hover
             flex items-center justify-center
+            shrink-0
             relative overflow-hidden
             interaction-base interaction-press
           `}
@@ -91,10 +122,56 @@ export default function TopPill({
                         <span className={`h-1.5 w-1.5 rounded-full ${isListening ? "bg-emerald-300 animate-pulse" : "bg-white/45"}`} />
                         {isListening ? "Stop listening" : "Start listening"}
                     </span>
-                    {isListening ? (
-                        <span className="font-mono text-[9px] leading-none opacity-80">{listeningDuration}</span>
+                    {isListening || trialRemainingLabel ? (
+                        <span className="font-mono text-[9px] leading-none opacity-80">
+                            {trialRemainingLabel ?? listeningDuration}
+                        </span>
                     ) : null}
                 </button>
+
+                {/* PRIMARY ACTIONS */}
+                <div className="flex items-center gap-1.5 border-l border-white/10 pl-2">
+                    <button
+                        onClick={onAnswer}
+                        className={actionButtonClass}
+                        style={appearance.chipStyle}
+                        aria-label="Answer current prompt"
+                        title="Answer"
+                    >
+                        <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                        <span>Answer</span>
+                        {shortcutLabel(answerShortcut) && (
+                            <kbd className="ml-1 rounded-md border border-white/10 bg-white/[0.08] px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white/65">
+                                {shortcutLabel(answerShortcut)}
+                            </kbd>
+                        )}
+                    </button>
+                    <button
+                        onClick={onScreenshot}
+                        className={actionButtonClass}
+                        style={appearance.chipStyle}
+                        aria-label="Attach screenshot"
+                        title="Screenshot"
+                    >
+                        <Camera className="w-3.5 h-3.5 text-sky-300" />
+                        <span>Screenshot</span>
+                        {shortcutLabel(screenshotShortcut) && (
+                            <kbd className="ml-1 rounded-md border border-white/10 bg-white/[0.08] px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white/65">
+                                {shortcutLabel(screenshotShortcut)}
+                            </kbd>
+                        )}
+                    </button>
+                    <button
+                        onClick={onChat}
+                        className={actionButtonClass}
+                        style={appearance.chipStyle}
+                        aria-label="Focus chat"
+                        title="Chat"
+                    >
+                        <MessageSquare className="w-3.5 h-3.5 text-emerald-300" />
+                        <span>Chat</span>
+                    </button>
+                </div>
 
                 {/* CENTER SEGMENT */}
                 <button
@@ -152,6 +229,7 @@ export default function TopPill({
             overlay-icon-surface
             text-white
             flex items-center justify-center
+            shrink-0
             interaction-base interaction-press
             hover:bg-white/10 hover:text-white
           `}

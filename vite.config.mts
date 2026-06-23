@@ -18,15 +18,33 @@ export default defineConfig({
         },
     },
     server: {
+        host: '127.0.0.1',
         port: 5180,
     },
     build: {
         chunkSizeWarningLimit: 1000,
         rollupOptions: {
             output: {
-                manualChunks: {
-                    vendor: ['react', 'react-dom', 'framer-motion'],
-                    ui: ['lucide-react', '@radix-ui/react-dialog', '@radix-ui/react-toast']
+                manualChunks(id) {
+                    if (!id.includes('node_modules')) {
+                        return;
+                    }
+
+                    if (
+                        id.includes('node_modules/react') ||
+                        id.includes('node_modules/react-dom') ||
+                        id.includes('node_modules/framer-motion')
+                    ) {
+                        return 'vendor';
+                    }
+
+                    if (
+                        id.includes('node_modules/lucide-react') ||
+                        id.includes('node_modules/@radix-ui/react-dialog') ||
+                        id.includes('node_modules/@radix-ui/react-toast')
+                    ) {
+                        return 'ui';
+                    }
                 }
             }
         }

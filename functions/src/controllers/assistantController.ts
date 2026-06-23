@@ -16,6 +16,7 @@ import {
   materializeSubscription,
   materializeUsage,
 } from "../utils/usage.js";
+import { getMonthKey } from "../utils/monthKey.js";
 import {
   DEFAULT_DEEPSEEK_CHAT_MODEL_ID,
   type DeepSeekChatModelId,
@@ -439,11 +440,15 @@ async function reserveAssistantUsage(input: {
       throw new Error("FREE_TRIAL_LIMIT_EXCEEDED");
     }
 
-    if (latestPlanStatus.remaining.prompts <= 0) {
+    if (latestSubscription.plan !== "free" && latestPlanStatus.remaining.prompts <= 0) {
       throw new Error("PROMPT_LIMIT_EXCEEDED");
     }
 
-    if (input.hasScreenshot && latestPlanStatus.remaining.screenshots <= 0) {
+    if (
+      latestSubscription.plan !== "free" &&
+      input.hasScreenshot &&
+      latestPlanStatus.remaining.screenshots <= 0
+    ) {
       throw new Error("SCREENSHOT_LIMIT_EXCEEDED");
     }
 
@@ -470,32 +475,115 @@ async function reserveAssistantUsage(input: {
       { merge: true }
     );
 
-    if (latestSubscription.plan === "free") {
-      transaction.set(
-        userRef,
-        {
-          freeTrialPromptCount: FieldValue.increment(1),
-          freeTrialScreenshotCount: FieldValue.increment(
-            input.hasScreenshot ? 1 : 0
-          ),
-          updatedAt: FieldValue.serverTimestamp(),
-        },
-        { merge: true }
-      );
-    }
-
     return {
       route,
       remaining: {
-        promptsRemaining: Math.max(latestPlanStatus.remaining.prompts - 1, 0),
-        screenshotsRemaining: Math.max(
-          latestPlanStatus.remaining.screenshots -
-            (input.hasScreenshot ? 1 : 0),
-          0
-        ),
+        promptsRemaining:
+          latestSubscription.plan === "free"
+            ? Number.MAX_SAFE_INTEGER
+            : Math.max(latestPlanStatus.remaining.prompts - 1, 0),
+        screenshotsRemaining:
+          latestSubscription.plan === "free"
+            ? Number.MAX_SAFE_INTEGER
+            : Math.max(
+                latestPlanStatus.remaining.screenshots -
+                  (input.hasScreenshot ? 1 : 0),
+                0
+              ),
       },
     };
   });
+}
+
+function isPaidUnlimitedPlan(subscription: ReturnType<typeof materializeSubscription>) {
+  return (
+    subscription.status === "active" &&
+    (subscription.plan === "pro" || subscription.plan === "power")
+  );
+}
+
+function selectPaidUnlimitedFastRoute(input: {
+  hasScreenshot: boolean;
+  hasGeminiApiKey: boolean;
+  hasDeepSeekApiKey: boolean;
+}): AssistantModelRoute {
+  if (input.hasScreenshot) {
+    if (!input.hasGeminiApiKey) {
+      throw new Error("GEMINI_CONFIG_MISSING");
+    }
+
+    return {
+      provider: "gemini",
+      modelId: "gemini-2.5-flash-lite",
+      premiumApplied: false,
+      premiumAllowance: 0,
+      premiumUsedBefore: 0,
+      premiumCounter: null,
+    };
+  }
+
+  if (!input.hasDeepSeekApiKey) {
+    throw new Error("DEEPSEEK_CONFIG_MISSING");
+  }
+
+  return {
+    provider: "deepseek",
+    modelId: DEFAULT_DEEPSEEK_CHAT_MODEL_ID,
+    premiumApplied: false,
+    premiumAllowance: 0,
+    premiumUsedBefore: 0,
+    premiumCounter: null,
+  };
+}
+
+async function prepareAssistantUsage(input: {
+  uid: string;
+  identity: AuthenticatedUser;
+  hasScreenshot: boolean;
+  hasOpenAiApiKey: boolean;
+  hasGeminiApiKey: boolean;
+  hasDeepSeekApiKey: boolean;
+}) {
+  const monthKey = getMonthKey();
+  const refs = getUserRefs(input.uid, monthKey);
+  const subscriptionSnap = await db.doc(refs.subscriptionPath).get();
+
+  if (subscriptionSnap.exists) {
+    const subscription = materializeSubscription(
+      subscriptionSnap.data() as ReturnType<typeof materializeSubscription>
+    );
+
+    if (isPaidUnlimitedPlan(subscription)) {
+      return {
+        monthKey,
+        route: selectPaidUnlimitedFastRoute({
+          hasScreenshot: input.hasScreenshot,
+          hasGeminiApiKey: input.hasGeminiApiKey,
+          hasDeepSeekApiKey: input.hasDeepSeekApiKey,
+        }),
+        remaining: {
+          promptsRemaining: Number.MAX_SAFE_INTEGER,
+          screenshotsRemaining: Number.MAX_SAFE_INTEGER,
+        },
+      };
+    }
+  }
+
+  const ensured = await ensureUsageDocuments(input.uid, input.identity);
+  const reservation = await reserveAssistantUsage({
+    uid: input.uid,
+    monthKey: ensured.monthKey,
+    hasScreenshot: input.hasScreenshot,
+    hasOpenAiApiKey: input.hasOpenAiApiKey,
+    hasGeminiApiKey: input.hasGeminiApiKey,
+    hasDeepSeekApiKey: input.hasDeepSeekApiKey,
+  });
+
+  return {
+    monthKey: ensured.monthKey,
+    route: reservation.route,
+    remaining: reservation.remaining,
+  };
 }
 
 async function recordAssistantCost(input: {
@@ -550,11 +638,6 @@ export async function processAssistantReplyController(
       );
     }
 
-    const { monthKey } = await ensureUsageDocuments(
-      authUser.uid,
-      authUser
-    );
-
     const fallbackInputText = [
       request.data?.systemPrompt,
       ...(request.data?.history?.map((entry) => entry.content) ?? []),
@@ -563,15 +646,15 @@ export async function processAssistantReplyController(
       .filter(Boolean)
       .join("\n");
 
-    const reservation = await reserveAssistantUsage({
+    const preparedUsage = await prepareAssistantUsage({
       uid: authUser.uid,
-      monthKey,
+      identity: authUser,
       hasScreenshot,
       hasOpenAiApiKey: Boolean(openAiApiKey),
       hasGeminiApiKey: Boolean(geminiApiKey),
       hasDeepSeekApiKey: Boolean(deepseekApiKey),
     });
-    const route = reservation.route;
+    const route = preparedUsage.route;
 
     let replyText = "";
     let costEstimate: {
@@ -720,7 +803,7 @@ export async function processAssistantReplyController(
 
     await recordAssistantCost({
       uid: authUser.uid,
-      monthKey,
+      monthKey: preparedUsage.monthKey,
       inputTokens: finalCostEstimate.inputTokens,
       outputTokens: finalCostEstimate.outputTokens,
       estimatedCostUsd: finalCostEstimate.estimatedCostUsd,
@@ -742,7 +825,7 @@ export async function processAssistantReplyController(
         screenshotCountAdded: hasScreenshot ? 1 : 0,
         estimatedCostUsdAdded: finalCostEstimate.estimatedCostUsd,
       },
-      remaining: reservation.remaining,
+      remaining: preparedUsage.remaining,
     };
   } catch (error) {
     if (error instanceof HttpsError && error.code === "unauthenticated") {
@@ -886,19 +969,15 @@ export async function processAssistantReplyStreamController(
       return;
     }
 
-    const { monthKey } = await ensureUsageDocuments(
-      authUser.uid,
-      authUser
-    );
-    const reservation = await reserveAssistantUsage({
+    const preparedUsage = await prepareAssistantUsage({
       uid: authUser.uid,
-      monthKey,
+      identity: authUser,
       hasScreenshot,
       hasOpenAiApiKey: Boolean(openAiApiKey),
       hasGeminiApiKey: Boolean(geminiApiKey),
       hasDeepSeekApiKey: Boolean(deepseekApiKey),
     });
-    const route = reservation.route;
+    const route = preparedUsage.route;
 
     response.setHeader("Content-Type", "text/event-stream; charset=utf-8");
     response.setHeader("Cache-Control", "no-cache, no-transform");
@@ -1070,7 +1149,7 @@ export async function processAssistantReplyStreamController(
 
     await recordAssistantCost({
       uid: authUser.uid,
-      monthKey,
+      monthKey: preparedUsage.monthKey,
       inputTokens: costEstimate.inputTokens,
       outputTokens: costEstimate.outputTokens,
       estimatedCostUsd: costEstimate.estimatedCostUsd,
@@ -1084,7 +1163,7 @@ export async function processAssistantReplyStreamController(
         screenshotCountAdded: hasScreenshot ? 1 : 0,
         estimatedCostUsdAdded: costEstimate.estimatedCostUsd,
       },
-      remaining: reservation.remaining,
+      remaining: preparedUsage.remaining,
     });
     response.end();
   } catch (error) {

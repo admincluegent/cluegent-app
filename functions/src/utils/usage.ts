@@ -546,9 +546,7 @@ function materializeUsageBaseline(raw?: UsageBaseline | null): UsageBaseline | n
 export function isFreeTrialExhausted(status: ReturnType<typeof buildPlanStatus>) {
   return (
     status.plan === "free" &&
-    (status.remaining.prompts <= 0 ||
-      status.remaining.screenshots <= 0 ||
-      status.remaining.sttSeconds <= 0)
+    status.remaining.sttSeconds <= 0
   );
 }
 

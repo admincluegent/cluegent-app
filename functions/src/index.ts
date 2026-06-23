@@ -61,6 +61,8 @@ const razorpayTestKeyId = defineSecret("RAZORPAY_TEST_KEY_ID");
 const razorpayTestKeySecret = defineSecret("RAZORPAY_TEST_KEY_SECRET");
 const razorpayTestWebhookSecret = defineSecret("RAZORPAY_TEST_WEBHOOK_SECRET");
 const razorpayTestAllowedEmails = defineSecret("RAZORPAY_TEST_ALLOWED_EMAILS");
+const razorpayTestPlanPlusMonthly = defineSecret("RAZORPAY_TEST_PLAN_PLUS_MONTHLY");
+const razorpayTestPlanPlusYearly = defineSecret("RAZORPAY_TEST_PLAN_PLUS_YEARLY");
 const razorpayTestPlanProMonthly = defineSecret("RAZORPAY_TEST_PLAN_PRO_MONTHLY");
 const razorpayTestPlanProYearly = defineSecret("RAZORPAY_TEST_PLAN_PRO_YEARLY");
 const razorpayTestPlanPowerMonthly = defineSecret("RAZORPAY_TEST_PLAN_POWER_MONTHLY");
@@ -110,6 +112,8 @@ export const createRazorpayTestSubscription = onCall(
       razorpayTestKeyId,
       razorpayTestKeySecret,
       razorpayTestAllowedEmails,
+      razorpayTestPlanPlusMonthly,
+      razorpayTestPlanPlusYearly,
       razorpayTestPlanProMonthly,
       razorpayTestPlanProYearly,
       razorpayTestPlanPowerMonthly,
@@ -122,6 +126,8 @@ export const createRazorpayTestSubscription = onCall(
       keySecret: razorpayTestKeySecret.value(),
       allowedEmails: razorpayTestAllowedEmails.value(),
       plans: {
+        plusMonthly: razorpayTestPlanPlusMonthly.value(),
+        plusYearly: razorpayTestPlanPlusYearly.value(),
         proMonthly: razorpayTestPlanProMonthly.value(),
         proYearly: razorpayTestPlanProYearly.value(),
         powerMonthly: razorpayTestPlanPowerMonthly.value(),
@@ -224,7 +230,10 @@ export const cancelRazorpayLiveSubscription = onCall(
 );
 
 export const checkUsageBeforeAction = onCall(
-  callableOptions,
+  {
+    ...callableOptions,
+    maxInstances: 10,
+  },
   checkUsageBeforeActionController
 );
 
@@ -253,6 +262,8 @@ export const razorpayTestWebhook = onRequest(
     invoker: "public",
     secrets: [
       razorpayTestWebhookSecret,
+      razorpayTestPlanPlusMonthly,
+      razorpayTestPlanPlusYearly,
       razorpayTestPlanProMonthly,
       razorpayTestPlanProYearly,
       razorpayTestPlanPowerMonthly,
@@ -263,6 +274,8 @@ export const razorpayTestWebhook = onRequest(
     razorpayTestWebhookController(request, response, {
       webhookSecret: razorpayTestWebhookSecret.value(),
       plans: {
+        plusMonthly: razorpayTestPlanPlusMonthly.value(),
+        plusYearly: razorpayTestPlanPlusYearly.value(),
         proMonthly: razorpayTestPlanProMonthly.value(),
         proYearly: razorpayTestPlanProYearly.value(),
         powerMonthly: razorpayTestPlanPowerMonthly.value(),
@@ -285,6 +298,8 @@ export const razorpayLiveWebhook = onRequest(
       webhookSecret: razorpayLiveWebhookSecret.value(),
       plans: {
         inr: {
+          plusMonthly: "",
+          plusYearly: "",
           proMonthly: "",
           proYearly: "",
           powerMonthly: "",

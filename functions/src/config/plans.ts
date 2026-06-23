@@ -1,4 +1,4 @@
-export type PlanId = "free" | "livetest" | "pro" | "power";
+export type PlanId = "free" | "livetest" | "plus" | "pro" | "power";
 export type SubscriptionStatus =
   | "active"
   | "inactive"
@@ -22,9 +22,9 @@ export const PLAN_CONFIGS: Record<PlanId, PlanConfig> = {
   free: {
     id: "free",
     label: "Free",
-    sttSecondsLimit: 1800,
-    promptLimit: 20,
-    screenshotLimit: 20,
+    sttSecondsLimit: 720,
+    promptLimit: UNLIMITED_USAGE_LIMIT,
+    screenshotLimit: UNLIMITED_USAGE_LIMIT,
   },
   livetest: {
     id: "livetest",
@@ -33,12 +33,19 @@ export const PLAN_CONFIGS: Record<PlanId, PlanConfig> = {
     promptLimit: 200,
     screenshotLimit: 200,
   },
+  plus: {
+    id: "plus",
+    label: "Plus",
+    sttSecondsLimit: 36000,
+    promptLimit: 1000,
+    screenshotLimit: 1000,
+  },
   pro: {
     id: "pro",
     label: "Pro",
-    sttSecondsLimit: 108000,
-    promptLimit: 5000,
-    screenshotLimit: 2500,
+    sttSecondsLimit: UNLIMITED_USAGE_LIMIT,
+    promptLimit: UNLIMITED_USAGE_LIMIT,
+    screenshotLimit: UNLIMITED_USAGE_LIMIT,
   },
   power: {
     id: "power",

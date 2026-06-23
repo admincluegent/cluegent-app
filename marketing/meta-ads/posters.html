@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cluegent Meta Ad Posters</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --ink: #101522;
+        --muted: #617089;
+        --yellow: #ffbd05;
+        --green: #18b957;
+        --blue: #2d68f4;
+        --paper: #f7fbff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 40px;
+        background: #e8eef7;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 540px);
+        gap: 32px;
+      }
+
+      .poster {
+        position: relative;
+        width: 1080px;
+        height: 1350px;
+        overflow: hidden;
+        isolation: isolate;
+        background: var(--paper);
+        color: var(--ink);
+      }
+
+      .poster.preview {
+        transform: scale(0.5);
+        transform-origin: top left;
+        margin-right: -540px;
+        margin-bottom: -675px;
+      }
+
+      .poster::before,
+      .poster::after {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        pointer-events: none;
+      }
+
+      .brand {
+        position: absolute;
+        top: 58px;
+        left: 58px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        z-index: 3;
+      }
+
+      .brand img {
+        width: 70px;
+        height: 70px;
+        border-radius: 18px;
+      }
+
+      .brand span {
+        font-size: 43px;
+        font-weight: 900;
+        letter-spacing: 0;
+        color: var(--yellow);
+      }
+
+      .tag {
+        position: absolute;
+        top: 71px;
+        right: 58px;
+        padding: 14px 22px;
+        border: 1px solid rgba(16, 21, 34, 0.1);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.8);
+        color: #23304a;
+        font-size: 25px;
+        font-weight: 800;
+        box-shadow: 0 18px 50px rgba(46, 79, 130, 0.12);
+      }
+
+      .content {
+        position: absolute;
+        left: 58px;
+        right: 58px;
+        top: 168px;
+        z-index: 2;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 930px;
+        font-size: 112px;
+        line-height: 0.9;
+        letter-spacing: 0;
+        font-weight: 950;
+      }
+
+      .sub {
+        margin: 30px 0 0;
+        max-width: 820px;
+        color: #435068;
+        font-size: 39px;
+        line-height: 1.16;
+        font-weight: 740;
+      }
+
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 38px;
+        min-height: 86px;
+        padding: 0 42px;
+        border-radius: 999px;
+        background: var(--green);
+        color: white;
+        font-size: 33px;
+        font-weight: 950;
+        box-shadow: 0 26px 60px rgba(24, 185, 87, 0.32);
+      }
+
+      .proof-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 26px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 48px;
+        padding: 0 18px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(16, 21, 34, 0.1);
+        color: #26324a;
+        font-size: 22px;
+        font-weight: 820;
+        box-shadow: 0 14px 34px rgba(46, 79, 130, 0.11);
+      }
+
+      .mock-window {
+        position: absolute;
+        left: 58px;
+        right: 58px;
+        bottom: 70px;
+        height: 455px;
+        border-radius: 42px;
+        background:
+          linear-gradient(135deg, rgba(15, 20, 34, 0.96), rgba(38, 45, 68, 0.96)),
+          #111620;
+        box-shadow: 0 42px 100px rgba(23, 32, 55, 0.32);
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+      }
+
+      .traffic {
+        position: absolute;
+        top: 26px;
+        left: 32px;
+        display: flex;
+        gap: 12px;
+      }
+
+      .traffic i {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: block;
+      }
+
+      .traffic i:nth-child(1) {
+        background: #ff5f57;
+      }
+
+      .traffic i:nth-child(2) {
+        background: #febc2e;
+      }
+
+      .traffic i:nth-child(3) {
+        background: #28c840;
+      }
+
+      .search {
+        position: absolute;
+        top: 18px;
+        left: 235px;
+        right: 235px;
+        height: 36px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .answer-card {
+        position: absolute;
+        left: 50px;
+        right: 50px;
+        top: 92px;
+        padding: 38px;
+        border-radius: 32px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .question-chip {
+        display: inline-flex;
+        padding: 14px 20px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #5fa3ff, #285ff0);
+        color: white;
+        font-size: 24px;
+        font-weight: 900;
+      }
+
+      .answer-card p {
+        margin: 26px 0 0;
+        color: #f8fbff;
+        font-size: 32px;
+        line-height: 1.22;
+        font-weight: 760;
+      }
+
+      .quick-actions {
+        position: absolute;
+        left: 88px;
+        right: 88px;
+        bottom: 38px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+
+      .quick-actions span {
+        height: 56px;
+        display: grid;
+        place-items: center;
+        border-radius: 999px;
+        color: rgba(255, 255, 255, 0.9);
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        font-size: 20px;
+        font-weight: 850;
+      }
+
+      .photo-frame {
+        position: absolute;
+        left: 58px;
+        right: 58px;
+        bottom: 78px;
+        height: 610px;
+        border-radius: 44px;
+        overflow: hidden;
+        box-shadow: 0 42px 95px rgba(34, 45, 72, 0.28);
+        background: #dde8f7;
+        border: 10px solid rgba(255, 255, 255, 0.7);
+      }
+
+      .photo-frame img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .gradient-a {
+        background: #f5fbff;
+      }
+
+      .gradient-a::before {
+        width: 920px;
+        height: 920px;
+        top: -330px;
+        right: -360px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(45, 104, 244, 0.22), transparent 68%);
+      }
+
+      .gradient-a::after {
+        width: 700px;
+        height: 700px;
+        bottom: -300px;
+        left: -280px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 189, 5, 0.26), transparent 70%);
+      }
+
+      .dark {
+        background: #0f1320;
+        color: white;
+      }
+
+      .dark::before {
+        inset: 0;
+        background:
+          linear-gradient(135deg, rgba(24, 185, 87, 0.32), transparent 36%),
+          radial-gradient(circle at 80% 18%, rgba(45, 104, 244, 0.46), transparent 36%),
+          radial-gradient(circle at 72% 86%, rgba(255, 189, 5, 0.2), transparent 34%);
+      }
+
+      .dark .tag,
+      .dark .pill {
+        background: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.92);
+        border-color: rgba(255, 255, 255, 0.13);
+      }
+
+      .dark .sub {
+        color: rgba(255, 255, 255, 0.76);
+      }
+
+      .phone-call {
+        position: absolute;
+        left: 82px;
+        right: 82px;
+        bottom: 76px;
+        height: 525px;
+        border-radius: 52px;
+        padding: 34px;
+        background: rgba(255, 255, 255, 0.09);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        box-shadow: 0 50px 110px rgba(0, 0, 0, 0.34);
+      }
+
+      .call-grid {
+        display: grid;
+        height: 100%;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 18px;
+      }
+
+      .person {
+        position: relative;
+        border-radius: 30px;
+        background:
+          linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04)),
+          #182131;
+        overflow: hidden;
+      }
+
+      .person::before {
+        content: "";
+        position: absolute;
+        width: 92px;
+        height: 92px;
+        left: 50%;
+        top: 38%;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        background: linear-gradient(135deg, #d8e4ff, #8191ae);
+      }
+
+      .person::after {
+        content: "";
+        position: absolute;
+        width: 140px;
+        height: 58px;
+        left: 50%;
+        top: 68%;
+        transform: translate(-50%, -50%);
+        border-radius: 999px 999px 24px 24px;
+        background: linear-gradient(135deg, #d8e4ff, #7588a8);
+      }
+
+      .overlay-mini {
+        position: absolute;
+        left: 54px;
+        right: 54px;
+        bottom: 54px;
+        padding: 26px;
+        border-radius: 30px;
+        background: rgba(8, 11, 20, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 30px 70px rgba(0, 0, 0, 0.35);
+      }
+
+      .overlay-mini strong {
+        display: block;
+        color: white;
+        font-size: 31px;
+        line-height: 1.1;
+      }
+
+      .overlay-mini span {
+        display: block;
+        margin-top: 10px;
+        color: rgba(255, 255, 255, 0.66);
+        font-size: 22px;
+        font-weight: 750;
+      }
+
+      .custom-stack {
+        position: absolute;
+        left: 58px;
+        right: 58px;
+        bottom: 82px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .setting-card {
+        display: grid;
+        grid-template-columns: 90px 1fr auto;
+        gap: 24px;
+        align-items: center;
+        padding: 28px 30px;
+        border-radius: 34px;
+        background: rgba(255, 255, 255, 0.84);
+        border: 1px solid rgba(16, 21, 34, 0.1);
+        box-shadow: 0 22px 54px rgba(46, 79, 130, 0.14);
+      }
+
+      .icon-bubble {
+        width: 90px;
+        height: 90px;
+        display: grid;
+        place-items: center;
+        border-radius: 28px;
+        color: white;
+        background: linear-gradient(135deg, var(--blue), #75aaff);
+        font-size: 38px;
+        font-weight: 900;
+      }
+
+      .setting-card h2 {
+        margin: 0;
+        color: #111827;
+        font-size: 32px;
+        line-height: 1.05;
+      }
+
+      .setting-card p {
+        margin: 8px 0 0;
+        color: #62708a;
+        font-size: 22px;
+        line-height: 1.15;
+        font-weight: 720;
+      }
+
+      .toggle {
+        width: 80px;
+        height: 44px;
+        padding: 5px;
+        border-radius: 999px;
+        background: #15b859;
+      }
+
+      .toggle::before {
+        content: "";
+        display: block;
+        width: 34px;
+        height: 34px;
+        margin-left: auto;
+        border-radius: 50%;
+        background: white;
+      }
+
+      .code-panel {
+        position: absolute;
+        left: 58px;
+        right: 58px;
+        bottom: 76px;
+        height: 560px;
+        border-radius: 44px;
+        overflow: hidden;
+        background: #101522;
+        box-shadow: 0 42px 100px rgba(23, 32, 55, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+      }
+
+      .code-head {
+        height: 76px;
+        padding: 0 34px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.74);
+        font-size: 21px;
+        font-weight: 850;
+      }
+
+      .code-lines {
+        position: absolute;
+        left: 34px;
+        right: 34px;
+        top: 108px;
+        color: #d7e5ff;
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 25px;
+        line-height: 1.85;
+      }
+
+      .code-lines b {
+        color: #83f5a9;
+      }
+
+      .code-answer {
+        position: absolute;
+        left: 34px;
+        right: 34px;
+        bottom: 34px;
+        padding: 28px;
+        border-radius: 30px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: white;
+      }
+
+      .code-answer h2 {
+        margin: 0;
+        font-size: 27px;
+      }
+
+      .code-answer p {
+        margin: 12px 0 0;
+        font-size: 22px;
+        line-height: 1.24;
+        color: rgba(255, 255, 255, 0.73);
+        font-weight: 700;
+      }
+
+      .footer-note {
+        position: absolute;
+        left: 58px;
+        right: 58px;
+        bottom: 24px;
+        color: rgba(16, 21, 34, 0.48);
+        font-size: 18px;
+        line-height: 1.25;
+        font-weight: 650;
+        text-align: center;
+      }
+
+      .dark .footer-note {
+        color: rgba(255, 255, 255, 0.46);
+      }
+
+      .poster-one h1 {
+        font-size: 118px;
+        max-width: 900px;
+      }
+
+      .poster-one .content {
+        top: 178px;
+      }
+
+      .poster-two h1 {
+        max-width: 940px;
+        font-size: 105px;
+      }
+
+      .poster-two .sub {
+        max-width: 850px;
+      }
+
+      .poster-two .photo-frame {
+        bottom: 76px;
+        height: 560px;
+      }
+
+      .poster-three h1 {
+        font-size: 100px;
+        max-width: 980px;
+      }
+
+      .poster-three .content {
+        top: 176px;
+      }
+
+      .poster-four h1 {
+        font-size: 112px;
+        max-width: 930px;
+      }
+
+      .poster-four .code-panel {
+        height: 460px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="grid">
+      <section class="poster preview poster-one gradient-a" data-name="01-interview-freeze">
+        <div class="brand">
+          <img src="../../website/assets/icon.png" alt="" />
+          <span>Cluegent</span>
+        </div>
+        <div class="tag">AI Interview Assistant</div>
+        <div class="content">
+          <h1>Interview tomorrow?</h1>
+          <p class="sub">Get real-time answer help, coding support, and screen-aware context during live calls.</p>
+          <div class="cta">Try for free</div>
+          <div class="proof-row">
+            <span class="pill">Zoom</span>
+            <span class="pill">Google Meet</span>
+            <span class="pill">Microsoft Teams</span>
+          </div>
+        </div>
+        <div class="mock-window">
+          <div class="traffic"><i></i><i></i><i></i></div>
+          <div class="search"></div>
+          <div class="answer-card">
+            <span class="question-chip">What should I answer?</span>
+            <p>Start with the tradeoff, give one example, then end with a confident next step.</p>
+          </div>
+          <div class="quick-actions">
+            <span>Answer shortly</span>
+            <span>Give example</span>
+            <span>Ask follow-up</span>
+          </div>
+        </div>
+        <p class="footer-note">Use responsibly and follow interview, employer, and platform rules.</p>
+      </section>
+
+      <section class="poster preview poster-two dark" data-name="02-private-overlay">
+        <div class="brand">
+          <img src="../../website/assets/icon.png" alt="" />
+          <span>Cluegent</span>
+        </div>
+        <div class="tag">Private Overlay</div>
+        <div class="content">
+          <h1>Visible to you. Private on calls.</h1>
+          <p class="sub">A Windows desktop overlay designed to stay out of standard screen sharing.</p>
+          <div class="cta">Try for free</div>
+          <div class="proof-row">
+            <span class="pill">Live answers</span>
+            <span class="pill">Screenshot context</span>
+          </div>
+        </div>
+        <div class="photo-frame">
+          <img src="../../website/assets/privacy-controls-showcase.png" alt="" />
+        </div>
+        <p class="footer-note">Privacy behavior can vary by app, device, and permissions. Test before important calls.</p>
+      </section>
+
+      <section class="poster preview poster-three gradient-a" data-name="03-customizable-context">
+        <div class="brand">
+          <img src="../../website/assets/icon.png" alt="" />
+          <span>Cluegent</span>
+        </div>
+        <div class="tag">Customize Your Copilot</div>
+        <div class="content">
+          <h1>Make AI answer like it knows you.</h1>
+          <p class="sub">Add your resume for context and choose how Cluegent responds: listening, screen, or typed prompts.</p>
+          <div class="cta">Try for free</div>
+        </div>
+        <div class="custom-stack">
+          <div class="setting-card">
+            <div class="icon-bubble">CV</div>
+            <div>
+              <h2>Resume context</h2>
+              <p>Upload your resume in Settings → Customize.</p>
+            </div>
+            <div class="toggle"></div>
+          </div>
+          <div class="setting-card">
+            <div class="icon-bubble">3</div>
+            <div>
+              <h2>Response modes</h2>
+              <p>Listening, screen-aware, or typed answer style.</p>
+            </div>
+            <div class="toggle"></div>
+          </div>
+          <div class="setting-card">
+            <div class="icon-bubble">⚡</div>
+            <div>
+              <h2>Quick actions</h2>
+              <p>Ask for examples, shorter answers, or next questions.</p>
+            </div>
+            <div class="toggle"></div>
+          </div>
+        </div>
+        <p class="footer-note">Use responsibly and follow interview, employer, and platform rules.</p>
+      </section>
+
+      <section class="poster preview poster-four dark" data-name="04-coding-interview">
+        <div class="brand">
+          <img src="../../website/assets/icon.png" alt="" />
+          <span>Cluegent</span>
+        </div>
+        <div class="tag">Coding Interviews</div>
+        <div class="content">
+          <h1>Stuck on a coding question?</h1>
+          <p class="sub">Cluegent helps you explain tradeoffs, reason through bugs, and answer clearly in real time.</p>
+          <div class="cta">Try for free</div>
+          <div class="proof-row">
+            <span class="pill">Code help</span>
+            <span class="pill">Screen context</span>
+            <span class="pill">Clear explanations</span>
+          </div>
+        </div>
+        <div class="code-panel">
+          <div class="code-head">
+            <span>live-interview.js</span>
+            <span>Cluegent context active</span>
+          </div>
+          <div class="code-lines">
+            <div><b>function</b> twoSum(nums, target) {</div>
+            <div>&nbsp;&nbsp;const seen = new Map();</div>
+            <div>&nbsp;&nbsp;// explain time + space</div>
+            <div>}</div>
+          </div>
+          <div class="code-answer">
+            <h2>Suggested answer</h2>
+            <p>Use a hash map for O(n) time. Mention the tradeoff: extra memory for faster lookup.</p>
+          </div>
+        </div>
+        <p class="footer-note">Use responsibly and follow interview, employer, and platform rules.</p>
+      </section>
+    </main>
+  </body>
+</html>

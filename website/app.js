@@ -90,6 +90,50 @@ document.querySelectorAll("[data-video-play]").forEach((button) => {
   });
 });
 
+document.querySelectorAll("[data-workflow-tabs]").forEach((tabsRoot) => {
+  const tabs = Array.from(tabsRoot.querySelectorAll("[data-workflow-tab]"));
+  const panels = Array.from(tabsRoot.querySelectorAll("[data-workflow-panel]"));
+
+  const activateTab = (activeTab, shouldFocus = false) => {
+    const activeKey = activeTab.getAttribute("data-workflow-tab");
+
+    tabs.forEach((tab) => {
+      const isActive = tab === activeTab;
+      tab.classList.toggle("is-active", isActive);
+      tab.setAttribute("aria-selected", String(isActive));
+      tab.setAttribute("tabindex", isActive ? "0" : "-1");
+    });
+
+    panels.forEach((panel) => {
+      const isActive = panel.getAttribute("data-workflow-panel") === activeKey;
+      panel.classList.toggle("is-active", isActive);
+      panel.hidden = !isActive;
+    });
+
+    if (shouldFocus) {
+      activeTab.focus();
+    }
+  };
+
+  tabs.forEach((tab, index) => {
+    tab.addEventListener("click", () => activateTab(tab));
+    tab.addEventListener("keydown", (event) => {
+      const isNext = event.key === "ArrowRight" || event.key === "ArrowDown";
+      const isPrevious = event.key === "ArrowLeft" || event.key === "ArrowUp";
+      if (!isNext && !isPrevious && event.key !== "Home" && event.key !== "End") return;
+
+      event.preventDefault();
+      let nextIndex = index;
+      if (isNext) nextIndex = (index + 1) % tabs.length;
+      if (isPrevious) nextIndex = (index - 1 + tabs.length) % tabs.length;
+      if (event.key === "Home") nextIndex = 0;
+      if (event.key === "End") nextIndex = tabs.length - 1;
+
+      activateTab(tabs[nextIndex], true);
+    });
+  });
+});
+
 const observer = new IntersectionObserver(
   (entries) => {
     entries.forEach((entry) => {

@@ -6,7 +6,7 @@
     <title>Cluegent - AI Interview Assistant & Private Meeting Copilot</title>
     <meta
       name="description"
-      content="Cluegent is a private AI interview assistant for real-time answers, coding help, screenshot-aware support, Zoom, Meet, Teams, and Windows desktop workflows."
+      content="Cluegent is a free AI interview assistant and interview copilot for Windows. Get real-time answers, screenshot coding help, resume-aware context, and a private overlay for Zoom, Meet, and Teams."
     />
     <meta name="author" content="Cluegent" />
     <link rel="canonical" href="https://www.cluegent.com/" />
@@ -29,7 +29,7 @@
       content="Private AI interview assistant for real-time answers, coding help, screenshot-aware support, and desktop meeting workflows."
     />
     <meta name="twitter:image" content="https://www.cluegent.com/assets/how-to-use-01.png" />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#0F172A" />
     <link rel="icon" type="image/png" href="/assets/icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -37,7 +37,7 @@
       href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500;600&family=Geist:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/styles.css?v=20260607-header-downloads" />
+    <link rel="stylesheet" href="/styles.css?v=20260623-pricing-offer" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -85,7 +85,7 @@
             "name": "What is Cluegent?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Cluegent is a desktop AI assistant for permitted interviews and meetings. It listens when you ask it to, keeps rolling context, and gives real-time answers through a private overlay."
+              "text": "Cluegent is a desktop AI interview assistant and meeting copilot for permitted live calls. It listens when you ask it to, keeps rolling context, and gives real-time answers through a private overlay."
             }
           },
           {
@@ -103,9 +103,40 @@
               "@type": "Answer",
               "text": "Cluegent is designed for desktop calls and screen workflows, including Google Meet, Zoom, Microsoft Teams, Slack Huddles, browser tabs, coding editors, and documents."
             }
+          },
+          {
+            "@type": "Question",
+            "name": "Does Cluegent work for coding interviews?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Cluegent can use screenshot context for visible coding problems, errors, and shared screens, then help explain approaches, tradeoffs, and next steps."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can Cluegent use my resume for interview answers?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. In Settings, the Customize section lets you add resume context so Cluegent can use your projects, skills, and experience when shaping answers."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Will Cluegent show during screen sharing?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Cluegent includes a private overlay mode designed to stay out of standard screen sharing. Behavior can vary by app, operating system, and permissions, so users should test their setup and follow all applicable rules."
+            }
           }
         ]
       }
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CCH0Y2SN4G"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag("js", new Date());
+      gtag("config", "G-CCH0Y2SN4G");
     </script>
   </head>
   <body>
@@ -193,120 +224,125 @@
             <div class="hero-grid"></div>
           </div>
 
-          <div class="hero-copy reveal">
-            <h1>
-              <span>Undetectable AI Interview Assistant</span>
-            </h1>
-            <div class="hero-screen-line">Invisible During Screen Sharing for Live Calls</div>
-            <p class="hero-subtitle">
-              Cluegent gives real-time interview answers, coding help, screenshot-aware context, and meeting support
-              <span>from a private Windows desktop overlay for Zoom, Meet, Teams, and technical calls.</span>
-            </p>
-            <div class="hero-actions" id="download-cluegent">
-              <a class="primary-download primary-download--free" href="#hero">
-                <span>Try for free</span>
-                <span class="hero-arrow" aria-hidden="true">→</span>
-              </a>
-              <div class="download-menu" data-download-menu>
-                <button
-                  class="secondary-download secondary-download--mac"
-                  type="button"
-                  aria-haspopup="menu"
-                  aria-expanded="false"
-                  aria-controls="macos-download-options"
-                  data-download-trigger
-                >
-                  <span class="mac-glyph" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" role="presentation">
-                      <path fill="currentColor" d="M17.1 12.7c0-2 1.7-3 1.8-3.1-1-1.4-2.5-1.6-3-1.6-1.3-.1-2.4.7-3.1.7-.6 0-1.6-.7-2.7-.7-1.4 0-2.7.8-3.4 2.1-1.5 2.6-.4 6.5 1.1 8.6.7 1 1.6 2.2 2.7 2.1 1.1 0 1.5-.7 2.8-.7s1.7.7 2.9.7 1.9-1 2.6-2.1c.8-1.2 1.1-2.3 1.1-2.4 0-.1-2.8-1.1-2.8-3.6ZM15 6.6c.6-.7 1-1.7.9-2.6-.9 0-1.9.6-2.5 1.3-.6.7-1 1.6-.9 2.6 1 0 1.9-.5 2.5-1.3Z"/>
-                    </svg>
-                  </span>
-                  <span>Get for macOS</span>
-                  <span class="download-chevron" aria-hidden="true">
-                    <svg viewBox="0 0 16 16" role="presentation">
-                      <path d="M4 6 8 10l4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </span>
-                </button>
-                <div class="download-options" id="macos-download-options" role="menu" data-download-options hidden>
-                  <p>Choose your Mac chip</p>
-                  <a
-                    class="download-option download-option--apple"
-                    href="https://github.com/admincluegent/cluegent-app/releases/download/v1.0.5/Cluegent-1.0.5-arm64-mac.zip"
-                    role="menuitem"
-                    target="_blank"
-                    rel="noreferrer"
+          <div class="hero-content">
+            <div class="hero-copy reveal">
+              <p class="trust-line">Free AI interview assistant for Windows</p>
+              <h1>
+                <span>Undetectable AI</span>
+                <span>Interview Assistant</span>
+              </h1>
+              <div class="hero-screen-line">Invisible During Screen Sharing for Live Calls</div>
+              <p class="hero-subtitle">
+                Cluegent gives real-time interview answers, coding help, screenshot-aware context, and meeting support
+                <span>from a private Windows desktop overlay for Zoom, Meet, Teams, and technical calls.</span>
+              </p>
+              <div class="hero-actions" id="download-cluegent">
+                <a class="primary-download primary-download--free" href="https://apps.microsoft.com/detail/9NXWZPN07THN" target="_blank" rel="noreferrer">
+                  <span>Try for free</span>
+                  <span class="hero-arrow" aria-hidden="true">→</span>
+                </a>
+                <div class="download-menu" data-download-menu>
+                  <button
+                    class="secondary-download secondary-download--mac"
+                    type="button"
+                    aria-haspopup="menu"
+                    aria-expanded="false"
+                    aria-controls="macos-download-options"
+                    data-download-trigger
                   >
-                    <strong>Apple Silicon Mac</strong>
-                    <span>M1, M2, M3, M4, M5</span>
-                  </a>
-                  <a
-                    class="download-option download-option--intel"
-                    href="https://github.com/admincluegent/cluegent-app/releases/download/v1.0.5/Cluegent-1.0.5-mac.zip"
-                    role="menuitem"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <strong>Intel Mac</strong>
-                    <span>Older Macs with Intel processor</span>
-                  </a>
+                    <span class="mac-glyph" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" role="presentation">
+                        <path fill="currentColor" d="M17.1 12.7c0-2 1.7-3 1.8-3.1-1-1.4-2.5-1.6-3-1.6-1.3-.1-2.4.7-3.1.7-.6 0-1.6-.7-2.7-.7-1.4 0-2.7.8-3.4 2.1-1.5 2.6-.4 6.5 1.1 8.6.7 1 1.6 2.2 2.7 2.1 1.1 0 1.5-.7 2.8-.7s1.7.7 2.9.7 1.9-1 2.6-2.1c.8-1.2 1.1-2.3 1.1-2.4 0-.1-2.8-1.1-2.8-3.6ZM15 6.6c.6-.7 1-1.7.9-2.6-.9 0-1.9.6-2.5 1.3-.6.7-1 1.6-.9 2.6 1 0 1.9-.5 2.5-1.3Z"/>
+                      </svg>
+                    </span>
+                    <span>Get for macOS</span>
+                    <span class="download-chevron" aria-hidden="true">
+                      <svg viewBox="0 0 16 16" role="presentation">
+                        <path d="M4 6 8 10l4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </span>
+                  </button>
+                  <div class="download-options" id="macos-download-options" role="menu" data-download-options hidden>
+                    <p>Choose your Mac chip</p>
+                    <a
+                      class="download-option download-option--apple"
+                      href="https://github.com/admincluegent/cluegent-app/releases/download/v1.0.5/Cluegent-1.0.5-arm64-mac.zip"
+                      role="menuitem"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <strong>Apple Silicon Mac</strong>
+                      <span>M1, M2, M3, M4, M5</span>
+                    </a>
+                    <a
+                      class="download-option download-option--intel"
+                      href="https://github.com/admincluegent/cluegent-app/releases/download/v1.0.5/Cluegent-1.0.5-mac.zip"
+                      role="menuitem"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <strong>Intel Mac</strong>
+                      <span>Older Macs with Intel processor</span>
+                    </a>
+                  </div>
                 </div>
-              </div>
-              <a class="secondary-download" href="https://apps.microsoft.com/detail/9NXWZPN07THN">
-                <span class="windows-glyph" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" role="presentation">
-                    <path d="M2 3.6 10.2 2v9H2V3.6Zm9.8-1.8L22 0v11h-10.2V1.8ZM2 12.9h8.2v9L2 20.3v-7.4Zm9.8 0H22v11l-10.2-1.8v-9.2Z" fill="currentColor"/>
-                  </svg>
-                </span>
-                <span>Get for Windows</span>
-              </a>
-            </div>
-          </div>
-
-          <div class="hero-preview reveal" id="preview">
-            <div class="preview-glow"></div>
-            <div class="desktop-preview">
-              <div class="desktop-topbar">
-                <span class="tiny-logo"><img src="/assets/icon.png" alt="" /></span>
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-
-              <div class="desktop-scene">
-                <div class="demo-video-frame">
-                  <video
-                    class="demo-video"
-                    src="/assets/demo_video.mp4"
-                    autoplay
-                    muted
-                    playsinline
-                    preload="metadata"
-                    aria-label="Cluegent desktop app demo"
-                  ></video>
-                  <div class="static-app-overlay" aria-hidden="true">
-                    <div class="static-top-pill">
-                      <span class="static-logo"><img src="/assets/icon.png" alt="" /></span>
-                      <span class="static-listen-dot"></span>
-                      <span>Start listening</span>
-                      <button type="button">Hide</button>
-                      <span class="static-stop"></span>
+                <div class="hero-platform-row">
+                  <a class="secondary-download" href="https://apps.microsoft.com/detail/9NXWZPN07THN">
+                    <span class="windows-glyph" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" role="presentation">
+                        <path d="M2 3.6 10.2 2v9H2V3.6Zm9.8-1.8L22 0v11h-10.2V1.8ZM2 12.9h8.2v9L2 20.3v-7.4Zm9.8 0H22v11l-10.2-1.8v-9.2Z" fill="currentColor"/>
+                      </svg>
+                    </span>
+                    <span>Get for Windows</span>
+                  </a>
+                  <div class="hero-proof" aria-label="Cluegent user rating">
+                    <div class="hero-proof-avatars" aria-hidden="true">
+                      <img class="hero-proof-avatar" src="/assets/review-avatar-1.png" alt="" />
+                      <img class="hero-proof-avatar" src="/assets/review-avatar-2.png" alt="" />
+                      <img class="hero-proof-avatar" src="/assets/review-avatar-3.png" alt="" />
                     </div>
-                    <div class="static-answer-card">
-                      <div class="static-user-bubble">What should I answer?</div>
-                      <p>
-                        Explain the tradeoff clearly, then give one practical next step.
-                      </p>
-                      <div class="static-actions">
-                        <span>Ask next question</span>
-                        <span>Give example</span>
-                        <span>Answer shortly</span>
+                    <div class="hero-proof-copy">
+                      <p>Used by <strong>4,000+</strong> people</p>
+                      <div class="hero-proof-rating">
+                        <span class="hero-proof-stars" aria-hidden="true">★★★★★</span>
+                        <strong>4.7</strong>
+                        <span>star rating reviews</span>
                       </div>
-                      <div class="static-prompt">Ask anything... <kbd data-shortcut-mod>Ctrl</kbd><kbd>Enter</kbd></div>
                     </div>
                   </div>
                 </div>
               </div>
+              <div class="hero-trust-bar" aria-label="Cluegent trust signals">
+                <span>Resume-aware answers</span>
+                <span>Screenshot coding help</span>
+                <span>Zoom · Meet · Teams</span>
+              </div>
+            </div>
+
+            <div class="hero-preview reveal" id="preview">
+              <div class="preview-glow"></div>
+              <div class="desktop-preview">
+                <div class="desktop-topbar">
+                  <span class="window-dot window-dot--red"></span>
+                  <span class="window-dot window-dot--yellow"></span>
+                  <span class="window-dot window-dot--green"></span>
+                </div>
+
+                <div class="desktop-scene">
+                  <div class="demo-video-frame">
+                    <video
+                      class="demo-video"
+                      src="/assets/cluegent-how-to-full.mp4"
+                      controls
+                      playsinline
+                      poster="/assets/how-to-use-01.png"
+                      preload="none"
+                      aria-label="Cluegent walkthrough video"
+                    ></video>
+                  </div>
+                </div>
+              </div>
+              <p class="hero-video-note">Play walkthrough</p>
             </div>
           </div>
 
@@ -391,6 +427,54 @@
                 <p>Use the answer in your editor, keep the assistant movable, and continue without breaking focus.</p>
               </div>
             </article>
+          </div>
+        </section>
+
+        <section class="company-marquee-section" aria-labelledby="company-marquee-title">
+          <div class="company-marquee-copy reveal">
+            <p id="company-marquee-title">Used for 10,000+ interviews</p>
+          </div>
+          <div class="company-marquee reveal" aria-label="Companies candidates prepare for with Cluegent">
+            <div class="company-marquee-track">
+              <span class="company-logo company-logo--tcs">TCS</span>
+              <span class="company-logo company-logo--infosys">Infosys</span>
+              <span class="company-logo company-logo--wipro">Wipro</span>
+              <span class="company-logo company-logo--hcl">HCLTech</span>
+              <span class="company-logo company-logo--zoho">Zoho</span>
+              <span class="company-logo company-logo--flipkart">Flipkart</span>
+              <span class="company-logo company-logo--razorpay">Razorpay</span>
+              <span class="company-logo company-logo--reliance">Reliance</span>
+              <span class="company-logo company-logo--google">Google</span>
+              <span class="company-logo company-logo--microsoft">Microsoft</span>
+              <span class="company-logo company-logo--amazon">Amazon</span>
+              <span class="company-logo company-logo--meta">Meta</span>
+              <span class="company-logo company-logo--ibm">IBM</span>
+              <span class="company-logo company-logo--linkedin">LinkedIn</span>
+              <span class="company-logo company-logo--paypal">PayPal</span>
+              <span class="company-logo company-logo--netflix">NETFLIX</span>
+              <span class="company-logo company-logo--adobe">Adobe</span>
+              <span class="company-logo company-logo--salesforce">Salesforce</span>
+            </div>
+            <div class="company-marquee-track" aria-hidden="true">
+              <span class="company-logo company-logo--tcs">TCS</span>
+              <span class="company-logo company-logo--infosys">Infosys</span>
+              <span class="company-logo company-logo--wipro">Wipro</span>
+              <span class="company-logo company-logo--hcl">HCLTech</span>
+              <span class="company-logo company-logo--zoho">Zoho</span>
+              <span class="company-logo company-logo--flipkart">Flipkart</span>
+              <span class="company-logo company-logo--razorpay">Razorpay</span>
+              <span class="company-logo company-logo--reliance">Reliance</span>
+              <span class="company-logo company-logo--google">Google</span>
+              <span class="company-logo company-logo--microsoft">Microsoft</span>
+              <span class="company-logo company-logo--amazon">Amazon</span>
+              <span class="company-logo company-logo--meta">Meta</span>
+              <span class="company-logo company-logo--ibm">IBM</span>
+              <span class="company-logo company-logo--linkedin">LinkedIn</span>
+              <span class="company-logo company-logo--paypal">PayPal</span>
+              <span class="company-logo company-logo--netflix">NETFLIX</span>
+              <span class="company-logo company-logo--adobe">Adobe</span>
+              <span class="company-logo company-logo--salesforce">Salesforce</span>
+            </div>
           </div>
         </section>
 
@@ -527,305 +611,233 @@
           </div>
         </section>
 
-        <section class="section features-section" id="features">
+        <section class="section features-section workflow-tabs-section" id="features">
           <div class="section-heading reveal">
-            <h2>How Cluegent works during interviews and meetings</h2>
-            <p>Fast answers, coding support, clear notes, and context that follows the conversation.</p>
-          </div>
-
-          <div class="feature-grid">
-            <article class="feature-card feature-card--answer reveal">
-              <span class="card-number">01</span>
-              <h3>Cluegent interface operations</h3>
-              <p>
-                Start listening, use quick actions, and submit only when you want Cluegent to answer.
-              </p>
-              <div class="walkthrough-card walkthrough-card--interface" data-demo="interface">
-                <div class="walkthrough-stage">
-                  <div class="walkthrough-top-pill">
-                    <span class="walkthrough-top-logo"><img src="/assets/icon.png" alt="" /></span>
-                    <button class="walkthrough-listen-button" type="button" data-interface-listen>
-                      <span class="walkthrough-live-dot"></span>
-                      Start listening
-                    </button>
-                    <button class="walkthrough-hide-button" type="button">Hide</button>
-                    <button class="walkthrough-icon-button" type="button" aria-label="Options">
-                      <span class="walkthrough-sliders"></span>
-                    </button>
-                    <button class="walkthrough-icon-button" type="button" aria-label="Stop">
-                      <span class="walkthrough-stop-square"></span>
-                    </button>
-                  </div>
-
-                  <div class="walkthrough-overlay" data-interface-overlay>
-                    <div class="walkthrough-transcript" data-demo-transcript>
-                      ...compare ScrollView and FlatList, then explain useEffect clearly
-                    </div>
-
-                    <div class="walkthrough-actions">
-                      <span data-demo-action>Ask next question</span>
-                      <span data-demo-action>Give Example</span>
-                      <span data-demo-action>Brainstorm</span>
-                      <span data-demo-action>Mic</span>
-                    </div>
-
-                    <div class="walkthrough-response">
-                      <small>Cluegent response</small>
-                      <p data-demo-response>Listening begins only when you press Start listening.</p>
-                    </div>
-
-                    <div class="walkthrough-prompt-row">
-                      <div class="walkthrough-prompt">
-                        Ask anything... <span data-shortcut="Enter">Ctrl + Enter</span> to submit
-                      </div>
-                      <button class="walkthrough-send-button" type="button" aria-label="Send">
-                        →
-                      </button>
-                    </div>
-                  </div>
-
-                  <div class="walkthrough-step-pill" data-demo-step-label>
-                    Start listening
-                  </div>
-
-                  <div class="walkthrough-cursor" data-demo-cursor>
-                    <span class="walkthrough-cursor-dot"></span>
-                    <span class="walkthrough-cursor-arrow">↖</span>
-                  </div>
-                </div>
-              </div>
-            </article>
-
-            <article class="feature-card feature-card--models reveal">
-              <span class="card-number">02</span>
-              <h3>Screenshot response</h3>
-              <p>
-                Capture a screen, attach it, and get a direct answer for visible questions, code, and errors.
-              </p>
-              <div class="walkthrough-card walkthrough-card--screenshot" data-demo="screenshot">
-                <div class="walkthrough-stage">
-                  <div class="walkthrough-top-pill">
-                    <span class="walkthrough-top-logo"><img src="/assets/icon.png" alt="" /></span>
-                    <button class="walkthrough-shot-button" type="button" data-screenshot-hotkey>
-                      <span class="walkthrough-live-dot"></span>
-                      Start listening
-                    </button>
-                    <button class="walkthrough-hide-button" type="button">Hide</button>
-                    <button class="walkthrough-icon-button" type="button" aria-label="Options">
-                      <span class="walkthrough-sliders"></span>
-                    </button>
-                    <button class="walkthrough-icon-button" type="button" aria-label="Stop">
-                      <span class="walkthrough-stop-square"></span>
-                    </button>
-                  </div>
-
-                  <div class="walkthrough-overlay walkthrough-overlay--screenshot">
-                    <div class="walkthrough-transcript" data-demo-screenshot-transcript>
-                      ...transcript hint: explain the visible React hook question clearly
-                    </div>
-
-                    <div class="walkthrough-actions">
-                      <span>Ask next question</span>
-                      <span>Give Example</span>
-                      <span>Brainstorm</span>
-                      <span>Mic</span>
-                    </div>
-
-                    <div class="walkthrough-shot-bubble" data-demo-shot-bubble>
-                      <div>Screenshot attached</div>
-                      <div class="walkthrough-shot-divider"></div>
-                    </div>
-
-                    <div class="walkthrough-response">
-                      <small>Cluegent response</small>
-                      <p data-demo-screenshot-response>
-                        Press <span data-shortcut="[">Ctrl + [</span> to attach the current screen from inside the same overlay.
-                      </p>
-                    </div>
-
-                    <div class="walkthrough-prompt-row">
-                      <div class="walkthrough-prompt">
-                        Ask anything... <span data-shortcut="[">Ctrl + [</span> for screenshot
-                      </div>
-                      <button class="walkthrough-send-button walkthrough-send-button--camera" type="button" aria-label="Screenshot">
-                        ◉
-                      </button>
-                    </div>
-                  </div>
-
-                  <div class="walkthrough-step-pill walkthrough-step-pill--amber" data-demo-screenshot-step>
-                    Capture screenshot with <span data-shortcut="[">Ctrl + [</span>
-                  </div>
-
-                  <div class="walkthrough-cursor" data-demo-screenshot-cursor>
-                    <span class="walkthrough-cursor-dot"></span>
-                    <span class="walkthrough-cursor-arrow">↖</span>
-                  </div>
-                </div>
-              </div>
-            </article>
-          </div>
-        </section>
-
-        <div class="feature-how-to-grid feature-how-to-grid--home">
-          <article class="feature-how-to-card reveal">
-            <img src="/assets/how-to-use-01.png" alt="Cluegent dashboard with Detectable toggle and Start Cluegent button" loading="lazy" />
-            <div>
-              <span>01</span>
-              <h3>Switch to Undetectable and start Cluegent</h3>
-              <p>Click the Detectable toggle to enable private overlay mode, then click Start Cluegent.</p>
-            </div>
-          </article>
-
-          <article class="feature-how-to-card reveal">
-            <img src="/assets/how-to-use-02.png" alt="Cluegent floating assistant opened on screen" loading="lazy" />
-            <div>
-              <span>02</span>
-              <h3>Move the assistant anywhere</h3>
-              <p>The floating bar can be positioned wherever it is comfortable while you continue using other apps.</p>
-            </div>
-          </article>
-
-          <article class="feature-how-to-card reveal">
-            <img src="/assets/how-to-use-03.png" alt="Listening mode with rolling transcript" loading="lazy" />
-            <div>
-              <span>03</span>
-              <h3>Use listening mode</h3>
-              <p>Click Start listening. Cluegent shows a rolling transcript as the conversation happens.</p>
-            </div>
-          </article>
-
-          <article class="feature-how-to-card reveal">
-            <img src="/assets/how-to-use-04.png" alt="AI response generated from the listening transcript" loading="lazy" />
-            <div>
-              <span>04</span>
-              <h3>Submit the live context</h3>
-              <p>Press <strong>Ctrl + Enter</strong> to get an AI response based on the transcript.</p>
-            </div>
-          </article>
-
-          <article class="feature-how-to-card reveal">
-            <img src="/assets/how-to-use-05.png" alt="Typed prompt inside Cluegent" loading="lazy" />
-            <div>
-              <span>05</span>
-              <h3>Ask with type mode</h3>
-              <p>Type your question directly in the input box, then submit with the arrow or Ctrl + Enter.</p>
-            </div>
-          </article>
-
-          <article class="feature-how-to-card reveal">
-            <img src="/assets/how-to-use-06.png" alt="Cluegent response for typed prompt" loading="lazy" />
-            <div>
-              <span>06</span>
-              <h3>Read the answer in place</h3>
-              <p>The response appears inside the same overlay, so you do not have to leave your workflow.</p>
-            </div>
-          </article>
-
-          <article class="feature-how-to-card reveal">
-            <img src="/assets/how-to-use-07.png" alt="Cluegent overlay above coding problem before screenshot capture" loading="lazy" />
-            <div>
-              <span>07</span>
-              <h3>Capture a screenshot</h3>
-              <p>Use <strong>Ctrl + [</strong> to attach the visible screen when you need help with code or visual context.</p>
-            </div>
-          </article>
-
-          <article class="feature-how-to-card reveal">
-            <img src="/assets/how-to-use-08.png" alt="Screenshot attached and AI coding solution shown" loading="lazy" />
-            <div>
-              <span>08</span>
-              <h3>Get a code solution</h3>
-              <p>Cluegent reads the screenshot, explains the approach, and gives a practical solution.</p>
-            </div>
-          </article>
-
-          <article class="feature-how-to-card reveal">
-            <img src="/assets/how-to-use-09.png" alt="Accepted coding result after applying Cluegent solution" loading="lazy" />
-            <div>
-              <span>09</span>
-              <h3>Apply and continue</h3>
-              <p>Use the answer in your editor, keep the assistant movable, and continue without breaking focus.</p>
-            </div>
-          </article>
-        </div>
-
-        <section class="section modes-section privacy-controls-section">
-          <div class="section-heading reveal">
-            <span class="eyebrow">Only visible to you & Invisible to others</span>
-            <!-- <h2>Only Visible to you</h2> -->
-          </div>
-
-          <div class="privacy-controls-showcase reveal">
-            <div class="privacy-controls-visual" aria-hidden="true">
-              <img src="/assets/privacy-controls-showcase.png" alt="" loading="lazy" />
-            </div>
-            <p class="privacy-controls-copy">
-              <strong>fully private</strong> Cluegent stays in your local desktop workflow and gives you control over listening, screenshots, and AI requests.
+            <span class="workflow-eyebrow">How Cluegent works during interviews and meetings</span>
+            <h2><span>Completely</span> <strong>Invisible</strong></h2>
+            <p>
+              Even when you share your <strong>entire screen</strong>, Cluegent remains
+              <em>100% private to you</em>.
             </p>
           </div>
+
+          <div class="workflow-tabs reveal" data-workflow-tabs>
+            <div class="workflow-tab-list" role="tablist" aria-label="Cluegent workflow modes">
+              <button class="workflow-tab is-active" id="workflow-tab-listening" type="button" role="tab" aria-selected="true" aria-controls="workflow-panel-listening" data-workflow-tab="listening">
+                <span class="workflow-tab-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" role="presentation">
+                    <path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                Listening
+              </button>
+              <button class="workflow-tab" id="workflow-tab-screen" type="button" role="tab" aria-selected="false" aria-controls="workflow-panel-screen" tabindex="-1" data-workflow-tab="screen">
+                <span class="workflow-tab-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" role="presentation">
+                    <rect x="4" y="5" width="16" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <path d="M9 20h6M12 16v4M8 9h3M8 12h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                On-screen questions
+              </button>
+              <button class="workflow-tab" id="workflow-tab-chat" type="button" role="tab" aria-selected="false" aria-controls="workflow-panel-chat" tabindex="-1" data-workflow-tab="chat">
+                <span class="workflow-tab-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" role="presentation">
+                    <path d="M5 6.5A3.5 3.5 0 0 1 8.5 3h7A3.5 3.5 0 0 1 19 6.5v4A3.5 3.5 0 0 1 15.5 14H11l-5 4v-4A3.5 3.5 0 0 1 5 10.5v-4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    <path d="M9 8h6M9 11h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                Chat with AI
+              </button>
+            </div>
+
+            <div class="workflow-tab-copy">
+              <article class="workflow-panel is-active" id="workflow-panel-listening" role="tabpanel" aria-labelledby="workflow-tab-listening" data-workflow-panel="listening">
+                <div class="workflow-shortcuts">
+                  <span class="workflow-key">Click Start listening</span>
+                  <span class="workflow-key">Ctrl + Enter</span>
+                </div>
+                <p>Start listening when the call begins. Cluegent keeps the live transcript, then Ctrl + Enter sends the current context for a short answer.</p>
+                <figure class="workflow-screenshot">
+                  <img src="/assets/how-to-use-03.png" alt="Cluegent listening mode showing a rolling transcript" loading="lazy" />
+                  <figcaption>Listening mode keeps the conversation context ready without leaving your call.</figcaption>
+                </figure>
+              </article>
+
+              <article class="workflow-panel" id="workflow-panel-screen" role="tabpanel" aria-labelledby="workflow-tab-screen" data-workflow-panel="screen" hidden>
+                <div class="workflow-shortcuts">
+                  <span class="workflow-key">Ctrl + [</span>
+                  <span class="workflow-key">Ctrl + Enter</span>
+                </div>
+                <p>Use Ctrl + [ when a coding problem, error, slide, or on-screen question is visible. Cluegent attaches the screen and answers with visual context.</p>
+                <figure class="workflow-screenshot">
+                  <img src="/assets/how-to-use-08.png" alt="Cluegent screenshot response with coding answer" loading="lazy" />
+                  <figcaption>On-screen questions are answered from the screenshot plus your current transcript context.</figcaption>
+                </figure>
+              </article>
+
+              <article class="workflow-panel" id="workflow-panel-chat" role="tabpanel" aria-labelledby="workflow-tab-chat" data-workflow-panel="chat" hidden>
+                <div class="workflow-shortcuts">
+                  <span class="workflow-key">Type a prompt</span>
+                  <span class="workflow-key">Ctrl + Enter</span>
+                </div>
+                <p>Type a direct question or use quick action buttons like clarify, brainstorm, and follow-up. The response appears inside the same private overlay.</p>
+                <figure class="workflow-screenshot">
+                  <img src="/assets/how-to-use-05.png" alt="Typed prompt inside Cluegent chat input" loading="lazy" />
+                  <figcaption>Chat with AI lets you ask for a specific response style while staying in one workspace.</figcaption>
+                </figure>
+              </article>
+            </div>
+          </div>
         </section>
 
-        <section class="section steps-section">
+        <section class="section comparison-section" aria-labelledby="comparison-title">
           <div class="section-heading reveal">
-            <h2>Meeting notes in 3 steps</h2>
-            <p>The simplest path from live conversation to useful memory.</p>
+            <p class="section-kicker">AI interview tool comparison</p>
+            <h2 id="comparison-title">Why Cluegent is different from generic AI tools</h2>
+            <p>Every AI can answer a question. Cluegent is built to answer using your resume, your screen, and the live call context.</p>
           </div>
 
-          <div class="steps-grid">
-            <article class="step-card reveal">
-              <div class="step-visual step-visual--launch" aria-hidden="true">
-                <div class="step-window step-window--soft">
-                  <div class="step-window-bar">
-                    <span></span><span></span><span></span>
-                  </div>
-                  <div class="step-window-body">
-                    <img class="step-bg-image" src="/assets/meetingnotesimage.png" alt="" loading="lazy" />
-                    <div class="step-launch-panel">
-                      <button class="step-launch-button">Start Cluegent</button>
-                      <span class="step-avatar"></span>
-                    </div>
-                    <div class="step-pointer step-pointer--launch"></div>
-                  </div>
-                </div>
+          <div class="comparison-table reveal" role="table" aria-label="Cluegent comparison with generic AI tools">
+            <div class="comparison-row comparison-row--head" role="row">
+              <div role="columnheader">Capability</div>
+              <div role="columnheader">Cluegent</div>
+              <div role="columnheader">ChatGPT tab</div>
+              <div role="columnheader">Other interview AI</div>
+            </div>
+            <div class="comparison-row" role="row">
+              <div role="cell">Resume-personalized answers</div>
+              <div role="cell" class="is-yes">Yes</div>
+              <div role="cell" class="is-no">No</div>
+              <div role="cell" class="is-no">Often limited</div>
+            </div>
+            <div class="comparison-row" role="row">
+              <div role="cell">Private desktop overlay</div>
+              <div role="cell" class="is-yes">Yes</div>
+              <div role="cell" class="is-no">No</div>
+              <div role="cell" class="is-maybe">Varies</div>
+            </div>
+            <div class="comparison-row" role="row">
+              <div role="cell">Screenshot coding help</div>
+              <div role="cell" class="is-yes">Yes</div>
+              <div role="cell" class="is-maybe">Manual upload</div>
+              <div role="cell" class="is-maybe">Varies</div>
+            </div>
+            <div class="comparison-row" role="row">
+              <div role="cell">Live transcript context</div>
+              <div role="cell" class="is-yes">Yes</div>
+              <div role="cell" class="is-no">No</div>
+              <div role="cell" class="is-maybe">Sometimes</div>
+            </div>
+            <div class="comparison-row" role="row">
+              <div role="cell">Quick answer controls</div>
+              <div role="cell" class="is-yes">Yes</div>
+              <div role="cell" class="is-no">No</div>
+              <div role="cell" class="is-maybe">Varies</div>
+            </div>
+            <div class="comparison-row" role="row">
+              <div role="cell">Windows desktop workflow</div>
+              <div role="cell" class="is-yes">Yes</div>
+              <div role="cell" class="is-no">Browser only</div>
+              <div role="cell" class="is-maybe">Varies</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section pricing-section" id="pricing" aria-labelledby="pricing-title">
+          <div class="section-heading reveal">
+            <p class="section-kicker">Pricing</p>
+            <h2 id="pricing-title">Choose the Cluegent plan that fits your interview flow</h2>
+            <p>Start free, then upgrade when you need more listening time, AI requests, and screenshot analyses.</p>
+          </div>
+
+          <div class="pricing-grid reveal">
+            <article class="pricing-card pricing-card--trial">
+              <div class="pricing-card-head">
+                <h3>Free trial</h3>
+                <p class="pricing-price"><span>₹0</span></p>
+                <p class="pricing-note">Try Cluegent before upgrading.</p>
               </div>
-              <div class="step-meta"><span class="step-index">1</span><h3>Start Cluegent</h3></div>
-              <p>Open Cluegent before your meeting starts and keep the private overlay ready on your desktop.</p>
+              <ul>
+                <li>Private desktop overlay</li>
+                <li>Real-time assistant</li>
+                <li>Try listening and typed prompts</li>
+                <li>Screenshot-aware workflow preview</li>
+                <li>Coding + meeting support</li>
+              </ul>
+              <a class="pricing-button" href="#download-cluegent">Start free</a>
             </article>
-            <article class="step-card reveal">
-              <div class="step-visual step-visual--end" aria-hidden="true">
-                <div class="step-window">
-                  <div class="step-window-bar">
-                    <span></span><span></span><span></span>
-                  </div>
-                  <div class="step-window-body step-window-body--meeting">
-                    <img class="step-bg-image" src="/assets/meetingnotesimage.png" alt="" loading="lazy" />
-                    <div class="step-cluegent-pill">
-                      <span class="step-pill-logo"><img src="/assets/icon.png" alt="" /></span>
-                      <span class="step-pill-hide">Hide</span>
-                      <span class="step-pill-stop"></span>
-                    </div>
-                    <div class="step-pointer step-pointer--end"></div>
-                  </div>
+
+            <article class="pricing-card pricing-card--plus">
+              <div class="pricing-card-head">
+                <div class="pricing-title-row">
+                  <h3>Plus</h3>
+                  <span class="pricing-badge">Starter</span>
                 </div>
+                <p class="pricing-offer" aria-label="50 percent offer, original price 1,998 rupees">
+                  <span class="pricing-original">₹1,998</span>
+                  <span class="pricing-offer-badge">50% off</span>
+                </p>
+                <p class="pricing-price"><span>₹999</span><small>/month</small></p>
+                <p class="pricing-note">Planned starter upgrade for focused interview prep.</p>
               </div>
-              <div class="step-meta"><span class="step-index">2</span><h3>End meeting</h3></div>
-              <p>Stop the session when the meeting ends so Cluegent closes the loop and saves the conversation flow.</p>
+              <ul>
+                <li>Undetectability - Cluegent stays invisible during screen sharing</li>
+                <li>10 hours listening</li>
+                <li>1,000 AI requests</li>
+                <li>1,000 screenshot analyses</li>
+                <li>Real-time assistant</li>
+                <li>Coding + meeting support</li>
+              </ul>
+              <a class="pricing-button" href="#download-cluegent">Upgrade</a>
             </article>
-            <article class="step-card reveal">
-              <div class="step-visual step-visual--saved" aria-hidden="true">
-                <div class="step-note-sheet">
-                  <!-- <div class="step-note-title">Meeting saved local</div> -->
-                  <div class="step-note-chip">Recent meetings</div>
-                  <!-- <div class="step-note-label">Transcript + responses</div> -->
-                  <div class="step-note-heading">meeting summary</div>
-                  <div class="step-note-lines">
-                    <span></span><span></span><span></span><span></span><span></span><span></span>
-                  </div>
+
+            <article class="pricing-card pricing-card--pro">
+              <div class="pricing-card-head">
+                <div class="pricing-title-row">
+                  <h3>Pro</h3>
+                  <span class="pricing-badge">Most Popular</span>
                 </div>
+                <p class="pricing-offer" aria-label="50 percent offer, original price 4,998 rupees">
+                  <span class="pricing-original">₹4,998</span>
+                  <span class="pricing-offer-badge">50% off</span>
+                </p>
+                <p class="pricing-price"><span>₹2,499</span><small>/month</small></p>
+                <p class="pricing-note">For active candidates handling multiple interview rounds.</p>
               </div>
-              <div class="step-meta"><span class="step-index">3</span><h3>Meeting saved local</h3></div>
-              <p>Review the saved transcript, prompts, screenshots, and Cluegent answers later from Recent Meetings.</p>
+              <ul>
+                <li>Undetectability - Cluegent stays invisible during screen sharing</li>
+                <li>Unlimited listening</li>
+                <li>Unlimited AI requests</li>
+                <li>Unlimited screenshot analyses</li>
+                <li>Real-time assistant</li>
+                <li>Coding + meeting support</li>
+              </ul>
+              <a class="pricing-button" href="#download-cluegent">Upgrade</a>
+            </article>
+
+            <article class="pricing-card pricing-card--power">
+              <div class="pricing-card-head">
+                <h3>Power</h3>
+                <p class="pricing-offer" aria-label="50 percent offer, original price 12,998 rupees">
+                  <span class="pricing-original">₹12,998</span>
+                  <span class="pricing-offer-badge">50% off</span>
+                </p>
+                <p class="pricing-price"><span>₹6,499</span><small>/month</small></p>
+                <p class="pricing-note">For heavy usage, coding rounds, and high-frequency calls.</p>
+              </div>
+              <ul>
+                <li>Undetectability - Cluegent stays invisible during screen sharing</li>
+                <li>Unlimited listening</li>
+                <li>Unlimited AI requests</li>
+                <li>Unlimited screenshot analyses</li>
+                <li>Real-time assistant</li>
+                <li>Coding + meeting support</li>
+                <li>Faster responses</li>
+                <li>Priority processing</li>
+              </ul>
+              <a class="pricing-button" href="#download-cluegent">Upgrade</a>
             </article>
           </div>
         </section>
@@ -868,8 +880,9 @@
             <details open>
               <summary>What is Cluegent?</summary>
               <p>
-                Cluegent is a desktop AI meeting assistant that listens when you ask it to, keeps
-                rolling context, and gives real-time answers through a private overlay.
+                Cluegent is a desktop AI interview assistant and meeting copilot for permitted live calls.
+                It listens when you ask it to, keeps rolling context, and gives real-time answers through
+                a private overlay.
               </p>
             </details>
             <details>
@@ -887,6 +900,28 @@
               </p>
             </details>
             <details>
+              <summary>Does Cluegent work for coding interviews?</summary>
+              <p>
+                Yes. Use screenshot mode to attach a visible coding problem, error, or shared screen.
+                Cluegent can help with the approach, edge cases, tradeoffs, and a clean explanation.
+              </p>
+            </details>
+            <details>
+              <summary>Can Cluegent use my resume for answers?</summary>
+              <p>
+                Yes. Open Settings, go to Customize, and add resume context so Cluegent can shape
+                answers around your projects, skills, stack, and experience.
+              </p>
+            </details>
+            <details>
+              <summary>Will Cluegent show during screen sharing?</summary>
+              <p>
+                Cluegent includes a private overlay mode designed to stay out of standard screen sharing.
+                Behavior can vary by app, operating system, and permissions, so test your setup before
+                important calls and follow all applicable rules.
+              </p>
+            </details>
+            <details>
               <summary>Is my data safe?</summary>
               <p>
                 Cluegent is built on privacy. Recent meeting history and saved local context stay
@@ -895,11 +930,17 @@
               </p>
             </details>
             <details>
-              <summary>Can I talk to customer support?</summary>
+              <summary>Is Cluegent free to try?</summary>
               <p>
-                Yes. Our support team is available to help you get the most out of your AI meeting
-                assistant. You can reach us at
-                <a href="mailto:admincluegent@gmail.com">admincluegent@gmail.com</a>.
+                Yes. Cluegent is free to start, and the download page points you to the current Windows
+                and macOS builds.
+              </p>
+            </details>
+            <details>
+              <summary>Can I use it as an AI meeting copilot too?</summary>
+              <p>
+                Yes. Cluegent also works for permitted live meetings, client calls, product reviews,
+                and technical discussions where you want live context and quick answers.
               </p>
             </details>
           </div>
@@ -1029,6 +1070,6 @@
       </footer>
     </div>
 
-    <script src="/app.js?v=20260607-header-downloads"></script>
+    <script src="/app.js?v=20260622-workflow-tabs"></script>
   </body>
 </html>

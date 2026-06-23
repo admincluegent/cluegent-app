@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useRef, useLayoutEffect, useMemo, useCallback } from 'react';
 import {
     Sparkles,
     Pencil,
@@ -44,6 +44,7 @@ import { useShortcuts } from '../hooks/useShortcuts';
 import { useResolvedTheme } from '../hooks/useResolvedTheme';
 import { getOverlayAppearance, OVERLAY_OPACITY_DEFAULT } from '../lib/overlayAppearance';
 import { useAuth } from '../contexts/auth.context';
+import { trackSttUsage } from '../services/backendApi';
 import {
     appendLocalMeetingEvent,
     finishCurrentLocalMeeting,
@@ -92,6 +93,8 @@ interface NativelyInterfaceProps {
 type ScreenshotAttachment = { path: string; preview: string };
 
 const FREE_PLAN_LIMIT_REACHED_MESSAGE = "Free Plan Limit Reached. Subscribe to use more.";
+const FREE_TRIAL_TOTAL_USAGE_SECONDS = 12 * 60;
+const FREE_TRIAL_USAGE_REPORT_INTERVAL_SECONDS = 5;
 
 const isPlanLimitMessage = (error: string) => {
     const lower = error.toLowerCase();
@@ -126,7 +129,7 @@ const normalizeMarkdownLists = (text: string) => (
 
 const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, overlayOpacity = OVERLAY_OPACITY_DEFAULT }) => {
     const isLightTheme = useResolvedTheme() === 'light';
-    const { planStatus, refreshProfile, isSyncing } = useAuth();
+    const { user, planStatus, refreshProfile, isSyncing } = useAuth();
     const [isExpanded, setIsExpanded] = useState(true);
     const [inputValue, setInputValue] = useState('');
     const { shortcuts, isShortcutPressed } = useShortcuts();
@@ -149,6 +152,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     const isRecordingRef = useRef(false);  // Ref to track recording state (avoids stale closure)
     const [manualTranscript, setManualTranscript] = useState('');
     const manualTranscriptRef = useRef<string>('');
+    const [isCluegentSessionActive, setIsCluegentSessionActive] = useState(false);
     const [showTranscript, setShowTranscript] = useState(() => {
         const stored = localStorage.getItem('natively_interviewer_transcript');
         return stored !== 'false';
@@ -158,13 +162,98 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     const requestStartTimeRef = useRef<number | null>(null);
     const streamingResponseTextRef = useRef('');
     const localMeetingIdRef = useRef<string | null>(getCurrentLocalMeetingId());
-    const isFreePlanExhausted = planStatus?.plan === 'free' && (
-        (planStatus.remaining.prompts ?? 0) <= 0 ||
-        (planStatus.remaining.screenshots ?? 0) <= 0 ||
-        (planStatus.remaining.sttSeconds ?? 0) <= 0
-    );
     const isPaidListeningExhausted = !!planStatus && planStatus.plan !== 'free' && (planStatus.remaining.sttSeconds ?? 0) <= 0;
-    const listeningDuration = `${Math.floor(listeningSeconds / 60).toString().padStart(2, '0')}:${(listeningSeconds % 60).toString().padStart(2, '0')}`;
+    const formatDuration = (seconds: number) => (
+        `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`
+    );
+    const freeTrialUsageStorageKey = user?.uid
+        ? `cluegent_free_trial_local_used_seconds_${user.uid}`
+        : null;
+    const [freeTrialLocalUsedSeconds, setFreeTrialLocalUsedSeconds] = useState(0);
+    const freeTrialLocalUsedSecondsRef = useRef(0);
+    const freeTrialReportedSecondsRef = useRef(0);
+    const freeTrialUsageReportInFlightRef = useRef(false);
+    const freeTrialLimitOpenedRef = useRef(false);
+    const wasCluegentSessionActiveRef = useRef(false);
+    const serverFreeTrialUsedSeconds = planStatus?.plan === 'free'
+        ? Math.max(
+            0,
+            FREE_TRIAL_TOTAL_USAGE_SECONDS -
+                Math.min(
+                    FREE_TRIAL_TOTAL_USAGE_SECONDS,
+                    planStatus.remaining.sttSeconds ?? FREE_TRIAL_TOTAL_USAGE_SECONDS
+                )
+        )
+        : 0;
+    const effectiveFreeTrialUsedSeconds = planStatus?.plan === 'free'
+        ? Math.max(serverFreeTrialUsedSeconds, freeTrialLocalUsedSeconds)
+        : 0;
+    const freeTrialRemainingSeconds =
+        planStatus?.plan === 'free'
+            ? Math.max(0, FREE_TRIAL_TOTAL_USAGE_SECONDS - effectiveFreeTrialUsedSeconds)
+            : null;
+    const isFreePlanExhausted = planStatus?.plan === 'free' && freeTrialRemainingSeconds !== null && freeTrialRemainingSeconds <= 0;
+    const listeningDuration =
+        freeTrialRemainingSeconds !== null
+            ? `${formatDuration(freeTrialRemainingSeconds)} left`
+            : formatDuration(listeningSeconds);
+
+    useEffect(() => {
+        freeTrialLocalUsedSecondsRef.current = freeTrialLocalUsedSeconds;
+    }, [freeTrialLocalUsedSeconds]);
+
+    const syncFreeTrialUsage = useCallback(async (options?: { force?: boolean }) => {
+        if (
+            planStatus?.plan !== 'free' ||
+            !freeTrialUsageStorageKey ||
+            freeTrialUsageReportInFlightRef.current
+        ) {
+            return;
+        }
+
+        const currentUsedSeconds = freeTrialLocalUsedSecondsRef.current;
+        const unreportedSeconds = currentUsedSeconds - freeTrialReportedSecondsRef.current;
+        const shouldReport =
+            unreportedSeconds >= FREE_TRIAL_USAGE_REPORT_INTERVAL_SECONDS ||
+            (options?.force === true && unreportedSeconds > 0) ||
+            (currentUsedSeconds >= FREE_TRIAL_TOTAL_USAGE_SECONDS && unreportedSeconds > 0);
+
+        if (!shouldReport) {
+            return;
+        }
+
+        const secondsToReport = Math.max(1, Math.floor(unreportedSeconds));
+        freeTrialUsageReportInFlightRef.current = true;
+
+        try {
+            const result = await trackSttUsage(secondsToReport);
+            const nextReportedSeconds = Math.min(
+                FREE_TRIAL_TOTAL_USAGE_SECONDS,
+                freeTrialReportedSecondsRef.current + secondsToReport
+            );
+            freeTrialReportedSecondsRef.current = nextReportedSeconds;
+
+            if (result.remaining.sttSecondsRemaining <= 0) {
+                freeTrialLocalUsedSecondsRef.current = FREE_TRIAL_TOTAL_USAGE_SECONDS;
+                setFreeTrialLocalUsedSeconds(FREE_TRIAL_TOTAL_USAGE_SECONDS);
+                localStorage.setItem(freeTrialUsageStorageKey, String(FREE_TRIAL_TOTAL_USAGE_SECONDS));
+            }
+
+            void refreshProfile();
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            if (isPlanLimitMessage(message)) {
+                freeTrialLocalUsedSecondsRef.current = FREE_TRIAL_TOTAL_USAGE_SECONDS;
+                setFreeTrialLocalUsedSeconds(FREE_TRIAL_TOTAL_USAGE_SECONDS);
+                localStorage.setItem(freeTrialUsageStorageKey, String(FREE_TRIAL_TOTAL_USAGE_SECONDS));
+                void refreshProfile();
+            } else {
+                console.warn('[NativelyInterface] Failed to sync free trial usage', error);
+            }
+        } finally {
+            freeTrialUsageReportInFlightRef.current = false;
+        }
+    }, [freeTrialUsageStorageKey, planStatus?.plan, refreshProfile]);
 
     // Sync transcript setting
     useEffect(() => {
@@ -186,6 +275,10 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     const [isInterviewerSpeaking, setIsInterviewerSpeaking] = useState(false);  // Track if actively speaking
     const rollingTranscriptRef = useRef('');
     const finalizedRollingTranscriptRef = useRef('');  // Stores only committed interviewer turns
+    const [userRollingTranscript, setUserRollingTranscript] = useState('');
+    const [isUserSpeaking, setIsUserSpeaking] = useState(false);
+    const userRollingTranscriptRef = useRef('');
+    const finalizedUserRollingTranscriptRef = useRef('');
     const [voiceInput, setVoiceInput] = useState('');  // Accumulated user voice input
     const voiceInputRef = useRef<string>('');  // Ref for capturing in async handlers
     const textInputRef = useRef<HTMLInputElement>(null); // Ref for input focus
@@ -193,6 +286,12 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [responsePanelHeight, setResponsePanelHeight] = useState(() => {
+        const stored = Number(localStorage.getItem('cluegent_response_panel_height'));
+        return Number.isFinite(stored) && stored > 0
+            ? Math.min(Math.max(stored, 260), 620)
+            : 380;
+    });
     // Captures data from onCaptureAndProcess before the React state flush so
     // handleWhatToSay() can access it even in React 18 concurrent mode (where
     // a plain setTimeout(0) may fire before setAttachedContext flushes).
@@ -306,6 +405,123 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         }, 1000);
         return () => window.clearInterval(timer);
     }, [isListening]);
+
+    useEffect(() => {
+        let disposed = false;
+
+        const refreshActiveState = async () => {
+            const localSessionActive = Boolean(localStorage.getItem('natively_last_meeting_start'));
+            let active = localSessionActive;
+
+            try {
+                active = Boolean(await window.electronAPI?.getMeetingActive?.());
+            } catch {
+                active = localSessionActive;
+            }
+
+            if (!disposed) {
+                setIsCluegentSessionActive(active);
+            }
+        };
+
+        void refreshActiveState();
+        const intervalId = window.setInterval(() => {
+            void refreshActiveState();
+        }, 1000);
+
+        return () => {
+            disposed = true;
+            window.clearInterval(intervalId);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!freeTrialUsageStorageKey) {
+            setFreeTrialLocalUsedSeconds(0);
+            freeTrialLocalUsedSecondsRef.current = 0;
+            freeTrialReportedSecondsRef.current = 0;
+            return;
+        }
+
+        const stored = Number(localStorage.getItem(freeTrialUsageStorageKey));
+        const safeStored = Number.isFinite(stored)
+            ? Math.min(Math.max(Math.floor(stored), 0), FREE_TRIAL_TOTAL_USAGE_SECONDS)
+            : 0;
+        const mergedUsedSeconds = Math.max(safeStored, serverFreeTrialUsedSeconds);
+        setFreeTrialLocalUsedSeconds(mergedUsedSeconds);
+        freeTrialLocalUsedSecondsRef.current = mergedUsedSeconds;
+        localStorage.setItem(freeTrialUsageStorageKey, String(mergedUsedSeconds));
+        freeTrialReportedSecondsRef.current = serverFreeTrialUsedSeconds;
+        if (mergedUsedSeconds < FREE_TRIAL_TOTAL_USAGE_SECONDS) {
+            freeTrialLimitOpenedRef.current = false;
+        }
+    }, [freeTrialUsageStorageKey, serverFreeTrialUsedSeconds]);
+
+    useEffect(() => {
+        if (planStatus?.plan !== 'free' || !freeTrialUsageStorageKey) {
+            return;
+        }
+
+        if (serverFreeTrialUsedSeconds > freeTrialReportedSecondsRef.current) {
+            freeTrialReportedSecondsRef.current = serverFreeTrialUsedSeconds;
+        }
+    }, [freeTrialUsageStorageKey, planStatus?.plan, serverFreeTrialUsedSeconds]);
+
+    useEffect(() => {
+        if (planStatus?.plan !== 'free' || !freeTrialUsageStorageKey) {
+            return;
+        }
+
+        const tick = () => {
+            if (!isCluegentSessionActive) {
+                return;
+            }
+
+            setFreeTrialLocalUsedSeconds((previous) => {
+                const next = Math.min(previous + 1, FREE_TRIAL_TOTAL_USAGE_SECONDS);
+                freeTrialLocalUsedSecondsRef.current = next;
+                localStorage.setItem(freeTrialUsageStorageKey, String(next));
+                return next;
+            });
+        };
+
+        const timer = window.setInterval(tick, 1000);
+        tick();
+        return () => window.clearInterval(timer);
+    }, [freeTrialUsageStorageKey, isCluegentSessionActive, planStatus?.plan]);
+
+    useEffect(() => {
+        void syncFreeTrialUsage();
+    }, [freeTrialLocalUsedSeconds, syncFreeTrialUsage]);
+
+    useEffect(() => {
+        if (wasCluegentSessionActiveRef.current && !isCluegentSessionActive) {
+            void syncFreeTrialUsage({ force: true });
+        }
+
+        wasCluegentSessionActiveRef.current = isCluegentSessionActive;
+    }, [isCluegentSessionActive, syncFreeTrialUsage]);
+
+    useEffect(() => {
+        const flushUsage = () => {
+            void syncFreeTrialUsage({ force: true });
+        };
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'hidden') {
+                flushUsage();
+            }
+        };
+
+        window.addEventListener('pagehide', flushUsage);
+        window.addEventListener('beforeunload', flushUsage);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            window.removeEventListener('pagehide', flushUsage);
+            window.removeEventListener('beforeunload', flushUsage);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [syncFreeTrialUsage]);
 
     const codeTheme = {
         'code[class*="language-"]': {
@@ -466,6 +682,19 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     }, [rollingTranscript]);
 
     useEffect(() => {
+        userRollingTranscriptRef.current = userRollingTranscript;
+    }, [userRollingTranscript]);
+
+    const combinedRollingTranscript = useMemo(() => {
+        const interviewer = rollingTranscript.trim();
+        const microphone = userRollingTranscript.trim();
+        return [
+            interviewer ? `Interviewer: ${interviewer}` : '',
+            microphone ? `You: ${microphone}` : '',
+        ].filter(Boolean).join('   |   ');
+    }, [rollingTranscript, userRollingTranscript]);
+
+    useEffect(() => {
         const trimContextLine = (value: string, maxLength = 700) => {
             const clean = value.replace(/\s+/g, ' ').trim();
             return clean.length > maxLength ? `${clean.slice(0, maxLength)}...` : clean;
@@ -496,10 +725,20 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             || finalizedRollingTranscriptRef.current
             || ''
         ).trim().slice(-2500);
+        const micTranscript = (
+            userRollingTranscriptRef.current
+            || userRollingTranscript
+            || finalizedUserRollingTranscriptRef.current
+            || ''
+        ).trim().slice(-1800);
         const chatContext = conversationContext.trim();
 
         if (liveTranscript) {
-            contextBlocks.push(`[ROLLING TRANSCRIPT - latest live audio]\n${liveTranscript}`);
+            contextBlocks.push(`[INTERVIEWER / SYSTEM AUDIO - latest live audio]\n${liveTranscript}`);
+        }
+
+        if (micTranscript) {
+            contextBlocks.push(`[YOU / MICROPHONE - latest live audio]\n${micTranscript}`);
         }
 
         if (chatContext) {
@@ -525,10 +764,14 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     type AiSubmitFlow = 'typed' | 'rolling-stt' | 'screenshot' | 'rolling-stt+screenshot';
 
     const getLatestRollingTranscript = () => (
-        rollingTranscriptRef.current
-        || rollingTranscript
-        || finalizedRollingTranscriptRef.current
-        || ''
+        [
+            (rollingTranscriptRef.current || rollingTranscript || finalizedRollingTranscriptRef.current || '').trim()
+                ? `Interviewer: ${(rollingTranscriptRef.current || rollingTranscript || finalizedRollingTranscriptRef.current || '').trim()}`
+                : '',
+            (userRollingTranscriptRef.current || userRollingTranscript || finalizedUserRollingTranscriptRef.current || '').trim()
+                ? `You: ${(userRollingTranscriptRef.current || userRollingTranscript || finalizedUserRollingTranscriptRef.current || '').trim()}`
+                : '',
+        ].filter(Boolean).join('\n')
     ).trim();
 
     const getAiSubmitFlow = (hasScreenshot: boolean, hasTypedPrompt: boolean, hasRollingTranscript: boolean): AiSubmitFlow => {
@@ -629,6 +872,10 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             setVoiceInput('');
             setRollingTranscript('');
             finalizedRollingTranscriptRef.current = '';
+            setUserRollingTranscript('');
+            finalizedUserRollingTranscriptRef.current = '';
+            userRollingTranscriptRef.current = '';
+            setIsUserSpeaking(false);
             setIsProcessing(false);
             // Optionally reset connection status if needed, but connection persists
 
@@ -697,8 +944,8 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
         // Real-time Transcripts
         cleanups.push(window.electronAPI.onNativeAudioTranscript((transcript) => {
-            // When Answer button is active, capture USER transcripts for voice input
-            // Use ref to avoid stale closure issue
+            // When the manual Mic flow is active, capture USER transcripts for voice input.
+            // Use ref to avoid stale closure issue.
             if (isRecordingRef.current && transcript.speaker === 'user') {
                 if (transcript.final) {
                     // Accumulate final transcripts
@@ -717,10 +964,43 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                 return;  // Don't add to messages while recording
             }
 
-            // Ignore user mic transcripts when not recording
-            // Only interviewer (system audio) transcripts should appear in chat
             if (transcript.speaker === 'user') {
-                return;  // Skip user mic input - only relevant when Answer button is active
+                if (!isListeningRef.current) {
+                    return;
+                }
+
+                setIsUserSpeaking(!transcript.final);
+                const committed = finalizedUserRollingTranscriptRef.current;
+                const nextText = transcript.text.trim();
+
+                if (transcript.final) {
+                    const normalizedTranscript = committed
+                        ? `${committed}  |  ${nextText}`
+                        : nextText;
+                    finalizedUserRollingTranscriptRef.current = normalizedTranscript;
+                    userRollingTranscriptRef.current = normalizedTranscript;
+                    setUserRollingTranscript(normalizedTranscript);
+                    try {
+                        appendLocalMeetingEvent({
+                            type: 'transcript',
+                            text: `You: ${nextText}`,
+                        }, localMeetingIdRef.current);
+                    } catch (error) {
+                        console.warn('[NativelyInterface] Failed to save microphone transcript locally:', error);
+                    }
+
+                    setTimeout(() => {
+                        setIsUserSpeaking(false);
+                    }, 3000);
+                    return;
+                }
+
+                const liveTranscript = committed && nextText
+                    ? `${committed}  |  ${nextText}`
+                    : nextText || committed;
+                userRollingTranscriptRef.current = liveTranscript;
+                setUserRollingTranscript(liveTranscript);
+                return;
             }
 
             if (!isListeningRef.current) {
@@ -1218,23 +1498,18 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
         if (currentAttachments.length > 0) {
             setAttachedContext([]);
+            setMessages(prev => [...prev, {
+                id: Date.now().toString(),
+                role: 'user',
+                text: 'Screenshot attached',
+                hasScreenshot: true,
+                screenshotPreview: currentAttachments[0]?.preview
+            }]);
             appendLocalMeetingEvent({
                 type: 'prompt',
                 text: 'Screenshot attached',
                 hasScreenshot: true,
             }, localMeetingIdRef.current);
-            // Show the attached image in chat
-            setMessages(prev => [...prev, {
-                id: Date.now().toString(),
-                role: 'user',
-                text: '',
-                hasScreenshot: true,
-                screenshotPreview: currentAttachments[0].preview
-            }]);
-            // Scroll to bottom when user sends message
-            setTimeout(() => {
-            	messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-            }, 50);
         }
 
         try {
@@ -1312,18 +1587,6 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             text: action.label,
             hasScreenshot: currentAttachments.length > 0,
         }, localMeetingIdRef.current);
-
-        setMessages(prev => [...prev, {
-            id: Date.now().toString(),
-            role: 'user',
-            text: action.label,
-            hasScreenshot: currentAttachments.length > 0,
-            screenshotPreview: currentAttachments[0]?.preview,
-        }]);
-
-        setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 50);
 
         streamingResponseTextRef.current = '';
         setMessages(prev => [...prev, {
@@ -2015,18 +2278,20 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
             text: effectivePrompt || (currentAttachments.length > 0 ? 'Screenshot attached' : ''),
             hasScreenshot: currentAttachments.length > 0,
         }, localMeetingIdRef.current);
-        setMessages(prev => [...prev, {
-            id: Date.now().toString(),
-            role: 'user',
-            text: visiblePromptText,
-            hasScreenshot: currentAttachments.length > 0,
-            screenshotPreview: currentAttachments[0]?.preview
-        }]);
+        if (userText || hasScreenshot) {
+            setMessages(prev => [...prev, {
+                id: Date.now().toString(),
+                role: 'user',
+                text: visiblePromptText || 'Screenshot attached',
+                hasScreenshot,
+                screenshotPreview: currentAttachments[0]?.preview
+            }]);
 
-        // Scroll to bottom when user sends message
-        setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 50);
+            // Scroll to bottom when user sends message
+            setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, 50);
+        }
 
         // Add placeholder for streaming response
         streamingResponseTextRef.current = '';
@@ -2120,6 +2385,30 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
 
     const clearChat = () => {
         setMessages([]);
+        setConversationContext('');
+    };
+
+    const handleResponseResizeStart = (event: React.PointerEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const startY = event.clientY;
+        const startHeight = responsePanelHeight;
+        let latestHeight = startHeight;
+
+        const clampHeight = (height: number) => Math.min(Math.max(height, 260), 620);
+        const handlePointerMove = (moveEvent: PointerEvent) => {
+            latestHeight = clampHeight(startHeight + moveEvent.clientY - startY);
+            setResponsePanelHeight(latestHeight);
+        };
+        const handlePointerUp = () => {
+            localStorage.setItem('cluegent_response_panel_height', String(latestHeight));
+            window.removeEventListener('pointermove', handlePointerMove);
+            window.removeEventListener('pointerup', handlePointerUp);
+        };
+
+        window.addEventListener('pointermove', handlePointerMove);
+        window.addEventListener('pointerup', handlePointerUp);
     };
 
 
@@ -2446,7 +2735,14 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
 
     const generalHandlersRef = useRef({
         toggleVisibility: () => window.electronAPI.toggleWindow(),
-        processScreenshots: handleWhatToSay,
+        processScreenshots: () => {
+            if (inputValue.trim() || attachedContextRef.current.length > 0) {
+                void handleManualSubmit();
+                return;
+            }
+
+            void handleWhatToSay();
+        },
         resetCancel: async () => {
             if (isProcessing) {
                 setIsProcessing(false);
@@ -2492,7 +2788,14 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
     // Update ref
     generalHandlersRef.current = {
         toggleVisibility: () => window.electronAPI.toggleWindow(),
-        processScreenshots: handleWhatToSay,
+        processScreenshots: () => {
+            if (inputValue.trim() || attachedContextRef.current.length > 0) {
+                void handleManualSubmit();
+                return;
+            }
+
+            void handleWhatToSay();
+        },
         resetCancel: async () => {
             if (isProcessing) {
                 setIsProcessing(false);
@@ -2727,6 +3030,8 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
             setListeningSeconds(0);
             setSttInterviewerStatus('reconnecting');
             setSttInterviewerError('');
+            setSttUserStatus('reconnecting');
+            setSttUserError('');
             const inputDeviceId = localStorage.getItem('preferredInputDeviceId');
             let outputDeviceId = localStorage.getItem('preferredOutputDeviceId');
             const shouldUseScreenCaptureKit =
@@ -2746,6 +3051,8 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                 setListeningSeconds(0);
                 setSttInterviewerStatus('failed');
                 setSttInterviewerError(result.error);
+                setSttUserStatus('failed');
+                setSttUserError(result.error);
             }
         } catch (error) {
             setIsListening(false);
@@ -2754,6 +3061,8 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
             setListeningSeconds(0);
             setSttInterviewerStatus('failed');
             setSttInterviewerError(error instanceof Error ? error.message : 'Failed to toggle listening');
+            setSttUserStatus('failed');
+            setSttUserError(error instanceof Error ? error.message : 'Failed to toggle listening');
         }
     };
 
@@ -2762,7 +3071,36 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
         setIsInterviewerSpeaking(false);
         rollingTranscriptRef.current = '';
         finalizedRollingTranscriptRef.current = '';
+        setUserRollingTranscript('');
+        setIsUserSpeaking(false);
+        userRollingTranscriptRef.current = '';
+        finalizedUserRollingTranscriptRef.current = '';
     };
+
+    useEffect(() => {
+        if (
+            planStatus?.plan !== 'free' ||
+            freeTrialRemainingSeconds === null ||
+            freeTrialRemainingSeconds > 0 ||
+            freeTrialLimitOpenedRef.current
+        ) {
+            return;
+        }
+
+        freeTrialLimitOpenedRef.current = true;
+        clearRollingTranscript();
+        if (isListening) {
+            setIsListening(false);
+            isListeningRef.current = false;
+            listeningStartedAtRef.current = null;
+            setListeningSeconds(0);
+            void window.electronAPI.stopListening();
+        }
+        setSttInterviewerStatus('failed');
+        setSttInterviewerError('Free trial limit reached. Subscribe to continue using Cluegent.');
+        void refreshProfile();
+        void window.electronAPI?.openSettingsTab?.('billing');
+    }, [freeTrialRemainingSeconds, isListening, planStatus?.plan, refreshProfile]);
 
     const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
         if (isSettingsOpen) {
@@ -2779,8 +3117,27 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
         window.electronAPI.toggleSettingsWindow({ x, y });
     };
 
+    const handleToolbarAnswer = () => {
+        if (inputValue.trim() || attachedContextRef.current.length > 0) {
+            void handleManualSubmit();
+            return;
+        }
+
+        void handleWhatToSay();
+    };
+
+    const handleToolbarScreenshot = () => {
+        void generalHandlersRef.current.takeScreenshot();
+    };
+
+    const handleToolbarChat = () => {
+        setIsExpanded(true);
+        requestAnimationFrame(() => textInputRef.current?.focus());
+    };
+    const hasPendingManualSubmit = inputValue.trim().length > 0 || attachedContext.length > 0;
+
     return (
-        <div ref={contentRef} className="flex flex-col items-center w-[600px] max-w-full mx-auto h-fit min-h-0 bg-transparent p-0 rounded-[24px] font-sans gap-2 overlay-text-primary">
+        <div ref={contentRef} className="flex flex-col items-center w-[1180px] max-w-none mx-auto h-fit min-h-0 bg-transparent p-0 rounded-[24px] font-sans gap-2 overlay-text-primary">
             <TopPill
                 expanded={isExpanded}
                 onToggle={() => setIsExpanded(!isExpanded)}
@@ -2789,7 +3146,17 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                 onLogoClick={() => window.electronAPI?.setWindowMode?.('launcher')}
                 isListening={isListening}
                 listeningDuration={listeningDuration}
+                trialRemainingLabel={
+                    freeTrialRemainingSeconds !== null
+                        ? `${formatDuration(freeTrialRemainingSeconds)} left`
+                        : undefined
+                }
                 onToggleListening={handleToggleListening}
+                onAnswer={handleToolbarAnswer}
+                onScreenshot={handleToolbarScreenshot}
+                onChat={handleToolbarChat}
+                answerShortcut={shortcuts.processScreenshots}
+                screenshotShortcut={shortcuts.takeScreenshot}
                 isOptionsOpen={isSettingsOpen}
                 onOptionsClick={handleOptionsClick}
             />
@@ -2804,7 +3171,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                         className="flex flex-col items-center gap-2 w-full"
                     >
                         <div
-                            className={`cluegent-overlay-shell relative w-[600px] max-w-full backdrop-blur-2xl border rounded-[24px] overflow-hidden flex flex-col draggable-area overlay-shell-surface ${overlayPanelClass}`}
+                            className={`cluegent-overlay-shell relative w-[600px] max-w-none backdrop-blur-2xl border rounded-[24px] overflow-hidden flex flex-col draggable-area overlay-shell-surface ${overlayPanelClass}`}
                             style={appearance.shellStyle}
                         >
 
@@ -2879,10 +3246,10 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                             )}
 
                             {/* Rolling Transcript Bar â€” includes STT status indicator inline */}
-                            {isListening && ((showTranscript && rollingTranscript) || interviewerSttIndicatorStatus !== 'connected' || (isManualRecording && sttUserStatus !== 'connected')) ? (
+                            {isListening && ((showTranscript && combinedRollingTranscript) || interviewerSttIndicatorStatus !== 'connected' || sttUserStatus !== 'connected') ? (
                                 <RollingTranscript
-                                    text={showTranscript ? rollingTranscript : ''}
-                                    isActive={isInterviewerSpeaking}
+                                    text={showTranscript ? combinedRollingTranscript : ''}
+                                    isActive={isInterviewerSpeaking || isUserSpeaking}
                                     surfaceStyle={showTranscript ? appearance.transcriptStyle : undefined}
                                     interviewerChannel={{
                                         status: interviewerSttIndicatorStatus,
@@ -2895,12 +3262,29 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                         provider: sttUserProvider,
                                     }}
                                     onCopyDiagnostics={copyDiagnostics}
+                                    onClearTranscript={clearRollingTranscript}
                                 />
                             ) : null}
 
                             {/* Chat History - Only show if there are messages OR active states */}
                             {(messages.length > 0 || isManualRecording || isProcessing) && (
-                                <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3 max-h-[clamp(300px,35vh,450px)] no-drag" style={{ scrollbarWidth: 'none' }}>
+                                <div
+                                    className="relative mx-3 mb-2 rounded-[22px] border border-white/10 bg-black/[0.08] no-drag overflow-hidden"
+                                    style={{ height: responsePanelHeight }}
+                                >
+                                    <div className="absolute left-3 right-3 top-2 z-10 flex items-center justify-end pointer-events-none">
+                                        {messages.length > 0 && (
+                                            <button
+                                                type="button"
+                                                onClick={clearChat}
+                                                className="pointer-events-auto rounded-full border border-white/10 bg-white/[0.08] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-white/70 transition hover:bg-white/[0.14] hover:text-white active:scale-95"
+                                                title="Clear response chat"
+                                            >
+                                                Clear chat
+                                            </button>
+                                        )}
+                                    </div>
+                                <div ref={scrollContainerRef} className="h-full overflow-y-auto p-4 pt-11 pb-6 space-y-3 no-drag" style={{ scrollbarWidth: 'none' }}>
                                     {messages.map((msg) => (
                                         <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}>
                                             <div className={`
@@ -2910,7 +3294,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                                     : ''
                                                 }
                       ${msg.role === 'system'
-                                                    ? 'overlay-text-primary font-normal'
+                                                    ? 'cluegent-response-card rounded-[22px] border border-white/10 bg-[#2c2a27]/92 px-5 py-4 text-[16px] font-medium leading-7 text-white shadow-[0_22px_70px_-42px_rgba(0,0,0,0.75)]'
                                                     : ''
                                                 }
                       ${msg.role === 'interviewer'
@@ -2927,8 +3311,16 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                                 {msg.role === 'user' && msg.hasScreenshot && (
                                                     <div className={`flex items-center gap-1 text-[10px] opacity-70 mb-1 border-b pb-1 ${isLightTheme ? 'border-black/10' : 'border-white/10'}`}>
                                                         <Image className="w-2.5 h-2.5" />
-                                                        <span>Screenshot attached</span>
+                                                <span>Screenshot attached</span>
                                                     </div>
+                                                )}
+                                                {msg.role === 'user' && msg.screenshotPreview && (
+                                                    <img
+                                                        src={msg.screenshotPreview}
+                                                        alt="Attached screenshot preview"
+                                                        className={`mb-2 max-h-28 w-auto max-w-full rounded-lg border object-contain ${isLightTheme ? 'border-black/15' : 'border-white/15'}`}
+                                                        draggable="false"
+                                                    />
                                                 )}
                                                 {msg.role === 'system' && !msg.isStreaming && (
                                                     <button
@@ -2985,6 +3377,14 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                     )}
                                     <div ref={messagesEndRef} />
                                 </div>
+                                    <div
+                                        onPointerDown={handleResponseResizeStart}
+                                        className="absolute inset-x-0 bottom-0 z-20 flex h-5 cursor-ns-resize items-end justify-center bg-gradient-to-t from-black/18 to-transparent pb-1"
+                                        title="Drag to resize responses"
+                                    >
+                                        <span className="h-1 w-12 rounded-full bg-white/18 transition group-hover:bg-white/30" />
+                                    </div>
+                                </div>
                             )}
 
                             {isFreePlanExhausted && !isSyncing && (
@@ -2995,14 +3395,14 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                                 Free Plan Limit Reached
                                             </p>
                                             <p className="mt-1 text-[12px] leading-5 text-violet-100/85">
-                                                    Your free trial includes 30 min listening, 50 AI requests, and 20 screenshot analyses. Subscribe to Pro to keep using Cluegent.
+                                                Your free trial includes 12 minutes of Cluegent usage. Subscribe to keep using live answers, chat, and screenshot analysis.
                                             </p>
                                         </div>
                                         <button
                                             onClick={() => void window.electronAPI?.openSettingsTab?.('billing')}
                                             className="inline-flex shrink-0 items-center gap-2 rounded-full bg-violet-500 px-4 py-2 text-[12px] font-semibold text-black transition hover:bg-violet-400"
                                         >
-                                            Subscribe to Pro
+                                            Subscribe
                                             <ArrowRight className="w-3.5 h-3.5" />
                                         </button>
                                     </div>
@@ -3032,7 +3432,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
 
                             {/* Quick Actions - Minimal & Clean */}
                             {showQuickActionButtons && (
-                            <div className={`flex flex-nowrap justify-start items-center gap-1.5 px-4 pb-3 overflow-x-auto ${isListening && rollingTranscript && showTranscript ? 'pt-1' : 'pt-3'}`} style={{ scrollbarWidth: 'none' }}>
+                            <div className={`flex flex-nowrap justify-start items-center gap-1.5 px-4 pb-3 overflow-x-auto ${isListening && combinedRollingTranscript && showTranscript ? 'pt-1' : 'pt-3'}`} style={{ scrollbarWidth: 'none' }}>
                                 {allQuickActions.map((action) => (
                                     <button
                                         key={action.id}
@@ -3043,23 +3443,6 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                         {action.label}
                                     </button>
                                 ))}
-                                <button
-                                    onClick={handleAnswerNow}
-                                    className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all active:scale-95 duration-200 interaction-base interaction-press min-w-[74px] whitespace-nowrap shrink-0 ${isManualRecording
-                                        ? 'bg-red-500/10 text-red-400 ring-1 ring-red-500/20'
-                                        : 'overlay-chip-surface overlay-text-interactive hover:text-emerald-500 hover:bg-emerald-500/10'
-                                        }`}
-                                    style={isManualRecording ? undefined : appearance.chipStyle}
-                                >
-                                    {isManualRecording ? (
-                                        <>
-                                            <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-                                            Stop
-                                        </>
-                                    ) : (
-                                        <><Mic className="w-3 h-3 opacity-70" /> Mic</>
-                                    )}
-                                </button>
                             </div>
                             )}
 
@@ -3067,8 +3450,8 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                             <div className={`p-3 ${showQuickActionButtons ? 'pt-0' : 'pt-3'}`}>
                                 {/* Latent Context Preview (Attached Screenshot) */}
                                 {attachedContext.length > 0 && (
-                                    <div className={`mb-2 rounded-lg p-2 transition-all duration-200 border ${subtleSurfaceClass}`} style={appearance.subtleStyle}>
-                                        <div className="flex items-center justify-between mb-1.5">
+                                    <div className={`mb-2 rounded-lg border p-1.5 transition-all duration-200 ${subtleSurfaceClass}`} style={appearance.subtleStyle}>
+                                        <div className="mb-1 flex items-center justify-between">
                                             <span className="text-[11px] font-medium overlay-text-primary">
                                                 {attachedContext.length} screenshot{attachedContext.length > 1 ? 's' : ''} attached
                                             </span>
@@ -3081,13 +3464,13 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                                 <X className="w-3.5 h-3.5" />
                                             </button>
                                         </div>
-                                        <div className="flex gap-1.5 overflow-x-auto max-w-full pb-1">
+                                        <div className="flex max-w-full gap-1.5 overflow-x-auto pb-0.5">
                                             {attachedContext.map((ctx, idx) => (
                                                 <div key={ctx.path} className="relative group/thumb flex-shrink-0">
                                                     <img
                                                         src={ctx.preview}
                                                         alt={`Screenshot ${idx + 1}`}
-                                                        className={`h-10 w-auto rounded border ${isLightTheme ? 'border-black/15' : 'border-white/20'}`}
+                                                        className={`h-7 w-auto rounded border object-contain ${isLightTheme ? 'border-black/15' : 'border-white/20'}`}
                                                     />
                                                     <button
                                                         onClick={() => setAttachedContext(prev => prev.filter((_, i) => i !== idx))}
@@ -3168,16 +3551,16 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                 <div className="flex items-center shrink-0 px-0.5">
                                     <button
                                         onClick={handleManualSubmit}
-                                        disabled={!inputValue.trim()}
+                                        disabled={!hasPendingManualSubmit}
                                     className={`
                                     w-7 h-7 rounded-full flex items-center justify-center
                                     interaction-base interaction-press
-                                    ${inputValue.trim()
+                                    ${hasPendingManualSubmit
                                                 ? 'bg-[#007AFF] text-white shadow-lg shadow-blue-500/20 hover:bg-[#0071E3]'
                                                 : 'overlay-icon-surface overlay-text-muted cursor-not-allowed'
                                             }
                                 `}
-                                    style={inputValue.trim() ? undefined : appearance.iconStyle}
+                                    style={hasPendingManualSubmit ? undefined : appearance.iconStyle}
                                     >
                                         <ArrowRight className="w-3.5 h-3.5" />
                                     </button>

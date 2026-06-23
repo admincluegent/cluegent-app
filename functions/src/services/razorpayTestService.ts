@@ -4,12 +4,14 @@ import type { BillingInterval } from "../utils/usage.js";
 
 const RAZORPAY_API_BASE_URL = "https://api.razorpay.com/v1";
 
-export type PaidPlanId = Extract<PlanId, "livetest" | "pro" | "power">;
+export type PaidPlanId = Extract<PlanId, "livetest" | "plus" | "pro" | "power">;
 export type RazorpayProviderMode = "test" | "live";
 export type RazorpayCurrency = "INR" | "USD";
 
 export interface RazorpayTestPlanConfig {
   liveTestMonthly?: string;
+  plusMonthly?: string;
+  plusYearly?: string;
   proMonthly: string;
   proYearly: string;
   powerMonthly: string;
@@ -84,6 +86,14 @@ export function resolveRazorpayPlanId(
     return plans.liveTestMonthly ?? "";
   }
 
+  if (planId === "plus" && interval === "month") {
+    return plans.plusMonthly ?? "";
+  }
+
+  if (planId === "plus" && interval === "year") {
+    return plans.plusYearly ?? "";
+  }
+
   if (planId === "pro" && interval === "year") {
     return plans.proYearly;
   }
@@ -109,6 +119,14 @@ export function resolvePlanFromRazorpayPlanId(
 
   if (plans.liveTestMonthly && planId === plans.liveTestMonthly) {
     return { planId: "livetest", interval: "month" };
+  }
+
+  if (plans.plusMonthly && planId === plans.plusMonthly) {
+    return { planId: "plus", interval: "month" };
+  }
+
+  if (plans.plusYearly && planId === plans.plusYearly) {
+    return { planId: "plus", interval: "year" };
   }
 
   if (planId === plans.proYearly) {

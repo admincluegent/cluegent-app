@@ -485,6 +485,43 @@ body {
   background: var(--overlay-inline-code-bg);
 }
 
+.cluegent-response-card {
+  font-size: 16px;
+  line-height: 1.72;
+  font-weight: 520;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.cluegent-response-card .markdown-content {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.cluegent-response-card .markdown-content p,
+.cluegent-response-card .markdown-content li {
+  font-size: 16px;
+  line-height: 1.72;
+}
+
+.cluegent-response-card .markdown-content strong,
+.cluegent-response-card .markdown-content h1,
+.cluegent-response-card .markdown-content h2,
+.cluegent-response-card .markdown-content h3 {
+  color: #d6a15f;
+  font-weight: 800;
+}
+
+.cluegent-response-card .markdown-content li::marker {
+  color: #d6a15f;
+}
+
+.cluegent-response-card .overlay-inline-code-surface {
+  color: #f2bd75;
+  font-size: 0.88em;
+  font-weight: 700;
+  border: 1px solid rgba(214, 161, 95, 0.18);
+  background: rgba(214, 161, 95, 0.12);
+}
+
 .overlay-text-primary {
   color: var(--overlay-text-primary);
 }

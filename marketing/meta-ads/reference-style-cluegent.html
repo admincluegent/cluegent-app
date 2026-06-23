@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cluegent Reference Style Meta Ad</title>
+    <style>
+      :root {
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --ink: #202124;
+        --muted: #656d7a;
+        --green: #15b85c;
+        --yellow: #ffdc52;
+        --blue: #2f6df5;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #dfe5ee;
+      }
+
+      .ad {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #ffffff;
+        color: var(--ink);
+      }
+
+      .caption {
+        height: 132px;
+        padding: 28px 28px 0;
+        font-size: 34px;
+        line-height: 1.22;
+        font-weight: 500;
+        letter-spacing: 0;
+      }
+
+      .hero {
+        position: relative;
+        height: 1288px;
+        overflow: hidden;
+        background:
+          linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.1)),
+          #d6d9dd;
+      }
+
+      .desk {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(180deg, rgba(0, 0, 0, 0) 0 61%, #302923 61% 100%),
+          radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.8), transparent 28%),
+          linear-gradient(135deg, #cdd2d4, #aab0b0 52%, #b05854 52%, #8c322e);
+      }
+
+      .wall-texture {
+        position: absolute;
+        inset: 0 0 51% 0;
+        opacity: 0.34;
+        background-image:
+          linear-gradient(90deg, rgba(0, 0, 0, 0.08) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+        background-size: 31px 31px;
+        mix-blend-mode: multiply;
+      }
+
+      .laptop {
+        position: absolute;
+        left: 92px;
+        top: 220px;
+        width: 898px;
+        height: 760px;
+        perspective: 1200px;
+      }
+
+      .screen {
+        position: absolute;
+        left: 34px;
+        top: 0;
+        width: 830px;
+        height: 540px;
+        border-radius: 15px 15px 7px 7px;
+        background: #15181f;
+        border: 18px solid #1a1e25;
+        box-shadow:
+          0 26px 50px rgba(0, 0, 0, 0.36),
+          inset 0 0 0 2px rgba(255, 255, 255, 0.04);
+        overflow: hidden;
+      }
+
+      .screen::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: -10px;
+        width: 96px;
+        height: 18px;
+        transform: translateX(-50%);
+        border-radius: 0 0 8px 8px;
+        background: #0c0d11;
+        z-index: 4;
+      }
+
+      .product-image {
+        position: absolute;
+        inset: 18px;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: saturate(1.07) contrast(1.04);
+      }
+
+      .meet-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 64px;
+        background: rgba(18, 20, 28, 0.95);
+        z-index: 5;
+      }
+
+      .meet-buttons {
+        position: absolute;
+        left: 50%;
+        bottom: 12px;
+        display: flex;
+        gap: 12px;
+        transform: translateX(-50%);
+      }
+
+      .meet-buttons i {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: block;
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      .meet-buttons i:nth-child(4) {
+        background: #e5484d;
+        width: 48px;
+        border-radius: 999px;
+      }
+
+      .base {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 542px;
+        height: 198px;
+        border-radius: 0 0 32px 32px;
+        background:
+          linear-gradient(180deg, #22272e, #111419 74%),
+          #171b20;
+        transform: rotateX(58deg);
+        transform-origin: top center;
+        box-shadow: 0 42px 60px rgba(0, 0, 0, 0.32);
+      }
+
+      .keyboard {
+        position: absolute;
+        left: 94px;
+        right: 94px;
+        top: 586px;
+        height: 54px;
+        display: grid;
+        grid-template-columns: repeat(13, 1fr);
+        gap: 6px;
+        opacity: 0.32;
+      }
+
+      .keyboard i {
+        border-radius: 5px;
+        background: #4a515d;
+      }
+
+      .trackpad {
+        position: absolute;
+        left: 365px;
+        top: 656px;
+        width: 170px;
+        height: 70px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .arrow {
+        position: absolute;
+        left: 98px;
+        top: 610px;
+        width: 210px;
+        height: 210px;
+        z-index: 8;
+        transform: rotate(-24deg);
+      }
+
+      .arrow::before {
+        content: "";
+        position: absolute;
+        left: 80px;
+        top: 70px;
+        width: 150px;
+        height: 72px;
+        border-radius: 999px;
+        background: #f34a40;
+      }
+
+      .arrow::after {
+        content: "";
+        position: absolute;
+        left: 190px;
+        top: 35px;
+        border-top: 70px solid transparent;
+        border-bottom: 70px solid transparent;
+        border-left: 106px solid #f34a40;
+      }
+
+      .callout {
+        position: absolute;
+        left: 88px;
+        right: 88px;
+        bottom: 266px;
+        z-index: 9;
+        padding: 26px 28px 30px;
+        border-radius: 19px;
+        background: #ffffff;
+        box-shadow: 0 16px 34px rgba(0, 0, 0, 0.25);
+        text-align: center;
+      }
+
+      .callout h1 {
+        margin: 0;
+        font-size: 54px;
+        line-height: 1.08;
+        font-weight: 1000;
+        letter-spacing: 0;
+        color: #070707;
+      }
+
+      .callout .green {
+        color: var(--green);
+      }
+
+      .big-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 128px;
+        z-index: 9;
+        color: var(--yellow);
+        font-size: 72px;
+        line-height: 1;
+        font-weight: 1000;
+        letter-spacing: 0;
+        text-align: center;
+        text-shadow: 0 5px 16px rgba(0, 0, 0, 0.38);
+      }
+
+      .logo-badge {
+        position: absolute;
+        right: 74px;
+        bottom: 64px;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 17px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
+        color: #111827;
+        font-size: 22px;
+        font-weight: 950;
+      }
+
+      .logo-badge img {
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
+      }
+
+      .ad-card {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 500px;
+        background: #ffffff;
+        border-top: 1px solid #e1e5ea;
+        padding: 34px 28px 32px;
+      }
+
+      .domain {
+        color: #69717e;
+        font-size: 28px;
+        line-height: 1;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        font-weight: 680;
+      }
+
+      .bottom-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 24px;
+        align-items: center;
+        margin-top: 12px;
+      }
+
+      .headline {
+        font-size: 39px;
+        line-height: 1.1;
+        color: #202124;
+        font-weight: 560;
+        letter-spacing: 0;
+      }
+
+      .button {
+        min-width: 230px;
+        min-height: 86px;
+        display: grid;
+        place-items: center;
+        border-radius: 14px;
+        background: #f1f2f4;
+        color: #222;
+        font-size: 32px;
+        font-weight: 560;
+      }
+
+      .description {
+        margin-top: 10px;
+        max-width: 820px;
+        color: #69717e;
+        font-size: 33px;
+        line-height: 1.28;
+        font-weight: 430;
+      }
+
+      .small-note {
+        position: absolute;
+        left: 28px;
+        right: 28px;
+        bottom: 18px;
+        color: #98a0aa;
+        font-size: 18px;
+        line-height: 1.2;
+      }
+    </style>
+  </head>
+  <body>
+    <article class="ad">
+      <div class="caption">
+        Cluegent gives you real-time answers to questions in your live interviews
+      </div>
+
+      <section class="hero">
+        <div class="desk"></div>
+        <div class="wall-texture"></div>
+
+        <div class="laptop">
+          <div class="screen">
+            <div class="product-image">
+              <img src="../../website/assets/privacy-controls-showcase.png" alt="" />
+            </div>
+            <div class="meet-bar">
+              <div class="meet-buttons"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            </div>
+          </div>
+          <div class="base"></div>
+          <div class="keyboard">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <div class="trackpad"></div>
+        </div>
+
+        <div class="arrow"></div>
+
+        <div class="callout">
+          <h1>Interviewers Can’t See This</h1>
+          <h1>Live AI <span class="green">help</span> in interviews</h1>
+        </div>
+
+        <div class="big-line">Private Overlay</div>
+        <div class="logo-badge">
+          <img src="../../website/assets/icon.png" alt="" />
+          <span>Cluegent</span>
+        </div>
+      </section>
+
+      <section class="ad-card">
+        <div class="domain">CLUEGENT.COM</div>
+        <div class="bottom-row">
+          <div class="headline">Ace Your Next Interview with AI</div>
+          <div class="button">Download</div>
+        </div>
+        <div class="description">
+          Cluegent gives you real-time, AI-powered answers on Zoom, Google Meet & Teams.
+          Resume context, coding help, and quick actions included.
+        </div>
+        <div class="small-note">
+          Designed for standard screen sharing. Test your setup and follow interview, employer, and platform rules.
+        </div>
+      </section>
+    </article>
+  </body>
+</html>

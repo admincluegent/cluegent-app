@@ -19,12 +19,14 @@ interface RollingTranscriptProps {
     /** User microphone channel */
     microphoneChannel?: ChannelStatus;
     onCopyDiagnostics?: () => void;
+    onClearTranscript?: () => void;
 }
 
 const RollingTranscript: React.FC<RollingTranscriptProps> = ({
     text, isActive = true, surfaceStyle,
     interviewerChannel, microphoneChannel,
-    onCopyDiagnostics
+    onCopyDiagnostics,
+    onClearTranscript
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [copied, setCopied] = useState(false);
@@ -89,14 +91,15 @@ const RollingTranscript: React.FC<RollingTranscriptProps> = ({
                 {anyReconnecting && !anyFailed && <div className="absolute inset-0 bg-amber-500/10 stt-pulse-amber" />}
                 {/* 90% centered content */}
                 <div className="w-[90%] mx-auto pt-2">
-                    <div
-                        ref={containerRef}
-                        className="overflow-hidden whitespace-nowrap scroll-smooth overlay-transcript-surface transition-all duration-500 text-right"
-                        style={{
-                            ...surfaceStyle,
-                            maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
-                        }}
-                    >
+                    <div className="flex items-center gap-2">
+                        <div
+                            ref={containerRef}
+                            className="min-w-0 flex-1 overflow-hidden whitespace-nowrap scroll-smooth overlay-transcript-surface transition-all duration-500 text-right"
+                            style={{
+                                ...surfaceStyle,
+                                maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
+                            }}
+                        >
                         {isNormal && (
                             <span className="inline-flex items-center text-[13px] italic leading-7 text-[var(--overlay-text-muted)] transition-all duration-300">
                                 {text || 'Listening…'}
@@ -117,6 +120,18 @@ const RollingTranscript: React.FC<RollingTranscriptProps> = ({
                         )}
 
                         </div>
+                        {isNormal && text && onClearTranscript && (
+                            <button
+                                type="button"
+                                onClick={onClearTranscript}
+                                className="no-drag shrink-0 rounded-full border border-white/10 bg-white/[0.07] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-white/70 transition hover:bg-white/[0.12] hover:text-white active:scale-95"
+                                aria-label="Clear transcript"
+                                title="Clear transcript"
+                            >
+                                Clear
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Error chips row — both channels visible */}

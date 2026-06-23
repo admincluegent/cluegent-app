@@ -57,7 +57,7 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 const PROFILE_SYNC_MIN_INTERVAL_MS = 5_000;
-const PROFILE_BACKGROUND_REFRESH_MS = 60_000;
+const PROFILE_BACKGROUND_REFRESH_MS = 15 * 60 * 1000;
 const TOKEN_SYNC_MIN_INTERVAL_MS = 5_000;
 const TOKEN_BACKGROUND_REFRESH_MS = 30 * 60 * 1000;
 

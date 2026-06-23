@@ -166,6 +166,7 @@ type STTProvider = FirebaseManagedSTT & {
   finalize?: () => void;
   setAudioChannelCount?: (count: number) => void;
   notifySpeechEnded?: () => void;
+  setUsageReportingEnabled?: (enabled: boolean) => void;
 };
 
 type ScreenshotWindowMode = 'launcher' | 'overlay';
@@ -1414,24 +1415,37 @@ export class AppState {
     if (!this.isMeetingActive) {
       await this.startMeeting(metadata);
     }
-    if (this.isListeningActive) return;
+    if (this.isListeningActive && this.isMicListeningActive) return;
 
     try {
       if (metadata?.audio) {
         await this.reconfigureAudio(metadata.audio.inputDeviceId, metadata.audio.outputDeviceId);
       }
 
-      this.setupSystemAudioPipeline('system');
-      this.systemAudioCapture?.start();
-      this.googleSTT?.start();
+      this.setupSystemAudioPipeline('all');
+
+      if (!this.isListeningActive) {
+        this.googleSTT?.setUsageReportingEnabled?.(true);
+        this.systemAudioCapture?.start();
+        this.googleSTT?.start();
+      }
+
+      if (!this.isMicListeningActive) {
+        // Combined Start Listening runs microphone STT for context, but usage
+        // should be counted once for the listening session, not once per stream.
+        this.googleSTT_User?.setUsageReportingEnabled?.(false);
+        this.microphoneCapture?.start();
+        this.googleSTT_User?.start();
+      }
 
       if (this.ragManager) {
         this.ragManager.startLiveIndexing('live-meeting-current');
       }
 
       this.isListeningActive = true;
+      this.isMicListeningActive = true;
       this.broadcastListeningState();
-      console.log('[Main] System listening started.');
+      console.log('[Main] Combined system + microphone listening started.');
     } catch (err) {
       console.error('[Main] Error starting listening:', err);
       this.broadcast('meeting-audio-error', (err as Error).message || 'Listening failed to start');
@@ -1444,14 +1458,17 @@ export class AppState {
 
     this.systemAudioCapture?.stop();
     this.googleSTT?.stop();
+    this.microphoneCapture?.stop();
+    this.googleSTT_User?.stop();
     this.isListeningActive = false;
+    this.isMicListeningActive = false;
     this.broadcastListeningState();
 
     if (this.ragManager) {
       this.ragManager.stopLiveIndexing().catch(() => {});
     }
 
-    console.log('[Main] System listening stopped.');
+    console.log('[Main] Combined listening stopped.');
   }
 
   public async startMicStt(): Promise<void> {
@@ -1461,6 +1478,7 @@ export class AppState {
     if (this.isMicListeningActive) return;
 
     this.setupSystemAudioPipeline('mic');
+    this.googleSTT_User?.setUsageReportingEnabled?.(true);
     this.microphoneCapture?.start();
     this.googleSTT_User?.start();
     this.isMicListeningActive = true;

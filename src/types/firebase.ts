@@ -1,4 +1,4 @@
-export type UserPlan = "free" | "livetest" | "pro" | "power";
+export type UserPlan = "free" | "livetest" | "plus" | "pro" | "power";
 export type SubscriptionStatus =
   | "active"
   | "inactive"

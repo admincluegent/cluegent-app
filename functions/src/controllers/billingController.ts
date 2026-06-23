@@ -55,7 +55,7 @@ interface VerifyRazorpayLiveOrderPaymentData {
 
 interface LiveBillingPlanPrice {
   providerMode: "live";
-  planId: Extract<PaidPlanId, "pro" | "power">;
+  planId: Extract<PaidPlanId, "plus" | "pro" | "power">;
   interval: BillingInterval;
   currency: RazorpayCurrency;
   amountSubunits: number;
@@ -124,6 +124,10 @@ const LIVE_ORDER_PRICES_SUBUNITS: Record<
     livetest: {
       month: 500,
     },
+    plus: {
+      month: 99_900,
+      year: 999_000,
+    },
     pro: {
       month: 249_900,
       year: 2_499_000,
@@ -135,6 +139,10 @@ const LIVE_ORDER_PRICES_SUBUNITS: Record<
   },
   USD: {
     livetest: {},
+    plus: {
+      month: 1_200,
+      year: 12_000,
+    },
     pro: {
       month: 2_900,
       year: 29_000,
@@ -171,13 +179,14 @@ export async function createRazorpayTestSubscriptionController(
   const interval = request.data?.interval;
 
   const isSupportedPlan =
+    (planId === "plus" && (interval === "month" || interval === "year")) ||
     (planId === "pro" && (interval === "month" || interval === "year")) ||
     (planId === "power" && (interval === "month" || interval === "year"));
 
   if (!isSupportedPlan) {
     throw new HttpsError(
       "invalid-argument",
-      "Razorpay test checkout currently supports Pro and Power monthly/yearly plans."
+      "Razorpay test checkout currently supports Plus, Pro, and Power monthly/yearly plans."
     );
   }
 
@@ -422,7 +431,7 @@ export async function createRazorpayLiveOrderController(
   if (!isSupportedPaidPlan(planId as PaidPlanId, interval as BillingInterval)) {
     throw new HttpsError(
       "invalid-argument",
-      "Choose a valid Pro or Power monthly/yearly plan."
+      "Choose a valid Plus, Pro, or Power monthly/yearly plan."
     );
   }
 
@@ -659,91 +668,13 @@ async function verifyRazorpayLiveOrderPaymentForPlan(
 }
 
 export async function createRazorpayLiveSubscriptionController(
-  request: CallableRequest<CreateRazorpayLiveSubscriptionData>,
-  env: Pick<RazorpayLiveEnv, "keyId" | "keySecret" | "plans">
+  _request: CallableRequest<CreateRazorpayLiveSubscriptionData>,
+  _env: Pick<RazorpayLiveEnv, "keyId" | "keySecret" | "plans">
 ) {
-  const authUser = requireAuth(request);
-  const planId = request.data?.planId;
-  const interval = request.data?.interval;
-  const currency = request.data?.currency === "USD" ? "USD" : "INR";
-
-  const isSupportedPlan =
-    (planId === "pro" && (interval === "month" || interval === "year")) ||
-    (planId === "power" && (interval === "month" || interval === "year"));
-
-  if (!isSupportedPlan) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Razorpay live subscription checkout supports Pro and Power monthly/yearly plans."
-    );
-  }
-
-  assertPowerYearlyCheckoutEnabled(planId, interval);
-
-  await ensureUsageDocuments(authUser.uid, authUser);
-
-  if (currency === "USD" && !env.plans.usd) {
-    throw new HttpsError(
-      "failed-precondition",
-      "Razorpay live USD plans are not configured."
-    );
-  }
-
-  const plansForCurrency = currency === "USD" ? env.plans.usd! : env.plans.inr;
-  const razorpayPlanId = resolveRazorpayPlanId(planId, interval, plansForCurrency);
-  assertConfiguredPlanId(planId, interval, razorpayPlanId, "live", currency);
-
-  const subscription = await createRazorpayTestSubscription({
-    keyId: env.keyId,
-    keySecret: env.keySecret,
-    planId: razorpayPlanId,
-    totalCount: interval === "month" ? 120 : 10,
-    uid: authUser.uid,
-    email: authUser.email,
-    displayName: authUser.displayName,
-    appPlanId: planId,
-    interval,
-    providerMode: "live",
-    currency,
-  });
-
-  await writePendingRazorpaySubscription({
-    providerMode: "live",
-    uid: authUser.uid,
-    email: authUser.email,
-    displayName: authUser.displayName,
-    subscriptionId: subscription.id ?? "",
-    razorpayPlanId,
-    planId,
-    interval,
-    currency,
-  });
-
-  return {
-    success: true,
-    data: {
-      providerMode: "live" as const,
-      keyId: env.keyId,
-      subscriptionId: subscription.id,
-      planId,
-      interval,
-      currency,
-      name: "Cluegent",
-      description: `Cluegent ${PLAN_CONFIGS[planId].label} ${
-        interval === "month" ? "Monthly" : "Yearly"
-      }`,
-      prefill: {
-        name: authUser.displayName,
-        email: authUser.email,
-      },
-      notes: {
-        firebase_uid: authUser.uid,
-        cluegent_plan_id: planId,
-        cluegent_billing_interval: interval,
-        cluegent_currency: currency,
-      },
-    },
-  };
+  throw new HttpsError(
+    "failed-precondition",
+    "Razorpay live subscription checkout is disabled. Use createRazorpayLiveOrder for Plus, Pro, and Power checkout."
+  );
 }
 
 export async function verifyRazorpayLivePaymentController(
@@ -1847,6 +1778,7 @@ function getRazorpayCollections(providerMode: RazorpayProviderMode) {
 
 function isSupportedPaidPlan(planId: PaidPlanId, interval: BillingInterval) {
   return (
+    (planId === "plus" && (interval === "month" || interval === "year")) ||
     (planId === "pro" && (interval === "month" || interval === "year")) ||
     (planId === "power" && (interval === "month" || interval === "year")) ||
     (planId === LIVE_TEST_PLAN_ID && interval === "month")
@@ -1905,7 +1837,11 @@ function getLiveOrderPricing(
 
 function buildLiveBillingPlanPrices(): LiveBillingPlanPrice[] {
   const currencies: RazorpayCurrency[] = ["INR", "USD"];
-  const planIds: Array<Extract<PaidPlanId, "pro" | "power">> = ["pro", "power"];
+  const planIds: Array<Extract<PaidPlanId, "plus" | "pro" | "power">> = [
+    "plus",
+    "pro",
+    "power",
+  ];
   const intervals: BillingInterval[] = ["month", "year"];
 
   return currencies.flatMap((currency) =>

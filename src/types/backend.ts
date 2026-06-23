@@ -31,11 +31,28 @@ export interface GetPlanStatusResponse {
   planStatus: PlanStatus;
 }
 
+export type TrackSttUsageResponse =
+  | {
+      success: true;
+      usage: {
+        sttSecondsAdded: number;
+        estimatedCostUsdAdded: number;
+      };
+      remaining: {
+        sttSecondsRemaining: number;
+      };
+    }
+  | {
+      success: false;
+      code: string;
+      message: string;
+    };
+
 export type BillingCurrency = "INR" | "USD";
 
 export interface LiveBillingPlanPrice {
   providerMode: "live";
-  planId: Extract<UserPlan, "pro" | "power">;
+  planId: Extract<UserPlan, "plus" | "pro" | "power">;
   interval: BillingInterval;
   currency: BillingCurrency;
   amountSubunits: number;

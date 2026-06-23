@@ -14,7 +14,7 @@ console.log(`[WindowHelper] isEnvDev: ${isEnvDev}, isPackaged: ${isPackaged}, in
 const isDev = isEnvDev && !isPackaged;
 
 const startUrl = isDev
-  ? "http://localhost:5180"
+  ? process.env.VITE_DEV_SERVER_URL || "http://127.0.0.1:5180"
   : `file://${path.join(__dirname, "../../dist/index.html")}`
 
 export class WindowHelper {
@@ -33,7 +33,7 @@ export class WindowHelper {
   private opacityTimeout: NodeJS.Timeout | null = null
 
   // Constants
-  private static readonly OVERLAY_DEFAULT_WIDTH = 600;
+  private static readonly OVERLAY_DEFAULT_WIDTH = 1180;
   private static readonly OVERLAY_MIN_HEIGHT = 216;
 
   // Movement variables (apply to active window)
@@ -232,14 +232,14 @@ export class WindowHelper {
     // constructor is the only reliable guard against OS-level position persistence.
     const overlayDefaultX = Math.floor(workArea.x + (workArea.width - WindowHelper.OVERLAY_DEFAULT_WIDTH) / 2);
     // Use original vertical offset calculation that positions the overlay higher
-    const overlayDefaultY = Math.floor(workArea.y + (workArea.height - WindowHelper.OVERLAY_DEFAULT_WIDTH) / 2);
+    const overlayDefaultY = Math.floor(workArea.y + (workArea.height - WindowHelper.OVERLAY_MIN_HEIGHT) / 2);
 
     const overlaySettings: Electron.BrowserWindowConstructorOptions = {
       width: WindowHelper.OVERLAY_DEFAULT_WIDTH,
       height: 1,
       x: overlayDefaultX,
       y: overlayDefaultY,
-      minWidth: 300,
+      minWidth: 600,
       minHeight: 1,
       webPreferences: {
         nodeIntegration: false,

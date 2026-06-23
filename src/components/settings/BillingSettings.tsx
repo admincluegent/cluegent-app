@@ -58,10 +58,10 @@ declare global {
 }
 
 type CheckoutCard = {
-  id: "pro" | "power";
+  id: "plus" | "pro" | "power";
   interval: BillingInterval;
   name: string;
-  accent: "sky" | "violet";
+  accent: "emerald" | "sky" | "violet";
   eyebrow: string;
   price: string;
   priceSuffix: string;
@@ -77,22 +77,65 @@ type BillingProviderMode = "test" | "live";
 
 const CHECKOUT_CARDS: CheckoutCard[] = [
   {
+    id: "plus",
+    interval: "month",
+    name: "Plus",
+    accent: "emerald",
+    eyebrow: "Plus",
+    price: "₹999",
+    priceSuffix: "/month",
+    tagline: "For focused interview preparation with more listening and screenshot capacity.",
+    sttSecondsLimit: 36000,
+    promptLimit: 1000,
+    screenshotLimit: 1000,
+    highlights: [
+      "Undetectability - Cluegent stays invisible during screen sharing",
+      "10 hours listening",
+      "1,000 AI requests",
+      "1,000 screenshot analyses",
+      "Real-time assistant",
+      "Coding + meeting support",
+    ],
+  },
+  {
+    id: "plus",
+    interval: "year",
+    name: "Plus",
+    accent: "emerald",
+    eyebrow: "Plus",
+    price: "₹833",
+    priceSuffix: "/month, billed yearly",
+    savings: "Save ₹1,998",
+    tagline: "Annual Plus access for steady interview prep at a lower yearly price.",
+    sttSecondsLimit: 36000,
+    promptLimit: 1000,
+    screenshotLimit: 1000,
+    highlights: [
+      "Undetectability - Cluegent stays invisible during screen sharing",
+      "10 hours/month listening",
+      "1,000 AI requests/month",
+      "1,000 screenshot analyses/month",
+      "Real-time assistant",
+      "Coding + meeting support",
+    ],
+  },
+  {
     id: "pro",
     interval: "month",
     name: "Pro",
     accent: "sky",
-    eyebrow: "Pro",
+    eyebrow: "Most Popular",
     price: "₹2,499",
     priceSuffix: "/month",
     tagline: "For regular meetings, technical conversations, and real-time assistant support.",
-    sttSecondsLimit: 108000,
-    promptLimit: 5000,
-    screenshotLimit: 2500,
+    sttSecondsLimit: UNLIMITED_USAGE_LIMIT,
+    promptLimit: UNLIMITED_USAGE_LIMIT,
+    screenshotLimit: UNLIMITED_USAGE_LIMIT,
     highlights: [
       "Undetectability - Cluegent stays invisible during screen sharing",
-      "30 hours listening",
-      "5,000 AI requests",
-      "2,500 screenshot analyses",
+      "Unlimited listening",
+      "Unlimited AI requests",
+      "Unlimited screenshot analyses",
       "Real-time assistant",
       "Coding + meeting support",
     ],
@@ -102,19 +145,19 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
     interval: "year",
     name: "Pro",
     accent: "sky",
-    eyebrow: "Pro",
+    eyebrow: "Most Popular",
     price: "₹2,083",
     priceSuffix: "/month, billed yearly",
     savings: "Save ₹4,998",
     tagline: "Annual Pro access with the same core assistant limits at a lower yearly price.",
-    sttSecondsLimit: 108000,
-    promptLimit: 5000,
-    screenshotLimit: 2500,
+    sttSecondsLimit: UNLIMITED_USAGE_LIMIT,
+    promptLimit: UNLIMITED_USAGE_LIMIT,
+    screenshotLimit: UNLIMITED_USAGE_LIMIT,
     highlights: [
       "Undetectability - Cluegent stays invisible during screen sharing",
-      "30 hours/month listening",
-      "5,000 AI requests/month",
-      "2,500 screenshot analyses/month",
+      "Unlimited listening",
+      "Unlimited AI requests",
+      "Unlimited screenshot analyses",
       "Real-time assistant",
       "Coding + meeting support",
     ],
@@ -124,7 +167,7 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
     interval: "month",
     name: "Power",
     accent: "violet",
-    eyebrow: "Most Popular",
+    eyebrow: "Power",
     price: "₹6,499",
     priceSuffix: "/month",
     tagline: "For heavy users who need more assistant capacity and faster responses.",
@@ -147,7 +190,7 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
     interval: "year",
     name: "Power",
     accent: "violet",
-    eyebrow: "Most Popular",
+    eyebrow: "Power",
     price: "₹5,416",
     priceSuffix: "/month, billed yearly",
     savings: "Save ₹12,998",
@@ -169,9 +212,18 @@ const CHECKOUT_CARDS: CheckoutCard[] = [
 ];
 
 const USD_CHECKOUT_PRICING: Record<
-  "pro" | "power",
+  "plus" | "pro" | "power",
   Record<BillingInterval, { price: string; savings?: string }>
 > = {
+  plus: {
+    month: {
+      price: "$12",
+    },
+    year: {
+      price: "$10",
+      savings: "Save $24",
+    },
+  },
   pro: {
     month: {
       price: "$29",
@@ -197,14 +249,14 @@ const FREE_PLAN_CARD = {
   name: "Free",
   eyebrow: "Free Trial",
   tagline: "Limited usage.",
-  sttSecondsLimit: 1800,
-  promptLimit: 20,
-  screenshotLimit: 20,
+  sttSecondsLimit: 720,
+  promptLimit: Number.MAX_SAFE_INTEGER,
+  screenshotLimit: Number.MAX_SAFE_INTEGER,
   highlights: [
-    "30 min listening",
-    "20 AI requests",
-    "20 screenshot analyses",
-    "Limited usage",
+    "12 min total Cluegent usage",
+    "Try live answers",
+    "Try screenshot analysis",
+    "Subscribe to continue",
   ],
 };
 
@@ -213,7 +265,7 @@ function isCheckoutCardEnabled(plan: CheckoutCard) {
 }
 
 function getCheckoutPricingKey(
-  planId: "pro" | "power",
+  planId: "plus" | "pro" | "power",
   interval: BillingInterval,
   currency: BillingCurrency
 ) {
@@ -255,6 +307,23 @@ function getCheckoutCardPricing(
   return getFallbackCheckoutCardPricing(plan, currency);
 }
 
+function getOfferOriginalPrice(displayPrice: string) {
+  const parsed = displayPrice.match(/^([₹$])\s?([\d,]+)$/);
+
+  if (!parsed) {
+    return null;
+  }
+
+  const [, symbol, amountText] = parsed;
+  const amount = Number(amountText.replace(/,/g, ""));
+
+  if (!Number.isFinite(amount)) {
+    return null;
+  }
+
+  return `${symbol}${Math.round(amount * 2).toLocaleString("en-US")}`;
+}
+
 function BillingCurrencyFlag({ currency }: { currency: BillingCurrency }) {
   if (currency === "INR") {
     return (
@@ -281,28 +350,41 @@ function BillingCurrencyFlag({ currency }: { currency: BillingCurrency }) {
 }
 
 function getAccentClasses(accent: CheckoutCard["accent"]) {
+  if (accent === "emerald") {
+    return {
+      border: "border-emerald-400",
+      badge:
+        "border-emerald-200 bg-emerald-50 text-emerald-700",
+      button:
+        "border border-slate-300 bg-white text-slate-950 shadow-[0_14px_36px_-28px_rgba(15,23,42,0.35)] hover:border-emerald-500 hover:bg-emerald-50",
+      card: "bg-white",
+      glow: "from-transparent via-transparent to-transparent",
+      bullet: "text-emerald-500",
+    };
+  }
+
   if (accent === "sky") {
     return {
-      border: "border-sky-400/30",
+      border: "border-orange-400",
       badge:
-        "border-white/25 bg-white/[0.18] text-white shadow-[0_18px_55px_-35px_rgba(255,255,255,0.9)]",
+        "border-orange-200 bg-orange-50 text-orange-700",
       button:
-        "border border-white/25 bg-white text-slate-950 shadow-[0_18px_45px_-24px_rgba(255,255,255,0.9)] hover:bg-white/90",
-      card: "bg-gradient-to-br from-amber-300 via-orange-500 to-red-600",
-      glow: "from-white/[0.24] via-white/[0.08] to-transparent",
-      bullet: "text-emerald-300",
+        "border border-slate-300 bg-white text-slate-950 shadow-[0_14px_36px_-28px_rgba(15,23,42,0.35)] hover:border-orange-500 hover:bg-orange-50",
+      card: "bg-white",
+      glow: "from-transparent via-transparent to-transparent",
+      bullet: "text-orange-500",
     };
   }
 
   return {
-    border: "border-violet-400/30",
+    border: "border-slate-500",
     badge:
-      "border-white/25 bg-white/[0.18] text-white shadow-[0_18px_55px_-35px_rgba(255,255,255,0.9)]",
+      "border-slate-300 bg-slate-100 text-slate-700",
     button:
-      "border border-white/25 bg-white text-slate-950 shadow-[0_18px_45px_-24px_rgba(255,255,255,0.9)] hover:bg-white/90",
-    card: "bg-gradient-to-br from-slate-800 via-slate-700 to-zinc-600",
-    glow: "from-white/[0.24] via-white/[0.08] to-transparent",
-    bullet: "text-emerald-300",
+      "border border-slate-300 bg-white text-slate-950 shadow-[0_14px_36px_-28px_rgba(15,23,42,0.35)] hover:border-slate-700 hover:bg-slate-50",
+    card: "bg-white",
+    glow: "from-transparent via-transparent to-transparent",
+    bullet: "text-slate-600",
   };
 }
 
@@ -423,7 +505,7 @@ export const BillingSettings: React.FC = () => {
   }, [checkoutStartedAt, pendingCheckoutKey, refreshProfile]);
 
   const handleOpenRazorpayCheckout = async (
-    planId: "pro" | "power",
+    planId: "plus" | "pro" | "power",
     interval: BillingInterval,
     providerMode: BillingProviderMode = "test"
   ) => {
@@ -443,7 +525,7 @@ export const BillingSettings: React.FC = () => {
       const result =
         providerMode === "live"
           ? await createRazorpayLiveOrder(planId, interval, selectedCurrency)
-          : await createRazorpayTestSubscription(planId as "pro" | "power", interval);
+          : await createRazorpayTestSubscription(planId, interval);
       setPendingCheckoutKey(requestKey);
       setCheckoutStartedAt(Date.now());
 
@@ -545,7 +627,6 @@ export const BillingSettings: React.FC = () => {
       CHECKOUT_CARDS.filter(
         (plan) =>
           plan.interval === selectedInterval &&
-          (plan.id === "pro" || plan.id === "power") &&
           isCheckoutCardEnabled(plan)
       ),
     [selectedInterval]
@@ -571,10 +652,10 @@ export const BillingSettings: React.FC = () => {
 
   return (
     <div className="-m-6 min-h-full bg-white p-6 text-slate-950 animated fadeIn">
-      <section className="space-y-5">
+      <section className="space-y-4">
         <div className="flex flex-col items-center gap-4 text-center">
-          <div className="w-full max-w-[980px]">
-            <h2 className="text-[2.75rem] font-semibold leading-none tracking-[-0.06em] text-slate-950">
+          <div className="w-full max-w-[1120px]">
+            <h2 className="text-[2.45rem] font-semibold leading-none tracking-[-0.055em] text-slate-950">
               Choose your plan
             </h2>
             <p className="mt-3 text-base font-medium text-slate-500">
@@ -610,7 +691,7 @@ export const BillingSettings: React.FC = () => {
         </div>
 
         <div className="space-y-4">
-          <div className="mx-auto flex w-full max-w-[980px] justify-end">
+          <div className="mx-auto flex w-full max-w-[1120px] justify-end">
             <div className="inline-flex rounded-[18px] border border-slate-200 bg-slate-100/90 p-0.5 shadow-[0_14px_38px_-30px_rgba(15,23,42,0.35)]">
               {(["INR", "USD"] as BillingCurrency[]).map((currency) => {
                 const isSelected = selectedCurrency === currency;
@@ -638,7 +719,7 @@ export const BillingSettings: React.FC = () => {
             </div>
           </div>
 
-          <div className="mx-auto grid w-full max-w-[980px] gap-4 lg:grid-cols-2">
+          <div className="mx-auto flex w-full max-w-[1120px] snap-x gap-3 overflow-x-auto pb-4 [-webkit-overflow-scrolling:touch]">
             {visiblePaidCards.map((plan) => {
               const accent = getAccentClasses(plan.accent);
               const pricing = getCheckoutCardPricing(
@@ -646,36 +727,54 @@ export const BillingSettings: React.FC = () => {
                 selectedCurrency,
                 livePricingByKey
               );
+              const originalPrice = getOfferOriginalPrice(pricing.price);
               const cardKey = `${plan.id}-${plan.interval}`;
               const liveCardKey = `live-${cardKey}`;
               const isBusy = busyKey === cardKey || busyKey === liveCardKey;
               const isActive =
                 subscription?.plan === plan.id && subscription?.billingInterval === plan.interval;
+              const isPlusLimitReached =
+                plan.id === "plus" &&
+                planStatus?.plan === "plus" &&
+                ((planStatus.remaining.prompts ?? 0) <= 0 ||
+                  (planStatus.remaining.screenshots ?? 0) <= 0 ||
+                  (planStatus.remaining.sttSeconds ?? 0) <= 0);
+              const canBuyAgain = isActive && isPlusLimitReached;
 
               return (
                 <article
                   key={cardKey}
-                  className={`relative flex min-h-[520px] flex-col overflow-hidden rounded-[28px] border p-6 text-white shadow-[0_28px_90px_-45px_rgba(15,23,42,0.95)] ${accent.card} ${accent.border}`}
+                  className={`relative flex min-h-[430px] w-[252px] shrink-0 snap-start flex-col overflow-hidden rounded-[24px] border-2 p-5 text-slate-950 shadow-[0_22px_70px_-46px_rgba(15,23,42,0.45)] sm:w-[270px] ${accent.card} ${accent.border}`}
                 >
                   <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accent.glow}`} />
 
                   <div className="relative">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h4 className="text-[1.75rem] font-semibold leading-none tracking-[-0.04em] text-white">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="text-[1.45rem] font-semibold leading-none tracking-[-0.04em] text-slate-950">
                         {plan.name}
                       </h4>
-                      {plan.id === "power" && (
-                        <span className="rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white">
-                          Popular
+                      {(plan.id === "plus" || plan.id === "pro") && (
+                        <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${accent.badge}`}>
+                          {plan.id === "pro" ? "Most Popular" : "Starter"}
                         </span>
                       )}
                     </div>
-                    <div className="mt-4 flex flex-wrap items-end gap-2">
-                      <span className="text-[1.65rem] font-semibold leading-none tracking-[-0.03em] text-white sm:text-[1.85rem]">
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      {originalPrice && (
+                        <span className="text-sm font-semibold leading-none text-slate-400 line-through decoration-slate-400 decoration-2">
+                          {originalPrice}
+                        </span>
+                      )}
+                      <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${accent.badge}`}>
+                        50% off
+                      </span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-end gap-2">
+                      <span className="text-[1.5rem] font-semibold leading-none tracking-[-0.03em] text-slate-950 sm:text-[1.65rem]">
                         {plan.interval === "year" ? (
                           <>
                             {pricing.price}
-                            <span className="ml-1 text-xs font-medium tracking-normal text-white/85">
+                            <span className="ml-1 text-[11px] font-medium tracking-normal text-slate-500">
                               /month
                             </span>
                           </>
@@ -684,42 +783,42 @@ export const BillingSettings: React.FC = () => {
                         )}
                       </span>
                       {plan.interval === "month" && (
-                        <span className="whitespace-nowrap pb-0.5 text-xs font-medium leading-snug text-white/85">
+                        <span className="whitespace-nowrap pb-0.5 text-[11px] font-medium leading-snug text-slate-500">
                           {plan.priceSuffix}
                         </span>
                       )}
                       {plan.interval === "year" && (
-                        <span className="mb-1 rounded-full border border-white/25 bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
+                        <span className={`mb-0.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${accent.badge}`}>
                           billed yearly
                         </span>
                       )}
                       {pricing.savings && (
-                        <span className="mb-1 rounded-full border border-white/25 bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
+                        <span className={`mb-0.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${accent.badge}`}>
                           {pricing.savings}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="relative mt-6 space-y-3 text-sm text-text-primary">
+                  <div className="relative mt-5 space-y-2.5 text-[13px] leading-5 text-slate-700">
                     {plan.highlights.map((item) => (
-                      <div key={item} className="flex items-start gap-3">
-                        <Check size={16} className={`mt-0.5 shrink-0 ${accent.bullet}`} />
-                        <span className="text-slate-100">{item}</span>
+                      <div key={item} className="flex items-start gap-2.5">
+                        <Check size={14} className={`mt-0.5 shrink-0 ${accent.bullet}`} />
+                        <span>{item}</span>
                       </div>
                     ))}
                   </div>
 
-                  <div className="relative mt-auto pt-8">
+                  <div className="relative mt-auto pt-6">
                     <button
                       type="button"
                       onClick={() => {
                         void handleOpenRazorpayCheckout(plan.id, plan.interval, "live");
                       }}
-                      disabled={isBusy || isActive}
-                      className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                        isActive
-                          ? "border border-white/80 bg-white/10 text-white"
+                      disabled={isBusy || (isActive && !canBuyAgain)}
+                      className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-[13px] font-semibold transition ${
+                        isActive && !canBuyAgain
+                          ? "border border-slate-300 bg-slate-100 text-slate-600"
                           : accent.button
                       } ${isBusy ? "opacity-70" : ""}`}
                     >
@@ -728,6 +827,8 @@ export const BillingSettings: React.FC = () => {
                           <Loader2 size={15} className="animate-spin" />
                           Opening
                         </>
+                      ) : canBuyAgain ? (
+                        "Buy again"
                       ) : isActive ? (
                         "Current Plan"
                       ) : (
