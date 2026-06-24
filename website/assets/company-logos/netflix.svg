@@ -1,0 +1,12 @@
+<svg width="90" height="90" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title">
+  <title id="title">Netflix</title>
+  <path d="M20 10h15.5l19.3 54.4V10H70v70H54.2L35.1 26.2V80H20V10Z" fill="#E50914"/>
+  <path d="M35.1 10h15.6L70 64.5V80H54.2L35.1 26.2V10Z" fill="url(#paint0_linear)"/>
+  <defs>
+    <linearGradient id="paint0_linear" x1="42" y1="13" x2="64" y2="80" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B00610"/>
+      <stop offset="0.5" stop-color="#E50914"/>
+      <stop offset="1" stop-color="#8A050B"/>
+    </linearGradient>
+  </defs>
+</svg>

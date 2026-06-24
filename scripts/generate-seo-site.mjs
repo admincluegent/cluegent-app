@@ -8,11 +8,16 @@ const websiteDir = join(rootDir, "website");
 const siteUrl = "https://www.cluegent.com";
 const ga4MeasurementId = "G-CCH0Y2SN4G";
 const downloadUrl = "https://apps.microsoft.com/detail/9NXWZPN07THN";
-const generatedDate = "2026-06-04";
+const generatedDate = "2026-06-23";
 const defaultImage = "/assets/how-to-use-01.png";
 
 const productLinks = [
   ["AI Interview Assistant", "/ai-interview-assistant/"],
+  ["AI Interview Assistant India", "/ai-interview-assistant-india/"],
+  ["AI Interview Assistant for Freshers", "/ai-interview-assistant-for-freshers/"],
+  ["AI Interview Assistant for Zoom", "/ai-interview-assistant-for-zoom/"],
+  ["AI Interview Assistant for Google Meet", "/ai-interview-assistant-for-google-meet/"],
+  ["AI Interview Assistant for Teams", "/ai-interview-assistant-for-teams/"],
   ["Coding Interview Assistant", "/coding-interview-assistant/"],
   ["Private Overlay", "/undetectable-ai-interview-assistant/"],
   ["AI Meeting Assistant", "/ai-meeting-assistant/"],
@@ -98,8 +103,256 @@ const landingPages = [
     ],
     related: [
       ["/coding-interview-assistant/", "AI coding interview assistant"],
+      ["/ai-interview-assistant-india/", "AI interview assistant India"],
+      ["/ai-interview-assistant-for-freshers/", "AI interview assistant for freshers"],
+      ["/ai-interview-assistant-for-zoom/", "AI interview assistant for Zoom"],
+      ["/ai-interview-assistant-for-google-meet/", "AI interview assistant for Google Meet"],
+      ["/ai-interview-assistant-for-teams/", "AI interview assistant for Teams"],
       ["/undetectable-ai-interview-assistant/", "Private overlay for screen sharing"],
       ["/blog/how-to-use-ai-interview-assistant-live-interviews/", "How to use AI interview assistants"],
+    ],
+  },
+  {
+    slug: "ai-interview-assistant-india",
+    title: "AI Interview Assistant India | Cluegent",
+    description:
+      "Cluegent is an AI interview assistant for India with real-time interview answers, coding help, resume-aware context, and a private desktop overlay for Zoom, Meet, and Teams.",
+    kicker: "AI interview assistant India",
+    h1: "AI Interview Assistant for India",
+    lede:
+      "Cluegent helps Indian job seekers, freshers, and developers stay structured during permitted live interviews with resume-aware answers, coding support, screenshot context, and private desktop workflows.",
+    image: defaultImage,
+    primaryCta: "Try Cluegent free",
+    secondaryCta: "Read India guide",
+    secondaryHref: "/blog/best-ai-interview-assistants-india/",
+    bullets: [
+      "Built for live interview workflows across Zoom, Google Meet, and Microsoft Teams.",
+      "Resume-aware answers for freshers, developers, and experienced candidates.",
+      "Screenshot-aware coding help for visible problems, errors, and technical screens.",
+      "Private desktop overlay designed to stay out of standard screen sharing.",
+      "Useful for software, product, support, analyst, and technical interview practice.",
+    ],
+    sections: [
+      {
+        title: "Why India candidates search for live AI interview help",
+        text: "Many Indian candidates face fast-paced interviews, coding rounds, English communication pressure, and back-to-back hiring processes. Cluegent is positioned for candidates who need structure, examples, and context while staying inside the desktop workflow.",
+      },
+      {
+        title: "How Cluegent helps during Indian hiring rounds",
+        text: "Use live listening for permitted calls, add your resume for context, submit typed prompts for direct questions, and attach screenshots when a code problem, system design diagram, or error is visible on screen.",
+      },
+      {
+        title: "Affordability and plan clarity",
+        text: "Cluegent shows plan details inside the app and keeps pricing visible on the website. Candidates can start free, test the workflow, and upgrade only if the assistant fits their interview preparation and live-call needs.",
+      },
+      {
+        title: "Responsible use matters",
+        text: "Use Cluegent only where AI assistance, transcription, screenshot capture, and desktop overlays are permitted by the interviewer, employer, platform, school, and local law.",
+      },
+    ],
+    comparisonRows: [
+      ["India interview use cases", "Freshers, developers, technical rounds", "Generic global copy"],
+      ["Resume context", "Built into customization", "Often separate"],
+      ["Coding screenshots", "Built in", "Manual copy-paste"],
+      ["Meeting platforms", "Zoom, Google Meet, Teams", "Varies"],
+    ],
+    related: [
+      ["/ai-interview-assistant-for-freshers/", "AI interview assistant for freshers"],
+      ["/coding-interview-assistant/", "Coding interview assistant"],
+      ["/chiku-ai-alternative/", "Chiku AI alternative"],
+      ["/blog/best-ai-interview-assistants-india/", "Best AI interview assistants in India"],
+    ],
+  },
+  {
+    slug: "ai-interview-assistant-for-freshers",
+    title: "AI Interview Assistant for Freshers | Cluegent",
+    description:
+      "Cluegent helps freshers answer live interview questions with resume context, STAR structure, coding help, examples, and private desktop assistance.",
+    kicker: "Freshers interview assistant",
+    h1: "AI Interview Assistant for Freshers",
+    lede:
+      "Cluegent helps freshers turn resume details, projects, internships, coursework, and coding practice into clearer live interview answers.",
+    image: defaultImage,
+    primaryCta: "Start free",
+    secondaryCta: "Read freshers guide",
+    secondaryHref: "/blog/ai-interview-assistant-for-freshers/",
+    bullets: [
+      "Add resume context so answers can reference your projects and skills.",
+      "Use quick actions for examples, clarification, and follow-up answers.",
+      "Structure behavioral answers with STAR-style responses.",
+      "Attach coding screens when a technical question is visible.",
+      "Practice responsibly before using Cluegent in permitted live calls.",
+    ],
+    sections: [
+      {
+        title: "Freshers often need structure more than long answers",
+        text: "First job interviews are stressful because candidates may know the concept but struggle to frame it clearly. Cluegent helps turn raw context into a concise answer, example, or follow-up point.",
+      },
+      {
+        title: "Resume-aware context for projects and internships",
+        text: "Add your resume in Customize so Cluegent can keep your projects, skills, coursework, and internship experience in mind when you ask for answer structure.",
+      },
+      {
+        title: "Coding, HR, and behavioral interviews",
+        text: "Use screenshot mode for coding questions, listening mode for permitted live context, and typed prompts for HR or behavioral questions where a short structured answer is useful.",
+      },
+      {
+        title: "Use it as support, not replacement",
+        text: "Freshers should prepare fundamentals first. Cluegent is best used to organize what you know and reduce blank moments, not to fake knowledge.",
+      },
+    ],
+    comparisonRows: [
+      ["Resume-aware answers", "Yes", "Generic AI answers"],
+      ["STAR support", "Quick prompts", "Manual prep"],
+      ["Coding support", "Screenshot-aware", "Copy-paste"],
+      ["Freshers focus", "Dedicated workflow", "Broad tools"],
+    ],
+    related: [
+      ["/ai-interview-assistant-india/", "AI interview assistant India"],
+      ["/blog/star-method-behavioral-interview-questions/", "STAR behavioral answers"],
+      ["/blog/ai-interview-assistant-for-freshers/", "Freshers guide"],
+      ["/pricing/", "Pricing"],
+    ],
+  },
+  {
+    slug: "ai-interview-assistant-for-zoom",
+    title: "AI Interview Assistant for Zoom Interviews | Cluegent",
+    description:
+      "Use Cluegent as a private AI interview assistant for permitted Zoom interviews with live context, resume-aware answers, coding screenshots, and typed prompts.",
+    kicker: "Zoom interview assistant",
+    h1: "AI Interview Assistant for Zoom Interviews",
+    lede:
+      "Cluegent runs as a desktop assistant outside the meeting participant list, helping with permitted Zoom interviews through live context, typed prompts, and screenshot-aware support.",
+    image: defaultImage,
+    primaryCta: "Try Cluegent for Zoom",
+    secondaryCta: "Compare alternatives",
+    secondaryHref: "/alternatives/",
+    bullets: [
+      "Designed for desktop workflows alongside Zoom.",
+      "Does not join the call as a meeting participant.",
+      "Private overlay designed to stay out of standard screen sharing.",
+      "Supports resume-aware and screenshot-aware answers.",
+      "Useful for HR, behavioral, technical, and coding Zoom interviews.",
+    ],
+    sections: [
+      {
+        title: "Why Zoom interviews need fast context",
+        text: "Zoom interviews move quickly between introductions, behavioral questions, coding prompts, and follow-up constraints. Cluegent keeps the relevant context close so you can request a structured answer without leaving the desktop workflow.",
+      },
+      {
+        title: "How Cluegent works with Zoom",
+        text: "Start Cluegent before the call, place the overlay where it is comfortable, use listening only where permitted, and submit typed or screenshot prompts when you need direct help.",
+      },
+      {
+        title: "Private overlay language",
+        text: "Cluegent is designed to stay out of standard screen capture, but users should always check Zoom settings, interview rules, and any monitoring requirements before use.",
+      },
+    ],
+    comparisonRows: [
+      ["Zoom participant", "No", "Meeting bot"],
+      ["Live context", "User-controlled", "Post-call notes"],
+      ["Screenshot help", "Yes", "Manual"],
+      ["Resume context", "Yes", "Generic"],
+    ],
+    related: [
+      ["/ai-interview-assistant-for-google-meet/", "Google Meet interview assistant"],
+      ["/ai-interview-assistant-for-teams/", "Teams interview assistant"],
+      ["/blog/best-ai-interview-assistant-for-zoom/", "Zoom interview guide"],
+      ["/download/", "Download"],
+    ],
+  },
+  {
+    slug: "ai-interview-assistant-for-google-meet",
+    title: "AI Interview Assistant for Google Meet | Cluegent",
+    description:
+      "Cluegent helps with permitted Google Meet interviews using live interview context, typed prompts, coding screenshot support, and resume-aware desktop answers.",
+    kicker: "Google Meet interview assistant",
+    h1: "AI Interview Assistant for Google Meet",
+    lede:
+      "Use Cluegent beside Google Meet for permitted interviews where you want live context, quick answer structure, resume-aware prompts, and screenshot-aware coding support.",
+    image: defaultImage,
+    primaryCta: "Try Cluegent for Google Meet",
+    secondaryCta: "Read Meet guide",
+    secondaryHref: "/blog/best-ai-interview-assistant-for-google-meet/",
+    bullets: [
+      "Desktop assistant workflow for Google Meet interviews.",
+      "Resume-aware context for project and experience answers.",
+      "Screenshot-aware support for coding screens and visual prompts.",
+      "Quick actions for examples, clarification, and follow-up questions.",
+      "Private overlay designed to stay out of standard screen sharing.",
+    ],
+    sections: [
+      {
+        title: "Google Meet interviews often mix voice and screen",
+        text: "Candidates may need to answer spoken questions, explain projects, solve visible code, or react to screen-shared prompts. Cluegent supports those workflows with listening, typed prompt, and screenshot modes.",
+      },
+      {
+        title: "How to prepare before the Meet call",
+        text: "Test Cluegent before the interview, add resume context, choose response style, and verify that your intended use is allowed by the interviewer and platform rules.",
+      },
+      {
+        title: "Use concise answers",
+        text: "For live interviews, Cluegent is most useful when answers are short, structured, and easy to speak. Customize listening responses and typed responses for your preferred style.",
+      },
+    ],
+    comparisonRows: [
+      ["Google Meet workflow", "Desktop assistant", "Browser tab switching"],
+      ["Live answer structure", "Yes", "Manual"],
+      ["Code screenshots", "Yes", "Manual"],
+      ["Quick actions", "Customizable", "Generic prompts"],
+    ],
+    related: [
+      ["/ai-interview-assistant-for-zoom/", "Zoom interview assistant"],
+      ["/ai-interview-assistant-for-teams/", "Teams interview assistant"],
+      ["/blog/best-ai-interview-assistant-for-google-meet/", "Google Meet guide"],
+      ["/ai-interview-assistant-india/", "AI interview assistant India"],
+    ],
+  },
+  {
+    slug: "ai-interview-assistant-for-teams",
+    title: "AI Interview Assistant for Microsoft Teams | Cluegent",
+    description:
+      "Use Cluegent during permitted Microsoft Teams interviews for live answers, resume-aware context, screenshot coding help, and private desktop assistance.",
+    kicker: "Microsoft Teams interview assistant",
+    h1: "AI Interview Assistant for Microsoft Teams",
+    lede:
+      "Cluegent supports permitted Microsoft Teams interviews with a private desktop assistant for live context, typed prompts, coding screens, and resume-aware answers.",
+    image: defaultImage,
+    primaryCta: "Try Cluegent for Teams",
+    secondaryCta: "Download Cluegent",
+    secondaryHref: "/download/",
+    bullets: [
+      "Works beside Microsoft Teams as a desktop assistant.",
+      "Use live listening only where transcription and AI assistance are allowed.",
+      "Attach screenshots for coding rounds, diagrams, and visible prompts.",
+      "Customize answer behavior for HR, coding, and technical interviews.",
+      "Keep Cluegent out of the meeting participant list.",
+    ],
+    sections: [
+      {
+        title: "Teams interviews need a desktop-first workflow",
+        text: "Many corporate interviews happen on Microsoft Teams, especially technical, consulting, support, and enterprise roles. Cluegent keeps help in a movable desktop overlay while you stay focused on the call.",
+      },
+      {
+        title: "Good for enterprise-style interviews",
+        text: "Use typed prompts for direct questions, quick actions for clarification, and screenshots when the interview includes shared technical content or coding tasks.",
+      },
+      {
+        title: "Stay compliant",
+        text: "Teams environments may include company policies and security controls. Use Cluegent only when AI assistance and capture features are permitted.",
+      },
+    ],
+    comparisonRows: [
+      ["Teams participant", "No", "Meeting bot"],
+      ["Technical interview support", "Screenshots and prompts", "Manual"],
+      ["Resume context", "Customizable", "Generic"],
+      ["Responsible-use controls", "Clear disclaimer", "Varies"],
+    ],
+    related: [
+      ["/ai-interview-assistant-for-zoom/", "Zoom interview assistant"],
+      ["/ai-interview-assistant-for-google-meet/", "Google Meet interview assistant"],
+      ["/coding-interview-assistant/", "Coding interview assistant"],
+      ["/pricing/", "Pricing"],
     ],
   },
   {
@@ -146,6 +399,8 @@ const landingPages = [
       ["/blog/react-interview-questions-with-answers/", "React interview questions"],
       ["/blog/javascript-coding-interview-questions/", "JavaScript coding questions"],
       ["/blog/system-design-interview-questions-beginners/", "System design questions"],
+      ["/blog/how-to-use-ai-during-coding-interview/", "How to use AI during coding interviews"],
+      ["/ai-interview-assistant-india/", "AI interview assistant India"],
     ],
   },
   {
@@ -374,7 +629,11 @@ const landingPages = [
 const alternatives = [
   {
     slug: "lockedin-ai",
+    rootSlug: "lockedin-ai-alternative",
+    blogSlug: "cluegent-vs-lockedin-ai",
     competitor: "LockedIn AI",
+    alternativeTitle: "LockedIn AI Alternative | Cluegent",
+    alternativeH1: "LockedIn AI Alternative",
     title: "Cluegent vs LockedIn AI | AI Interview Assistant Alternative",
     description:
       "Compare Cluegent and LockedIn AI for live interview assistance, coding help, private desktop workflows, meeting support, and responsible use.",
@@ -389,7 +648,11 @@ const alternatives = [
   },
   {
     slug: "final-round-ai",
+    rootSlug: "final-round-ai-alternative",
+    blogSlug: "cluegent-vs-final-round-ai",
     competitor: "Final Round AI",
+    alternativeTitle: "Final Round AI Alternative | Cluegent",
+    alternativeH1: "Final Round AI Alternative",
     title: "Cluegent vs Final Round AI | Interview Copilot Alternative",
     description:
       "Compare Cluegent and Final Round AI for real-time interview help, coding support, private overlay workflows, and interview preparation.",
@@ -404,7 +667,11 @@ const alternatives = [
   },
   {
     slug: "parakeet-ai",
+    rootSlug: "parakeet-ai-alternative",
+    blogSlug: "cluegent-vs-parakeet-ai",
     competitor: "ParakeetAI",
+    alternativeTitle: "Parakeet AI Alternative | Cluegent",
+    alternativeH1: "Parakeet AI Alternative",
     title: "Cluegent vs ParakeetAI | AI Interview Assistant Alternative",
     description:
       "Compare Cluegent and ParakeetAI for private AI interview assistance, coding interview support, platform compatibility, and live meeting help.",
@@ -419,7 +686,11 @@ const alternatives = [
   },
   {
     slug: "chiku-ai",
+    rootSlug: "chiku-ai-alternative",
+    blogSlug: "cluegent-vs-chiku-ai",
     competitor: "Chiku AI",
+    alternativeTitle: "Chiku AI Alternative | Cluegent",
+    alternativeH1: "Chiku AI Alternative",
     title: "Cluegent vs Chiku AI | AI Interview Assistant Alternative",
     description:
       "Compare Cluegent and Chiku AI for AI interview assistance, India-friendly positioning, private desktop support, coding help, and meeting workflows.",
@@ -435,6 +706,129 @@ const alternatives = [
 ];
 
 const blogPosts = [
+  {
+    slug: "best-ai-interview-assistants-india",
+    title: "Best AI Interview Assistants in India | Cluegent",
+    description:
+      "Compare the best AI interview assistants in India for freshers, developers, coding interviews, Google Meet, Zoom, Teams, pricing, and private desktop workflows.",
+    h1: "Best AI Interview Assistants in India",
+    summary:
+      "Indian candidates need tools that handle live interview pressure, coding screens, resume context, affordability, and common platforms like Google Meet, Zoom, and Teams.",
+    sections: [
+      ["What Indian candidates should compare", "Look for real-time answer quality, coding screenshot support, resume-aware context, pricing in India, platform compatibility, setup speed, and clear responsible-use policies."],
+      ["Where Cluegent fits", "Cluegent is a desktop AI interview assistant for job seekers and developers who want live transcript context, typed prompts, screenshot-aware coding help, resume context, and quick actions."],
+      ["Best use cases", "Cluegent is strongest for permitted live interviews, technical screens, freshers preparing their first answers, and developers who need structured explanations under time pressure."],
+      ["What to avoid", "Avoid relying on any tool as a replacement for preparation. Also avoid products that make absolute invisibility claims without explaining responsible use and platform limitations."],
+    ],
+    links: [["/ai-interview-assistant-india/", "AI interview assistant India"], ["/chiku-ai-alternative/", "Chiku AI alternative"], ["/ai-interview-assistant-for-freshers/", "Freshers interview assistant"]],
+  },
+  {
+    slug: "ai-interview-assistant-for-freshers",
+    title: "AI Interview Assistant for Freshers | Cluegent Guide",
+    description:
+      "A practical guide for freshers using an AI interview assistant for resume-aware answers, project explanations, HR questions, STAR responses, and coding screens.",
+    h1: "AI Interview Assistant for Freshers",
+    summary:
+      "Freshers usually do not need longer answers. They need structure, confidence, project context, and a way to avoid blank moments during live interviews.",
+    sections: [
+      ["Start with resume context", "Add your resume before the interview so answers can reference projects, internships, coursework, skills, and tools you actually know."],
+      ["Use STAR for behavioral answers", "For HR and behavioral questions, ask for Situation, Task, Action, and Result structure so the answer sounds specific instead of generic."],
+      ["Use screenshots for technical screens", "If a coding problem or error is visible, screenshot-aware support can explain the approach, complexity, edge cases, and debugging steps."],
+      ["Practice before the real call", "Freshers should test shortcuts, overlay placement, response style, and platform behavior before any important interview."],
+    ],
+    links: [["/ai-interview-assistant-for-freshers/", "Freshers landing page"], ["/blog/star-method-behavioral-interview-questions/", "STAR answers"], ["/coding-interview-assistant/", "Coding interview assistant"]],
+  },
+  {
+    slug: "how-to-use-ai-during-coding-interview",
+    title: "How to Use AI During a Coding Interview | Cluegent",
+    description:
+      "Learn how to use AI responsibly during permitted coding interviews for approach, debugging, screenshots, complexity analysis, and spoken explanations.",
+    h1: "How to Use AI During a Coding Interview",
+    summary:
+      "AI support is most useful in coding interviews when it helps you structure the approach, explain tradeoffs, debug visible code, and communicate clearly.",
+    sections: [
+      ["Use AI for structure first", "Ask for the brute force approach, optimized approach, edge cases, time complexity, and a short explanation you can speak naturally."],
+      ["Use screenshots when code is visible", "When the editor, problem, test failure, or stack trace is on screen, screenshot context is faster and less error-prone than retyping everything."],
+      ["Do not skip fundamentals", "You still need to understand data structures, language behavior, complexity, and debugging. Use Cluegent to organize thinking, not to replace it."],
+      ["Stay within interview rules", "Only use AI assistance, transcription, or screenshots when the hiring process allows it."],
+    ],
+    links: [["/coding-interview-assistant/", "Coding interview assistant"], ["/blog/javascript-coding-interview-questions/", "JavaScript coding questions"], ["/blog/react-interview-questions-with-answers/", "React questions"]],
+  },
+  {
+    slug: "best-ai-interview-assistant-for-google-meet",
+    title: "Best AI Interview Assistant for Google Meet | Cluegent",
+    description:
+      "Choose an AI interview assistant for Google Meet interviews with live context, resume-aware answers, coding screenshots, private desktop overlay, and responsible use.",
+    h1: "Best AI Interview Assistant for Google Meet",
+    summary:
+      "For Google Meet interviews, the best assistant should work beside the call, handle live context, support screenshots, and avoid forcing tab switching.",
+    sections: [
+      ["What matters on Google Meet", "Candidates need quick answer structure, screen support for technical prompts, resume context, and a workflow that does not join the meeting as a participant."],
+      ["How Cluegent fits", "Cluegent runs as a desktop app, supports listening when permitted, typed prompts, screenshot answers, quick actions, and private overlay behavior."],
+      ["Before using it", "Test Google Meet, your OS, overlay placement, microphone, shortcuts, and allowed use before any important call."],
+    ],
+    links: [["/ai-interview-assistant-for-google-meet/", "Google Meet interview assistant"], ["/ai-interview-assistant-for-zoom/", "Zoom assistant"], ["/download/", "Download"]],
+  },
+  {
+    slug: "best-ai-interview-assistant-for-zoom",
+    title: "Best AI Interview Assistant for Zoom Interviews | Cluegent",
+    description:
+      "Choose an AI interview assistant for Zoom interviews with real-time context, resume-aware answers, private desktop overlay, and screenshot coding help.",
+    h1: "Best AI Interview Assistant for Zoom Interviews",
+    summary:
+      "Zoom interviews reward fast, clear answers. A good AI assistant should support live context, screenshots, and concise spoken responses without joining as a participant.",
+    sections: [
+      ["What to look for", "Prioritize desktop workflow, setup speed, private overlay language, transcript context, screenshot support, and customization for short spoken answers."],
+      ["Where Cluegent helps", "Cluegent supports permitted Zoom workflows with live listening, typed prompts, screenshot-aware code help, resume context, and quick action buttons."],
+      ["Use responsibly", "Check Zoom settings, interviewer rules, and platform policy before using any AI, audio capture, or screenshot feature."],
+    ],
+    links: [["/ai-interview-assistant-for-zoom/", "Zoom interview assistant"], ["/ai-interview-assistant-for-google-meet/", "Google Meet assistant"], ["/alternatives/", "Compare alternatives"]],
+  },
+  {
+    slug: "cluegent-vs-parakeet-ai",
+    title: "Cluegent vs Parakeet AI | AI Interview Assistant Comparison",
+    description:
+      "Compare Cluegent and Parakeet AI for real-time interview answers, coding support, screen sharing privacy, customization, and desktop workflows.",
+    h1: "Cluegent vs Parakeet AI",
+    summary:
+      "Parakeet AI has strong real-time interview positioning. Cluegent focuses on a customizable desktop workflow with resume context, screenshots, quick actions, and local meeting support.",
+    sections: [
+      ["Choose Cluegent if", "You want a desktop assistant with typed prompts, screenshot-aware code help, resume-aware context, quick actions, and meeting workflows."],
+      ["Compare the workflow", "Test how fast each tool starts, how answers are submitted, how screenshots work, and whether the assistant fits your Zoom, Meet, or Teams workflow."],
+      ["Evaluate privacy language", "Look for careful wording about standard screen sharing and responsible use instead of absolute promises."],
+    ],
+    links: [["/parakeet-ai-alternative/", "Parakeet AI alternative"], ["/alternatives/parakeet-ai/", "Full comparison"], ["/ai-interview-assistant/", "AI interview assistant"]],
+  },
+  {
+    slug: "cluegent-vs-chiku-ai",
+    title: "Cluegent vs Chiku AI | AI Interview Assistant Comparison",
+    description:
+      "Compare Cluegent and Chiku AI for India-focused AI interview assistance, pricing, coding support, private desktop workflows, and live meeting help.",
+    h1: "Cluegent vs Chiku AI",
+    summary:
+      "Chiku AI is visible in India-focused AI interview searches. Cluegent competes with desktop workflow, customization, screenshot support, and resume-aware answers.",
+    sections: [
+      ["India search intent", "Candidates in India often compare pricing, setup speed, supported platforms, coding help, and whether the product works for freshers."],
+      ["Where Cluegent fits", "Cluegent helps with permitted live interviews, resume context, screenshot coding help, typed prompts, quick actions, and Zoom/Meet/Teams workflows."],
+      ["What to test", "Compare answer quality, customization, platform behavior, pricing clarity, support, and responsible-use terms."],
+    ],
+    links: [["/chiku-ai-alternative/", "Chiku AI alternative"], ["/alternatives/chiku-ai/", "Full comparison"], ["/ai-interview-assistant-india/", "AI interview assistant India"]],
+  },
+  {
+    slug: "cluegent-vs-final-round-ai",
+    title: "Cluegent vs Final Round AI | AI Interview Assistant Comparison",
+    description:
+      "Compare Cluegent and Final Round AI for live interview assistance, interview prep, coding help, private desktop workflows, and candidate use cases.",
+    h1: "Cluegent vs Final Round AI",
+    summary:
+      "Final Round AI is known for a broader interview prep ecosystem. Cluegent is positioned as a focused desktop assistant for live interview and meeting workflows.",
+    sections: [
+      ["Different product shapes", "Final Round AI is closer to a larger prep platform. Cluegent focuses on live context, screenshot support, typed prompts, and desktop overlay workflows."],
+      ["Choose Cluegent if", "You need a simple live assistant for permitted interviews, coding rounds, resume-aware answers, quick actions, and local meeting context."],
+      ["Choose broader prep if", "You want many pre-interview resources, question banks, and company prep pages before the live call."],
+    ],
+    links: [["/final-round-ai-alternative/", "Final Round AI alternative"], ["/alternatives/final-round-ai/", "Full comparison"], ["/blog/best-ai-interview-assistants-2026/", "Best AI interview assistants"]],
+  },
   {
     slug: "best-ai-interview-assistants-2026",
     title: "Best AI Interview Assistants in 2026 | Cluegent Guide",
@@ -645,7 +1039,7 @@ function footer() {
         </div>
         <div>
           <h3>Compare</h3>
-          ${alternatives.map((item) => `<a href="/alternatives/${item.slug}/">Cluegent vs ${item.competitor}</a>`).join("")}
+          ${alternatives.map((item) => `<a href="/${item.rootSlug}/">${item.alternativeH1}</a>`).join("")}
         </div>
         <div>
           <h3>Support</h3>
@@ -754,6 +1148,19 @@ function faqSchema(faqs = sharedFaq) {
   };
 }
 
+function breadcrumbSchema(items) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: absolute(item.url),
+    })),
+  };
+}
+
 function videoSchema() {
   return {
     "@context": "https://schema.org",
@@ -784,7 +1191,16 @@ ${head({ title, description, canonical, image, schema })}
 
 function landingTemplate(page) {
   const canonical = `/${page.slug}/`;
-  const schema = [...baseSchemas(), softwareSchema(page), faqSchema(), ...(page.slug === "how-to-use-cluegent" ? [videoSchema()] : [])];
+  const schema = [
+    ...baseSchemas(),
+    softwareSchema(page),
+    faqSchema(),
+    breadcrumbSchema([
+      { name: "Home", url: "/" },
+      { name: page.h1, url: canonical },
+    ]),
+    ...(page.slug === "how-to-use-cluegent" ? [videoSchema()] : []),
+  ];
   const body = `
     <main>
       <section class="seo-hero">
@@ -915,13 +1331,28 @@ function alternativesIndexTemplate() {
               <h2>Cluegent vs ${escapeHtml(item.competitor)}</h2>
               <p>${escapeHtml(item.positioning)}</p>
               <a class="secondary-link" href="/alternatives/${item.slug}/">Read comparison</a>
+              <a class="secondary-link" href="/${item.rootSlug}/">Read ${escapeHtml(item.alternativeH1)}</a>
             </article>`
             )
             .join("")}
         </div>
       </section>
     </main>`;
-  return pageShell({ title, description, canonical: "/alternatives/", image: defaultImage, schema: baseSchemas(), body, activePath: "/alternatives/" });
+  return pageShell({
+    title,
+    description,
+    canonical: "/alternatives/",
+    image: defaultImage,
+    schema: [
+      ...baseSchemas(),
+      breadcrumbSchema([
+        { name: "Home", url: "/" },
+        { name: "Alternatives", url: "/alternatives/" },
+      ]),
+    ],
+    body,
+    activePath: "/alternatives/",
+  });
 }
 
 function alternativeTemplate(item) {
@@ -968,11 +1399,130 @@ function alternativeTemplate(item) {
         <div>
           <a href="/ai-interview-assistant/">AI interview assistant</a>
           <a href="/coding-interview-assistant/">Coding interview assistant</a>
-          <a href="/blog/cluegent-vs-lockedin-ai/">Cluegent vs LockedIn AI blog</a>
+          <a href="/${item.rootSlug}/">${escapeHtml(item.alternativeH1)}</a>
+          <a href="/blog/${item.blogSlug}/">Cluegent vs ${escapeHtml(item.competitor)} blog</a>
         </div>
       </section>
     </main>`;
-  return pageShell({ title: item.title, description: item.description, canonical, image: defaultImage, schema: [...baseSchemas(), faqSchema()], body, activePath: "/alternatives/" });
+  return pageShell({
+    title: item.title,
+    description: item.description,
+    canonical,
+    image: defaultImage,
+    schema: [
+      ...baseSchemas(),
+      faqSchema(),
+      breadcrumbSchema([
+        { name: "Home", url: "/" },
+        { name: "Alternatives", url: "/alternatives/" },
+        { name: `Cluegent vs ${item.competitor}`, url: canonical },
+      ]),
+    ],
+    body,
+    activePath: "/alternatives/",
+  });
+}
+
+function alternativeLandingTemplate(item) {
+  const canonical = `/${item.rootSlug}/`;
+  const description = `${item.alternativeH1} for candidates comparing private AI interview assistants, coding interview support, resume-aware context, platform compatibility, and pricing.`;
+  const body = `
+    <main>
+      <section class="seo-hero seo-hero--simple">
+        <div class="seo-hero-copy reveal">
+          <p class="section-kicker">AI interview assistant alternative</p>
+          <h1>${escapeHtml(item.alternativeH1)}</h1>
+          <p>${escapeHtml(item.positioning)} Use this page to compare live interview workflow, coding support, private overlay behavior, customization, and responsible-use fit.</p>
+          <div class="seo-actions">
+            <a class="primary-download" href="${downloadUrl}">Try Cluegent</a>
+            <a class="secondary-link" href="/alternatives/${item.slug}/">Read full comparison</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="seo-section">
+        <div class="seo-two-col">
+          <article class="seo-panel reveal">
+            <h2>Why people look for a ${escapeHtml(item.competitor)} alternative</h2>
+            <p>Candidates usually compare AI interview tools when they need a different workflow, clearer pricing, faster setup, better coding support, resume context, screenshot help, or a desktop assistant that fits Zoom, Google Meet, and Teams interviews.</p>
+          </article>
+          <article class="seo-panel reveal">
+            <h2>How Cluegent helps</h2>
+            <p>Cluegent focuses on a desktop workflow with live listening when permitted, typed prompts, screenshot-aware coding help, resume-aware answers, custom response styles, quick actions, and local meeting history.</p>
+          </article>
+          <article class="seo-panel reveal">
+            <h2>Customize responses before the call</h2>
+            <p>Add your resume in Settings, customize listening responses, screen responses, and typed prompt responses, then use quick action buttons for common interview moves like clarify, give example, or follow up.</p>
+          </article>
+          <article class="seo-panel reveal">
+            <h2>Use responsibly</h2>
+            <p>Use Cluegent only where AI assistance, capture, transcription, and screenshots are allowed. The private overlay is designed to stay out of standard screen sharing, not to bypass every monitoring method.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="seo-section">
+        <div class="section-heading reveal">
+          <h2>${escapeHtml(item.alternativeH1)} comparison points</h2>
+          <p>Compare the exact live interview workflow before choosing a tool.</p>
+        </div>
+        <div class="seo-table reveal">
+          ${item.rows
+            .map(
+              (row) => `
+            <div>
+              <strong>${escapeHtml(row[0])}</strong>
+              <span>Cluegent: ${escapeHtml(row[1])}</span>
+              <span>${escapeHtml(item.competitor)}: ${escapeHtml(row[2])}</span>
+            </div>`
+            )
+            .join("")}
+        </div>
+      </section>
+
+      <section class="seo-section faq-section">
+        <div class="section-heading reveal">
+          <h2>Frequently asked questions</h2>
+        </div>
+        <div class="faq-list reveal">
+          ${sharedFaq
+            .map(
+              (faq, index) => `
+            <details${index === 0 ? " open" : ""}>
+              <summary>${escapeHtml(faq.q)}</summary>
+              <p>${escapeHtml(faq.a)}</p>
+            </details>`
+            )
+            .join("")}
+        </div>
+      </section>
+
+      <section class="seo-section seo-related">
+        <h2>Related resources</h2>
+        <div>
+          <a href="/alternatives/${item.slug}/">Full ${escapeHtml(item.competitor)} comparison</a>
+          <a href="/blog/${item.blogSlug}/">Cluegent vs ${escapeHtml(item.competitor)} guide</a>
+          <a href="/ai-interview-assistant/">AI interview assistant</a>
+          <a href="/pricing/">Pricing</a>
+        </div>
+      </section>
+    </main>`;
+  return pageShell({
+    title: item.alternativeTitle,
+    description,
+    canonical,
+    image: defaultImage,
+    schema: [
+      ...baseSchemas(),
+      faqSchema(),
+      breadcrumbSchema([
+        { name: "Home", url: "/" },
+        { name: item.alternativeH1, url: canonical },
+      ]),
+    ],
+    body,
+    activePath: "/alternatives/",
+  });
 }
 
 function blogIndexTemplate() {
@@ -1003,7 +1553,21 @@ function blogIndexTemplate() {
         </div>
       </section>
     </main>`;
-  return pageShell({ title, description, canonical: "/blog/", image: defaultImage, schema: baseSchemas(), body, activePath: "/blog/" });
+  return pageShell({
+    title,
+    description,
+    canonical: "/blog/",
+    image: defaultImage,
+    schema: [
+      ...baseSchemas(),
+      breadcrumbSchema([
+        { name: "Home", url: "/" },
+        { name: "Blog", url: "/blog/" },
+      ]),
+    ],
+    body,
+    activePath: "/blog/",
+  });
 }
 
 function articleTemplate(post) {
@@ -1031,6 +1595,11 @@ function articleTemplate(post) {
       },
       mainEntityOfPage: absolute(canonical),
     },
+    breadcrumbSchema([
+      { name: "Home", url: "/" },
+      { name: "Blog", url: "/blog/" },
+      { name: post.h1, url: canonical },
+    ]),
   ];
   const body = `
     <main>
@@ -1073,6 +1642,7 @@ function buildSitemap() {
     ...landingPages.map((page) => `/${page.slug}/`),
     "/alternatives/",
     ...alternatives.map((item) => `/alternatives/${item.slug}/`),
+    ...alternatives.map((item) => `/${item.rootSlug}/`),
     "/blog/",
     ...blogPosts.map((post) => `/blog/${post.slug}/`),
   ];
@@ -1110,6 +1680,7 @@ for (const page of landingPages) {
 writePage("alternatives/index.html", alternativesIndexTemplate());
 for (const item of alternatives) {
   writePage(`alternatives/${item.slug}/index.html`, alternativeTemplate(item));
+  writePage(`${item.rootSlug}/index.html`, alternativeLandingTemplate(item));
 }
 
 writePage("blog/index.html", blogIndexTemplate());

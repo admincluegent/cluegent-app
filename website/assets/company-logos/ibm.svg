@@ -1,0 +1,10 @@
+<svg width="150" height="70" viewBox="0 0 150 70" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title">
+  <title id="title">IBM</title>
+  <defs>
+    <pattern id="stripes" width="150" height="8" patternUnits="userSpaceOnUse">
+      <rect width="150" height="3.8" fill="#1F70C1"/>
+      <rect y="3.8" width="150" height="4.2" fill="transparent"/>
+    </pattern>
+  </defs>
+  <text x="8" y="51" fill="url(#stripes)" font-family="Georgia, 'Times New Roman', serif" font-size="56" font-weight="900">IBM</text>
+</svg>

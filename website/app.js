@@ -4,6 +4,22 @@ const navLinks = document.querySelectorAll(".site-nav a");
 const revealItems = document.querySelectorAll(".reveal");
 const shortcutModifier = /mac|iphone|ipad|ipod/i.test(navigator.platform) ? "Command" : "Ctrl";
 
+const trackCluegentEvent = (eventName, params = {}) => {
+  if (typeof window.gtag !== "function") return;
+  window.gtag("event", eventName, {
+    page_path: window.location.pathname,
+    ...params,
+  });
+};
+
+const getDownloadPlatform = (href, text) => {
+  const value = `${href} ${text}`.toLowerCase();
+  if (value.includes("apps.microsoft.com") || value.includes("windows")) return "windows";
+  if (value.includes("arm64")) return "mac_arm64";
+  if (value.includes("mac")) return "mac_intel";
+  return "unknown";
+};
+
 document.querySelectorAll("[data-shortcut-mod]").forEach((element) => {
   element.textContent = shortcutModifier;
 });
@@ -23,6 +39,47 @@ navLinks.forEach((link) => {
   link.addEventListener("click", () => {
     root.classList.remove("menu-open");
     menuToggle?.setAttribute("aria-expanded", "false");
+  });
+});
+
+document.querySelectorAll("a[href]").forEach((element) => {
+  element.addEventListener("click", () => {
+    const href = element.href || "";
+    const linkText = element.textContent?.replace(/\s+/g, " ").trim() || "";
+    const trackingText = `${href} ${linkText}`.toLowerCase();
+
+    if (trackingText.includes("try for free") || trackingText.includes("start free")) {
+      trackCluegentEvent("free_trial_click", {
+        link_url: href,
+        link_text: linkText,
+        platform: getDownloadPlatform(href, linkText),
+      });
+      return;
+    }
+
+    if (trackingText.includes("pricing") || trackingText.includes("upgrade")) {
+      trackCluegentEvent("pricing_click", {
+        link_url: href,
+        link_text: linkText,
+        platform: getDownloadPlatform(href, linkText),
+      });
+      return;
+    }
+
+    if (
+      trackingText.includes("apps.microsoft.com") ||
+      trackingText.includes("github.com/admincluegent/cluegent-app/releases/download") ||
+      trackingText.includes("download") ||
+      trackingText.includes("get cluegent") ||
+      trackingText.includes("get for windows") ||
+      trackingText.includes("get for macos")
+    ) {
+      trackCluegentEvent("download_click", {
+        link_url: href,
+        link_text: linkText,
+        platform: getDownloadPlatform(href, linkText),
+      });
+    }
   });
 });
 
