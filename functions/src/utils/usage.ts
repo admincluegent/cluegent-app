@@ -309,11 +309,15 @@ export function materializeFreeTrialUsage(raw?: Record<string, unknown>): FreeTr
       typeof raw?.freeTrialScreenshotCount === "number"
         ? raw.freeTrialScreenshotCount
         : 0,
-    sttSecondsUsed:
-      typeof raw?.freeTrialSttSecondsUsed === "number"
-        ? raw.freeTrialSttSecondsUsed
-        : 0,
+    sttSecondsUsed: clampFreeTrialSttSecondsUsed(raw?.freeTrialSttSecondsUsed),
   };
+}
+
+export function clampFreeTrialSttSecondsUsed(value: unknown) {
+  const seconds =
+    typeof value === "number" && Number.isFinite(value) ? Math.floor(value) : 0;
+
+  return Math.min(Math.max(seconds, 0), DEFAULT_PLAN.sttSecondsLimit);
 }
 
 export function buildUsageBaseline(usage: MaterializedUsage): UsageBaseline {

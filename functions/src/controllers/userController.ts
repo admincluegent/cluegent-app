@@ -12,6 +12,7 @@ import {
   buildUsageDoc,
   buildUserProfileDoc,
   buildUserProfileUpdate,
+  clampFreeTrialSttSecondsUsed,
   getUserRefs,
   isExpiredLiveOrderEntitlement,
   materializeFreeTrialUsage,
@@ -62,6 +63,8 @@ export async function getOrCreateUserProfileController(
       transaction.set(userRef, profileDoc);
     } else {
       const userData = userSnap.data();
+      const normalizedFreeTrialSttSecondsUsed =
+        clampFreeTrialSttSecondsUsed(userData?.freeTrialSttSecondsUsed);
       transaction.update(userRef, {
         ...profileUpdate,
         ...(typeof userData?.freeTrialPromptCount !== "number"
@@ -75,9 +78,11 @@ export async function getOrCreateUserProfileController(
               freeTrialSttSecondsUsed:
                 subscriptionSnap.data()?.plan === "free" &&
                 typeof usageSnap.data()?.sttSecondsUsed === "number"
-                  ? Math.max(usageSnap.data()?.sttSecondsUsed as number, 0)
+                  ? clampFreeTrialSttSecondsUsed(usageSnap.data()?.sttSecondsUsed)
                   : 0,
             }
+          : userData.freeTrialSttSecondsUsed !== normalizedFreeTrialSttSecondsUsed
+            ? { freeTrialSttSecondsUsed: normalizedFreeTrialSttSecondsUsed }
           : {}),
       });
     }

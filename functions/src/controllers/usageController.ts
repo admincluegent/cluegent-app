@@ -11,6 +11,7 @@ import {
   buildUsageBaseline,
   buildUsageDoc,
   buildUserProfileDoc,
+  clampFreeTrialSttSecondsUsed,
   getUserRefs,
   isExpiredLiveOrderEntitlement,
   materializeFreeTrialUsage,
@@ -64,7 +65,9 @@ export async function ensureUsageDocuments(
     userSnap.exists &&
     (typeof userData?.freeTrialPromptCount !== "number" ||
       typeof userData?.freeTrialScreenshotCount !== "number" ||
-      typeof userData?.freeTrialSttSecondsUsed !== "number");
+      typeof userData?.freeTrialSttSecondsUsed !== "number" ||
+      userData.freeTrialSttSecondsUsed !==
+        clampFreeTrialSttSecondsUsed(userData.freeTrialSttSecondsUsed));
 
   if (
     subscriptionSnap.exists &&
@@ -108,26 +111,31 @@ export async function ensureUsageDocuments(
         { merge: true }
       );
     } else if (freeTrialFieldsNeedRefresh) {
+      const latestUserData = userSnap.data();
+      const normalizedFreeTrialSttSecondsUsed =
+        clampFreeTrialSttSecondsUsed(latestUserData?.freeTrialSttSecondsUsed);
       transaction.set(
         userRef,
         {
-          ...(typeof userSnap.data()?.freeTrialPromptCount !== "number"
+          ...(typeof latestUserData?.freeTrialPromptCount !== "number"
             ? { freeTrialPromptCount: 0 }
             : {}),
-          ...(typeof userSnap.data()?.freeTrialScreenshotCount !== "number"
+          ...(typeof latestUserData?.freeTrialScreenshotCount !== "number"
             ? { freeTrialScreenshotCount: 0 }
             : {}),
-          ...(typeof userSnap.data()?.freeTrialSttSecondsUsed !== "number"
+          ...(typeof latestUserData?.freeTrialSttSecondsUsed !== "number"
             ? {
                 freeTrialSttSecondsUsed:
                   latestSubscriptionSnap.data()?.plan === "free" &&
                   typeof latestUsageSnap.data()?.sttSecondsUsed === "number"
-                    ? Math.max(
-                        latestUsageSnap.data()?.sttSecondsUsed as number,
-                        0
+                    ? clampFreeTrialSttSecondsUsed(
+                        latestUsageSnap.data()?.sttSecondsUsed
                       )
                     : 0,
               }
+            : latestUserData.freeTrialSttSecondsUsed !==
+                normalizedFreeTrialSttSecondsUsed
+              ? { freeTrialSttSecondsUsed: normalizedFreeTrialSttSecondsUsed }
             : {}),
           updatedAt: FieldValue.serverTimestamp(),
         },
