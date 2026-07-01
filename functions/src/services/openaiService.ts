@@ -189,7 +189,7 @@ export async function generateOpenAiReply(
         model: model.id,
         messages: buildMessages(input),
         temperature: model.temperature,
-        max_tokens: model.maxCompletionTokens,
+        max_completion_tokens: model.maxCompletionTokens,
         stream: false,
       }),
     });
@@ -250,7 +250,7 @@ export async function streamOpenAiReply(
         model: model.id,
         messages: buildMessages(input),
         temperature: model.temperature,
-        max_tokens: model.maxCompletionTokens,
+        max_completion_tokens: model.maxCompletionTokens,
         stream: true,
         stream_options: {
           include_usage: true,

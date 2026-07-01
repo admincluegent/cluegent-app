@@ -366,11 +366,50 @@ function getAuthorizationHeader(request: {
   get?: (name: string) => string | undefined;
   headers?: Record<string, string | string[] | undefined>;
 }) {
-  return (
+  const appToken =
+    request.get?.("x-cluegent-firebase-token") ??
+    request.get?.("X-Cluegent-Firebase-Token") ??
+    request.headers?.["x-cluegent-firebase-token"];
+  const normalizedAppToken = Array.isArray(appToken) ? appToken[0] : appToken;
+
+  return normalizedAppToken
+    ? `Bearer ${normalizedAppToken}`
+    : (
     request.get?.("authorization") ??
     request.get?.("Authorization") ??
     request.headers?.authorization
   );
+}
+
+function getRequestHeader(
+  request: {
+    get?: (name: string) => string | undefined;
+    headers?: Record<string, string | string[] | undefined>;
+  },
+  name: string
+): string | undefined {
+  const value =
+    request.get?.(name) ??
+    request.get?.(name.toLowerCase()) ??
+    request.headers?.[name.toLowerCase()];
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function logAssistantTiming(
+  traceId: string,
+  milestone: string,
+  submitStartedAt: number | undefined,
+  details: Record<string, unknown> = {}
+) {
+  const at = Date.now();
+  console.info("[AI_TIMING]", JSON.stringify({
+    traceId,
+    milestone,
+    component: "firebase-backend",
+    at,
+    elapsedMs: submitStartedAt ? at - submitStartedAt : undefined,
+    ...details,
+  }));
 }
 
 function writeSse(response: { write: (chunk: string) => void }, payload: unknown) {
@@ -495,84 +534,17 @@ async function reserveAssistantUsage(input: {
   });
 }
 
-function isPaidUnlimitedPlan(subscription: ReturnType<typeof materializeSubscription>) {
-  return (
-    subscription.status === "active" &&
-    (subscription.plan === "pro" || subscription.plan === "power")
-  );
-}
-
-function selectPaidUnlimitedFastRoute(input: {
-  hasScreenshot: boolean;
-  hasGeminiApiKey: boolean;
-  hasDeepSeekApiKey: boolean;
-}): AssistantModelRoute {
-  if (input.hasScreenshot) {
-    if (!input.hasGeminiApiKey) {
-      throw new Error("GEMINI_CONFIG_MISSING");
-    }
-
-    return {
-      provider: "gemini",
-      modelId: "gemini-2.5-flash-lite",
-      premiumApplied: false,
-      premiumAllowance: 0,
-      premiumUsedBefore: 0,
-      premiumCounter: null,
-    };
-  }
-
-  if (!input.hasDeepSeekApiKey) {
-    throw new Error("DEEPSEEK_CONFIG_MISSING");
-  }
-
-  return {
-    provider: "deepseek",
-    modelId: DEFAULT_DEEPSEEK_CHAT_MODEL_ID,
-    premiumApplied: false,
-    premiumAllowance: 0,
-    premiumUsedBefore: 0,
-    premiumCounter: null,
-  };
-}
-
 async function prepareAssistantUsage(input: {
   uid: string;
-  identity: AuthenticatedUser;
   hasScreenshot: boolean;
   hasOpenAiApiKey: boolean;
   hasGeminiApiKey: boolean;
   hasDeepSeekApiKey: boolean;
 }) {
   const monthKey = getMonthKey();
-  const refs = getUserRefs(input.uid, monthKey);
-  const subscriptionSnap = await db.doc(refs.subscriptionPath).get();
-
-  if (subscriptionSnap.exists) {
-    const subscription = materializeSubscription(
-      subscriptionSnap.data() as ReturnType<typeof materializeSubscription>
-    );
-
-    if (isPaidUnlimitedPlan(subscription)) {
-      return {
-        monthKey,
-        route: selectPaidUnlimitedFastRoute({
-          hasScreenshot: input.hasScreenshot,
-          hasGeminiApiKey: input.hasGeminiApiKey,
-          hasDeepSeekApiKey: input.hasDeepSeekApiKey,
-        }),
-        remaining: {
-          promptsRemaining: Number.MAX_SAFE_INTEGER,
-          screenshotsRemaining: Number.MAX_SAFE_INTEGER,
-        },
-      };
-    }
-  }
-
-  const ensured = await ensureUsageDocuments(input.uid, input.identity);
   const reservation = await reserveAssistantUsage({
     uid: input.uid,
-    monthKey: ensured.monthKey,
+    monthKey,
     hasScreenshot: input.hasScreenshot,
     hasOpenAiApiKey: input.hasOpenAiApiKey,
     hasGeminiApiKey: input.hasGeminiApiKey,
@@ -580,7 +552,7 @@ async function prepareAssistantUsage(input: {
   });
 
   return {
-    monthKey: ensured.monthKey,
+    monthKey,
     route: reservation.route,
     remaining: reservation.remaining,
   };
@@ -648,7 +620,6 @@ export async function processAssistantReplyController(
 
     const preparedUsage = await prepareAssistantUsage({
       uid: authUser.uid,
-      identity: authUser,
       hasScreenshot,
       hasOpenAiApiKey: Boolean(openAiApiKey),
       hasGeminiApiKey: Boolean(geminiApiKey),
@@ -921,6 +892,17 @@ export async function processAssistantReplyStreamController(
     openAiApiKey: string;
   }
 ) {
+  const backendReceivedAt = Date.now();
+  const rawTraceId = getRequestHeader(request, "x-cluegent-trace-id");
+  const traceId = rawTraceId?.slice(0, 128) || `backend-${backendReceivedAt}`;
+  const rawSubmitStartedAt = Number(
+    getRequestHeader(request, "x-cluegent-submit-started-at")
+  );
+  const submitStartedAt =
+    Number.isFinite(rawSubmitStartedAt) && rawSubmitStartedAt > 0
+      ? rawSubmitStartedAt
+      : undefined;
+
   if (request.method === "OPTIONS") {
     response.status(204).send("");
     return;
@@ -935,11 +917,16 @@ export async function processAssistantReplyStreamController(
     return;
   }
 
+  logAssistantTiming(traceId, "backend_received", submitStartedAt);
+
   try {
     const authHeader = getAuthorizationHeader(request);
     const authUser = await requireBearerAuth(
       Array.isArray(authHeader) ? authHeader[0] : authHeader
     );
+    logAssistantTiming(traceId, "auth_done", submitStartedAt, {
+      sinceBackendMs: Date.now() - backendReceivedAt,
+    });
     const data = getHttpAssistantData(request);
     const prompt = data.prompt?.trim();
     const hasScreenshot = Boolean(
@@ -971,11 +958,13 @@ export async function processAssistantReplyStreamController(
 
     const preparedUsage = await prepareAssistantUsage({
       uid: authUser.uid,
-      identity: authUser,
       hasScreenshot,
       hasOpenAiApiKey: Boolean(openAiApiKey),
       hasGeminiApiKey: Boolean(geminiApiKey),
       hasDeepSeekApiKey: Boolean(deepseekApiKey),
+    });
+    logAssistantTiming(traceId, "usage_done", submitStartedAt, {
+      sinceBackendMs: Date.now() - backendReceivedAt,
     });
     const route = preparedUsage.route;
 
@@ -1003,13 +992,22 @@ export async function processAssistantReplyStreamController(
       .filter(Boolean)
       .join("\n");
 
+    let hasLoggedModelFirstToken = false;
+    let resolvedRoute = route;
     const streamDelta = (delta: string) => {
+      if (!hasLoggedModelFirstToken) {
+        hasLoggedModelFirstToken = true;
+        logAssistantTiming(traceId, "model_first_token", submitStartedAt, {
+          sinceBackendMs: Date.now() - backendReceivedAt,
+          provider: resolvedRoute.provider,
+          model: resolvedRoute.modelId,
+        });
+      }
       if (!response.writableEnded) {
         writeSse(response, { delta });
       }
     };
 
-    let resolvedRoute = route;
     let assistantResult: Awaited<ReturnType<typeof streamOpenAiReply>>;
 
     try {
@@ -1166,6 +1164,12 @@ export async function processAssistantReplyStreamController(
       remaining: preparedUsage.remaining,
     });
     response.end();
+    logAssistantTiming(traceId, "stream_done", submitStartedAt, {
+      sinceBackendMs: Date.now() - backendReceivedAt,
+      componentStage: "backend",
+      provider: resolvedRoute.provider,
+      model: assistantResult.modelId,
+    });
   } catch (error) {
     if (error instanceof HttpsError && error.code === "unauthenticated") {
       sendAssistantHttpFailure(

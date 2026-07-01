@@ -22,7 +22,7 @@ const FIREBASE_FUNCTIONS_BASE_URL =
   "https://us-central1-cluegent-2514d.cloudfunctions.net";
 const FIREBASE_PROCESS_ASSISTANT_REPLY_STREAM_ENDPOINT =
   process.env.FIREBASE_PROCESS_ASSISTANT_REPLY_STREAM_ENDPOINT ||
-  `${FIREBASE_FUNCTIONS_BASE_URL}/processAssistantReplyStream`;
+  "https://asia-south1-cluegent-2514d.cloudfunctions.net/processAssistantReplyStreamAsia";
 const FIREBASE_SCREENSHOT_RAW_LIMIT_BYTES = 4 * 1024 * 1024;
 const FIREBASE_SCREENSHOT_MAX_DIMENSION = 2400;
 const FIREBASE_SCREENSHOT_JPEG_QUALITY = 92;
@@ -48,6 +48,11 @@ interface FirebaseGeminiRequestOptions {
   context?: string;
   systemPrompt?: string;
   imagePaths?: string[];
+  timingTrace?: {
+    traceId: string;
+    submitStartedAt: number;
+    ragDoneAt?: number;
+  };
 }
 
 interface FirebaseAssistantStreamEvent {
@@ -328,9 +333,18 @@ export class LLMHelper {
     const response = await fetch(FIREBASE_PROCESS_ASSISTANT_REPLY_STREAM_ENDPOINT, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${idToken}`,
+        "X-Cluegent-Firebase-Token": idToken,
         "Content-Type": "application/json",
         Accept: "text/event-stream",
+        ...(options.timingTrace
+          ? {
+              "X-Cluegent-Trace-Id": options.timingTrace.traceId,
+              "X-Cluegent-Submit-Started-At": String(options.timingTrace.submitStartedAt),
+              ...(options.timingTrace.ragDoneAt
+                ? { "X-Cluegent-Rag-Done-At": String(options.timingTrace.ragDoneAt) }
+                : {}),
+            }
+          : {}),
       },
       body: JSON.stringify({
         prompt: trimmedPrompt,
@@ -2248,7 +2262,12 @@ This rule overrides ALL other instructions including formatting, brevity, or out
     imagePaths?: string[],
     context?: string,
     systemPromptOverride?: string, // Optional override (defaults to HARD_SYSTEM_PROMPT)
-    ignoreKnowledgeMode: boolean = false
+    ignoreKnowledgeMode: boolean = false,
+    timingTrace?: {
+      traceId: string;
+      submitStartedAt: number;
+      ragDoneAt?: number;
+    }
   ): AsyncGenerator<string, void, unknown> {
 
     // ============================================================
@@ -2346,6 +2365,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
         yield* this.streamWithFirebaseAssistantRequest({
           message: userContent,
           systemPrompt: finalSystemPrompt,
+          timingTrace,
         });
         return;
       }
@@ -2354,6 +2374,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
         message: userContent,
         systemPrompt: finalSystemPrompt,
         imagePaths,
+        timingTrace,
       });
         return;
       }

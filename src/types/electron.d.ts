@@ -191,7 +191,7 @@ export interface ElectronAPI {
   onSessionReset: (callback: () => void) => () => void;
 
   // Streaming listeners
-  streamGeminiChat: (message: string, imagePaths?: string[], context?: string, options?: { skipSystemPrompt?: boolean, ignoreKnowledgeMode?: boolean }) => Promise<void>
+  streamGeminiChat: (message: string, imagePaths?: string[], context?: string, options?: { skipSystemPrompt?: boolean, ignoreKnowledgeMode?: boolean, timingTrace?: { traceId: string; submitStartedAt: number; ragDoneAt?: number } }) => Promise<void>
   onGeminiStreamToken: (callback: (token: string) => void) => () => void
   onGeminiStreamDone: (callback: () => void) => () => void
   onGeminiStreamError: (callback: (error: string) => void) => () => void;

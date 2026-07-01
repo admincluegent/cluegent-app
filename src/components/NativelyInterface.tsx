@@ -92,6 +92,34 @@ interface NativelyInterfaceProps {
 
 type ScreenshotAttachment = { path: string; preview: string };
 
+type AiTimingTrace = {
+    traceId: string;
+    submitStartedAt: number;
+    ragDoneAt?: number;
+    clientFirstTokenAt?: number;
+};
+
+const createAiTimingTrace = (): AiTimingTrace => ({
+    traceId: globalThis.crypto?.randomUUID?.() ?? `ai-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    submitStartedAt: Date.now(),
+});
+
+const logAiTiming = (
+    trace: AiTimingTrace,
+    milestone: string,
+    details: Record<string, unknown> = {}
+) => {
+    const at = Date.now();
+    console.info('[AI_TIMING]', JSON.stringify({
+        traceId: trace.traceId,
+        milestone,
+        component: 'renderer',
+        at,
+        elapsedMs: at - trace.submitStartedAt,
+        ...details,
+    }));
+};
+
 const FREE_PLAN_LIMIT_REACHED_MESSAGE = "Free Plan Limit Reached. Subscribe to use more.";
 const FREE_TRIAL_TOTAL_USAGE_SECONDS = 12 * 60;
 const FREE_TRIAL_USAGE_REPORT_INTERVAL_SECONDS = 5;
@@ -160,6 +188,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
     // Analytics State
     const requestStartTimeRef = useRef<number | null>(null);
+    const activeAiTimingRef = useRef<AiTimingTrace | null>(null);
     const streamingResponseTextRef = useRef('');
     const localMeetingIdRef = useRef<string | null>(getCurrentLocalMeetingId());
     const isPaidListeningExhausted = !!planStatus && planStatus.plan !== 'free' && (planStatus.remaining.sttSeconds ?? 0) <= 0;
@@ -1560,6 +1589,13 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     };
 
     const handleQuickActionPrompt = async (action: QuickActionConfig) => {
+        const timingTrace = createAiTimingTrace();
+        activeAiTimingRef.current = timingTrace;
+        requestStartTimeRef.current = timingTrace.submitStartedAt;
+        logAiTiming(timingTrace, 'submit_start', { source: 'quick_action' });
+        timingTrace.ragDoneAt = Date.now();
+        logAiTiming(timingTrace, 'rag_done', { skipped: true });
+
         const defaultAction = DEFAULT_QUICK_ACTIONS.find(item => item.id === action.id);
         const labelChanged = action.label.trim() !== defaultAction?.label;
         const instructionChanged = action.instruction.trim() !== defaultAction?.instruction;
@@ -1607,7 +1643,6 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                 currentAttachments.length > 0 ? 'Read visible screenshot text first. If it contains a question, instruction, coding problem, code task, or error, answer/solve/debug it directly. Combine related rolling transcript context with the screenshot; if unrelated, answer both. Do not say no errors are visible unless asked.' : '',
             ].filter(Boolean).join('\n');
 
-            requestStartTimeRef.current = Date.now();
             const rollingPrompt = getLatestRollingTranscript();
             const requestContext = buildLiveCopilotContext(combineInstructions(scenarioBehavior, quickActionPrompt));
             debugAiSubmitFlow(
@@ -1627,7 +1662,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                 promptText,
                 currentAttachments.length > 0 ? currentAttachments.map(s => s.path) : undefined,
                 requestContext,
-                { skipSystemPrompt: true, ignoreKnowledgeMode: true }
+                { skipSystemPrompt: true, ignoreKnowledgeMode: true, timingTrace }
             );
         } catch (err) {
             setIsProcessing(false);
@@ -1802,6 +1837,11 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
         // Stream Token
         cleanups.push(window.electronAPI.onGeminiStreamToken((token) => {
+            const timingTrace = activeAiTimingRef.current;
+            if (timingTrace && !timingTrace.clientFirstTokenAt) {
+                timingTrace.clientFirstTokenAt = Date.now();
+                logAiTiming(timingTrace, 'client_first_token');
+            }
             streamingResponseTextRef.current += token;
             // Guard: if this token is the negotiation coaching JSON sentinel, accumulate it
             // silently. The JSON is always emitted as a single complete `yield JSON.stringify(...)`
@@ -1845,6 +1885,11 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
         // Stream Done
         cleanups.push(window.electronAPI.onGeminiStreamDone(() => {
+            const timingTrace = activeAiTimingRef.current;
+            if (timingTrace) {
+                logAiTiming(timingTrace, 'stream_done', { componentStage: 'client' });
+                activeAiTimingRef.current = null;
+            }
             setIsProcessing(false);
 
             // Calculate latency if we have a start time
@@ -1938,6 +1983,11 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         // JIT RAG Stream listeners (for live meeting RAG responses)
         if (window.electronAPI.onRAGStreamChunk) {
             cleanups.push(window.electronAPI.onRAGStreamChunk((data: { chunk: string }) => {
+                const timingTrace = activeAiTimingRef.current;
+                if (timingTrace && !timingTrace.clientFirstTokenAt) {
+                    timingTrace.clientFirstTokenAt = Date.now();
+                    logAiTiming(timingTrace, 'client_first_token', { route: 'rag' });
+                }
                 // Same guard as onGeminiStreamToken: suppress raw JSON if this chunk is
                 // the negotiation coaching sentinel. The onRAGStreamComplete handler will
                 // convert it to the proper card UI.
@@ -1978,6 +2028,14 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
         if (window.electronAPI.onRAGStreamComplete) {
             cleanups.push(window.electronAPI.onRAGStreamComplete(() => {
+                const timingTrace = activeAiTimingRef.current;
+                if (timingTrace) {
+                    logAiTiming(timingTrace, 'stream_done', {
+                        componentStage: 'client',
+                        route: 'rag',
+                    });
+                    activeAiTimingRef.current = null;
+                }
                 setIsProcessing(false);
                 requestStartTimeRef.current = null;
                 setMessages(prev => {
@@ -2238,6 +2296,14 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
         }
         if (!inputValue.trim() && currentAttachments.length === 0 && !rollingPrompt) return;
 
+        const timingTrace = createAiTimingTrace();
+        activeAiTimingRef.current = timingTrace;
+        requestStartTimeRef.current = timingTrace.submitStartedAt;
+        logAiTiming(timingTrace, 'submit_start', {
+            source: 'manual_submit',
+            hasScreenshot: currentAttachments.length > 0,
+        });
+
         const userText = inputValue.trim();
         const hasScreenshot = currentAttachments.length > 0;
         const effectivePrompt = hasScreenshot
@@ -2309,14 +2375,25 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
             // JIT RAG pre-flight: try to use indexed meeting context first
             if (currentAttachments.length === 0 && shouldQueryLiveRag(effectivePrompt)) {
                 const ragResult = await window.electronAPI.ragQueryLive?.(effectivePrompt);
+                timingTrace.ragDoneAt = Date.now();
+                logAiTiming(timingTrace, 'rag_done', {
+                    attempted: true,
+                    handled: Boolean(ragResult?.success),
+                    fallback: Boolean(ragResult?.fallback),
+                });
                 if (ragResult?.success) {
                     // JIT RAG handled it â€” response streamed via rag:stream-chunk events
                     return;
                 }
+            } else {
+                timingTrace.ragDoneAt = Date.now();
+                logAiTiming(timingTrace, 'rag_done', {
+                    skipped: true,
+                    reason: currentAttachments.length > 0 ? 'screenshot' : 'not_contextual',
+                });
             }
 
             // Pass imagePath if attached, AND conversation context
-            requestStartTimeRef.current = Date.now();
             const scenarioBehavior = buildAiBehaviorInstruction(hasScreenshot ? 'screenshot' : 'typed');
             const screenshotInstruction = hasScreenshot
                 ? [
@@ -2346,7 +2423,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                 effectivePrompt,
                 hasScreenshot ? currentAttachments.map(s => s.path) : undefined,
                 requestContext,
-                { skipSystemPrompt: true, ignoreKnowledgeMode: true }
+                { skipSystemPrompt: true, ignoreKnowledgeMode: true, timingTrace }
             );
         } catch (err) {
             setIsProcessing(false);

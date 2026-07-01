@@ -423,8 +423,25 @@ export function initializeIpcHandlers(appState: AppState): void {
   // that a newer stream has taken over.
   let _chatStreamId = 0;
 
-  safeHandle("gemini-chat-stream", async (event, message: string, imagePaths?: string[], context?: string, options?: { skipSystemPrompt?: boolean, ignoreKnowledgeMode?: boolean }) => {
+  safeHandle("gemini-chat-stream", async (event, message: string, imagePaths?: string[], context?: string, options?: {
+    skipSystemPrompt?: boolean;
+    ignoreKnowledgeMode?: boolean;
+    timingTrace?: { traceId: string; submitStartedAt: number; ragDoneAt?: number };
+  }) => {
     try {
+      const ipcReceivedAt = Date.now();
+      if (options?.timingTrace) {
+        console.info("[AI_TIMING]", JSON.stringify({
+          traceId: options.timingTrace.traceId,
+          milestone: "ipc_received",
+          component: "electron-main",
+          at: ipcReceivedAt,
+          elapsedMs: ipcReceivedAt - options.timingTrace.submitStartedAt,
+          sinceRagDoneMs: options.timingTrace.ragDoneAt
+            ? ipcReceivedAt - options.timingTrace.ragDoneAt
+            : undefined,
+        }));
+      }
       console.log("[IPC] gemini-chat-stream started using LLMHelper.streamChat");
       const llmHelper = appState.processingHelper.getLLMHelper();
 
@@ -476,7 +493,14 @@ export function initializeIpcHandlers(appState: AppState): void {
       try {
         // USE streamChat which handles routing
         const compactSystemPrompt = options?.skipSystemPrompt ? FAST_LIVE_COPILOT_SYSTEM_PROMPT : undefined;
-        const stream = llmHelper.streamChat(message, imagePaths, context, compactSystemPrompt, options?.ignoreKnowledgeMode);
+        const stream = llmHelper.streamChat(
+          message,
+          imagePaths,
+          context,
+          compactSystemPrompt,
+          options?.ignoreKnowledgeMode,
+          options?.timingTrace
+        );
 
         for await (const token of stream) {
           // Bail if a newer stream has taken over (user triggered a new request)

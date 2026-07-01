@@ -41,7 +41,7 @@ Pro plan:
 - 30 hours listening per month
 - 5,000 AI requests per month
 - 2,500 screenshot analyses per month
-- first 200 monthly text and screenshot requests route through OpenAI `gpt-4.1-mini`
+- first 200 monthly text and screenshot requests route through OpenAI `gpt-5.4-nano`
 - fallback text model: DeepSeek
 - fallback screenshot model: Gemini
 
@@ -50,7 +50,7 @@ Power plan:
 - 50 hours listening per month
 - unlimited AI requests
 - unlimited screenshot analyses
-- first 500 monthly text and screenshot requests route through OpenAI `gpt-4.1-mini`
+- first 500 monthly text and screenshot requests route through OpenAI `gpt-5.4-nano`
 - fallback text model: DeepSeek
 - fallback screenshot model: Gemini
 

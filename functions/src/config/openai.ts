@@ -6,8 +6,8 @@ export interface OpenAiChatModelConfig {
 }
 
 export const OPENAI_CHAT_MODELS = {
-  "gpt-4.1-mini": {
-    id: "gpt-4.1-mini",
+  "gpt-5.4-nano": {
+    id: "gpt-5.4-nano",
     maxCompletionTokens: 2048,
     temperature: 0.4,
     fallbackImageTokens: 1200,
@@ -16,7 +16,7 @@ export const OPENAI_CHAT_MODELS = {
 
 export type OpenAiChatModelId = keyof typeof OPENAI_CHAT_MODELS;
 
-export const DEFAULT_OPENAI_CHAT_MODEL_ID = "gpt-4.1-mini";
+export const DEFAULT_OPENAI_CHAT_MODEL_ID = "gpt-5.4-nano";
 export const DEFAULT_OPENAI_CHAT_MODEL =
   OPENAI_CHAT_MODELS[DEFAULT_OPENAI_CHAT_MODEL_ID];
 

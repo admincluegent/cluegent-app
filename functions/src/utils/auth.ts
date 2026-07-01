@@ -8,6 +8,7 @@ const FIRESTORE_DATABASE_ID = "cluegent";
 const app = getApps().length ? getApps()[0]! : initializeApp();
 
 export const db = getFirestore(app, FIRESTORE_DATABASE_ID);
+db.settings({ universeDomain: "googleapis.com" });
 export const adminAuth = getAuth(app);
 
 export interface AuthenticatedUser {

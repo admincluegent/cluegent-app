@@ -40,9 +40,9 @@ export const COST_CONFIG = {
     },
   } satisfies Record<DeepSeekChatModelId, ChatModelPricing>,
   openai: {
-    "gpt-4.1-mini": {
-      inputUsdPerMillionTokens: 0.4,
-      outputUsdPerMillionTokens: 1.6,
+    "gpt-5.4-nano": {
+      inputUsdPerMillionTokens: 0.2,
+      outputUsdPerMillionTokens: 1.25,
     },
   } satisfies Record<OpenAiChatModelId, ChatModelPricing>,
   // deepgram: {
