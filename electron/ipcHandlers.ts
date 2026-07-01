@@ -258,14 +258,23 @@ export function initializeIpcHandlers(appState: AppState): void {
   })
 
   safeHandle("take-screenshot", async () => {
-    try {
-      const screenshotPath = await appState.takeScreenshot()
-      const preview = await appState.getImagePreview(screenshotPath)
-      return { path: screenshotPath, preview }
-    } catch (error) {
-      // console.error("Error taking screenshot:", error)
-      throw error
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const screenshotPath = await appState.takeScreenshot()
+        const preview = await appState.getImagePreview(screenshotPath)
+        return { path: screenshotPath, preview }
+      } catch (error) {
+        lastError = error;
+        console.warn(`[IPC] Screenshot capture attempt ${attempt}/2 failed:`, error);
+        if (attempt < 2) {
+          await new Promise(resolve => setTimeout(resolve, 250));
+        }
+      }
     }
+
+    throw lastError;
   })
 
   safeHandle("take-selective-screenshot", async () => {

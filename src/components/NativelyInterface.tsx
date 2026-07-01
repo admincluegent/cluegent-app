@@ -927,6 +927,16 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         });
     };
 
+    const reportScreenshotError = (error: unknown) => {
+        const detail = error instanceof Error ? error.message : String(error);
+        setIsExpanded(true);
+        setMessages(prev => [...prev, {
+            id: `screenshot-error-${Date.now()}`,
+            role: 'system',
+            text: `Screenshot failed: ${detail}`,
+        }]);
+    };
+
     // STT Status listener â€” must survive isExpanded changes.
     // If registered inside the [isExpanded] effect, events are dropped during cleanup.
     useEffect(() => {
@@ -2848,6 +2858,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                 }
             } catch (err) {
                 console.error("Error triggering screenshot:", err);
+                reportScreenshotError(err);
             }
         },
         selectiveScreenshot: async () => {
@@ -2901,6 +2912,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                 }
             } catch (err) {
                 console.error("Error triggering screenshot:", err);
+                reportScreenshotError(err);
             }
         },
         selectiveScreenshot: async () => {
