@@ -105,6 +105,22 @@ function scoreChunk(chunk: string, terms: Set<string>): number {
   return score;
 }
 
+function scoreProfileIntent(chunk: string, query: string): number {
+  let score = 0;
+
+  if (/\b(project|projects|portfolio|worked on|built)\b/i.test(query)) {
+    if (/\b(project|projects|portfolio)\b/i.test(chunk)) score += 10;
+    if (/\b(app|application|platform|module|feature)\b/i.test(chunk)) score += 2;
+  }
+
+  if (/\b(experience|employment|work history|previous role|years|yrs)\b/i.test(query)) {
+    if (/\b(work experience|employment|professional experience)\b/i.test(chunk)) score += 8;
+    if (/\b(?:19|20)\d{2}\b/.test(chunk)) score += 2;
+  }
+
+  return score;
+}
+
 export class LocalProfileManager {
   private static instance: LocalProfileManager | null = null;
   private readonly profileDir: string;
@@ -245,14 +261,34 @@ export class LocalProfileManager {
         return;
       }
       const parsed = JSON.parse(fs.readFileSync(this.profilePath, 'utf8'));
+      const resumeText = typeof parsed.resumeText === 'string' ? normalizeText(parsed.resumeText) : '';
       this.profile = {
         ...EMPTY_PROFILE,
         ...parsed,
-        skills: Array.isArray(parsed.skills) ? parsed.skills : [],
-        keywords: Array.isArray(parsed.keywords) ? parsed.keywords : [],
-        chunks: Array.isArray(parsed.chunks) ? parsed.chunks : [],
-        resumeText: typeof parsed.resumeText === 'string' ? parsed.resumeText : '',
+        resumeText,
       };
+
+      // Derived fields are intentionally rebuilt on load. This lets parser and
+      // retrieval fixes apply to already-uploaded resumes without making users
+      // delete and upload the same file again.
+      if (this.profile.hasResume && resumeText) {
+        const lines = resumeText.split('\n').map(line => line.trim()).filter(Boolean);
+        const skills = this.extractSkills(resumeText);
+        this.profile = {
+          ...this.profile,
+          name: this.extractName(lines),
+          role: this.extractRole(lines),
+          totalExperienceYears: this.extractExperienceYears(resumeText),
+          skills,
+          keywords: uniqueSorted([...skills, ...tokenize(resumeText).filter(token => token.length > 4)], 220),
+          chunks: this.chunkResume(resumeText),
+        };
+        this.save();
+      } else {
+        this.profile.skills = [];
+        this.profile.keywords = [];
+        this.profile.chunks = [];
+      }
     } catch (error) {
       console.warn('[LocalProfileManager] Failed to load local profile:', error);
       this.profile = { ...EMPTY_PROFILE };
@@ -335,18 +371,13 @@ export class LocalProfileManager {
   }
 
   private extractExperienceYears(text: string): number | undefined {
-    const direct = text.match(/(\d{1,2})\+?\s*(?:years|yrs)\s+(?:of\s+)?experience/i);
+    const direct = text.match(/\b(\d{1,2}(?:\.\d+)?)\s*\+?\s*(?:years|yrs)\s+(?:of\s+)?experience\b/i);
     if (direct) return Number(direct[1]);
 
-    const years = Array.from(text.matchAll(/\b(20\d{2}|19\d{2})\b/g))
-      .map(match => Number(match[1]))
-      .filter(year => year >= 1980 && year <= new Date().getFullYear());
-    if (years.length < 2) return undefined;
-
-    const min = Math.min(...years);
-    const max = Math.max(...years, new Date().getFullYear());
-    const diff = max - min;
-    return diff > 0 && diff < 50 ? diff : undefined;
+    // Do not derive a total from every four-digit year in the document.
+    // Education, certifications, and project dates otherwise inflate the
+    // result and turn an uncertain estimate into a confident wrong answer.
+    return undefined;
   }
 
   private extractSkills(text: string): string[] {
@@ -361,16 +392,26 @@ export class LocalProfileManager {
   }
 
   private chunkResume(text: string): string[] {
+    const MAX_CHUNK_CHARS = 1100;
     const paragraphs = text.split(/\n\s*\n+/).map(part => part.trim()).filter(Boolean);
+    const units = paragraphs.flatMap(paragraph => {
+      if (paragraph.length <= MAX_CHUNK_CHARS) return [paragraph];
+
+      // PDF extraction commonly returns a whole page as one paragraph with
+      // single line breaks. Split those pages before retrieval so content near
+      // the end (often Projects and recent Experience) is not truncated away.
+      const lines = paragraph.split('\n').map(line => line.trim()).filter(Boolean);
+      return lines.length > 1 ? lines : paragraph.match(/.{1,1000}(?:\s+|$)/g)?.map(part => part.trim()) || [paragraph];
+    });
     const chunks: string[] = [];
     let current = '';
 
-    for (const paragraph of paragraphs) {
-      if ((current + '\n\n' + paragraph).length > 900 && current) {
+    for (const unit of units) {
+      if ((current + '\n' + unit).length > MAX_CHUNK_CHARS && current) {
         chunks.push(current);
-        current = paragraph;
+        current = unit;
       } else {
-        current = current ? `${current}\n\n${paragraph}` : paragraph;
+        current = current ? `${current}\n${unit}` : unit;
       }
     }
     if (current) chunks.push(current);
@@ -378,7 +419,9 @@ export class LocalProfileManager {
     if (chunks.length > 0) return chunks.slice(0, 40);
 
     const fallback: string[] = [];
-    for (let i = 0; i < text.length; i += 900) fallback.push(text.slice(i, i + 900));
+    for (let i = 0; i < text.length; i += MAX_CHUNK_CHARS) {
+      fallback.push(text.slice(i, i + MAX_CHUNK_CHARS));
+    }
     return fallback.slice(0, 40);
   }
 
@@ -402,7 +445,7 @@ export class LocalProfileManager {
   private buildContextBlock(query: string, conditionalOnly: boolean): string {
     const terms = new Set(tokenize(query));
     const rankedChunks = this.profile.chunks
-      .map(chunk => ({ chunk, score: scoreChunk(chunk, terms) }))
+      .map(chunk => ({ chunk, score: scoreChunk(chunk, terms) + scoreProfileIntent(chunk, query) }))
       .sort((a, b) => b.score - a.score);
 
     const selectedChunks = rankedChunks
@@ -417,7 +460,9 @@ export class LocalProfileManager {
     const details = [
       this.profile.name ? `Name: ${this.profile.name}` : '',
       this.profile.role ? `Role/headline: ${this.profile.role}` : '',
-      this.profile.totalExperienceYears ? `Estimated experience: ${this.profile.totalExperienceYears} years` : '',
+      this.profile.totalExperienceYears !== undefined
+        ? `Resume-stated total experience: ${this.profile.totalExperienceYears} years`
+        : '',
       this.profile.skills.length ? `Skills: ${this.profile.skills.slice(0, 24).join(', ')}` : '',
     ].filter(Boolean).join('\n');
 
@@ -429,6 +474,9 @@ export class LocalProfileManager {
 Use this local resume context only when the current user request, transcript, or screenshot is about the user's background, work experience, projects, skills, interview fit, behavioral stories, or career history.
 If the current request is unrelated, ignore this block completely and answer normally using the active AI behavior rules.
 Never say "based on your resume" or reveal that this context was injected. Speak naturally in first person when using it.
+This context describes the user/candidate, not the AI assistant. For personal interview questions, answer as the candidate and never substitute the AI assistant's biography or generic example projects.
+Treat resume facts as authoritative. Preserve names, dates, durations, and numeric values exactly; do not round or invent them.
+For project questions, name the actual projects and explain only the contributions present in the snippets. If the requested fact is absent, say so briefly instead of fabricating it.
 
 ${details}
 

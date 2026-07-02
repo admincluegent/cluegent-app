@@ -187,6 +187,8 @@ type AssistantModelRoute =
 
 const OPENAI_FREE_MONTHLY_PROMPT_ALLOWANCE = 20;
 const OPENAI_FREE_MONTHLY_SCREENSHOT_ALLOWANCE = 20;
+const OPENAI_PLUS_MONTHLY_PROMPT_ALLOWANCE = 200;
+const OPENAI_PLUS_MONTHLY_SCREENSHOT_ALLOWANCE = 200;
 const OPENAI_PRO_MONTHLY_PROMPT_ALLOWANCE = 200;
 const OPENAI_PRO_MONTHLY_SCREENSHOT_ALLOWANCE = 200;
 const OPENAI_POWER_MONTHLY_PROMPT_ALLOWANCE = 500;
@@ -210,6 +212,12 @@ function getOpenAiMonthlyAllowance(input: {
     return input.hasScreenshot
       ? OPENAI_POWER_MONTHLY_SCREENSHOT_ALLOWANCE
       : OPENAI_POWER_MONTHLY_PROMPT_ALLOWANCE;
+  }
+
+  if (input.subscription.plan === "plus") {
+    return input.hasScreenshot
+      ? OPENAI_PLUS_MONTHLY_SCREENSHOT_ALLOWANCE
+      : OPENAI_PLUS_MONTHLY_PROMPT_ALLOWANCE;
   }
 
   if (input.subscription.plan === "pro") {

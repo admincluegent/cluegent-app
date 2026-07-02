@@ -37,18 +37,13 @@ const callableOptions = {
   region: "us-central1" as const,
   cors: true,
 };
-const warmAssistantRequestOptions = {
-  region: "us-central1" as const,
+const warmAssistantAsiaRequestOptions = {
+  region: "asia-south1" as const,
   cors: true,
   invoker: "public" as const,
-  minInstances: 0,
+  minInstances: 1,
   memory: "1GiB" as const,
   timeoutSeconds: 120,
-};
-const warmAssistantAsiaRequestOptions = {
-  ...warmAssistantRequestOptions,
-  region: "asia-south1" as const,
-  minInstances: 1,
 };
 const warmSttTokenRequestOptions = {
   region: "us-central1" as const,
@@ -240,19 +235,6 @@ export const checkUsageBeforeAction = onCall(
     maxInstances: 10,
   },
   checkUsageBeforeActionController
-);
-
-export const processAssistantReplyStream = onRequest(
-  {
-    ...warmAssistantRequestOptions,
-    secrets: [geminiApiKey, deepseekApiKey, openAiApiKey],
-  },
-  async (request, response) =>
-    processAssistantReplyStreamController(request, response, {
-      geminiApiKey: geminiApiKey.value(),
-      deepseekApiKey: deepseekApiKey.value(),
-      openAiApiKey: openAiApiKey.value(),
-    })
 );
 
 export const processAssistantReplyStreamAsia = onRequest(
