@@ -35,10 +35,109 @@
       "**/.*",
       "**/node_modules/**"
     ],
-    "rewrites": [
+    "redirects": [
       {
-        "source": "**",
-        "destination": "/index.html"
+        "source": "/index.html",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/how-to-use.html",
+        "destination": "/how-to-use-cluegent/",
+        "type": 301
+      },
+      {
+        "source": "/alternatives/chiku-ai{,/**}",
+        "destination": "/chiku-ai-alternative/",
+        "type": 301
+      },
+      {
+        "source": "/blog/cluegent-vs-chiku-ai{,/**}",
+        "destination": "/chiku-ai-alternative/",
+        "type": 301
+      },
+      {
+        "source": "/alternatives/parakeet-ai{,/**}",
+        "destination": "/parakeet-ai-alternative/",
+        "type": 301
+      },
+      {
+        "source": "/blog/cluegent-vs-parakeet-ai{,/**}",
+        "destination": "/parakeet-ai-alternative/",
+        "type": 301
+      },
+      {
+        "source": "/alternatives/lockedin-ai{,/**}",
+        "destination": "/lockedin-ai-alternative/",
+        "type": 301
+      },
+      {
+        "source": "/blog/cluegent-vs-lockedin-ai{,/**}",
+        "destination": "/lockedin-ai-alternative/",
+        "type": 301
+      },
+      {
+        "source": "/alternatives/final-round-ai{,/**}",
+        "destination": "/blog/cluegent-vs-final-round-ai/",
+        "type": 301
+      },
+      {
+        "source": "/final-round-ai-alternative{,/**}",
+        "destination": "/blog/cluegent-vs-final-round-ai/",
+        "type": 301
+      },
+      {
+        "source": "/blog/ai-interview-assistant-for-freshers{,/**}",
+        "destination": "/ai-interview-assistant-for-freshers/",
+        "type": 301
+      },
+      {
+        "source": "/blog/best-ai-interview-assistant-for-google-meet{,/**}",
+        "destination": "/ai-interview-assistant-for-google-meet/",
+        "type": 301
+      },
+      {
+        "source": "/blog/best-ai-interview-assistant-for-zoom{,/**}",
+        "destination": "/ai-interview-assistant-for-zoom/",
+        "type": 301
+      }
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(jpg|jpeg|png|svg|webp|avif|gif|ico)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=2592000"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(mp4|webm)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=2592000"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(css|js)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=86400"
+          }
+        ]
+      },
+      {
+        "source": "/sitemap.xml",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=3600"
+          }
+        ]
       }
     ]
   }

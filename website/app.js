@@ -20,6 +20,15 @@ const getDownloadPlatform = (href, text) => {
   return "unknown";
 };
 
+const getCtaLocation = (element) => {
+  if (element.dataset.analyticsLocation) return element.dataset.analyticsLocation;
+  const section = element.closest("section");
+  if (section?.id) return section.id;
+  if (element.closest(".site-header")) return "header";
+  if (element.closest(".site-footer")) return "footer";
+  return section?.classList[0] || "page";
+};
+
 document.querySelectorAll("[data-shortcut-mod]").forEach((element) => {
   element.textContent = shortcutModifier;
 });
@@ -47,22 +56,25 @@ document.querySelectorAll("a[href]").forEach((element) => {
     const href = element.href || "";
     const linkText = element.textContent?.replace(/\s+/g, " ").trim() || "";
     const trackingText = `${href} ${linkText}`.toLowerCase();
+    const commonParams = {
+      link_url: href,
+      link_text: linkText,
+      platform: getDownloadPlatform(href, linkText),
+      cta_location: getCtaLocation(element),
+    };
+
+    if (element.dataset.analyticsEvent) {
+      trackCluegentEvent(element.dataset.analyticsEvent, commonParams);
+      return;
+    }
 
     if (trackingText.includes("try for free") || trackingText.includes("start free")) {
-      trackCluegentEvent("free_trial_click", {
-        link_url: href,
-        link_text: linkText,
-        platform: getDownloadPlatform(href, linkText),
-      });
+      trackCluegentEvent("free_trial_click", commonParams);
       return;
     }
 
     if (trackingText.includes("pricing") || trackingText.includes("upgrade")) {
-      trackCluegentEvent("pricing_click", {
-        link_url: href,
-        link_text: linkText,
-        platform: getDownloadPlatform(href, linkText),
-      });
+      trackCluegentEvent(trackingText.includes("upgrade") ? "upgrade_click" : "pricing_click", commonParams);
       return;
     }
 
@@ -74,11 +86,7 @@ document.querySelectorAll("a[href]").forEach((element) => {
       trackingText.includes("get for windows") ||
       trackingText.includes("get for macos")
     ) {
-      trackCluegentEvent("download_click", {
-        link_url: href,
-        link_text: linkText,
-        platform: getDownloadPlatform(href, linkText),
-      });
+      trackCluegentEvent("download_click", commonParams);
     }
   });
 });
@@ -103,6 +111,12 @@ downloadMenus.forEach((menu) => {
 
   trigger.addEventListener("click", () => {
     const isOpen = menu.classList.toggle("is-open");
+    if (isOpen) {
+      trackCluegentEvent("download_menu_open", {
+        platform: "macos",
+        cta_location: getCtaLocation(trigger),
+      });
+    }
     trigger.setAttribute("aria-expanded", String(isOpen));
     const options = menu.querySelector("[data-download-options]");
     if (options instanceof HTMLElement) {

@@ -1,0 +1,5 @@
+# Paste one public job/career URL per line.
+# Lines starting with # are ignored.
+#
+# Example:
+# https://www.remocate.app/jobs/react-native-developer-2
