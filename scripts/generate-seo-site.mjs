@@ -10,7 +10,7 @@ const ga4MeasurementId = "G-CCH0Y2SN4G";
 const downloadUrl = "https://apps.microsoft.com/detail/9NXWZPN07THN";
 const macArmDownloadUrl = "https://github.com/admincluegent/cluegent-app/releases/download/v1.0.7/Cluegent-1.0.7-arm64-mac.zip";
 const macIntelDownloadUrl = "https://github.com/admincluegent/cluegent-app/releases/download/v1.0.7/Cluegent-1.0.7-mac.zip";
-const generatedDate = "2026-07-30";
+const generatedDate = "2026-08-13";
 const defaultImage = "/assets/how-to-use-01.png";
 
 const productLinks = [
@@ -123,6 +123,8 @@ const landingPages = [
       ["/ai-interview-assistant-for-teams/", "AI interview assistant for Teams"],
       ["/undetectable-ai-interview-assistant/", "Private overlay for screen sharing"],
       ["/blog/how-to-use-ai-interview-assistant-live-interviews/", "How to use AI interview assistants"],
+      ["/blog/interview-ai-assistant/", "Interview AI assistant guide"],
+      ["/blog/free-ai-interview-assistant-tools-compared/", "Free interview AI assistant tools"],
     ],
   },
   {
@@ -2487,19 +2489,40 @@ const blogPosts = [
   },
   {
     slug: "parakeet-ai",
-    title: "Parakeet AI: What Candidates Search Before Trying It | Cluegent",
+    title: "Parakeet AI Review 2026: Features, Pricing & Alternatives",
     description:
-      "Searching for Parakeet AI? Learn what candidates compare before trying AI interview assistants: review, pricing, free trial, download, Reddit feedback, and alternatives.",
-    h1: "Parakeet AI: What Candidates Search Before Trying It",
+      "An independent Parakeet AI review covering how it works, pricing questions, interview use, limitations, and alternatives such as Cluegent.",
+    h1: "Parakeet AI Review 2026: How It Works, Pricing and Alternatives",
     summary:
-      "The broad Parakeet AI search usually starts a buying journey. From there, candidates look for reviews, pricing, free access, downloads, Reddit feedback, and alternatives.",
-    sections: [
-      ["The broad search intent", "Someone searching only Parakeet AI may still be researching. They may not know whether they need a live interview assistant, a coding assistant, a desktop app, or a prep tool."],
-      ["Useful follow-up searches", "Common next searches include Parakeet AI review, Parakeet AI pricing, Parakeet AI download, Parakeet AI Reddit, Parakeet AI free, and Parakeet AI alternative."],
-      ["How to compare with Cluegent", "Use Cluegent as a practical benchmark: install the app, add resume context, test live listening, attach one screenshot, and submit one typed prompt."],
-      ["What matters most", "For live interviews, answer usefulness, workflow speed, platform fit, screenshot support, and responsible-use clarity matter more than broad homepage claims."],
+      "This independent guide consolidates the questions candidates ask about Parakeet AI, ParakeetAI, reviews, pricing, downloads, live interview use, Reddit feedback, and alternatives.",
+    publishedDate: "2026-07-30",
+    modifiedDate: "2026-08-11",
+    authorityPage: true,
+    authorityKicker: "Independent product guide",
+    authoritySecondaryHref: "/parakeet-ai-alternative/",
+    authoritySecondaryLabel: "Compare the alternative",
+    authorityFacts: [
+      ["Product category", "Real-time AI interview assistant"],
+      ["Research method", "Official product pages and workflow comparison"],
+      ["Last reviewed", "August 11, 2026"],
+      ["Best next step", "Verify current plans, then run a permitted practice call"],
     ],
-    links: [["/blog/parakeet-ai-review/", "Parakeet AI review"], ["/blog/parakeet-ai-pricing/", "Parakeet AI pricing"], ["/blog/parakeet-ai-download/", "Parakeet AI download"], ["/parakeet-ai-alternative/", "Parakeet AI alternative"]],
+    authoritySources: [
+      ["https://www.parakeet-ai.com/", "Parakeet AI official website"],
+      ["/editorial-policy/", "Cluegent editorial and testing policy"],
+    ],
+    sections: [
+      ["Is ParakeetAI the same as Parakeet AI?", "For AI interview software searches, ParakeetAI and Parakeet AI normally refer to the same product. The shorter word Parakeet can also have unrelated meanings, so this page focuses only on the interview-assistant product and the questions candidates ask before trying it."],
+      ["What Parakeet AI is designed to do", "Parakeet AI presents itself as an AI interview assistant that listens during online interviews and produces real-time suggested answers. Candidates evaluating it should confirm the current installation path, supported meeting platforms, coding workflow, plan allowances, and privacy documentation on the official website."],
+      ["How we evaluated the product", "This guide uses public official product information and a repeatable workflow checklist; it does not pretend that marketing claims are independent test results. We compare the steps a candidate must complete: setup, a spoken question, a resume question, a visible coding problem, a follow-up, and plan verification."],
+      ["Parakeet AI pricing and free access", "Pricing, credits, free access, and renewal terms can change. The reliable approach is to check the official pricing page on the day you plan to subscribe, record the billing interval and included usage, and compare that allowance with the length and number of interviews you expect."],
+      ["Strengths candidates may value", "The product is positioned around real-time answers and an interview-focused workflow. That can appeal to candidates who want a purpose-built assistant instead of moving between a generic chatbot, notes, and the meeting window."],
+      ["Limitations and questions to test", "Response usefulness depends on audio quality, question complexity, context, model latency, device setup, and the candidate's ability to verify the answer. Test interruptions, follow-up questions, code visible on screen, long prompts, and what happens when the plan allowance is exhausted."],
+      ["Parakeet AI Reddit and review claims", "Community posts can surface support or setup issues, but they are not automatically representative. Give more weight to reports that identify the operating system, meeting platform, interview type, plan, date, and exact result, then verify current facts against the official product pages."],
+      ["Parakeet AI vs Cluegent", "Cluegent is a Windows and macOS desktop assistant with user-controlled listening, typed prompts, screenshot-aware questions, resume context, customizable responses, quick actions, and local meeting history. Compare both products in the same permitted practice scenario and score setup time, first useful response, readability, coding context, and pricing fit."],
+      ["Responsible use", "Interview rules differ by employer, recruiter, school, assessment platform, and jurisdiction. Use AI, transcription, screenshots, or an overlay only where they are allowed. No product should be treated as a guarantee that it avoids every recording, monitoring, or proctoring method."],
+    ],
+    links: [["/blog/parakeet-ai-pricing/", "Parakeet AI pricing guide"], ["/parakeet-ai-alternative/", "Parakeet AI alternative comparison"], ["/best-parakeet-ai-alternatives/", "Best Parakeet AI alternatives"], ["/coding-interview-assistant/", "Coding interview assistant"], ["/download/", "Try Cluegent"]],
   },
   {
     slug: "parakeet-ai-review-reddit",
@@ -2647,12 +2670,12 @@ const blogPosts = [
   },
   {
     slug: "free-ai-interview-assistant-tools-compared",
-    title: "Free AI Interview Assistant Tools Compared | Cluegent",
+    title: "Interview AI Assistant Free: Free Tools and Trials | Cluegent",
     description:
-      "Compare free AI interview assistant tools, trials, and alternatives for live answers, coding screenshots, resume context, Zoom, Google Meet, and Teams.",
-    h1: "Free AI Interview Assistant Tools Compared",
+      "Looking for an interview AI assistant free option? Compare free tools and trials for live answers, coding screenshots, resume context, Zoom, Google Meet, and Teams.",
+    h1: "Interview AI Assistant Free: What to Test Before You Upgrade",
     summary:
-      "Free AI interview assistant searches usually come before a paid plan decision. Use the free path to test the real workflow, not just the landing page.",
+      "Interview AI assistant free searches usually come before a paid plan decision. Use the free path to test the real workflow, not just the landing page.",
     sections: [
       ["What to test for free", "Test one live question, one typed question, one screenshot, one resume-based answer, and one quick action. That is enough to know whether the workflow feels useful."],
       ["Free vs paid limits", "Free trials are for setup and answer-quality validation. Longer live interviews, repeated coding screens, and multiple mock rounds usually require a paid plan."],
@@ -2679,10 +2702,10 @@ const blogPosts = [
   },
   {
     slug: "cluegent-vs-final-round-ai",
-    title: "Cluegent vs Final Round AI | AI Interview Assistant Comparison",
+    title: "Final Round AI Alternative: Cluegent vs Final Round AI",
     description:
-      "Compare Cluegent and Final Round AI for live interview assistance, interview prep, coding help, private desktop workflows, and candidate use cases.",
-    h1: "Cluegent vs Final Round AI",
+      "Looking for a Final Round AI alternative? Compare Cluegent and Final Round AI for live interview assistance, interview prep, coding help, private desktop workflows, and candidate use cases.",
+    h1: "Final Round AI Alternative: Cluegent vs Final Round AI",
     summary:
       "Final Round AI is an all-in-one preparation and live interview platform. Cluegent is a focused Windows and macOS desktop assistant for live interviews, coding screens, and meetings.",
     publishedDate: "2026-06-23",
@@ -3070,12 +3093,1307 @@ const blogPosts = [
   },
 ];
 
+// Search-intent cluster for broad global "interview AI" discovery queries. These
+// are intentionally differentiated by user need so they do not compete for the
+// same query with near-identical pages.
+blogPosts.push(
+  {
+    slug: "interview-ai-tool",
+    title: "Interview AI Tool: How to Choose the Right Assistant | Cluegent",
+    description:
+      "A practical guide to choosing an interview AI tool for preparation, permitted live interviews, resume-aware answers, coding screens, screenshots, and remote calls.",
+    h1: "Interview AI Tool: What to Look For Before You Choose",
+    summary:
+      "An interview AI tool should support the actual interview workflow: preparation, resume context, technical questions, follow-ups, and the platform where the call happens.",
+    publishedDate: "2026-08-08",
+    modifiedDate: "2026-08-08",
+    sections: [
+      ["Start with the interview you actually have", "A behavioral interview, a live coding screen, and a system-design conversation need different context. Choose an interview AI tool that can work with the question format, your operating system, and the meeting platform instead of choosing from a generic feature list."],
+      ["Look for context, not only a chat box", "A useful interview AI assistant can use your resume, a typed question, permitted live transcript context, or a visible screenshot. That gives the response a better chance of being specific to the project, constraint, or code in front of you."],
+      ["Test the response workflow", "Before an important call, run a practice question and check how quickly you can submit, read, and act on a response. Test answer length, quick actions, screenshots, shortcuts, and the overlay position beside Zoom, Google Meet, or Teams."],
+      ["Use an interview AI tool responsibly", "Hiring processes can prohibit AI assistance, recording, screen capture, or outside help. Use Cluegent only for preparation or other workflows that are explicitly allowed, and never treat a private overlay as a promise that bypasses every monitoring method."],
+    ],
+    links: [["/ai-interview-assistant/", "AI interview assistant"], ["/blog/real-time-ai-interview-tool/", "Real-time AI interview tool guide"], ["/blog/ai-interview-copilot/", "AI interview copilot guide"], ["/pricing/", "Cluegent pricing"]],
+  },
+  {
+    slug: "free-ai-interview-tools",
+    title: "Free AI Interview Tools: What You Can Test Before Paying | Cluegent",
+    description:
+      "Compare free AI interview tool options by trial limits, answer quality, coding support, resume context, screenshots, desktop setup, and responsible use.",
+    h1: "Free AI Interview Tools: A Practical Evaluation Guide",
+    summary:
+      "Free access is most useful when it lets you test the exact workflow you need before committing to a paid interview assistant plan.",
+    publishedDate: "2026-08-08",
+    modifiedDate: "2026-08-08",
+    sections: [
+      ["What a free AI interview tool should let you test", "Use the free path to test one behavioral question, one resume-based answer, one technical or coding question, and one follow-up. The goal is to discover whether the tool helps you explain your own experience clearly, not simply to collect a large number of generic answers."],
+      ["Read limits before you depend on a trial", "Free plans can use time limits, request limits, feature restrictions, or expiring credits. Check the current plan page before starting, and save the trial for a realistic practice call rather than spending it on repeated test prompts."],
+      ["Compare workflow quality", "A free interview AI assistant is valuable when it supports the same inputs you will use later: typed prompts, resume context, coding screenshots, and permitted live audio context. A low price is less useful if setup, answer relevance, or platform fit is poor."],
+      ["Avoid misleading free-tool promises", "Do not assume a free plan provides unlimited access, and do not rely on a tool in a restricted interview. Use allowed practice sessions to learn the workflow, then choose a plan based on current limits and the number of interviews you expect."],
+    ],
+    links: [["/pricing/", "Cluegent plans and free trial"], ["/blog/interview-ai-tool/", "Interview AI tool guide"], ["/blog/ai-interview-assistant-software/", "Interview assistant software guide"], ["/download/", "Download Cluegent"]],
+  },
+  {
+    slug: "real-time-ai-interview-tool",
+    title: "Real-Time AI Interview Tool: What Matters in Live Calls | Cluegent",
+    description:
+      "Learn how to evaluate a real-time AI interview tool for permitted live calls, transcript context, screenshots, answer speed, coding rounds, and desktop setup.",
+    h1: "Real-Time AI Interview Tool for Live Calls: What to Evaluate",
+    summary:
+      "Real-time interview help is about more than model speed: the assistant needs the right context, a clear response surface, and a workflow you can use calmly.",
+    publishedDate: "2026-08-08",
+    modifiedDate: "2026-08-08",
+    sections: [
+      ["What real-time means in an interview workflow", "A real-time AI interview tool may use a typed prompt, live transcript context when permitted, or a screenshot of the visible question. The useful measure is time to the first relevant answer after the interviewer has finished the important part of the question."],
+      ["Why context changes response quality", "Live interview questions often include a resume reference, a constraint added verbally, or a visible coding error. Cluegent combines the context you choose to provide so you can ask for a direct answer, example, tradeoff, clarification, or follow-up."],
+      ["How to reduce perceived delay", "Use stable internet, keep answer style concise, select the right audio source, and avoid loading unnecessary apps during a practice run. For visual coding prompts, attach a clear screenshot rather than retyping a long problem statement."],
+      ["Test before the live interview", "Run a mock call on the exact device and meeting platform you will use. Check shortcuts, overlay placement, response readability, microphone or system-audio permission, and whether the hiring process permits AI assistance."],
+    ],
+    links: [["/blog/ai-interview-assistant-latency/", "AI interview assistant latency"], ["/ai-interview-assistant/", "AI interview assistant"], ["/blog/ai-interview-tools-for-coding/", "AI interview tools for coding"], ["/how-to-use-cluegent/", "How to use Cluegent"]],
+  },
+  {
+    slug: "ai-interview-copilot",
+    title: "AI Interview Copilot: Features to Compare Before You Choose | Cluegent",
+    description:
+      "Learn what an AI interview copilot does, how it differs from interview preparation tools, and what to compare for coding, resume context, live calls, and responsible use.",
+    h1: "AI Interview Copilot: A Buyer Guide for Candidates",
+    summary:
+      "An AI interview copilot should help you organize the context you already understand, not replace preparation, judgment, or the rules of the hiring process.",
+    publishedDate: "2026-08-08",
+    modifiedDate: "2026-08-08",
+    sections: [
+      ["Interview copilot versus preparation tool", "Preparation tools are useful before the interview for mock questions, study plans, resumes, and research. An AI interview copilot is designed around the live desktop workflow, where the question, transcript, screenshot, and your response style are moving together."],
+      ["Capabilities worth comparing", "Look for resume-aware answers, separate settings for listening, screen, and typed prompts, useful coding support, quick actions, platform compatibility, and controls that remain understandable under pressure."],
+      ["Use your own experience as the source", "The strongest behavioral answer is grounded in projects and examples you can explain in follow-up questions. Add resume context and ask for a STAR outline or concise spoken version, then adjust it so it accurately reflects your work."],
+      ["Choose transparency over marketing slogans", "A trustworthy product explains current pricing, setup requirements, response limits, screen-sharing behavior, and responsible-use constraints. Treat claims about privacy or invisibility as workflow details to test, never as an unlimited guarantee."],
+    ],
+    links: [["/blog/ai-interview-copilot-vs-interview-prep-tool/", "Copilot vs interview prep tool"], ["/ai-interview-assistant/", "AI interview assistant"], ["/blog/interview-ai-tool/", "Interview AI tool"], ["/alternatives/", "Compare AI interview copilots"]],
+  },
+  {
+    slug: "interview-ai-questions-and-answers",
+    title: "Interview AI Questions and Answers: A Better Practice Method | Cluegent",
+    description:
+      "Use AI interview questions and answers for better preparation: behavioral questions, coding questions, resume examples, follow-ups, STAR answers, and responsible practice.",
+    h1: "Interview AI Questions and Answers: How to Practice Well",
+    summary:
+      "Interview question practice works best when AI helps you explain real experience, clarify the technical reasoning, and prepare for follow-up questions.",
+    publishedDate: "2026-08-08",
+    modifiedDate: "2026-08-08",
+    sections: [
+      ["Build answers from real evidence", "Start with your resume, projects, coursework, metrics, and technical decisions. AI can turn that raw material into a clear answer, but every claim should be something you can explain honestly when the interviewer asks a deeper question."],
+      ["Practice behavioral and technical questions differently", "For behavioral questions, create a STAR outline with a measurable result and likely follow-ups. For coding questions, practice the problem restatement, approach, complexity, edge cases, implementation decisions, and the explanation you would say aloud."],
+      ["Ask for useful variations", "Instead of asking for one perfect response, ask for a concise answer, a detailed answer, an example, a tradeoff, and an interviewer follow-up. This teaches you how the story changes when the interviewer wants more detail."],
+      ["Use live support only where allowed", "Practice can be open-ended, but real interviews can have strict rules. Follow the employer's policy on AI assistance, recordings, transcription, and screenshots, and never use a generated answer for experience you do not have."],
+    ],
+    links: [["/blog/behavioral-interview-questions-with-ai/", "Behavioral interview questions with AI"], ["/blog/ai-interview-tools-for-coding/", "Coding interview AI tools"], ["/blog/star-method-behavioral-interview-questions/", "STAR method guide"], ["/ai-interview-assistant-for-freshers/", "AI interview assistant for freshers"]],
+  },
+  {
+    slug: "ai-interview-tools-for-coding",
+    title: "AI Interview Tools for Coding Interviews | Cluegent",
+    description:
+      "A guide to AI interview tools for coding rounds, including visible problem context, debugging, algorithm explanations, system design, LeetCode, HackerRank, and responsible use.",
+    h1: "AI Interview Tools for Coding Interviews: What Developers Need",
+    summary:
+      "Coding interviews combine spoken constraints, code editors, visible errors, and explanation. The best tools help developers reason, test, and communicate clearly.",
+    publishedDate: "2026-08-08",
+    modifiedDate: "2026-08-08",
+    sections: [
+      ["The inputs are different in coding rounds", "A developer may need to interpret a prompt, inspect existing code, explain a failing test, and answer a follow-up constraint. A coding-focused AI interview tool should handle typed questions and screenshot context rather than treating every interview as plain chat."],
+      ["Use an answer structure that interviewers can follow", "Start with the problem restatement, then give a simple approach, the optimized approach, complexity, edge cases, and implementation plan. Ask for a short spoken explanation after you understand the reasoning so the answer remains your own."],
+      ["What to test in a practice session", "Capture a sample coding prompt, a stack trace, and a partially completed solution. Compare whether the response identifies the real constraint, explains tradeoffs, produces test cases, and stays readable beside your editor."],
+      ["Fundamentals still decide the interview", "No tool replaces data structures, debugging skills, language knowledge, or communication. Use AI support only in permitted settings and make sure you can defend the reasoning without reading from a response."],
+    ],
+    links: [["/coding-interview-assistant/", "AI coding interview assistant"], ["/ai-interview-assistant-for-leetcode/", "AI interview assistant for LeetCode"], ["/ai-interview-assistant-for-hackerrank/", "AI interview assistant for HackerRank"], ["/blog/how-to-use-ai-during-coding-interview/", "Using AI during coding interviews"]],
+  },
+  {
+    slug: "ai-interview-tools-for-recruiters",
+    title: "AI Interview Tools for Recruiters: What to Evaluate | Cluegent",
+    description:
+      "A practical guide for recruiters evaluating AI interview tools, covering consent, candidate experience, structured notes, accessibility, privacy, live interview policies, and tool boundaries.",
+    h1: "AI Interview Tools for Recruiters: A Responsible Evaluation Guide",
+    summary:
+      "Recruiters should evaluate AI interview tools for consent, fairness, candidate experience, privacy, and clear policy boundaries before adopting them.",
+    publishedDate: "2026-08-08",
+    modifiedDate: "2026-08-08",
+    sections: [
+      ["Separate recruiter tools from candidate tools", "Recruiting teams may use tools for scheduling, structured notes, interview guides, and candidate communication. Candidate-facing assistants are a separate category, so recruiters should clearly state what support is allowed in every stage of the process."],
+      ["Put consent and accessibility first", "Candidates should know when interviews are recorded, transcribed, or analyzed. Provide accessible alternatives, explain data retention, avoid automated decisions without human review, and make it easy for candidates to ask questions about the process."],
+      ["Write an explicit AI-use policy", "A useful policy distinguishes preparation, take-home work, live interviews, coding screens, and assessments. It should specify whether candidates may use AI assistance, whether they can share screens, and how concerns will be handled consistently."],
+      ["Where Cluegent fits", "Cluegent is a candidate-controlled desktop assistant for permitted interview and meeting workflows; it is not an applicant tracking system, an automatic interviewer, or a recruiter surveillance product. Recruiters evaluating their process should use this distinction to make policy clear."],
+    ],
+    links: [["/blog/can-you-use-ai-in-job-interview/", "Can you use AI in a job interview?"], ["/about/", "About Cluegent"], ["/editorial-policy/", "Cluegent editorial and testing policy"], ["/ai-interview-assistant/", "Candidate AI interview assistant"]],
+  },
+  {
+    slug: "ai-interview-assistant-software",
+    title: "AI Interview Assistant Software: App, Tools and Setup | Cluegent",
+    description:
+      "How to compare AI interview assistant software, desktop apps, browser tools, resume context, coding support, privacy language, installations, and live interview workflows.",
+    h1: "AI Interview Assistant Software: Choosing an App or Desktop Tool",
+    summary:
+      "The right interview assistant software should fit the screen, meeting platform, coding environment, and preparation style you actually use.",
+    publishedDate: "2026-08-08",
+    modifiedDate: "2026-08-08",
+    sections: [
+      ["Desktop app, browser tool, or meeting bot", "These products work differently. A desktop app can sit beside your meeting and editor, while a browser tool stays inside a tab and a meeting bot may join the call. Decide which workflow you are comfortable with before comparing feature checklists."],
+      ["Check operating-system and installation support", "Verify whether the assistant supports your Windows or macOS computer, processor type, meeting platform, microphone permissions, and screen capture path. Download from the official store or release page rather than from unverified mirrors."],
+      ["Look for separate response settings", "Interview assistant tools are more useful when you can customize resume context, listening responses, screenshot responses, typed prompts, and repeated quick-action buttons. A single generic response style is rarely ideal for both HR questions and coding rounds."],
+      ["Keep product boundaries clear", "Cluegent is desktop software for permitted candidate workflows with typed prompts, live context, screenshots, quick actions, and local meeting history. It does not join calls as a participant and it does not replace interview preparation or consent requirements."],
+    ],
+    links: [["/download/", "Download Cluegent for Windows or macOS"], ["/how-to-use-cluegent/", "How to use Cluegent"], ["/blog/ai-interview-assistant-extension-vs-desktop-app/", "Extension vs desktop app"], ["/pricing/", "Pricing"]],
+  },
+  {
+    slug: "ai-interview-assistant-extension-vs-desktop-app",
+    title: "AI Interview Assistant Extension vs Desktop App | Cluegent",
+    description:
+      "Compare an AI interview assistant browser extension with a desktop app for live calls, coding screens, screenshots, permissions, platform fit, and responsible use.",
+    h1: "AI Interview Assistant Extension vs Desktop App",
+    summary:
+      "Browser extensions and desktop interview assistant apps solve different workflow problems. The better choice depends on where the meeting, code, screenshots, and answer surface live.",
+    publishedDate: "2026-08-08",
+    modifiedDate: "2026-08-08",
+    sections: [
+      ["When a browser extension can be useful", "An extension can be convenient when every task happens in one supported browser tab. It may be less useful when the call, code editor, documents, screenshots, and system audio are spread across desktop applications."],
+      ["Why some candidates choose a desktop app", "A desktop app can work beside Zoom, Google Meet, Teams, a code editor, and the browser. Cluegent uses a movable desktop workspace with typed prompts, screenshots, quick actions, and controlled listening when permitted."],
+      ["Compare permissions and privacy behavior", "Read the permission request, data handling explanation, supported browsers or operating systems, and screen-sharing limitations. Test the exact setup in a private practice call; no product should claim it can bypass every recording, proctoring, or monitoring method."],
+      ["Choose the tool you can use calmly", "The best setup keeps the interviewer, captions, code, meeting controls, and shared material unobstructed. Favor a readable response surface and a workflow you have practiced over a long list of untested features."],
+    ],
+    links: [["/blog/ai-interview-assistant-software/", "AI interview assistant software"], ["/blog/where-to-position-ai-interview-assistant-overlay/", "Where to position an AI interview overlay"], ["/undetectable-ai-interview-assistant/", "Private desktop overlay"], ["/download/", "Download desktop app"]],
+  },
+  {
+    slug: "ai-interview-assistant-github",
+    title: "AI Interview Assistant GitHub: How to Verify Downloads | Cluegent",
+    description:
+      "Searching for an AI interview assistant on GitHub? Learn how to verify official releases, avoid unsafe downloads, compare open-source and desktop tools, and install Cluegent safely.",
+    h1: "AI Interview Assistant GitHub: Verify the Tool Before You Download",
+    summary:
+      "GitHub can help candidates inspect a project's releases and documentation, but it is important to distinguish an official project page from copied installers or unrelated repositories.",
+    publishedDate: "2026-08-08",
+    modifiedDate: "2026-08-08",
+    sections: [
+      ["Why people search GitHub for interview tools", "Developers often search GitHub to inspect release notes, confirm whether a project is maintained, compare open-source approaches, or find a downloadable package. That is a sensible habit, but it should not replace checking the product's official website and support information."],
+      ["How to verify an official release", "Check that the organization name, repository link, release version, download filename, and website all match. Avoid executables or packages shared through unknown file hosts, shortened links, copied repositories, or chat messages that cannot be verified."],
+      ["Open source versus a supported desktop product", "Open-source projects can be useful for learning and experimentation, while a supported desktop product can provide installation guidance, product updates, account support, and a defined workflow. Compare maintenance, permissions, privacy, platform support, and the time you can spend configuring the tool."],
+      ["Official Cluegent sources", "Cluegent's public project repository and desktop releases are published under the admincluegent organization. Use the official website download page or the official release links, then verify the version before installing."],
+    ],
+    links: [["/download/", "Official Cluegent downloads"], ["https://github.com/admincluegent/cluegent-app", "Cluegent GitHub repository"], ["/blog/ai-interview-assistant-software/", "AI interview assistant software"], ["/how-to-use-cluegent/", "Cluegent setup guide"]],
+  },
+  {
+    slug: "interview-ai-tool-reddit",
+    title: "Interview AI Tool Reddit Searches: What to Verify | Cluegent",
+    description:
+      "Searching interview AI tool Reddit discussions? Use this checklist to evaluate real user reports about setup, pricing, free trials, coding support, privacy claims, and responsible use.",
+    h1: "Interview AI Tool Reddit Searches: How to Read Reviews Carefully",
+    summary:
+      "Community discussions can reveal practical setup issues, but a useful decision requires more than anonymous claims, screenshots, or a single positive review.",
+    publishedDate: "2026-08-08",
+    modifiedDate: "2026-08-08",
+    sections: [
+      ["What a helpful community review includes", "The most useful reports name the operating system, meeting platform, interview type, plan purchased, device setup, and result of a real practice workflow. Broad statements that a tool is 'undetectable' or 'works perfectly' do not tell you whether it fits your exact setup."],
+      ["Questions to ask before believing a claim", "Check whether the post distinguishes preparation from a permitted live workflow, whether it explains current pricing and limits, and whether the writer tested screenshots, coding prompts, resume context, answer speed, and customer support."],
+      ["Do not use community posts as policy advice", "A forum comment cannot tell you whether your employer, university, interviewer, or assessment platform allows AI assistance. Read the rules for your own interview and use AI only with the appropriate permission and consent."],
+      ["Verify the product yourself", "Use official documentation and a practice call to test the features that matter to you. Cluegent's free path lets candidates evaluate typed prompts, resume context, screenshots, and permitted live context before deciding whether a paid plan fits."],
+    ],
+    links: [["/blog/free-ai-interview-tools/", "Free AI interview tools"], ["/blog/interview-ai-tool/", "Interview AI tool guide"], ["/blog/ai-interview-assistant-github/", "Verify GitHub downloads"], ["/editorial-policy/", "Cluegent editorial policy"]],
+  }
+);
+
+// Final Round AI search cluster. The broad page intentionally owns the brand
+// spelling variants; the review and Reddit pages answer different user needs.
+blogPosts.push(
+  {
+    slug: "final-round-ai",
+    title: "Final Round AI (FinalRoundAI) Review, Pricing and Alternatives | Cluegent",
+    description:
+      "Searching for Final Round AI, FinalRoundAI, or FinalRound AI? Compare review questions, pricing, interview workflows, alternatives, and Cluegent's desktop assistant.",
+    h1: "Final Round AI (FinalRoundAI): Review, Pricing and Alternatives",
+    summary:
+      "Final Round AI is also searched as FinalRoundAI or FinalRound AI. This guide covers the software-related search intent: what to compare, how to evaluate its workflow, and when a focused alternative such as Cluegent may fit.",
+    publishedDate: "2026-08-08",
+    modifiedDate: "2026-08-08",
+    sections: [
+      ["Is FinalRoundAI the same as Final Round AI?", "For interview-software searches, FinalRoundAI and Final Round AI normally refer to the same product. This guide focuses on the AI interview platform, its preparation and live-workflow category, and the questions candidates should verify before they install or pay for any tool."],
+      ["What people mean when they search Final Round AI", "A broad Final Round AI search can mean several things: interview preparation, mock interviews, resume help, an AI copilot for live calls, pricing, technical interview support, or an alternative. Start by identifying the exact workflow you need rather than treating every feature as equally important."],
+      ["How to evaluate the workflow", "Use a permitted practice session to test a behavioral question, one resume or project question, a visible coding prompt, and a follow-up. Compare setup steps, answer quality, screen readability, operating-system fit, current plan limits, and whether the tool matches the meeting platform you actually use."],
+      ["Compare Cluegent as a focused desktop option", "Cluegent is a Windows and macOS desktop assistant built around controlled listening, typed prompts, screenshot-aware questions, resume context, customizable responses, quick actions, and local meeting history. It is designed for candidates who want a narrower live desktop workflow alongside their existing preparation routine."],
+      ["Use AI assistance responsibly", "Every hiring process can set its own rules for outside help, transcription, screenshots, recording, and AI. Use any interview tool only where it is explicitly allowed, and do not rely on privacy or overlay language as a guarantee against every monitoring method."],
+    ],
+    links: [["/blog/final-round-ai-review/", "Final Round AI review guide"], ["/blog/final-round-ai-pricing-free/", "Final Round AI pricing and free plan"], ["/blog/cluegent-vs-final-round-ai/", "Final Round AI alternative comparison"], ["/ai-interview-assistant/", "AI interview assistant"], ["/coding-interview-assistant/", "Coding interview assistant"]],
+    sources: [["https://www.finalroundai.com/", "Final Round AI official website and pricing overview"], ["https://www.finalroundai.com/frequently-asked-questions", "Final Round AI official FAQ"]],
+  },
+  {
+    slug: "final-round-ai-review",
+    title: "Final Round AI Review: What to Test Before You Pay | Cluegent",
+    description:
+      "A practical Final Round AI review checklist for candidates comparing preparation tools, live interview copilots, coding support, pricing, desktop workflow, and alternatives.",
+    h1: "Final Round AI Review: What to Test Before You Pay",
+    summary:
+      "A useful Final Round AI review should test the product against a realistic interview workflow, not only repeat feature claims or a headline price.",
+    publishedDate: "2026-08-08",
+    modifiedDate: "2026-08-08",
+    sections: [
+      ["What a useful Final Round AI review should cover", "Before deciding, separate interview preparation features from live-call support. Candidates should check the type of practice available, how the assistant handles a live question, whether coding and screen context are supported, and what setup is required on their computer."],
+      ["A five-minute product test", "Run one behavioral question, one project question, one technical follow-up, and one visible coding or screen-based prompt in a practice setting where you are allowed to use AI. Note response relevance, answer length, whether you can follow the reasoning, and whether the controls feel usable under time pressure."],
+      ["Questions to ask about plans and privacy", "Confirm current pricing, trial limits, supported operating systems, cancellation terms, data handling, meeting-platform fit, and the exact behavior during screen sharing. Competitor offers can change, so use the official product pages as the source of truth before purchasing."],
+      ["Where Cluegent differs", "Cluegent keeps the live workflow focused: user-controlled listening, typed prompts, screenshot context, resume-aware responses, customization, quick actions, and a private desktop overlay. It is useful when you prefer a lightweight desktop workspace instead of a broad preparation suite."],
+      ["Review tools responsibly", "The strongest decision comes from your own permitted practice test and the current official documentation. Do not use a review as evidence that AI assistance is allowed in your actual interview."],
+    ],
+    links: [["/blog/final-round-ai/", "Final Round AI guide"], ["/blog/final-round-ai-pricing-free/", "Final Round AI pricing and free plan"], ["/blog/cluegent-vs-final-round-ai/", "Final Round AI alternative"], ["/blog/ai-interview-assistant-software/", "AI interview assistant software"], ["/download/", "Download Cluegent"]],
+    sources: [["https://www.finalroundai.com/", "Final Round AI official website and pricing overview"], ["https://www.finalroundai.com/frequently-asked-questions", "Final Round AI official FAQ"]],
+  },
+  {
+    slug: "final-round-ai-reddit",
+    title: "Final Round AI Reddit Searches: How to Evaluate Feedback | Cluegent",
+    description:
+      "Searching Final Round AI Reddit discussions? Learn how to evaluate community feedback about pricing, setup, AI interview workflows, coding support, privacy claims, and alternatives.",
+    h1: "Final Round AI Reddit Searches: How to Evaluate Feedback",
+    summary:
+      "Community discussions can surface practical product concerns, but a good buying decision needs current official information and a permitted hands-on test.",
+    publishedDate: "2026-08-08",
+    modifiedDate: "2026-08-08",
+    sections: [
+      ["Why candidates search Reddit for Final Round AI", "People often look for less polished feedback before committing to a paid interview tool. They want to understand setup friction, answer quality, pricing, free access, platform support, coding workflow, and whether other candidates found the product useful."],
+      ["What makes a community report credible", "Give more weight to feedback that states the operating system, meeting platform, interview type, plan used, approximate date, and the exact problem or result. A vague claim about a tool being perfect, invisible, or unusable gives very little information about your own setup."],
+      ["What to verify outside community threads", "Check the official product documentation for current plans, support, platform requirements, privacy terms, and cancellation rules. Then test the exact workflow you need in a practice call rather than assuming another person's device or interview process matches yours."],
+      ["Compare the same workflow in Cluegent", "Use Cluegent's free path to test a typed question, your resume context, a screenshot, and permitted listening in one desktop workspace. Compare response clarity and workflow fit against verified product information before making a decision."],
+      ["Follow interview rules first", "A forum post cannot decide whether your employer, recruiter, school, or assessment platform allows AI assistance. Read the rules for your own interview and obtain the required permission before using any AI tool live."],
+    ],
+    links: [["/blog/final-round-ai/", "Final Round AI guide"], ["/blog/final-round-ai-review/", "Final Round AI review"], ["/blog/final-round-ai-pricing-free/", "Final Round AI pricing and free plan"], ["/blog/cluegent-vs-final-round-ai/", "Final Round AI alternative"], ["/editorial-policy/", "Cluegent editorial policy"]],
+    sources: [["https://www.finalroundai.com/", "Final Round AI official website and pricing overview"], ["https://www.finalroundai.com/frequently-asked-questions", "Final Round AI official FAQ"]],
+  }
+);
+
+// Competitor research clusters target three genuinely different search needs:
+// product evaluation, current pricing/free access, and community-review research.
+// Brand spelling variants are consolidated into one canonical page per intent.
+const competitorIntentClusters = [
+  {
+    slug: "lockedin-ai",
+    name: "LockedIn AI",
+    variants: "LockedInAI and Locked In AI",
+    category: "a desktop AI interview copilot with general and coding-oriented workflows",
+    productFocus:
+      "Its official documentation describes General, Coding and Duo modes, along with Stealth Mode on eligible plans. Candidates should match those modes to the behavioral, technical or coding rounds they actually expect.",
+    pricing:
+      "LockedIn AI uses free starting credits plus subscription, credit and lifetime purchase options. Its documentation says current prices and promotions should be confirmed on the official pricing page.",
+    freeAccess:
+      "The official billing guide describes a small allocation of free starting credits so a new user can evaluate the product before choosing a paid option.",
+    requirements:
+      "Test the relevant mode, credit consumption, operating-system support and screen-sharing behavior in a private practice call.",
+    alternativeHref: "/lockedin-ai-alternative/",
+    sources: [
+      ["https://www.lockedinai.com/", "LockedIn AI official website"],
+      ["https://www.lockedinai.com/pricing", "LockedIn AI official pricing"],
+      ["https://docs.lockedinai.com/docs/billing/plans-credits-and-promos", "LockedIn AI billing documentation"],
+      ["https://docs.lockedinai.com/docs/using", "LockedIn AI usage documentation"],
+    ],
+  },
+  {
+    slug: "interview-sidekick",
+    name: "Interview Sidekick",
+    variants: "InterviewSidekick and Interview Side Kick",
+    category: "an interview preparation and real-time desktop assistant",
+    productFocus:
+      "The official site combines mock interviews, a question bank, preparation material and a real-time assistant. That broader preparation scope should be compared separately from the experience of using the desktop assistant during a live practice call.",
+    pricing:
+      "Interview Sidekick currently promotes an Ultimate monthly plan on its official site. Prices and promotions can change, so verify the checkout total and included features before purchasing.",
+    freeAccess:
+      "Its official FAQ describes a limited two-minute real-time assistant test alongside basic preparation access, which is enough to inspect setup but not to simulate a complete interview.",
+    requirements:
+      "Check Windows or macOS compatibility, desktop installation, mock-interview depth, code capture and whether a short trial demonstrates the workflow you need.",
+    alternativeHref: "/alternatives/",
+    sources: [
+      ["https://interviewsidekick.com/", "Interview Sidekick official website"],
+      ["https://interviewsidekick.com/pricing", "Interview Sidekick official pricing"],
+      ["https://interviewsidekick.com/faq", "Interview Sidekick official FAQ"],
+    ],
+  },
+  {
+    slug: "beyz-ai",
+    name: "Beyz AI",
+    variants: "Beyz and BeyzAI",
+    category: "a desktop interview assistant with live, coding and preparation workflows",
+    productFocus:
+      "Beyz presents real-time interview help, coding support, solo practice and preparation materials. Its official download information lists macOS and Windows builds, so device compatibility is an important part of the evaluation.",
+    pricing:
+      "When checked on August 13, 2026, Beyz displayed monthly, quarterly and semiannual billing options, with the effective monthly amount varying by commitment. Verify the current checkout price because offers can change.",
+    freeAccess:
+      "Beyz advertises a free trial without a credit card. Confirm the current allowance and which live, coding or preparation features are included before depending on it for a practice session.",
+    requirements:
+      "The official page currently lists macOS 14 or later and Windows 11 22H2 or later, with separate Apple Silicon, Intel and Windows downloads. Recheck these requirements for your device.",
+    alternativeHref: "/alternatives/",
+    sources: [
+      ["https://beyz.ai/", "Beyz AI official website and pricing"],
+      ["https://beyz.ai/blog/beyz-interview-assistant-setup-tutorial", "Beyz setup tutorial"],
+      ["https://beyz.ai/document/terms", "Beyz official terms"],
+    ],
+  },
+  {
+    slug: "interviewai-io",
+    name: "InterviewAI.io",
+    variants: "Interview AI IO and InterviewAI.io",
+    category: "an AI interview-practice platform for candidates, with a separate asynchronous hiring product",
+    productFocus:
+      "The candidate product focuses on tailored questions, voice or text answers, scoring, templates and saved practice sessions. InterviewAI.io also markets a separate asynchronous interview product to employers, so candidates should make sure they are reading the correct pricing page.",
+    pricing:
+      "The official candidate pricing page currently lists weekly, monthly and yearly Premium options. InterviewAI.io's employer-facing asynchronous interview plans are separate and should not be confused with candidate practice pricing.",
+    freeAccess:
+      "Check the current candidate signup flow for available free practice because plan allowances may change. Do not infer candidate access from the separate employer product.",
+    requirements:
+      "Evaluate question relevance, voice and text capture, feedback usefulness, archive access and whether the practice format matches the role you are targeting.",
+    alternativeHref: "/alternatives/",
+    sources: [
+      ["https://www.interviewai.io/", "InterviewAI.io official website"],
+      ["https://www.interviewai.io/externalPricing", "InterviewAI.io candidate pricing"],
+      ["https://www.interviewai.io/async", "InterviewAI.io asynchronous interview product"],
+    ],
+  },
+  {
+    slug: "interviewai-me",
+    name: "InterviewAI.me",
+    variants: "Interview AI ME and InterviewAI.me",
+    category: "an interview-preparation and feedback product from Synnax Studio",
+    productFocus:
+      "InterviewAI.me focuses on preparation, interview feedback and related job-search assistance such as cover-letter support. It is a distinct product and domain from InterviewAI.io, despite the similar name.",
+    pricing:
+      "InterviewAI.me uses tokens for individual sessions and also lists a monthly subscription that includes tokens. Verify current token bundles, subscription renewal and mobile-app pricing before paying.",
+    freeAccess:
+      "The official site describes one free token for a new user rather than an unrestricted free plan. Use it to judge question relevance and feedback before buying more tokens.",
+    requirements:
+      "Confirm whether you plan to use the web or mobile experience, what one token covers, and whether the feedback format supports the role and interview type you are preparing for.",
+    alternativeHref: "/alternatives/",
+    sources: [
+      ["https://interviewai.me/", "InterviewAI.me official website and pricing"],
+    ],
+  },
+  {
+    slug: "interview-coder",
+    name: "Interview Coder",
+    variants: "InterviewCoder and Interview Coder AI",
+    category: "a desktop AI assistant focused on coding interviews",
+    productFocus:
+      "Interview Coder is positioned around coding problems, technical interviews and system-design workflows rather than broad behavioral-interview preparation. Developers should test problem capture, explanation quality, debugging and the ability to discuss tradeoffs aloud.",
+    pricing:
+      "When checked on August 13, 2026, the official site displayed Monthly Pro and Lifetime Pro options. The listed prices are substantially different commitments, so verify the current amount and refund policy before buying.",
+    freeAccess:
+      "The product can be downloaded and explored for free, while AI use requires a subscription according to its official FAQ. Treat free installation and free AI usage as separate questions.",
+    requirements:
+      "Check supported coding platforms, desktop permissions, language coverage, system-design support and the no-refund policy described on the official site.",
+    alternativeHref: "/coding-interview-assistant/",
+    sources: [
+      ["https://www.interviewcoder.co/", "Interview Coder official website and pricing"],
+      ["https://www.interviewcoder.co/faq", "Interview Coder official FAQ"],
+      ["https://www.interviewcoder.co/help", "Interview Coder help center"],
+      ["https://www.interviewcoder.co/policies/refund", "Interview Coder refund policy"],
+    ],
+  },
+];
+
+for (const competitor of competitorIntentClusters) {
+  blogPosts.push(
+    {
+      slug: `${competitor.slug}-review`,
+      title: `${competitor.name} Review 2026: Features, Pricing and Alternatives | Cluegent`,
+      description: `Independent ${competitor.name} review covering features, current pricing questions, free access, setup, user workflow, alternatives, and what candidates should test.`,
+      h1: `${competitor.name} Review 2026: What Candidates Should Know`,
+      summary: `${competitor.name} is ${competitor.category}. This independent guide separates current official information from the practical questions candidates should test themselves.`,
+      publishedDate: generatedDate,
+      modifiedDate: generatedDate,
+      sections: [
+        [`What is ${competitor.name}?`, `${competitor.name}, also searched as ${competitor.variants}, is ${competitor.category}. ${competitor.productFocus}`],
+        ["How to test the product", `Use a permitted practice session that resembles your real workflow. ${competitor.requirements} Include one role-specific question, one follow-up and one difficult input such as a coding problem, visible screen or detailed project question.`],
+        ["Pricing and free access", `${competitor.pricing} ${competitor.freeAccess}`],
+        ["What a useful review should measure", "Measure time to the first useful response, answer relevance, how well the product uses your real context, readability beside the meeting, setup friction and whether you can explain the result in your own words. Marketing claims and anonymous ratings are not substitutes for this test."],
+        [`${competitor.name} versus Cluegent`, "Cluegent is a Windows and macOS desktop assistant with controlled listening, typed prompts, screenshot-aware questions, resume context, custom response settings, quick actions and local meeting history. Compare both products using the same permitted test and the current official plan details."],
+        ["Responsible-use reminder", "Interview rules differ by employer, school, recruiter, assessment platform and jurisdiction. Use AI only where it is allowed, obtain any required consent for audio or screenshots, and never invent experience or submit reasoning you cannot defend."],
+      ],
+      links: [[`/blog/${competitor.slug}-pricing-free/`, `${competitor.name} pricing and free access`], [`/blog/${competitor.slug}-reddit/`, `${competitor.name} community feedback guide`], [competitor.alternativeHref, `${competitor.name} alternatives`], ["/ai-interview-assistant/", "Cluegent AI interview assistant"], ["/download/", "Try Cluegent"]],
+      sources: competitor.sources,
+    },
+    {
+      slug: `${competitor.slug}-pricing-free`,
+      title: `${competitor.name} Pricing and Free Plan 2026 | Cluegent`,
+      description: `Check ${competitor.name} pricing, free trial or free-plan questions, billing model, plan limits, requirements, and alternatives before subscribing.`,
+      h1: `${competitor.name} Pricing: Is It Free and What Should You Compare?`,
+      summary: `The useful question is not only whether ${competitor.name} is free. Candidates should compare what the free access proves, what the paid plan unlocks, and the total commitment required.`,
+      publishedDate: generatedDate,
+      modifiedDate: generatedDate,
+      sections: [
+        [`Is ${competitor.name} free?`, competitor.freeAccess],
+        [`How ${competitor.name} pricing works`, competitor.pricing],
+        ["Verify the price at checkout", "Competitor prices, taxes, currencies, promotions, plan names and allowances can change after publication. Treat the official checkout and billing terms as the source of truth, and take a dated screenshot of the plan you choose."],
+        ["Compare value using a real task", `${competitor.requirements} A low headline price is not valuable if the free or paid allowance cannot test the workflow you need; a larger plan is unnecessary if a focused practice workflow is enough.`],
+        ["Cancellation, renewal and refund questions", "Before paying, check whether billing renews automatically, how cancellation works, whether unused credits expire, what happens after limits are reached, and whether refunds are available. These policies matter as much as the monthly price."],
+        ["Compare Cluegent pricing", "Cluegent offers a time-limited free evaluation and paid desktop plans for Windows and macOS. Compare current allowances, live context, screenshots, typed prompts, resume customization and support on the official pricing page before choosing either product."],
+      ],
+      links: [[`/blog/${competitor.slug}-review/`, `${competitor.name} review`], [`/blog/${competitor.slug}-reddit/`, `${competitor.name} Reddit search guide`], [competitor.alternativeHref, `${competitor.name} alternative`], ["/pricing/", "Cluegent pricing"], ["/download/", "Download Cluegent"]],
+      sources: competitor.sources,
+    },
+    {
+      slug: `${competitor.slug}-reddit`,
+      title: `${competitor.name} Reddit Reviews: What to Verify in 2026 | Cluegent`,
+      description: `Searching ${competitor.name} Reddit reviews? Use this checklist to evaluate community claims about pricing, free access, setup, answer quality, privacy, and alternatives.`,
+      h1: `${competitor.name} Reddit Searches: How to Evaluate User Feedback`,
+      summary: `Community discussions can reveal practical setup and support issues, but anonymous feedback should be checked against current official documentation and your own permitted practice test.`,
+      publishedDate: generatedDate,
+      modifiedDate: generatedDate,
+      sections: [
+        [`Why people search Reddit for ${competitor.name}`, `Candidates commonly want unfiltered reports about ${competitor.name} setup, pricing, free access, answer quality, device support and customer service. They may also be checking whether ${competitor.variants} refer to the same product.`],
+        ["What makes a review credible", "Prioritize posts that name the date, operating system, product version, plan, meeting or coding platform, interview type and exact result. A vague claim that a tool is perfect, invisible, a scam or always detected is not reproducible evidence."],
+        ["Claims you should verify", `${competitor.freeAccess} ${competitor.pricing} Check both statements against the official pages because an older community post may describe a discontinued offer.`],
+        ["Run your own comparison", `${competitor.requirements} Then use the same question set with another product so you compare response usefulness and workflow fit rather than two unrelated testimonials.`],
+        ["Community comments are not interview policy", "A Reddit comment cannot tell you whether your employer, interviewer, university or assessment permits AI, recording, transcription or screenshots. Follow the rules that apply to your specific interview."],
+        ["Where Cluegent fits", "Cluegent provides a candidate-controlled desktop workspace for permitted live and practice use. Its free evaluation can help you test typed prompts, resume context, screenshots and live context before deciding whether any paid tool fits."],
+      ],
+      links: [[`/blog/${competitor.slug}-review/`, `${competitor.name} review`], [`/blog/${competitor.slug}-pricing-free/`, `${competitor.name} pricing`], [competitor.alternativeHref, `${competitor.name} alternatives`], ["/editorial-policy/", "Cluegent editorial policy"], ["/download/", "Try Cluegent"]],
+      sources: competitor.sources,
+    },
+  );
+}
+
+blogPosts.push({
+  slug: "final-round-ai-pricing-free",
+  title: "Final Round AI Pricing and Free Plan 2026 | Cluegent",
+  description:
+    "Review Final Round AI pricing, free-plan access, plan questions, desktop and coding features, cancellation considerations, and alternatives before subscribing.",
+  h1: "Final Round AI Pricing: Is It Free and Which Plan Fits?",
+  summary:
+    "Final Round AI combines preparation and live-assistance features, so pricing should be evaluated against the exact part of the workflow a candidate will use.",
+  publishedDate: generatedDate,
+  modifiedDate: generatedDate,
+  sections: [
+    ["Does Final Round AI have a free plan?", "Final Round AI's official website currently describes a free plan and paid options. Confirm the current allowance, feature access and whether payment information is required in the official signup flow because offers can change."],
+    ["How much does Final Round AI cost?", "The official site currently says plans start at $25 per month, but the final price can depend on the selected plan, commitment, promotion, currency and tax. Verify the current checkout rather than relying on an older review."],
+    ["Preparation suite versus live assistant value", "Separate the value of mock interviews, question preparation and career tools from the live Interview Copilot workflow. A broad bundle may be useful if you need both; a focused desktop product may be easier to compare if live context is your priority."],
+    ["What to verify before subscribing", "Check desktop requirements, coding and system-design support, plan limits, renewal, cancellation, refund policy, customer support and the behavior you need during a permitted practice call."],
+    ["Compare Cluegent", "Cluegent focuses on controlled listening, typed prompts, screenshots, resume-aware responses, customizable answer styles, quick actions and local meeting history in a Windows or macOS desktop workspace."],
+    ["Use either product responsibly", "Follow the rules of the interview and obtain any required consent. A paid plan does not make AI assistance acceptable in an interview where outside help is prohibited."],
+  ],
+  links: [["/blog/final-round-ai/", "Final Round AI guide"], ["/blog/final-round-ai-review/", "Final Round AI review"], ["/blog/final-round-ai-reddit/", "Final Round AI Reddit guide"], ["/blog/cluegent-vs-final-round-ai/", "Cluegent vs Final Round AI"], ["/pricing/", "Cluegent pricing"]],
+  sources: [
+    ["https://www.finalroundai.com/", "Final Round AI official website and pricing overview"],
+    ["https://www.finalroundai.com/frequently-asked-questions", "Final Round AI official FAQ"],
+  ],
+});
+
+// Cluely is one product query with two common spellings. Keep one canonical
+// resource so both variants strengthen the same page instead of competing.
+blogPosts.push({
+  slug: "cluely-ai",
+  title: "Cluely AI Review 2026: Features, Pricing & Alternatives",
+  description:
+    "An independent Cluely AI review covering what Cluely is, how to compare its workflow, pricing questions, interview use, and alternatives.",
+  h1: "Cluely AI Review 2026: Features, Pricing and Alternatives",
+  summary:
+    "This independent guide answers the main Cluely and Cluely AI searches, then gives candidates a repeatable way to compare live workflow, desktop fit, pricing, and responsible use.",
+  publishedDate: "2026-08-09",
+  modifiedDate: "2026-08-11",
+  authorityPage: true,
+  authorityKicker: "Independent product guide",
+  authoritySecondaryHref: "/blog/cluely-alternatives/",
+  authoritySecondaryLabel: "Compare alternatives",
+  authorityFacts: [
+    ["Product category", "AI meeting and desktop assistant"],
+    ["Research method", "Official documentation and workflow comparison"],
+    ["Last reviewed", "August 11, 2026"],
+    ["Best next step", "Verify current plans and test the exact permitted workflow"],
+  ],
+  authoritySources: [
+    ["https://docs.cluely.com/", "Cluely official documentation"],
+    ["/editorial-policy/", "Cluegent editorial and testing policy"],
+  ],
+  sections: [
+    ["Is Cluely AI the same as Cluely?", "For AI assistant and interview-software searches, Cluely AI and Cluely usually refer to the same product query. This page addresses that product-search intent and helps candidates evaluate the software category without confusing two spelling variants for different tools."],
+    ["What Cluely is designed to do", "Cluely's official documentation describes a desktop AI assistant for conversations and meetings. Before choosing it for a specific use case, confirm the current operating-system support, setup steps, inputs, meeting behavior, plan limits, and privacy terms in the official documentation."],
+    ["How we evaluated the product", "This guide reviews current public documentation and applies the same workflow checklist used across Cluegent comparisons. It separates vendor statements from our analysis and does not present a public claim as a measured result."],
+    ["Cluely pricing and free access", "Plans and free allowances can change. Verify the current official price, billing interval, usage limits, cancellation rules, and supported features on the day you subscribe. A free plan is useful only if it lets you test the situation you actually care about."],
+    ["Compare the workflow, not only the feature list", "Use a permitted practice session to test one behavioral question, one resume or project question, one visible coding or screen prompt, and one follow-up. Compare how easily you can provide context, read a response, and continue the conversation without losing focus on the call."],
+    ["Cluely extension, app, and login searches", "Navigational searches should lead to Cluely's official website or documentation. Before downloading or signing in, verify the domain and installer source. Cluegent does not imitate Cluely login, extension, careers, or account pages."],
+    ["Cluely vs Cluegent", "Cluegent is a Windows and macOS desktop assistant with user-controlled listening, typed prompts, screenshot-aware questions, resume context, custom response settings, quick action buttons, and local meeting history. Compare setup, first useful response, screen context, readability, plan fit, and support using the same permitted test."],
+    ["Use AI assistance responsibly", "Every company, interviewer, school, assessment platform, and jurisdiction can set different rules for AI, transcription, screenshots, and outside help. Use any AI assistant only where it is explicitly allowed, and do not treat privacy or overlay language as a guarantee against all monitoring methods."],
+  ],
+  links: [["/blog/is-cluely-ai-free/", "Is Cluely AI free?"], ["/blog/cluely-alternatives/", "Cluely alternatives"], ["/blog/cluely-for-interviews/", "Cluely for interviews"], ["/blog/cluely-extension-vs-desktop-app/", "Extension vs desktop app"], ["/download/", "Try Cluegent"]],
+});
+
+// These pages serve distinct Cluely search intents. Navigational searches such
+// as "Cluely login" and "Cluely careers" intentionally remain with Cluely's
+// official site instead of creating misleading or low-value competitor pages.
+blogPosts.push(
+  {
+    slug: "is-cluely-ai-free",
+    title: "Is Cluely AI Free? Plans, Trials and Alternatives | Cluegent",
+    description:
+      "Is Cluely AI free? Use this guide to compare free-plan access, current pricing, trial limits, desktop workflow, and alternatives before choosing an AI meeting or interview assistant.",
+    h1: "Is Cluely AI Free? What to Check Before You Choose a Plan",
+    summary:
+      "A free-plan question is really a workflow question: what can you test, what happens after a limit, and whether the product fits your meetings or permitted interview practice.",
+    publishedDate: "2026-08-09",
+    modifiedDate: "2026-08-09",
+    sections: [
+      ["Does Cluely AI have a free option?", "Cluely's official site currently includes a free-plan question in its FAQ. Plan details, allowances, prices, and availability can change, so check Cluely's current official pricing page before relying on a specific limit or offer."],
+      ["What to test before paying", "Use a practice call to test the exact situations you care about: a live question, an interrupted follow-up, a typed prompt, meeting notes, and any permitted on-screen context. A free tier is useful only when it lets you test the workflow you would actually use."],
+      ["Compare limits with the whole workflow", "Look beyond a single headline price. Confirm the supported operating systems, meeting platforms, response controls, trial or renewal terms, customer support, and what happens when a plan limit is reached. Keep a written comparison so a monthly and annual price are not confused."],
+      ["A free way to evaluate Cluegent", "Cluegent offers a free path for evaluating a focused Windows or macOS desktop workflow: user-controlled listening, typed prompts, screenshot context, resume-aware responses, customization, and quick actions. Review the current Cluegent pricing and in-app limits before subscribing."],
+      ["Use any assistant responsibly", "Free access does not change the rules of an interview, assessment, or meeting. Use AI assistance only where the organizer permits it and do not use a generated response to represent experience you cannot explain yourself."],
+    ],
+    links: [["/pricing/", "Cluegent plans and pricing"], ["/download/", "Download Cluegent"], ["/blog/free-ai-interview-tools/", "Free AI interview tools"], ["/blog/cluely-ai/", "Cluely AI guide"], ["/alternatives/", "AI assistant alternatives"]],
+  },
+  {
+    slug: "cluely-extension-vs-desktop-app",
+    title: "Cluely Extension vs Desktop App: What to Compare | Cluegent",
+    description:
+      "Searching for a Cluely extension? Compare browser extensions and desktop AI assistants for meetings, interview preparation, screenshots, permissions, coding context, and workflow fit.",
+    h1: "Cluely Extension vs a Desktop AI Assistant",
+    summary:
+      "A browser extension and a desktop assistant work in different places. The better fit depends on where your call, browser, code editor, notes, and response surface actually live.",
+    publishedDate: "2026-08-09",
+    modifiedDate: "2026-08-09",
+    sections: [
+      ["Why people search for a Cluely extension", "An extension can be attractive when a meeting and every supporting task stay inside one compatible browser. Before installing anything, confirm the official download method, supported browser, permissions, and whether the extension is still the product path offered by the vendor."],
+      ["When a desktop workspace is a better fit", "A desktop assistant can work beside Zoom, Google Meet, Teams, an IDE, documents, and multiple browser windows. This can be useful when a candidate needs typed prompts, screenshot-aware questions, resume context, and live controls without forcing everything into one browser tab."],
+      ["Compare permissions and visibility honestly", "Read permission prompts and privacy documentation closely. Test your own screen-sharing and recording setup in a permitted practice call. No extension or desktop application should be treated as a guarantee that it bypasses all monitoring, recording, assessment, or employer policies."],
+      ["How Cluegent approaches the desktop workflow", "Cluegent is a Windows and macOS desktop app with controlled listening, typed prompts, screenshot context, customizable responses, quick actions, and local meeting history. It is designed as a focused workspace beside a permitted call or coding screen."],
+      ["Choose the option you can practice with", "A short, familiar workflow is better than an untested setup. Use the same meeting platform, operating system, microphone, and screen layout you expect to use, then confirm that the answer surface remains readable and does not obstruct important controls."],
+    ],
+    links: [["/blog/ai-interview-assistant-extension-vs-desktop-app/", "AI assistant extension vs desktop app"], ["/blog/cluely-ai/", "Cluely AI guide"], ["/download/", "Download Cluegent desktop app"], ["/how-to-use-cluegent/", "How to use Cluegent"], ["/ai-meeting-assistant/", "AI meeting assistant"]],
+  },
+  {
+    slug: "cluely-alternatives",
+    title: "Cluely Alternatives: Compare AI Meeting and Interview Assistants | Cluegent",
+    description:
+      "Compare Cluely alternatives for meetings and permitted interview practice. Review desktop workflow, live context, screenshots, resume context, pricing, platforms, and responsible use.",
+    h1: "Cluely Alternatives: How to Compare the Right AI Assistant",
+    summary:
+      "The best Cluely alternative is not necessarily the tool with the longest feature list. It is the one that fits the specific meeting, preparation, coding, and operating-system workflow you use.",
+    publishedDate: "2026-08-09",
+    modifiedDate: "2026-08-09",
+    sections: [
+      ["Start with the job you need the assistant to do", "Some people want meeting notes and follow-ups; others need interview preparation, coding context, resume-aware answers, or a private desktop workspace. Write down the one or two situations that matter most before comparing brand pages or plan tables."],
+      ["Compare inputs, not only outputs", "Check what each tool can use as context: a typed question, a live transcript, notes, a resume, a screenshot, code on screen, or a meeting recording. The input you can provide safely and comfortably usually matters more than a generic claim about answer quality."],
+      ["Verify the desktop and platform fit", "Confirm your operating system, processor, meeting platform, browser requirements, audio permissions, screen-sharing behavior, and current plan terms. Run a permitted practice call on the same setup you expect to use rather than comparing screenshots alone."],
+      ["Where Cluegent fits", "Cluegent is a Windows and macOS desktop assistant for controlled listening, typed prompts, screenshot-aware questions, resume context, custom response settings, quick actions, and local meeting history. It is a focused choice for candidates and professionals who want those controls in one desktop workspace."],
+      ["Keep policy and consent in the comparison", "No alternative is suitable if it conflicts with the rules of the meeting, interview, school, employer, or assessment. Check the policy first, obtain consent where required, and use AI help only in permitted situations."],
+    ],
+    links: [["/blog/cluely-ai/", "Cluely AI review and guide"], ["/alternatives/", "Compare all AI assistant alternatives"], ["/ai-interview-assistant/", "AI interview assistant"], ["/ai-meeting-assistant/", "AI meeting assistant"], ["/pricing/", "Cluegent pricing"]],
+  },
+  {
+    slug: "cluely-for-interviews",
+    title: "Cluely for Interviews: What Candidates Should Know | Cluegent",
+    description:
+      "Considering Cluely for interviews? Learn how to evaluate AI interview assistance, practice workflows, live-call rules, coding context, preparation, responsible use, and desktop alternatives.",
+    h1: "Cluely for Interviews: A Responsible Evaluation Guide",
+    summary:
+      "AI can make preparation more structured, but live interview use depends on the employer's rules. Evaluate the workflow, not just the marketing claim, before choosing an assistant.",
+    publishedDate: "2026-08-09",
+    modifiedDate: "2026-08-09",
+    sections: [
+      ["Separate preparation from live interview use", "Preparation can include practicing behavioral answers, turning project notes into concise explanations, reviewing coding concepts, and rehearsing follow-up questions. A live interview has separate rules, and the candidate must follow the employer's instructions on AI, notes, screen sharing, transcription, and outside assistance."],
+      ["Test the questions that reflect your real interview", "Practice a behavioral question, a project walkthrough, a technical tradeoff, a coding prompt, and a follow-up. Check whether the response is accurate, concise, grounded in your own experience, and easy to explain without reading it word for word."],
+      ["Plan for coding and visible context", "A coding round may include a browser, IDE, whiteboard, error message, or partially completed solution. If screen context is permitted, test whether the assistant can help you reason about the visible problem while you still control and understand the final explanation."],
+      ["How Cluegent supports permitted workflows", "Cluegent provides a desktop workspace with user-controlled listening, typed prompts, screenshots, resume context, custom response modes, and quick actions. It is intended for preparation and permitted live workflows; it is not a substitute for technical skills, honesty, or interview policy."],
+      ["Use AI with integrity", "Do not claim ownership of a response, project, or decision you cannot defend. If a process forbids AI assistance, do not use it. The strongest long-term outcome is being ready to explain your own work clearly when the interviewer asks a deeper question."],
+    ],
+    links: [["/blog/can-you-use-ai-in-job-interview/", "Can you use AI in a job interview?"], ["/blog/ai-interview-assistant-for-freshers/", "AI assistant for freshers"], ["/coding-interview-assistant/", "Coding interview assistant"], ["/how-to-use-cluegent/", "How to use Cluegent"], ["/download/", "Download Cluegent"]],
+  }
+);
+
+// Broad AI-interview-assistant search intent is owned by the product landing
+// page. This companion guide answers the informational "interview AI
+// assistant" query without duplicating the commercial page.
+blogPosts.push({
+  slug: "interview-ai-assistant",
+  title: "Interview AI Assistant: What It Is and How to Choose One | Cluegent",
+  description:
+    "What is an interview AI assistant? Learn how AI assistants support interview preparation, coding questions, resume context, live calls, screenshots, and responsible use.",
+  h1: "Interview AI Assistant: What It Is and How to Choose One",
+  summary:
+    "An interview AI assistant can help candidates prepare clearer answers and, where permitted, keep useful context available during live calls. The right choice depends on the workflow, not just the feature list.",
+  publishedDate: "2026-08-09",
+  modifiedDate: "2026-08-09",
+  sections: [
+    ["What is an interview AI assistant?", "An interview AI assistant is software that can help a candidate prepare and structure interview responses. Depending on the product, it may work from typed questions, a resume, practice notes, a live transcript, screenshots, or visible coding context. Each product has different setup requirements and limits."],
+    ["Preparation assistant versus live-call assistant", "Preparation tools help with question banks, STAR stories, project walkthroughs, mock interviews, and technical concepts. A live-call assistant may provide a desktop workspace for typed prompts, controlled listening, or permitted screen context. Keep these two use cases separate when evaluating a product."],
+    ["What to test before choosing one", "Run a permitted practice session using a behavioral question, a project explanation, a technical follow-up, and a visible coding prompt. Test whether the answer is accurate, readable, grounded in your own background, and easy to explain in your own words."],
+    ["Where Cluegent fits", "Cluegent is a Windows and macOS desktop AI interview assistant with user-controlled listening, typed prompts, screenshot-aware questions, resume context, customizable response settings, quick actions, and local meeting history. It is built for preparation and live workflows where AI assistance is allowed."],
+    ["Follow the interview rules", "Every employer, interviewer, school, assessment platform, and jurisdiction can set different rules for AI, recording, transcripts, screenshots, and outside assistance. Use any interview AI assistant only where it is explicitly allowed, and never present a generated answer as experience you cannot explain."],
+  ],
+  links: [["/ai-interview-assistant/", "AI interview assistant for live calls"], ["/blog/free-ai-interview-assistant-tools-compared/", "Free interview AI assistant tools"], ["/blog/how-to-use-ai-interview-assistant-live-interviews/", "How to use an AI interview assistant"], ["/coding-interview-assistant/", "Coding interview assistant"], ["/download/", "Download Cluegent"]],
+});
+
+// Job-seeker content cluster built around distinct answer, preparation, and
+// interview-workflow intents. Each article owns one primary query so the pages
+// can support the product pillar without competing with one another.
+blogPosts.push(
+  {
+    slug: "tell-me-about-yourself-software-engineer",
+    title: "Tell Me About Yourself: Answers & Examples | Cluegent",
+    description:
+      "Learn how to answer tell me about yourself with a simple structure and practical interview examples for freshers, professionals, and software engineers.",
+    h1: "Tell Me About Yourself: Interview Answers and Examples",
+    summary:
+      "A strong tell me about yourself answer connects your present situation, relevant evidence, and the reason this opportunity is the logical next step.",
+    publishedDate: "2026-08-11",
+    modifiedDate: "2026-08-11",
+    bodyHtml: `
+      <section>
+        <h2>Why interviewers start with this question</h2>
+        <p>“Tell me about yourself” is not a request for your complete life story. It is a short test of relevance and communication. The interviewer wants to understand what kind of professional you are, what evidence supports that description, and why your background fits the role in front of you.</p>
+        <p>A useful answer normally takes 60 to 90 seconds. It should sound like a conversation, not a memorized biography. Focus on the two or three details that make the rest of the interview easier to understand.</p>
+      </section>
+      <section>
+        <h2>Use the present, evidence, future structure</h2>
+        <ol>
+          <li><strong>Present:</strong> State your current role, experience level, or area of study.</li>
+          <li><strong>Evidence:</strong> Mention one or two relevant projects, systems, outcomes, or technical strengths.</li>
+          <li><strong>Future:</strong> Explain why this role is a sensible next step.</li>
+        </ol>
+        <p>This structure keeps the answer focused on the employer's needs while giving the interviewer several useful follow-up paths.</p>
+      </section>
+      <section>
+        <h2>Tell me about yourself answer template</h2>
+        <p>Use this as a planning template, not a script: “I’m currently a [role, student, or professional identity] with experience in [two relevant areas]. Recently, I [specific project, responsibility, or result], which strengthened my ability to [job-relevant capability]. I’m now looking for [next-step responsibility], and this opportunity interests me because [specific connection to the role].”</p>
+        <p>Every bracket should contain a fact you can explain under follow-up questioning. Remove background details that do not help the interviewer understand your fit.</p>
+      </section>
+      <section>
+        <h2>Example for an experienced software engineer</h2>
+        <p>“I’m a backend engineer with four years of experience building APIs and event-driven services in Java and AWS. In my current role, I helped redesign an order-processing workflow that reduced failed transactions and made incidents easier to diagnose. I enjoy problems where reliability and product impact meet, which is why this role’s focus on distributed systems and ownership stood out to me.”</p>
+        <p>Notice that the example names a technical area, gives evidence, and ends with a role-specific reason. Replace every detail with something you can defend in a follow-up question.</p>
+      </section>
+      <section>
+        <h2>Example for a fresher or career starter</h2>
+        <p>“I recently completed my computer science degree, where I focused on web development and data structures. My strongest project was a React and Node.js scheduling app that I built with two classmates; I owned the API design and deployment. That project made me interested in product engineering, and I’m looking for a junior role where I can keep improving while contributing to a real user-facing application.”</p>
+      </section>
+      <section>
+        <h2>Example for a non-technical professional</h2>
+        <p>“I’m a customer success specialist with three years of experience helping B2B customers adopt workflow software. In my current role, I redesigned the onboarding checklist and partnered with support to reduce repeated setup questions. I’m now looking for a role where I can own larger accounts and work more closely with product, which is what attracted me to this position.”</p>
+      </section>
+      <section>
+        <h2>How to tailor the answer for each interview stage</h2>
+        <ul>
+          <li><strong>Recruiter screen:</strong> Emphasize role fit, experience level, location or availability, and motivation.</li>
+          <li><strong>Hiring manager:</strong> Add one achievement that resembles the team's immediate priorities.</li>
+          <li><strong>Technical interview:</strong> Name the systems, decisions, and outcomes that invite relevant technical follow-ups.</li>
+          <li><strong>Leadership interview:</strong> Connect your work to customer, team, or business impact.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Common mistakes to remove</h2>
+        <ul>
+          <li>Repeating every line of the resume in chronological order.</li>
+          <li>Listing technologies without explaining where you used them.</li>
+          <li>Using generic claims such as “hard-working” without evidence.</li>
+          <li>Giving an answer that could be sent to any company unchanged.</li>
+          <li>Memorizing every word so tightly that follow-up questions feel disruptive.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Practice with your resume as context</h2>
+        <p>Add your resume to Cluegent's Customize section and ask for a 75-second introduction based only on experiences that are actually present. Then request a shorter recruiter version and a role-specific hiring-manager version. Read both aloud, remove words you would never naturally say, and verify every metric and claim.</p>
+        <p class="seo-source-note">Research basis: Indeed identifies this as a common opening question for software engineering interviews and recommends a thoughtful, role-relevant introduction. See the <a href="https://www.indeed.com/career-advice/interviewing/tell-me-about-yourself-software-engineer" target="_blank" rel="noreferrer">Indeed software engineer answer guide</a>.</p>
+      </section>`,
+    faqs: [
+      { q: "How long should a tell me about yourself answer be?", a: "Aim for roughly 60 to 90 seconds. Use less time for a recruiter screen and add role-specific evidence when speaking with the hiring manager." },
+      { q: "Should I mention personal information?", a: "Only mention a personal detail when it clearly supports your professional story. The answer should stay centered on relevant experience, evidence, and motivation." },
+      { q: "Can freshers answer without work experience?", a: "Yes. Use coursework, internships, team projects, open-source contributions, hackathons, or a technically meaningful personal project as evidence." },
+    ],
+    links: [["/ai-interview-assistant-for-freshers/", "Interview assistant for freshers"], ["/ai-interview-assistant-with-resume-context/", "Resume-aware interview help"], ["/blog/resume-based-interview-questions-and-answers/", "Resume-based questions"], ["/download/", "Practice with Cluegent"]],
+  },
+  {
+    slug: "resume-based-interview-questions-and-answers",
+    title: "Resume-Based Interview Questions and Answers | Cluegent",
+    description:
+      "Prepare for resume-based interview questions about projects, skills, achievements, gaps, job changes, and technical decisions with practical answer frameworks.",
+    h1: "Resume-Based Interview Questions and Answers",
+    summary:
+      "Your resume creates the interviewer's question map. Prepare every claim, project, skill, transition, and metric before the call begins.",
+    publishedDate: "2026-08-11",
+    modifiedDate: "2026-08-11",
+    bodyHtml: `
+      <section>
+        <h2>Turn every resume line into a follow-up question</h2>
+        <p>Interviewers often use the resume to decide what to verify. A technology may trigger a depth question, a metric may trigger a measurement question, and a project may trigger questions about ownership, tradeoffs, failures, and teamwork. Preparation starts by reading the document from the interviewer's perspective.</p>
+      </section>
+      <section>
+        <h2>Questions to prepare for every project</h2>
+        <ul>
+          <li>What problem did the project solve, and who used it?</li>
+          <li>What did you personally own?</li>
+          <li>Why did you choose this architecture or technology?</li>
+          <li>What was the hardest bug, constraint, or tradeoff?</li>
+          <li>How did you test or measure the result?</li>
+          <li>What would you change if you rebuilt it today?</li>
+        </ul>
+        <p>Answering these six questions for each major project gives you material for technical, behavioral, and ownership rounds.</p>
+      </section>
+      <section>
+        <h2>Use claim, evidence, reflection</h2>
+        <p>Start with a direct claim, support it with a concrete example, and close with what you learned. For example: “I led the API migration” is only a claim. Add the number of services, your decision, the constraint, and the result. Reflection shows that you understand more than the final success.</p>
+      </section>
+      <section>
+        <h2>How to answer about a skill you have not used recently</h2>
+        <p>Be precise about your level. Say where you used the skill, how recently, and what adjacent knowledge remains strong. A credible answer is better than overstating fluency: “I used Python heavily in university and still use it for scripts, but my production work during the last two years has been mainly TypeScript.”</p>
+      </section>
+      <section>
+        <h2>Prepare gaps and job changes without becoming defensive</h2>
+        <p>Keep the explanation factual, brief, and forward-looking. State the situation, describe any productive action you took, and connect it to your current readiness. Do not invent consulting work, inflate responsibilities, or hide dates that the employer can verify.</p>
+      </section>
+      <section>
+        <h2>Generate a resume-specific practice set</h2>
+        <p>In Cluegent, add your resume as context and ask for questions about the three claims most likely to receive follow-ups. Practice one recruiter answer, one technical answer, and one behavioral answer. The goal is not to memorize generated text; it is to discover weak evidence before an interviewer does.</p>
+        <p class="seo-source-note">Career-center guidance recommends using a resume and job description to generate likely questions and then practicing answers aloud. See the <a href="https://careercenter.ucdavis.edu/sites/g/files/dgvnsk15461/files/inline-files/CRM%20Interviews%20and%20Offers%20Guide%20%28Print%29_0.pdf" target="_blank" rel="noreferrer">UC Davis Interviews and Offers Guide</a>.</p>
+      </section>`,
+    faqs: [
+      { q: "Which resume lines receive the most interview questions?", a: "Expect questions about recent roles, major projects, measurable achievements, tools listed as skills, employment gaps, promotions, and claims that are central to the job description." },
+      { q: "Should I memorize answers for every project?", a: "Memorize the facts and structure, not a script. You should be able to adjust the level of detail when an interviewer changes direction." },
+      { q: "Can AI create questions from my resume?", a: "Yes. Provide the resume and target job description, ask for likely questions, and verify that the suggested answers use only experience you genuinely have." },
+    ],
+    links: [["/ai-interview-assistant-with-resume-context/", "Resume context in Cluegent"], ["/blog/tell-me-about-yourself-software-engineer/", "Software engineer introduction"], ["/blog/software-engineer-behavioral-interview-questions/", "Behavioral questions"], ["/download/", "Download Cluegent"]],
+  },
+  {
+    slug: "mock-interview-with-ai",
+    title: "How to Run a Mock Interview With AI | Cluegent",
+    description:
+      "Run a useful AI mock interview using your resume and job description, realistic follow-ups, answer scoring, reflection, and a repeatable practice routine.",
+    h1: "How to Run a Mock Interview With AI",
+    summary:
+      "An effective AI mock interview is a rehearsal with realistic constraints, follow-up questions, evidence checks, and a clear review process.",
+    publishedDate: "2026-08-11",
+    modifiedDate: "2026-08-11",
+    bodyHtml: `
+      <section>
+        <h2>Start with the real job, not a generic question list</h2>
+        <p>Provide the job description, your resume, the expected interview round, and the seniority level. Ask the AI to identify the competencies that the employer is likely to test. This produces a more realistic session than requesting ten random interview questions.</p>
+      </section>
+      <section>
+        <h2>Use a five-part mock interview setup</h2>
+        <ol>
+          <li>Ask one question at a time.</li>
+          <li>Set a realistic answer limit, such as two minutes.</li>
+          <li>Require at least one follow-up when an answer is vague.</li>
+          <li>Do not show the ideal answer until you finish speaking.</li>
+          <li>Score relevance, evidence, structure, and clarity separately.</li>
+        </ol>
+      </section>
+      <section>
+        <h2>Practice aloud and preserve the transcript</h2>
+        <p>Thinking through an answer silently is easier than delivering it. Speak aloud, record or transcribe only with appropriate consent, and review where you paused, repeated yourself, or missed the actual question. A transcript makes vague statements and unsupported claims easier to notice.</p>
+      </section>
+      <section>
+        <h2>Use a useful feedback rubric</h2>
+        <div class="seo-table">
+          <div><strong>Relevance</strong><span>Did the answer address the question directly?</span><span>Remove unrelated background.</span></div>
+          <div><strong>Evidence</strong><span>Did it include a real example or metric?</span><span>Add verifiable detail.</span></div>
+          <div><strong>Structure</strong><span>Could the interviewer follow the story?</span><span>Use STAR or claim-evidence-reflection.</span></div>
+          <div><strong>Clarity</strong><span>Was the language concise and natural?</span><span>Shorten sentences and define technical terms.</span></div>
+        </div>
+      </section>
+      <section>
+        <h2>Repeat the weak answer, not the entire interview</h2>
+        <p>After the first run, choose the two lowest-scoring answers. Rebuild the evidence, answer again without reading, and compare the new transcript. Focused repetition produces more improvement than restarting a long mock session every time.</p>
+      </section>
+      <section>
+        <h2>Use Cluegent as a practice workspace</h2>
+        <p>Add resume context, type the mock question, and use quick actions such as clarify, give an example, or follow-up question. Keep the generated response as a coach, then close it and answer in your own words. Follow the employer's rules if you later use any assistance during a real call.</p>
+        <p class="seo-source-note">Current career guidance recommends practicing aloud and using AI for mock questions and feedback. See the <a href="https://apnews.com/article/a535a7932ff291a1998158d40cd82c4c" target="_blank" rel="noreferrer">Associated Press guide to AI in job hunting</a> and the <a href="https://careercenter.ucdavis.edu/sites/g/files/dgvnsk15461/files/inline-files/CRM%20Interviews%20and%20Offers%20Guide%20%28Print%29_0.pdf" target="_blank" rel="noreferrer">UC Davis interview guide</a>.</p>
+      </section>`,
+    faqs: [
+      { q: "What information should I give an AI mock interviewer?", a: "Use your resume, job description, target round, seniority, company context, and the skills you want evaluated. Remove personal data you do not want to share." },
+      { q: "How many mock interviews should I do?", a: "One diagnostic session followed by focused repetitions is usually more useful than many full sessions. Repeat until your evidence and delivery improve without becoming scripted." },
+      { q: "Can AI replace a human mock interviewer?", a: "AI is useful for repetition and structured feedback. A trusted person can still notice interpersonal signals, unclear assumptions, and role-specific nuances that automated feedback may miss." },
+    ],
+    links: [["/blog/how-to-use-ai-interview-assistant-live-interviews/", "Using AI interview assistance"], ["/ai-interview-assistant-with-resume-context/", "Resume-aware answers"], ["/blog/star-method-behavioral-interview-questions/", "STAR method practice"], ["/download/", "Start practicing with Cluegent"]],
+  },
+  {
+    slug: "how-to-prepare-for-coding-interview-in-7-days",
+    title: "How to Prepare for a Coding Interview in 7 Days | Cluegent",
+    description:
+      "Use this seven-day coding interview preparation plan for algorithms, coding patterns, debugging, communication, system design, and realistic mock practice.",
+    h1: "How to Prepare for a Coding Interview in 7 Days",
+    summary:
+      "One week is enough for focused revision and realistic practice, but not for learning every algorithm. Prioritize patterns, communication, and your weakest interview stage.",
+    publishedDate: "2026-08-11",
+    modifiedDate: "2026-08-11",
+    bodyHtml: `
+      <section>
+        <h2>Before day one: identify the interview format</h2>
+        <p>Confirm the language, platform, duration, number of rounds, and whether the role includes algorithms, debugging, frontend work, SQL, low-level design, or system design. A seven-day plan only works when it matches the actual interview.</p>
+      </section>
+      <section>
+        <h2>The seven-day coding interview plan</h2>
+        <div class="seo-table">
+          <div><strong>Day 1</strong><span>Run a timed diagnostic problem.</span><span>List knowledge and communication gaps.</span></div>
+          <div><strong>Day 2</strong><span>Arrays, strings, hash maps, two pointers.</span><span>Explain complexity aloud.</span></div>
+          <div><strong>Day 3</strong><span>Stacks, queues, linked lists, binary search.</span><span>Practice edge cases.</span></div>
+          <div><strong>Day 4</strong><span>Trees, graphs, BFS, DFS.</span><span>Trace one example by hand.</span></div>
+          <div><strong>Day 5</strong><span>Role-specific debugging, SQL, frontend, or system design.</span><span>Review the job description.</span></div>
+          <div><strong>Day 6</strong><span>Two realistic mock interviews.</span><span>Review transcripts and mistakes.</span></div>
+          <div><strong>Day 7</strong><span>Light revision and setup check.</span><span>Stop heavy practice early.</span></div>
+        </div>
+      </section>
+      <section>
+        <h2>Use the same communication loop for every problem</h2>
+        <ol>
+          <li>Restate the problem and clarify constraints.</li>
+          <li>Walk through a small example.</li>
+          <li>Describe a simple approach before optimizing.</li>
+          <li>State time and space complexity.</li>
+          <li>Implement while narrating meaningful decisions.</li>
+          <li>Test normal, boundary, and invalid cases.</li>
+        </ol>
+      </section>
+      <section>
+        <h2>Do not measure preparation by problem count</h2>
+        <p>Solving twenty unfamiliar questions superficially can be less useful than solving six representative patterns, explaining them, and repeating the failures. Track whether you recognized the pattern, selected the data structure, implemented correctly, and communicated clearly.</p>
+      </section>
+      <section>
+        <h2>Use screenshots for review, not blind copying</h2>
+        <p>During permitted practice, attach a screenshot of a failed solution or error and ask Cluegent to identify the likely issue, missing edge case, and complexity. Then fix the code yourself and explain why the change works. During a real assessment, follow its AI and outside-help policy.</p>
+      </section>
+      <section>
+        <h2>Protect the final evening</h2>
+        <p>Verify the editor, browser permissions, camera, microphone, meeting link, and backup connection. Prepare water, paper, and the questions you want to ask. Sleep is more valuable than one final late-night dynamic-programming problem.</p>
+        <p class="seo-source-note">Current software-engineering guides consistently separate coding, system design, behavioral preparation, and spoken reasoning. See the <a href="https://www.coursera.org/resources/software-engineering-interview-prep-guide" target="_blank" rel="noreferrer">Coursera software engineering interview guide</a>.</p>
+      </section>`,
+    faqs: [
+      { q: "Can I prepare for a coding interview in one week?", a: "You can revise core patterns, improve communication, and practice the expected format. One week is unlikely to replace missing fundamentals, so prioritize the highest-probability topics." },
+      { q: "How many coding problems should I solve each day?", a: "Choose quality over a fixed count. Two or three timed problems with explanation, testing, and review can be more valuable than many rushed solutions." },
+      { q: "Should I learn a new programming language before the interview?", a: "Usually no. Use the strongest language accepted by the interviewer unless the role explicitly requires a specific language." },
+    ],
+    links: [["/coding-interview-assistant/", "Coding interview assistant"], ["/blog/ai-interview-tools-for-coding/", "AI tools for coding interviews"], ["/blog/system-design-interview-questions-beginners/", "System design questions"], ["/download/", "Use Cluegent for practice"]],
+  },
+  {
+    slug: "software-engineer-behavioral-interview-questions",
+    title: "Behavioral Interview Questions: STAR Examples | Cluegent",
+    description:
+      "Prepare common behavioral interview questions with STAR answer frameworks, practical examples, story prompts, and follow-up questions for job seekers.",
+    h1: "Behavioral Interview Questions and STAR Answer Examples",
+    summary:
+      "Behavioral interview questions test how you make decisions, work with people, recover from mistakes, and turn past experience into evidence of future performance.",
+    publishedDate: "2026-08-11",
+    modifiedDate: "2026-08-11",
+    bodyHtml: `
+      <section>
+        <h2>What the behavioral round is really measuring</h2>
+        <p>The interviewer is looking for evidence of ownership, judgment, collaboration, learning, and communication. Useful detail matters, but the answer should explain why a decision mattered to customers, teammates, delivery, quality, or the business.</p>
+      </section>
+      <section>
+        <h2>Fifteen common behavioral interview questions</h2>
+        <ol>
+          <li>Tell me about a difficult decision you made.</li>
+          <li>Describe a serious problem you helped resolve.</li>
+          <li>Tell me about a disagreement with a teammate.</li>
+          <li>When did you simplify an unnecessarily complex process?</li>
+          <li>Describe a deadline you were at risk of missing.</li>
+          <li>Tell me about unclear requirements.</li>
+          <li>Describe feedback that changed how you work.</li>
+          <li>Tell me about a bug you introduced.</li>
+          <li>When did you improve a process for other people?</li>
+          <li>Describe a time you influenced without authority.</li>
+          <li>Tell me about a project that did not succeed.</li>
+          <li>How did you mentor or support a teammate?</li>
+          <li>When did you disagree with a manager or business decision?</li>
+          <li>Describe a quality, cost, speed, or customer tradeoff.</li>
+          <li>What is the most useful lesson from your last project?</li>
+        </ol>
+      </section>
+      <section>
+        <h2>Build a reusable story bank</h2>
+        <p>Prepare six to eight truthful stories rather than fifteen separate scripts. Good categories include an achievement, conflict, failure, incident, ambiguous project, leadership moment, feedback experience, and difficult tradeoff. One story can answer several questions when you change the emphasis honestly.</p>
+      </section>
+      <section>
+        <h2>Add engineering depth to STAR</h2>
+        <p>In the Action section, explain your decision process: alternatives considered, data used, stakeholders consulted, and risk managed. In the Result section, include the outcome and what changed in your approach afterward. Software engineers can add technical tradeoffs, while candidates in other roles can describe process, customer, revenue, quality, or delivery decisions. Avoid spending most of the answer describing the Situation.</p>
+      </section>
+      <section>
+        <h2>STAR answer example for handling conflict</h2>
+        <p><strong>Situation:</strong> A teammate and I disagreed about launching a customer workflow before all edge cases were automated. <strong>Task:</strong> I needed to protect quality without blocking a time-sensitive release. <strong>Action:</strong> I listed the highest-risk cases, reviewed support data with the teammate, and proposed a smaller launch with monitoring and a rollback plan. <strong>Result:</strong> We launched on time to a limited group, found one issue before wider release, and reused the risk checklist on later projects.</p>
+      </section>
+      <section>
+        <h2>STAR answer example for failure</h2>
+        <p><strong>Situation:</strong> I underestimated the review time required for a cross-team change. <strong>Task:</strong> I had to recover the schedule and communicate the risk. <strong>Action:</strong> I informed the project owner early, separated the essential work from optional improvements, and scheduled short review checkpoints. <strong>Result:</strong> The essential release moved by two days instead of a full sprint, and I added review dependencies to future estimates.</p>
+      </section>
+      <section>
+        <h2>How to answer without sounding rehearsed</h2>
+        <p>Memorize the sequence of facts, not complete sentences. Keep a five-line note for each story: situation, responsibility, two actions, outcome, and lesson. Practice answering the same story from different angles so a follow-up question does not break your script.</p>
+      </section>
+      <section>
+        <h2>Prepare for skeptical follow-ups</h2>
+        <ul>
+          <li>What was your personal contribution?</li>
+          <li>Why did you not choose the other option?</li>
+          <li>What evidence showed the result improved?</li>
+          <li>What did your teammate disagree with?</li>
+          <li>What would you do differently now?</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Use AI without inventing stories</h2>
+        <p>Give Cluegent a real project outline and ask it to identify missing STAR details or likely follow-ups. Never ask it to manufacture achievements or metrics. A polished story that collapses under one follow-up is worse than a modest example you understand completely.</p>
+      </section>`,
+    faqs: [
+      { q: "How many behavioral interview stories should I prepare?", a: "Six to eight varied stories usually cover common themes. Prepare the facts, decisions, outcomes, and lessons so you can adapt each story naturally." },
+      { q: "How technical should behavioral answers be?", a: "Use enough technical detail to explain the decision and tradeoff, then connect it to team, customer, delivery, reliability, or business impact." },
+      { q: "What if my project did not have a measurable result?", a: "Use observable evidence such as reduced manual work, fewer incidents, faster reviews, improved adoption, or a decision that prevented a known risk. Do not invent a number." },
+    ],
+    links: [["/blog/star-method-behavioral-interview-questions/", "STAR method guide"], ["/blog/behavioral-interview-questions-with-ai/", "Behavioral practice with AI"], ["/ai-interview-assistant-with-resume-context/", "Use resume context"], ["/download/", "Practice with Cluegent"]],
+  },
+  {
+    slug: "strengths-and-weaknesses-interview-answers",
+    title: "Strengths and Weaknesses: Interview Examples | Cluegent",
+    description:
+      "Answer interview questions about strengths and weaknesses with evidence, honest self-awareness, improvement steps, and adaptable examples for job seekers.",
+    h1: "Strengths and Weaknesses: Interview Answers and Examples",
+    summary:
+      "The best strengths and weaknesses answers combine evidence with self-awareness. They should help the interviewer predict how you will perform and improve.",
+    publishedDate: "2026-08-11",
+    modifiedDate: "2026-08-11",
+    bodyHtml: `
+      <section>
+        <h2>How to choose a strength</h2>
+        <p>Select a strength that matters to the role and that you can prove with a recent example. Useful categories include structured problem solving, stakeholder communication, debugging, prioritization, ownership, customer empathy, and learning unfamiliar systems.</p>
+      </section>
+      <section>
+        <h2>Strong interview strengths with evidence</h2>
+        <ul>
+          <li><strong>Problem solving:</strong> Explain how you diagnosed an unclear issue and chose a workable solution.</li>
+          <li><strong>Communication:</strong> Show how your explanation aligned people, prevented confusion, or improved a decision.</li>
+          <li><strong>Prioritization:</strong> Describe how you separated urgent work from merely visible work.</li>
+          <li><strong>Adaptability:</strong> Give an example of learning a new domain, tool, or responsibility under a real deadline.</li>
+          <li><strong>Ownership:</strong> Show where you followed a problem through to a measurable or observable outcome.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Use strength, evidence, relevance</h2>
+        <p>“One of my strengths is debugging unfamiliar systems. During an incident involving delayed events, I narrowed the issue from the API to a retry queue, added temporary observability, and helped restore normal processing. That methodical approach is relevant here because this role owns services with several external dependencies.”</p>
+      </section>
+      <section>
+        <h2>How to choose a credible weakness</h2>
+        <p>Choose a real limitation that is manageable for the role, then show what you are doing about it. Avoid a weakness that directly removes a core requirement, and avoid disguised strengths such as “I care too much.” The interviewer is testing self-awareness and response to feedback.</p>
+      </section>
+      <section>
+        <h2>Use weakness, impact, action, progress</h2>
+        <p>“Earlier in my career, I waited too long before sharing work in progress because I wanted the design to be complete. That sometimes delayed feedback. I now write a short decision note and ask for review once the main tradeoffs are clear. My recent projects have had fewer late design changes, although I still remind myself to share early.”</p>
+      </section>
+      <section>
+        <h2>More weakness answer examples</h2>
+        <p><strong>Delegation:</strong> “I used to hold onto tasks because explaining them felt slower. On a recent project I documented the expected result, assigned clear ownership, and scheduled one checkpoint instead. The work moved faster, and I am continuing to improve at matching tasks to people's strengths.”</p>
+        <p><strong>Public speaking:</strong> “Large presentations used to make me rush. I began volunteering for shorter team demos, rehearsing the opening, and asking a colleague for feedback. I am now comfortable presenting project updates, although I still prepare carefully for larger audiences.”</p>
+        <p><strong>Asking for help:</strong> “I sometimes spent too long solving problems alone. I now define what I tried and ask for input after a fixed time. That has reduced delays while keeping my questions focused.”</p>
+      </section>
+      <section>
+        <h2>Match strengths and weaknesses to the role</h2>
+        <p>Read the responsibilities and identify the three behaviors repeated most often. Your strength should support one of them. Your weakness should be genuine but should not remove your ability to perform the job's central requirement. A sales candidate should not choose relationship building as a major weakness, and an accountant should not choose accuracy.</p>
+      </section>
+      <section>
+        <h2>Weak answers to avoid</h2>
+        <ul>
+          <li>A weakness that makes you unable to perform the essential job.</li>
+          <li>A personality label without a work example.</li>
+          <li>A problem with no action or evidence of progress.</li>
+          <li>A rehearsed cliché that does not sound true.</li>
+          <li>Blaming a previous manager or team for the weakness.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Tailor the answer to the job description</h2>
+        <p>Highlight the capabilities the role repeatedly requests, then map them to evidence from your resume. Use Cluegent to produce a concise draft, but edit it until the language sounds like you and the example remains completely accurate.</p>
+      </section>`,
+    faqs: [
+      { q: "What is a safe weakness to mention?", a: "Choose a genuine, improvable limitation that is not the central requirement of the role. Explain its impact, the action you took, and evidence of progress." },
+      { q: "How many strengths should I give?", a: "Give one strong, relevant strength unless the interviewer asks for several. A supported example is more persuasive than a list of adjectives." },
+      { q: "Can I say perfectionism is my weakness?", a: "Only if you can describe a specific negative impact and a concrete behavior change. Without evidence, it usually sounds like a rehearsed disguised strength." },
+    ],
+    links: [["/blog/resume-based-interview-questions-and-answers/", "Resume-based interview answers"], ["/blog/mock-interview-with-ai/", "AI mock interview practice"], ["/ai-interview-assistant-for-freshers/", "Interview help for freshers"], ["/download/", "Practice answers in Cluegent"]],
+  },
+  {
+    slug: "salary-expectations-interview-answer",
+    title: "Salary Expectations: Answers & Examples | Cluegent",
+    description:
+      "Answer salary expectation questions with research, a defensible range, total compensation context, negotiation language, and examples for job seekers.",
+    h1: "Salary Expectations: Interview Answers and Examples",
+    summary:
+      "A salary expectations answer should be researched, flexible, and specific enough to identify whether the opportunity can work for both sides.",
+    publishedDate: "2026-08-11",
+    modifiedDate: "2026-08-11",
+    bodyHtml: `
+      <section>
+        <h2>Research before naming a number</h2>
+        <p>Use several sources for the role, seniority, location, company type, and employment arrangement. Compare base salary separately from bonus, equity, allowances, insurance, retirement contributions, and other benefits. A global remote role may use a different market than a local office role.</p>
+      </section>
+      <section>
+        <h2>When you can ask for the employer's range</h2>
+        <p>Early in the process, it is reasonable to say: “I’m still learning about the responsibilities and level. Could you share the budgeted range for the role so I can confirm we are aligned?” This avoids negotiating against incomplete information.</p>
+      </section>
+      <section>
+        <h2>Salary expectations answer for an application form</h2>
+        <p>When the field accepts text, write “Negotiable based on role scope and total compensation” or give a researched range if the form requires one. When it only accepts a number, use a defensible target within the local market rather than an artificially low figure intended only to pass screening.</p>
+      </section>
+      <section>
+        <h2>How to give a range</h2>
+        <p>“Based on the scope we have discussed and my research for similar roles, I’m targeting a base range of [lower number] to [upper number]. I’m open to discussing the complete package, including level, bonus, equity, and benefits.”</p>
+        <p>Use a range you would genuinely accept. Employers may focus on its lower end, so do not set the bottom below your real minimum.</p>
+      </section>
+      <section>
+        <h2>If your current salary is requested</h2>
+        <p>Rules about salary-history questions vary by location. Where appropriate, redirect to the value and scope of the new role: “I would prefer to focus on the market range and responsibilities for this position. For this opportunity, I’m targeting…” Seek qualified local guidance when legal requirements matter.</p>
+      </section>
+      <section>
+        <h2>If the offered range is lower</h2>
+        <p>Do not reject or accept immediately under pressure. Ask whether there is flexibility in level, base, sign-on bonus, equity, review timing, remote arrangement, or another part of the package. If the gap is fundamental, a respectful early exit saves everyone time.</p>
+      </section>
+      <section>
+        <h2>Salary expectations examples for different situations</h2>
+        <p><strong>Fresher:</strong> “I’m open to the established range for an entry-level candidate in this role. I’m evaluating the learning opportunity and complete package, and I would be glad to understand the budgeted range.”</p>
+        <p><strong>Experienced candidate:</strong> “Based on the responsibilities and comparable roles, I’m targeting a base range of [X] to [Y]. I’m flexible depending on the level, bonus, equity, benefits, and overall scope.”</p>
+        <p><strong>Career changer:</strong> “I understand that my direct experience in this function is newer, while my background in [transferable skill] adds value. I’m looking for a package aligned with the role's level and would like to understand the range you have budgeted.”</p>
+      </section>
+      <section>
+        <h2>Questions to clarify before accepting</h2>
+        <ul>
+          <li>Is the stated figure base salary or total compensation?</li>
+          <li>How are bonus and equity calculated, and when do they vest or pay?</li>
+          <li>When is compensation reviewed?</li>
+          <li>Are benefits, allowances, or remote-work costs included?</li>
+          <li>Does the offer depend on location, employment type, or probation?</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Practice the answer without sounding defensive</h2>
+        <p>Say the range aloud until it sounds calm and matter-of-fact. Use Cluegent to practice recruiter follow-ups such as “What is your minimum?”, “Why that range?”, and “Are you considering other offers?” Keep every answer honest and avoid inventing competing offers.</p>
+      </section>`,
+    faqs: [
+      { q: "Should I give an exact salary or a range?", a: "A researched range usually preserves flexibility. Make sure the lower number is still acceptable and explain that the complete compensation package matters." },
+      { q: "Can I ask for the salary range first?", a: "Yes. Asking for the budgeted range is especially useful early in the process, before you know the final level and responsibilities." },
+      { q: "Should I include bonus and equity in my number?", a: "Clarify whether you mean base salary or total compensation. Discuss bonus, equity, benefits, and allowances separately so both sides compare the same figures." },
+    ],
+    links: [["/blog/mock-interview-with-ai/", "Practice recruiter questions"], ["/blog/questions-to-ask-interviewer-at-end/", "Questions for the interviewer"], ["/ai-interview-assistant-with-resume-context/", "Resume-aware practice"], ["/download/", "Practice with Cluegent"]],
+  },
+  {
+    slug: "questions-to-ask-interviewer-at-end",
+    title: "Questions to Ask in an Interview: 30 Examples | Cluegent",
+    description:
+      "Choose 30 smart questions to ask in an interview about success, team culture, management, growth, role scope, technical work, and next steps.",
+    h1: "Questions to Ask in an Interview",
+    summary:
+      "The questions you ask should help you evaluate the role and demonstrate that you understand its real work, expectations, and tradeoffs.",
+    publishedDate: "2026-08-11",
+    modifiedDate: "2026-08-11",
+    bodyHtml: `
+      <section>
+        <h2>Choose questions for the person in front of you</h2>
+        <p>A recruiter, future manager, engineer, and executive can answer different questions well. Prepare more questions than you need, then choose two or three based on what the interview has already covered.</p>
+      </section>
+      <section>
+        <h2>Questions about success and scope</h2>
+        <ul>
+          <li>What would a strong first 90 days look like?</li>
+          <li>What problem needs the most attention from the person joining this role?</li>
+          <li>How will success be measured during the first year?</li>
+          <li>Which responsibilities are fixed, and which may change?</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Questions for a hiring manager</h2>
+        <ul>
+          <li>How do you give feedback and support professional growth?</li>
+          <li>What distinguishes people who perform well on this team?</li>
+          <li>Where does the team need more ownership or expertise?</li>
+          <li>How are priorities handled when several projects are urgent?</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Questions about team culture and collaboration</h2>
+        <ul>
+          <li>How does the team share context when priorities or requirements change?</li>
+          <li>What does healthy disagreement look like on this team?</li>
+          <li>How do people collaborate across functions or time zones?</li>
+          <li>What has the team changed recently based on employee feedback?</li>
+          <li>How are important decisions documented and communicated?</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Questions about learning and career growth</h2>
+        <ul>
+          <li>What skills would I be expected to develop during the first year?</li>
+          <li>How do people receive coaching or feedback outside formal reviews?</li>
+          <li>Can you share an example of how someone has grown in this team?</li>
+          <li>How are stretch assignments or new responsibilities decided?</li>
+          <li>What learning resources or mentorship are available?</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Questions for an engineer or technical interviewer</h2>
+        <ul>
+          <li>What technical decision has the team reconsidered recently?</li>
+          <li>How do code review, testing, deployment, and incident response work?</li>
+          <li>Where does technical debt create the most friction?</li>
+          <li>How much time is spent building new features versus maintaining systems?</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Questions to avoid or reframe</h2>
+        <p>Avoid asking something answered clearly on the first page of the company website. Do not ask five questions at once, and do not turn the final minutes into a second sales pitch. Compensation, leave, and flexibility are legitimate topics, but direct them to the person responsible for those details and choose the right stage.</p>
+      </section>
+      <section>
+        <h2>Questions about next steps</h2>
+        <ul>
+          <li>Is there anything in my background that you would like me to clarify?</li>
+          <li>What are the remaining stages in the interview process?</li>
+          <li>What timeline are you working toward for the decision?</li>
+        </ul>
+        <p>Ask about next steps after your role-specific questions. It gives the interviewer a chance to surface concerns and gives you a clear expectation for follow-up.</p>
+      </section>
+      <section>
+        <h2>Build one question from the conversation</h2>
+        <p>The strongest final question often begins with something you heard: “You mentioned the team is migrating the reporting pipeline. What has been the hardest part of that transition?” Cluegent's rolling context can help you note possible follow-ups during permitted calls, but the final question should reflect genuine curiosity.</p>
+      </section>`,
+    faqs: [
+      { q: "How many questions should I ask at the end of an interview?", a: "Usually two or three thoughtful questions fit the available time. Prepare at least five so you have alternatives when topics are already covered." },
+      { q: "Is it acceptable to ask about salary?", a: "Yes, but ask the recruiter or hiring manager at an appropriate stage. A technical interviewer may not know the compensation details." },
+      { q: "What if the interviewer answered all my prepared questions?", a: "Ask a follow-up based on the conversation, or ask what they personally find most challenging or rewarding about the team." },
+    ],
+    links: [["/blog/remote-video-interview-checklist/", "Remote interview checklist"], ["/blog/salary-expectations-interview-answer/", "Salary expectations answer"], ["/blog/tell-me-about-yourself-software-engineer/", "Opening answer guide"], ["/download/", "Keep interview context in Cluegent"]],
+  },
+  {
+    slug: "remote-video-interview-checklist",
+    title: "Remote Video Interview Checklist for Job Seekers | Cluegent",
+    description:
+      "Use this remote video interview checklist for Zoom, Google Meet, and Teams: device setup, audio, lighting, screen sharing, notes, backups, and follow-up.",
+    h1: "Remote Video Interview Checklist for Job Seekers",
+    summary:
+      "A remote interview tests the same skills as an in-person interview plus your ability to manage audio, video, screen sharing, and interruptions calmly.",
+    publishedDate: "2026-08-11",
+    modifiedDate: "2026-08-11",
+    bodyHtml: `
+      <section>
+        <h2>Twenty-four hours before</h2>
+        <ul>
+          <li>Confirm the time zone, meeting link, interviewers, and expected duration.</li>
+          <li>Update and restart the computer before the final hour, not minutes before.</li>
+          <li>Test Zoom, Google Meet, or Teams using the correct account.</li>
+          <li>Check camera, microphone, headphones, charger, and internet stability.</li>
+          <li>Prepare a phone hotspot or dial-in option where available.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Prepare the room and camera</h2>
+        <p>Place the camera near eye level, light your face from the front, and remove distracting movement from the background. Close the door, silence notifications, and tell other people when you need uninterrupted time. Use a plain virtual background only if the real background cannot be controlled.</p>
+      </section>
+      <section>
+        <h2>Prepare the desktop</h2>
+        <ul>
+          <li>Close personal messages, email previews, and unrelated browser tabs.</li>
+          <li>Disable pop-up notifications and automatic updates.</li>
+          <li>Open the resume, job description, portfolio, and permitted notes.</li>
+          <li>Check what appears when you share a window versus the entire screen.</li>
+          <li>Increase text size before a coding or presentation round if needed.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Ten minutes before</h2>
+        <p>Join the waiting area if appropriate, confirm the selected microphone and camera, connect power, place water nearby, and keep the interviewer's contact details available. Take one slow breath and review your opening answer rather than learning new material.</p>
+      </section>
+      <section>
+        <h2>If technology fails</h2>
+        <p>Say what happened clearly, attempt one quick fix, and move to the backup plan. A calm sentence such as “My audio dropped; I’m reconnecting now and will join by phone if it continues” demonstrates judgment better than silently troubleshooting for several minutes.</p>
+      </section>
+      <section>
+        <h2>Using Cluegent in permitted remote workflows</h2>
+        <p>Test Cluegent in a private practice call on the same computer. Verify audio permissions, overlay placement, shortcuts, response size, and screen-sharing behavior. Use transcripts, screenshots, recording, or AI assistance only when the employer and platform rules allow them.</p>
+      </section>`,
+    faqs: [
+      { q: "How early should I join a video interview?", a: "Be fully ready at least ten minutes early and join the waiting room around three to five minutes before the scheduled time unless the invitation says otherwise." },
+      { q: "Should I use headphones?", a: "Headphones often reduce echo and improve privacy. Test comfort, microphone quality, battery, and connection before the interview." },
+      { q: "Is it acceptable to keep notes on screen?", a: "Follow the interview rules. When notes are allowed, keep them short and glance at them rather than reading complete answers." },
+    ],
+    links: [["/ai-interview-assistant-for-zoom/", "AI interview assistant for Zoom"], ["/ai-interview-assistant-for-google-meet/", "AI assistant for Google Meet"], ["/ai-interview-assistant-for-teams/", "AI assistant for Teams"], ["/download/", "Download Cluegent"]],
+  },
+  {
+    slug: "why-should-we-hire-you-answer",
+    title: "Why Should We Hire You? Answers & Examples | Cluegent",
+    description:
+      "Answer why should we hire you with a role-specific value proposition, evidence, differentiation, and examples for freshers and experienced candidates.",
+    h1: "Why Should We Hire You? Answer Framework and Examples",
+    summary:
+      "A persuasive answer connects the employer's immediate need with evidence that you can contribute, learn, and work effectively in this specific role.",
+    publishedDate: "2026-08-11",
+    modifiedDate: "2026-08-11",
+    bodyHtml: `
+      <section>
+        <h2>What the question is testing</h2>
+        <p>The interviewer is asking you to summarize fit, not to claim that you are better than every other candidate. Show that you understand the role, can support your claims, and have a clear reason for wanting this particular opportunity.</p>
+      </section>
+      <section>
+        <h2>Use need, evidence, contribution</h2>
+        <ol>
+          <li><strong>Need:</strong> Name one or two priorities from the job description or interview.</li>
+          <li><strong>Evidence:</strong> Give a relevant example from your experience.</li>
+          <li><strong>Contribution:</strong> Explain how you would apply that strength in the role.</li>
+        </ol>
+      </section>
+      <section>
+        <h2>Why should we hire you answer template</h2>
+        <p>Use this structure as a starting point: “From our conversation, this role needs someone who can [priority one] and [priority two]. In my work on [relevant example], I [specific action and outcome]. I would bring that experience to [specific responsibility], while continuing to learn [relevant growth area].”</p>
+        <p>The best answer sounds confident without pretending to know the other candidates. It shows understanding of the role and supports every claim with evidence.</p>
+      </section>
+      <section>
+        <h2>Example for an experienced candidate</h2>
+        <p>“This role needs someone who can improve reliability while still shipping product work. In my current team, I introduced service-level dashboards and a lightweight incident-review process while continuing to own customer-facing API changes. That combination of delivery and operational discipline would let me contribute quickly to the platform challenges you described.”</p>
+      </section>
+      <section>
+        <h2>Example for a fresher</h2>
+        <p>“You are looking for someone with solid fundamentals who can learn the team's stack quickly. In my final project, I moved from basic JavaScript to building and deploying a TypeScript API, and I documented the setup so two teammates could contribute. I would bring that same learning speed, attention to fundamentals, and willingness to ask useful questions here.”</p>
+      </section>
+      <section>
+        <h2>Example for customer service</h2>
+        <p>“You need someone who can resolve customer problems calmly and identify patterns behind repeated issues. In my current role, I handled high-volume support while documenting the most common setup problems, which helped the team improve its onboarding guide. I would bring that combination of customer empathy and process improvement to this position.”</p>
+      </section>
+      <section>
+        <h2>Example for a career changer</h2>
+        <p>“Although I am moving into project coordination, the role requires stakeholder communication, prioritization, and dependable follow-through. I developed those skills while managing client deliverables in operations, where I coordinated timelines across three teams and surfaced risks early. I can contribute those transferable strengths immediately while learning your project systems.”</p>
+      </section>
+      <section>
+        <h2>What weakens the answer</h2>
+        <ul>
+          <li>Repeating “I am passionate and hard-working” without evidence.</li>
+          <li>Describing what you want without explaining employer value.</li>
+          <li>Claiming to be the best candidate without knowing the others.</li>
+          <li>Listing every skill instead of choosing the most relevant two.</li>
+          <li>Using an answer that never mentions this role or company.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Create a role-specific version</h2>
+        <p>Compare the job description with your resume, identify the two strongest evidence matches, and draft a 45- to 60-second answer. Cluegent can help shorten the draft and generate likely follow-ups, but you should verify every statement and deliver it naturally.</p>
+      </section>`,
+    faqs: [
+      { q: "How long should the answer be?", a: "Aim for approximately 45 to 60 seconds. Use one or two pieces of evidence and connect them directly to the role." },
+      { q: "How should a fresher answer without experience?", a: "Use projects, internships, coursework, volunteering, leadership, or evidence of learning quickly. Focus on relevant potential supported by real action." },
+      { q: "Should I compare myself with other candidates?", a: "No. You usually do not know their backgrounds. Explain your own fit and evidence without making unsupported comparisons." },
+    ],
+    links: [["/ai-interview-assistant-for-freshers/", "Interview assistant for freshers"], ["/blog/tell-me-about-yourself-software-engineer/", "Tell me about yourself guide"], ["/blog/resume-based-interview-questions-and-answers/", "Resume-based questions"], ["/download/", "Practice with Cluegent"]],
+  }
+);
+
 const canonicalRedirects = new Map([
   ["/how-to-use.html", "/how-to-use-cluegent/"],
   ["/alternatives/chiku-ai/", "/chiku-ai-alternative/"],
   ["/blog/cluegent-vs-chiku-ai/", "/chiku-ai-alternative/"],
   ["/alternatives/parakeet-ai/", "/parakeet-ai-alternative/"],
   ["/blog/cluegent-vs-parakeet-ai/", "/parakeet-ai-alternative/"],
+  ["/blog/parakeet-ai-alternative/", "/parakeet-ai-alternative/"],
+  ["/parakeet-ai-free-alternative/", "/parakeet-ai-alternative/"],
+  ["/parakeet-ai-free-trial-alternative/", "/parakeet-ai-alternative/"],
+  ["/blog/parakeet-ai-review-is-it-worth-it/", "/blog/parakeet-ai/"],
+  ["/blog/parakeet-ai-review/", "/blog/parakeet-ai/"],
+  ["/blog/parakeet-ai-review-reddit/", "/blog/parakeet-ai/"],
+  ["/blog/parakeet-ai-reddit/", "/blog/parakeet-ai/"],
+  ["/blog/parakeet-ai-interview/", "/blog/parakeet-ai/"],
+  ["/blog/parakeet-ai-download/", "/blog/parakeet-ai/"],
+  ["/parakeet-ai-review/", "/blog/parakeet-ai/"],
+  ["/blog/parakeet-ai-free/", "/blog/parakeet-ai-pricing/"],
+  ["/blog/parakeet-ai-is-free-or-not/", "/blog/parakeet-ai-pricing/"],
+  ["/parakeet-ai-pricing-alternative/", "/blog/parakeet-ai-pricing/"],
+  ["/parakeet-ai-pricing-india/", "/blog/parakeet-ai-pricing/"],
   ["/alternatives/lockedin-ai/", "/lockedin-ai-alternative/"],
   ["/blog/cluegent-vs-lockedin-ai/", "/lockedin-ai-alternative/"],
   ["/alternatives/final-round-ai/", "/blog/cluegent-vs-final-round-ai/"],
@@ -3531,6 +4849,16 @@ function landingTemplate(page) {
           <img src="${page.image}" alt="${escapeHtml(page.h1)}"${page.imageWidth ? ` width="${page.imageWidth}" height="${page.imageHeight}"` : ""} decoding="async" />
         </div>
       </section>
+      <section>
+        <h2>Checklist before you practice</h2>
+        <ul>
+          <li>Name the employer's need in language that reflects the job description.</li>
+          <li>Choose one example with a clear personal contribution.</li>
+          <li>Explain the result without inventing metrics.</li>
+          <li>Connect your evidence to work you would do in this role.</li>
+          <li>Keep the spoken answer under one minute unless asked for more detail.</li>
+        </ul>
+      </section>
 
       <section class="seo-section seo-section--compact">
         <div class="seo-feature-list reveal">
@@ -3971,10 +5299,46 @@ function blogIndexTemplate() {
   });
 }
 
+function authorityArticleHero(post, modifiedDate) {
+  const facts = post.authorityFacts || [];
+  const sources = post.authoritySources || [];
+  return `
+    <section class="authority-hero">
+      <div class="authority-hero__copy reveal">
+        <p class="section-kicker">${escapeHtml(post.authorityKicker || "Independent product guide")}</p>
+        <h1>${escapeHtml(post.h1)}</h1>
+        <p class="authority-hero__summary">${escapeHtml(post.summary)}</p>
+        <p class="seo-article-meta">Reviewed by <a href="/about/">Cluegent Editorial Team</a> · Updated <time datetime="${modifiedDate}">${new Date(`${modifiedDate}T00:00:00Z`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })}</time></p>
+        <div class="authority-hero__actions">
+          <a class="primary-download" href="${downloadUrl}" data-analytics-event="free_trial_click" data-analytics-location="authority_guide">Try Cluegent free</a>
+          <a class="secondary-link" href="${canonicalPath(post.authoritySecondaryHref || "/alternatives/")}">${escapeHtml(post.authoritySecondaryLabel || "Compare alternatives")}</a>
+        </div>
+        <div class="authority-hero__sources" aria-label="Sources used for this guide">
+          <strong>Sources checked</strong>
+          ${sources
+            .map(([href, label]) => `<a href="${href}"${href.startsWith("http") ? ' target="_blank" rel="noreferrer"' : ""}>${escapeHtml(label)}</a>`)
+            .join("")}
+        </div>
+      </div>
+      <aside class="authority-facts reveal" aria-label="Guide summary">
+        ${facts
+          .map(
+            ([label, value]) => `
+          <div>
+            <span>${escapeHtml(label)}</span>
+            <strong>${escapeHtml(value)}</strong>
+          </div>`
+          )
+          .join("")}
+      </aside>
+    </section>`;
+}
+
 function articleTemplate(post) {
   const canonical = `/blog/${post.slug}/`;
   const publishedDate = post.publishedDate || generatedDate;
   const modifiedDate = post.modifiedDate || generatedDate;
+  const articleFaqs = post.faqs || sharedFaq;
   const schema = [
     ...baseSchemas(),
     {
@@ -3999,7 +5363,7 @@ function articleTemplate(post) {
       },
       mainEntityOfPage: absolute(canonical),
     },
-    faqSchema(),
+    faqSchema(articleFaqs),
     breadcrumbSchema([
       { name: "Home", url: "/" },
       { name: "Blog", url: "/blog/" },
@@ -4008,18 +5372,38 @@ function articleTemplate(post) {
   ];
   const body = `
     <main>
-      ${cluegentHomepageHeroSection()}
-      <article class="seo-article">
-        <header class="seo-article-header reveal">
+      ${post.authorityPage ? authorityArticleHero(post, modifiedDate) : cluegentHomepageHeroSection()}
+      <article class="seo-article${post.authorityPage ? " seo-article--authority" : ""}">
+        ${
+          post.authorityPage
+            ? ""
+            : `<header class="seo-article-header reveal">
           <p class="section-kicker">AI interview guide</p>
           <h1>${escapeHtml(post.h1)}</h1>
           <p>${escapeHtml(post.summary)}</p>
           <p class="seo-article-meta">Reviewed by <a href="/about/">Cluegent Editorial Team</a> · Updated <time datetime="${modifiedDate}">${new Date(`${modifiedDate}T00:00:00Z`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })}</time></p>
-        </header>
+        </header>`
+        }
         <div class="seo-article-body reveal">
           ${
             post.bodyHtml ||
             post.sections.map(([title, text]) => `<section><h2>${escapeHtml(title)}</h2><p>${escapeHtml(text)}</p></section>`).join("")
+          }
+          ${
+            post.sources?.length
+              ? `<section class="seo-article-sources">
+            <h2>Sources checked</h2>
+            <p>Product features, plans, and offers can change. These first-party sources were checked for this guide:</p>
+            <ul>
+              ${post.sources
+                .map(
+                  ([href, label]) =>
+                    `<li><a href="${href}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a></li>`
+                )
+                .join("")}
+            </ul>
+          </section>`
+              : ""
           }
           <section>
             <h2>Where Cluegent helps</h2>
@@ -4027,7 +5411,7 @@ function articleTemplate(post) {
           </section>
           <section>
             <h2>Frequently asked questions</h2>
-            ${sharedFaq
+            ${articleFaqs
               .map(
                 (faq) => `<h3>${escapeHtml(faq.q)}</h3><p>${escapeHtml(faq.a)}</p>`
               )
@@ -4170,7 +5554,7 @@ function buildSitemap() {
     "/terms.html",
     "/about/",
     "/editorial-policy/",
-    ...landingPages.map((page) => `/${page.slug}/`),
+    ...landingPages.map((page) => canonicalPath(`/${page.slug}/`)),
     "/alternatives/",
     ...alternatives.map((item) => competitorCanonicalPath(item)),
     "/blog/",

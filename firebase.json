@@ -67,6 +67,76 @@
         "type": 301
       },
       {
+        "source": "/blog/parakeet-ai-alternative{,/**}",
+        "destination": "/parakeet-ai-alternative/",
+        "type": 301
+      },
+      {
+        "source": "/parakeet-ai-free-alternative{,/**}",
+        "destination": "/parakeet-ai-alternative/",
+        "type": 301
+      },
+      {
+        "source": "/parakeet-ai-free-trial-alternative{,/**}",
+        "destination": "/parakeet-ai-alternative/",
+        "type": 301
+      },
+      {
+        "source": "/blog/parakeet-ai-review-is-it-worth-it{,/**}",
+        "destination": "/blog/parakeet-ai/",
+        "type": 301
+      },
+      {
+        "source": "/blog/parakeet-ai-review{,/**}",
+        "destination": "/blog/parakeet-ai/",
+        "type": 301
+      },
+      {
+        "source": "/blog/parakeet-ai-review-reddit{,/**}",
+        "destination": "/blog/parakeet-ai/",
+        "type": 301
+      },
+      {
+        "source": "/blog/parakeet-ai-reddit{,/**}",
+        "destination": "/blog/parakeet-ai/",
+        "type": 301
+      },
+      {
+        "source": "/blog/parakeet-ai-interview{,/**}",
+        "destination": "/blog/parakeet-ai/",
+        "type": 301
+      },
+      {
+        "source": "/blog/parakeet-ai-download{,/**}",
+        "destination": "/blog/parakeet-ai/",
+        "type": 301
+      },
+      {
+        "source": "/parakeet-ai-review{,/**}",
+        "destination": "/blog/parakeet-ai/",
+        "type": 301
+      },
+      {
+        "source": "/blog/parakeet-ai-free{,/**}",
+        "destination": "/blog/parakeet-ai-pricing/",
+        "type": 301
+      },
+      {
+        "source": "/blog/parakeet-ai-is-free-or-not{,/**}",
+        "destination": "/blog/parakeet-ai-pricing/",
+        "type": 301
+      },
+      {
+        "source": "/parakeet-ai-pricing-alternative{,/**}",
+        "destination": "/blog/parakeet-ai-pricing/",
+        "type": 301
+      },
+      {
+        "source": "/parakeet-ai-pricing-india{,/**}",
+        "destination": "/blog/parakeet-ai-pricing/",
+        "type": 301
+      },
+      {
         "source": "/alternatives/lockedin-ai{,/**}",
         "destination": "/lockedin-ai-alternative/",
         "type": 301
