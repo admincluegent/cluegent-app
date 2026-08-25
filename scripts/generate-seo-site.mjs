@@ -39,6 +39,7 @@ const productLinks = [
 const resourceLinks = [
   ["How to Use", "/how-to-use-cluegent/"],
   ["Blog", "/blog/"],
+  ["Interview Questions", "/interview-questions/"],
   ["Alternatives", "/alternatives/"],
   ["About", "/about/"],
   ["Editorial Policy", "/editorial-policy/"],
@@ -3117,21 +3118,22 @@ blogPosts.push(
   },
   {
     slug: "free-ai-interview-tools",
-    title: "Free AI Interview Tools: What You Can Test Before Paying | Cluegent",
+    title: "Interview AI Tool Free: What You Can Test Before Paying | Cluegent",
     description:
-      "Compare free AI interview tool options by trial limits, answer quality, coding support, resume context, screenshots, desktop setup, and responsible use.",
-    h1: "Free AI Interview Tools: A Practical Evaluation Guide",
+      "Looking for an interview AI tool free trial or free AI interview assistant? Compare limits, answer quality, coding support, resume context, screenshots, and setup.",
+    h1: "Interview AI Tool Free: A Practical Evaluation Guide",
     summary:
-      "Free access is most useful when it lets you test the exact workflow you need before committing to a paid interview assistant plan.",
+      "A free interview AI assistant is most useful when it lets you test the exact workflow you need before committing to a paid plan.",
     publishedDate: "2026-08-08",
-    modifiedDate: "2026-08-08",
+    modifiedDate: "2026-08-16",
     sections: [
-      ["What a free AI interview tool should let you test", "Use the free path to test one behavioral question, one resume-based answer, one technical or coding question, and one follow-up. The goal is to discover whether the tool helps you explain your own experience clearly, not simply to collect a large number of generic answers."],
+      ["What an interview AI tool free trial should let you test", "Use the free path to test one behavioral question, one resume-based answer, one technical or coding question, and one follow-up. The goal is to discover whether the tool helps you explain your own experience clearly, not simply to collect a large number of generic answers."],
       ["Read limits before you depend on a trial", "Free plans can use time limits, request limits, feature restrictions, or expiring credits. Check the current plan page before starting, and save the trial for a realistic practice call rather than spending it on repeated test prompts."],
-      ["Compare workflow quality", "A free interview AI assistant is valuable when it supports the same inputs you will use later: typed prompts, resume context, coding screenshots, and permitted live audio context. A low price is less useful if setup, answer relevance, or platform fit is poor."],
+      ["Compare free interview AI assistant workflows", "People also search for interview AI assistant free access, interview AI free tools, and interview AI tool free options. Whatever wording brought you here, compare the same inputs you will use later: typed prompts, resume context, coding screenshots, and permitted live audio context."],
+      ["Free online tool or desktop assistant?", "A browser-based free online tool can be convenient for preparation, while a desktop assistant can work beside Zoom, Google Meet, Teams, browsers, and coding editors. Choose based on the workflow you need rather than assuming every free tool works the same way."],
       ["Avoid misleading free-tool promises", "Do not assume a free plan provides unlimited access, and do not rely on a tool in a restricted interview. Use allowed practice sessions to learn the workflow, then choose a plan based on current limits and the number of interviews you expect."],
     ],
-    links: [["/pricing/", "Cluegent plans and free trial"], ["/blog/interview-ai-tool/", "Interview AI tool guide"], ["/blog/ai-interview-assistant-software/", "Interview assistant software guide"], ["/download/", "Download Cluegent"]],
+    links: [["/pricing/", "Cluegent plans and free trial"], ["/blog/interview-ai-free-online/", "Interview AI free online guide"], ["/blog/interview-ai-tool/", "Interview AI tool guide"], ["/blog/interview-ai-helper/", "Interview AI helper guide"], ["/download/", "Download Cluegent"]],
   },
   {
     slug: "real-time-ai-interview-tool",
@@ -3160,14 +3162,14 @@ blogPosts.push(
     summary:
       "An AI interview copilot should help you organize the context you already understand, not replace preparation, judgment, or the rules of the hiring process.",
     publishedDate: "2026-08-08",
-    modifiedDate: "2026-08-08",
+    modifiedDate: "2026-08-16",
     sections: [
       ["Interview copilot versus preparation tool", "Preparation tools are useful before the interview for mock questions, study plans, resumes, and research. An AI interview copilot is designed around the live desktop workflow, where the question, transcript, screenshot, and your response style are moving together."],
       ["Capabilities worth comparing", "Look for resume-aware answers, separate settings for listening, screen, and typed prompts, useful coding support, quick actions, platform compatibility, and controls that remain understandable under pressure."],
       ["Use your own experience as the source", "The strongest behavioral answer is grounded in projects and examples you can explain in follow-up questions. Add resume context and ask for a STAR outline or concise spoken version, then adjust it so it accurately reflects your work."],
       ["Choose transparency over marketing slogans", "A trustworthy product explains current pricing, setup requirements, response limits, screen-sharing behavior, and responsible-use constraints. Treat claims about privacy or invisibility as workflow details to test, never as an unlimited guarantee."],
     ],
-    links: [["/blog/ai-interview-copilot-vs-interview-prep-tool/", "Copilot vs interview prep tool"], ["/ai-interview-assistant/", "AI interview assistant"], ["/blog/interview-ai-tool/", "Interview AI tool"], ["/alternatives/", "Compare AI interview copilots"]],
+    links: [["/blog/ai-interview-copilot-vs-interview-prep-tool/", "Copilot vs interview prep tool"], ["/ai-interview-assistant/", "AI interview assistant"], ["/blog/interview-ai-chat/", "Interview AI chat guide"], ["/blog/interview-ai-tool/", "Interview AI tool"], ["/alternatives/", "Compare AI interview copilots"]],
   },
   {
     slug: "interview-ai-questions-and-answers",
@@ -3221,7 +3223,7 @@ blogPosts.push(
       ["Write an explicit AI-use policy", "A useful policy distinguishes preparation, take-home work, live interviews, coding screens, and assessments. It should specify whether candidates may use AI assistance, whether they can share screens, and how concerns will be handled consistently."],
       ["Where Cluegent fits", "Cluegent is a candidate-controlled desktop assistant for permitted interview and meeting workflows; it is not an applicant tracking system, an automatic interviewer, or a recruiter surveillance product. Recruiters evaluating their process should use this distinction to make policy clear."],
     ],
-    links: [["/blog/can-you-use-ai-in-job-interview/", "Can you use AI in a job interview?"], ["/about/", "About Cluegent"], ["/editorial-policy/", "Cluegent editorial and testing policy"], ["/ai-interview-assistant/", "Candidate AI interview assistant"]],
+    links: [["/blog/how-to-use-ai-interview-assistant-live-interviews/", "How to use AI responsibly in interviews"], ["/about/", "About Cluegent"], ["/editorial-policy/", "Cluegent editorial and testing policy"], ["/ai-interview-assistant/", "Candidate AI interview assistant"]],
   },
   {
     slug: "ai-interview-assistant-software",
@@ -3279,16 +3281,16 @@ blogPosts.push(
   },
   {
     slug: "interview-ai-tool-reddit",
-    title: "Interview AI Tool Reddit Searches: What to Verify | Cluegent",
+    title: "Interview AI Reddit Reviews: What to Verify | Cluegent",
     description:
-      "Searching interview AI tool Reddit discussions? Use this checklist to evaluate real user reports about setup, pricing, free trials, coding support, privacy claims, and responsible use.",
-    h1: "Interview AI Tool Reddit Searches: How to Read Reviews Carefully",
+      "Searching interview AI Reddit or interview AI tool Reddit discussions? Evaluate reports about setup, pricing, free trials, coding support, privacy, and responsible use.",
+    h1: "Interview AI Reddit Reviews: How to Read Them Carefully",
     summary:
       "Community discussions can reveal practical setup issues, but a useful decision requires more than anonymous claims, screenshots, or a single positive review.",
     publishedDate: "2026-08-08",
-    modifiedDate: "2026-08-08",
+    modifiedDate: "2026-08-16",
     sections: [
-      ["What a helpful community review includes", "The most useful reports name the operating system, meeting platform, interview type, plan purchased, device setup, and result of a real practice workflow. Broad statements that a tool is 'undetectable' or 'works perfectly' do not tell you whether it fits your exact setup."],
+      ["What a helpful interview AI Reddit review includes", "The most useful reports name the operating system, meeting platform, interview type, plan purchased, device setup, and result of a real practice workflow. Broad statements that a tool is 'undetectable' or 'works perfectly' do not tell you whether it fits your exact setup."],
       ["Questions to ask before believing a claim", "Check whether the post distinguishes preparation from a permitted live workflow, whether it explains current pricing and limits, and whether the writer tested screenshots, coding prompts, resume context, answer speed, and customer support."],
       ["Do not use community posts as policy advice", "A forum comment cannot tell you whether your employer, university, interviewer, or assessment platform allows AI assistance. Read the rules for your own interview and use AI only with the appropriate permission and consent."],
       ["Verify the product yourself", "Use official documentation and a practice call to test the features that matter to you. Cluegent's free path lets candidates evaluate typed prompts, resume context, screenshots, and permitted live context before deciding whether a paid plan fits."],
@@ -3309,7 +3311,7 @@ blogPosts.push(
     summary:
       "Final Round AI is also searched as FinalRoundAI or FinalRound AI. This guide covers the software-related search intent: what to compare, how to evaluate its workflow, and when a focused alternative such as Cluegent may fit.",
     publishedDate: "2026-08-08",
-    modifiedDate: "2026-08-08",
+    modifiedDate: "2026-08-16",
     sections: [
       ["Is FinalRoundAI the same as Final Round AI?", "For interview-software searches, FinalRoundAI and Final Round AI normally refer to the same product. This guide focuses on the AI interview platform, its preparation and live-workflow category, and the questions candidates should verify before they install or pay for any tool."],
       ["What people mean when they search Final Round AI", "A broad Final Round AI search can mean several things: interview preparation, mock interviews, resume help, an AI copilot for live calls, pricing, technical interview support, or an alternative. Start by identifying the exact workflow you need rather than treating every feature as equally important."],
@@ -3692,7 +3694,7 @@ blogPosts.push(
       ["How Cluegent supports permitted workflows", "Cluegent provides a desktop workspace with user-controlled listening, typed prompts, screenshots, resume context, custom response modes, and quick actions. It is intended for preparation and permitted live workflows; it is not a substitute for technical skills, honesty, or interview policy."],
       ["Use AI with integrity", "Do not claim ownership of a response, project, or decision you cannot defend. If a process forbids AI assistance, do not use it. The strongest long-term outcome is being ready to explain your own work clearly when the interviewer asks a deeper question."],
     ],
-    links: [["/blog/can-you-use-ai-in-job-interview/", "Can you use AI in a job interview?"], ["/blog/ai-interview-assistant-for-freshers/", "AI assistant for freshers"], ["/coding-interview-assistant/", "Coding interview assistant"], ["/how-to-use-cluegent/", "How to use Cluegent"], ["/download/", "Download Cluegent"]],
+    links: [["/blog/how-to-use-ai-interview-assistant-live-interviews/", "How to use AI responsibly in interviews"], ["/blog/ai-interview-assistant-for-freshers/", "AI assistant for freshers"], ["/coding-interview-assistant/", "Coding interview assistant"], ["/how-to-use-cluegent/", "How to use Cluegent"], ["/download/", "Download Cluegent"]],
   }
 );
 
@@ -3708,7 +3710,7 @@ blogPosts.push({
   summary:
     "An interview AI assistant can help candidates prepare clearer answers and, where permitted, keep useful context available during live calls. The right choice depends on the workflow, not just the feature list.",
   publishedDate: "2026-08-09",
-  modifiedDate: "2026-08-09",
+  modifiedDate: "2026-08-16",
   sections: [
     ["What is an interview AI assistant?", "An interview AI assistant is software that can help a candidate prepare and structure interview responses. Depending on the product, it may work from typed questions, a resume, practice notes, a live transcript, screenshots, or visible coding context. Each product has different setup requirements and limits."],
     ["Preparation assistant versus live-call assistant", "Preparation tools help with question banks, STAR stories, project walkthroughs, mock interviews, and technical concepts. A live-call assistant may provide a desktop workspace for typed prompts, controlled listening, or permitted screen context. Keep these two use cases separate when evaluating a product."],
@@ -3716,8 +3718,114 @@ blogPosts.push({
     ["Where Cluegent fits", "Cluegent is a Windows and macOS desktop AI interview assistant with user-controlled listening, typed prompts, screenshot-aware questions, resume context, customizable response settings, quick actions, and local meeting history. It is built for preparation and live workflows where AI assistance is allowed."],
     ["Follow the interview rules", "Every employer, interviewer, school, assessment platform, and jurisdiction can set different rules for AI, recording, transcripts, screenshots, and outside assistance. Use any interview AI assistant only where it is explicitly allowed, and never present a generated answer as experience you cannot explain."],
   ],
-  links: [["/ai-interview-assistant/", "AI interview assistant for live calls"], ["/blog/free-ai-interview-assistant-tools-compared/", "Free interview AI assistant tools"], ["/blog/how-to-use-ai-interview-assistant-live-interviews/", "How to use an AI interview assistant"], ["/coding-interview-assistant/", "Coding interview assistant"], ["/download/", "Download Cluegent"]],
+  links: [["/ai-interview-assistant/", "AI interview assistant for live calls"], ["/blog/free-ai-interview-tools/", "Free interview AI assistant tools"], ["/blog/interview-ai-helper/", "Interview AI helper guide"], ["/blog/interview-ai-chat/", "Interview AI chat guide"], ["/coding-interview-assistant/", "Coding interview assistant"], ["/download/", "Download Cluegent"]],
 });
+
+// Supporting pages for broad interview-AI autocomplete queries. Similar free
+// terms are consolidated into one page so the site has one clear URL per
+// intent instead of several thin pages competing for the same query.
+blogPosts.push(
+  {
+    slug: "interview-ai-helper",
+    title: "Interview AI Helper: Features, Uses and Setup | Cluegent",
+    description:
+      "Learn what an interview AI helper does for preparation and permitted live calls, including resume context, coding questions, screenshots, chat, and response controls.",
+    h1: "Interview AI Helper: What It Does and How to Use One",
+    summary:
+      "An interview AI helper is useful when it turns your own resume, project knowledge, spoken context, or visible question into a response you can understand and explain.",
+    publishedDate: "2026-08-16",
+    modifiedDate: "2026-08-16",
+    sections: [
+      ["What is an interview AI helper?", "An interview AI helper is software for organizing interview preparation or, where the process allows it, supporting a live desktop workflow. It may accept typed questions, resume context, practice notes, transcript context, or screenshots. The important distinction is whether the tool helps you explain real knowledge rather than generating claims you cannot defend."],
+      ["Where a helper is most useful", "Use it to create a concise STAR outline, explain a project in plain language, compare coding approaches, identify edge cases, turn a long answer into a short spoken version, or prepare for likely follow-up questions. These tasks improve the structure of an answer without replacing the underlying experience."],
+      ["Interview preparation versus live assistance", "A preparation helper can be used before the interview for mock questions and study. A live assistant adds a faster response surface beside Zoom, Google Meet, Teams, a browser, or a coding editor. Live use has additional rules around AI assistance, recording, transcription, and screenshots."],
+      ["How Cluegent works as an interview AI helper", "Cluegent is a Windows and macOS desktop assistant with controlled listening, typed chat, screenshot-aware questions, resume context, separate response settings, and quick action buttons. You decide which context to provide and when to request an answer."],
+      ["A five-minute practice test", "Add a resume, ask one behavioral question, attach one coding screenshot, request a concise answer, and ask one follow-up. Check factual accuracy, reading speed, setup effort, and whether you can explain the answer naturally without copying it word for word."],
+      ["Use the tool within the rules", "Interview policies vary. Obtain permission where required and do not use AI, transcription, recording, or screenshots when the employer, school, recruiter, or assessment platform prohibits them."],
+    ],
+    faqs: [
+      { q: "Is an interview AI helper the same as a chatbot?", a: "Not always. A chatbot mainly responds to typed messages, while an interview helper may also use resume context, controlled transcript context, screenshots, shortcuts, and a desktop response surface." },
+      { q: "Can an interview AI helper answer coding questions?", a: "Some tools can interpret typed or visible coding questions, but you should test the supported languages, screenshot quality, complexity explanations, and debugging workflow before relying on one." },
+      { q: "Can I use an AI helper in a live interview?", a: "Only when the hiring process permits AI assistance and the related transcription or screen-capture features. Preparation use and live use can have different rules." },
+    ],
+    links: [["/ai-interview-assistant/", "Cluegent AI interview assistant"], ["/blog/interview-ai-assistant/", "What is an interview AI assistant?"], ["/blog/interview-ai-chat/", "Interview AI chat"], ["/blog/free-ai-interview-tools/", "Free interview AI tools"], ["/coding-interview-assistant/", "Coding interview assistant"], ["/download/", "Download Cluegent"]],
+  },
+  {
+    slug: "interview-ai-free-online",
+    title: "Interview AI Free Online: Tools, Limits and Safety | Cluegent",
+    description:
+      "Searching for interview AI free online tools? Compare browser tools and desktop trials by limits, resume context, coding support, screenshots, setup, and responsible use.",
+    h1: "Interview AI Free Online: What to Test Before You Choose",
+    summary:
+      "Free online interview AI can help with preparation, but candidates should verify limits, privacy, answer quality, and whether the tool supports the real interview workflow they need.",
+    publishedDate: "2026-08-16",
+    modifiedDate: "2026-08-16",
+    sections: [
+      ["What people mean by interview AI free online", "The search can refer to a question generator, mock interview website, answer chatbot, browser extension, or a free trial of a desktop assistant. These products solve different problems, so start by deciding whether you need preparation, coding practice, resume help, or a permitted live-call workflow."],
+      ["Free does not always mean unlimited", "A product may limit time, prompts, screenshots, models, devices, or trial duration. Read the current pricing page before an important practice session. A short trial can still be useful if it exposes the same controls and context sources as the paid product."],
+      ["Browser tool versus desktop trial", "An online browser tool is convenient for practice questions in one tab. A desktop assistant can work beside meeting apps, browsers, documents, and coding editors. Cluegent offers a free trial of its Windows and macOS desktop workflow rather than presenting itself as an unlimited anonymous web chat."],
+      ["Run one repeatable evaluation", "Use the same behavioral question, resume question, coding prompt, and follow-up across the tools you compare. Measure answer relevance, factual accuracy, setup time, readability, and how much editing is needed before the response sounds like you."],
+      ["Check privacy and download sources", "Use official websites, app stores, and release pages. Avoid copied installers and tools that do not explain data handling, permissions, plan limits, or support. Never upload confidential employer or interview material without permission."],
+      ["Follow the interview policy", "Free access does not change the rules of a hiring process. Use AI, recording, transcription, and screenshots only where they are allowed, and keep your final answer grounded in experience you can explain."],
+    ],
+    faqs: [
+      { q: "Is there a free online AI for interview preparation?", a: "Yes, several categories of tools offer free questions, mock practice, chat, or limited trials. Their features and limits differ, so verify the current official plan before using one." },
+      { q: "Is Cluegent a free online interview AI tool?", a: "Cluegent is a Windows and macOS desktop assistant with a free trial. It is not an unlimited browser-only chat service." },
+      { q: "What should I test during a free trial?", a: "Test one resume-based answer, one behavioral question, one coding or technical prompt, a screenshot if supported, and one follow-up on the device you plan to use." },
+    ],
+    links: [["/blog/free-ai-interview-tools/", "Interview AI tool free guide"], ["/pricing/", "Cluegent free trial and pricing"], ["/blog/interview-ai-helper/", "Interview AI helper"], ["/blog/ai-interview-assistant-software/", "AI interview assistant software"], ["/download/", "Official Cluegent downloads"]],
+  },
+  {
+    slug: "interview-ai-chat",
+    title: "Interview AI Chat: Practice Answers and Live Context | Cluegent",
+    description:
+      "Learn how interview AI chat can help with mock questions, resume answers, coding explanations, follow-ups, screenshots, and permitted live interview workflows.",
+    h1: "Interview AI Chat: How to Get Useful, Honest Answers",
+    summary:
+      "Interview AI chat works best when you provide accurate context, request a clear answer structure, and use follow-up questions to test your own understanding.",
+    publishedDate: "2026-08-16",
+    modifiedDate: "2026-08-16",
+    sections: [
+      ["What is interview AI chat?", "Interview AI chat is a conversational way to practice questions, improve answer structure, and explore follow-ups. A basic chat uses typed messages. A contextual assistant can also work from a resume, controlled transcript context, screenshots, or a visible coding question."],
+      ["Start with facts the assistant can trust", "Provide the job description, your real experience, the project you want to discuss, and the answer length you need. Do not ask the chat to invent metrics, responsibilities, or skills. An interviewer can quickly expose a story that is not yours."],
+      ["Use better follow-up prompts", "After the first response, ask for a 45-second version, likely interviewer follow-ups, a clearer example, technical tradeoffs, missing evidence, or a STAR outline. This turns the chat into active practice instead of a one-answer generator."],
+      ["Chat-only versus live context", "Copying every question into a separate browser chat can be slow during a permitted live workflow. Cluegent keeps typed chat in the same desktop workspace as controlled listening, screenshots, resume context, quick actions, and the current response."],
+      ["Use chat for coding interviews", "Ask for a problem restatement, brute-force approach, optimized approach, complexity, edge cases, test cases, and a concise spoken explanation. Verify the code and reasoning yourself before using the response in practice."],
+      ["Keep live use responsible", "Use interview AI chat live only where outside assistance is allowed. Do not share confidential prompts or capture audio and screens without the required permission."],
+    ],
+    faqs: [
+      { q: "Can interview AI chat use my resume?", a: "Some products allow resume context. Verify how the file is stored and make sure every generated claim matches experience you can explain." },
+      { q: "Can interview AI chat help with coding questions?", a: "Yes, it can help organize approaches, complexity, edge cases, tests, debugging, and explanations, but it does not replace coding fundamentals or verification." },
+      { q: "Does Cluegent include typed chat?", a: "Yes. Cluegent supports typed prompts and quick actions alongside controlled listening, screenshots, resume context, and customizable response settings." },
+    ],
+    links: [["/blog/interview-ai-helper/", "Interview AI helper"], ["/blog/ai-interview-copilot/", "AI interview copilot"], ["/blog/interview-ai-questions-and-answers/", "Interview AI questions and answers"], ["/how-to-use-cluegent/", "How to use Cluegent"], ["/download/", "Download Cluegent"]],
+  },
+  {
+    slug: "interview-ai-google",
+    title: "Interview AI Google Searches: Google Meet and Interview Prep | Cluegent",
+    description:
+      "Searching interview AI Google? Learn the difference between AI for Google Meet interviews, Google interview preparation, and interview assistant tools such as Cluegent.",
+    h1: "Interview AI Google: Google Meet Tools and Interview Preparation",
+    summary:
+      "The phrase interview AI Google can mean an assistant for a Google Meet call or AI preparation for an interview at Google. This guide separates those two needs.",
+    publishedDate: "2026-08-16",
+    modifiedDate: "2026-08-16",
+    sections: [
+      ["Two different searches share this phrase", "Some candidates want an AI assistant that works beside Google Meet. Others are preparing for an interview at Google and want practice questions, coding structure, behavioral stories, or system-design review. Choosing the right resource starts with identifying which meaning applies to you."],
+      ["AI assistance for Google Meet interviews", "For a permitted Google Meet workflow, test operating-system support, audio permissions, typed prompts, screenshot context, answer readability, and whether the tool joins the meeting. Cluegent runs as a separate Windows or macOS desktop app and does not join as a participant."],
+      ["Preparing for an interview at Google", "Use AI before the interview to organize resume stories, practice coding explanations, review data structures, compare system-design decisions, and generate follow-up questions. Company interview formats can change, so confirm the current process with the recruiter and official candidate information."],
+      ["Do not confuse search results with affiliation", "Cluegent is an independent product and is not affiliated with or endorsed by Google. References to Google or Google Meet describe interview preparation and platform compatibility, not a partnership or guaranteed hiring outcome."],
+      ["Practice the exact setup", "Run a private mock call in Google Meet on the device you will use. Check microphone and system-audio permissions, screen-sharing behavior, overlay placement, shortcuts, screenshots, and the response style before the real interview."],
+      ["Respect company and platform rules", "Use AI assistance, transcripts, recordings, and screenshots only when permitted. If the interview instructions prohibit outside assistance, use Cluegent for preparation rather than during the live call."],
+    ],
+    faqs: [
+      { q: "Does Cluegent work with Google Meet?", a: "Cluegent is designed to run beside Google Meet as a separate desktop app on supported Windows and macOS devices. Test permissions and your exact setup before an important call." },
+      { q: "Is Cluegent made by Google?", a: "No. Cluegent is an independent desktop AI assistant and is not affiliated with or endorsed by Google." },
+      { q: "Can AI help me prepare for a Google interview?", a: "AI can help organize behavioral stories, coding explanations, project examples, and mock follow-ups. Verify the current interview process and make sure every answer reflects your real experience." },
+    ],
+    links: [["/ai-interview-assistant-for-google-meet/", "AI interview assistant for Google Meet"], ["/blog/best-ai-interview-assistant-for-google-meet/", "Google Meet assistant guide"], ["/blog/system-design-interview-questions-beginners/", "System design interview questions"], ["/blog/ai-interview-tools-for-coding/", "AI interview tools for coding"], ["/download/", "Download Cluegent"]],
+  }
+);
 
 // Job-seeker content cluster built around distinct answer, preparation, and
 // interview-workflow intents. Each article owns one primary query so the pages
@@ -4374,6 +4482,295 @@ blogPosts.push(
   }
 );
 
+blogPosts.push(
+  {
+    slug: "job-interview-questions-and-answers",
+    title: "Job Interview Questions and Answers: 50 Examples | Cluegent",
+    h1: "50 Job Interview Questions and Answers",
+    description: "Prepare for 50 common job interview questions with concise answer frameworks, practical examples, and guidance for freshers and experienced candidates.",
+    summary: "A practical question bank for introductions, motivation, strengths, behavioral examples, work style, and closing questions. Adapt every answer to your own experience instead of memorizing a script.",
+    publishedDate: "2026-08-18",
+    modifiedDate: "2026-08-18",
+    sections: [
+      ["How to use these interview answers", "Treat each answer as a framework. Replace the example evidence with facts from your resume, keep the result measurable where possible, and practise until the answer sounds natural. For behavioral questions, use situation, task, action, and result."],
+    ],
+    questionGroups: [
+      {
+        title: "Introductions and background",
+        questions: [
+          ["1. Tell me about yourself.", "Give a 60- to 90-second present-past-future summary: your current focus, one or two relevant achievements, and why this role is the logical next step."],
+          ["2. Walk me through your resume.", "Explain the decisions connecting your education and roles. Emphasize progression, relevant responsibilities, and the reason for each transition instead of reading every bullet."],
+          ["3. How would you describe yourself?", "Choose two or three qualities relevant to the role and support each with a short example. Avoid unsupported labels such as hard-working or perfectionist."],
+          ["4. What is your greatest professional achievement?", "Choose an achievement relevant to the job. State the challenge, your personal contribution, and the measurable outcome without taking credit for the whole team."],
+          ["5. What project are you most proud of?", "Explain the user or business problem, your ownership, a difficult decision, and the result. Be ready to discuss tradeoffs and what you would improve."],
+          ["6. What have you learned in your current role?", "Name one technical or functional skill and one collaboration lesson, then show how you applied both in later work."],
+          ["7. Why did you choose this career?", "Connect a genuine interest or early experience to the work you enjoy now. Keep the answer focused on the profession rather than salary or status."],
+          ["8. What does your typical workday look like?", "Describe the work most relevant to the opening: prioritization, execution, communication, and review. Show how you protect time for important work."],
+          ["9. What are your main responsibilities?", "Group responsibilities into two or three themes and add scope, such as users served, projects owned, team size, or service volume."],
+          ["10. What makes your background relevant to this role?", "Match two requirements from the job description with evidence from your experience. Close by naming the contribution you could make quickly."],
+        ],
+      },
+      {
+        title: "Motivation, company, and role fit",
+        questions: [
+          ["11. Why do you want to work here?", "Mention a specific product, customer problem, team challenge, or company direction. Connect it to your experience and the work you want to do next."],
+          ["12. Why are you interested in this role?", "Identify the role's two most attractive responsibilities and explain how your past work prepares you for them."],
+          ["13. What do you know about our company?", "Summarize what the company does, who it serves, and one recent priority you verified. Then explain why that context interests you."],
+          ["14. Why should we hire you?", "Use need, evidence, and contribution: name the employer's priority, prove your fit with one example, and state how you would apply it."],
+          ["15. Why are you leaving your current job?", "Stay constructive. Focus on the scope, learning, ownership, or environment you are moving toward rather than criticizing people."],
+          ["16. Why did you leave your last job?", "Give a brief factual explanation and move quickly to what you learned and why this opportunity fits your next step."],
+          ["17. Why is there a gap in your resume?", "State the reason honestly without unnecessary detail, mention productive activity where relevant, and confirm your readiness to return."],
+          ["18. Why are you changing careers?", "Explain the informed decision, transferable skills, and concrete preparation you have completed, such as projects, coursework, or relevant responsibilities."],
+          ["19. What are you looking for in your next role?", "Name three priorities that align with the opening: meaningful responsibilities, a suitable team environment, and a clear learning or impact goal."],
+          ["20. Where do you see yourself in five years?", "Describe a direction rather than a rigid title. Show commitment to mastering the role, increasing responsibility, and creating value in the same field."],
+        ],
+      },
+      {
+        title: "Strengths, weaknesses, and work style",
+        questions: [
+          ["21. What is your greatest strength?", "Choose a strength central to the role, give a recent example, and explain the positive result."],
+          ["22. What is your biggest weakness?", "Choose a real but manageable weakness, describe the system you use to improve it, and show evidence of progress."],
+          ["23. How do you prioritize your work?", "Explain how you compare impact, urgency, dependencies, and effort. Mention how you communicate tradeoffs when priorities conflict."],
+          ["24. How do you handle pressure?", "Describe a repeatable process: clarify the objective, break down the work, surface risks early, and maintain quality checks."],
+          ["25. How do you manage deadlines?", "Work backward from the deadline, define milestones, identify dependencies, and communicate early when scope or timing is at risk."],
+          ["26. Do you prefer working alone or in a team?", "Show flexibility. Explain when focused independent work helps and when collaboration improves decisions, alignment, or delivery."],
+          ["27. How do you stay organized?", "Name the simple tools and routines you actually use, such as a prioritized task list, calendar blocks, project board, and weekly review."],
+          ["28. How do you learn a new skill?", "Describe a cycle of fundamentals, a small practical project, feedback, and deliberate application in real work."],
+          ["29. How do you respond to feedback?", "Listen without defending, clarify the expected change, apply it, and follow up. Give an example where feedback improved your work."],
+          ["30. What motivates you?", "Connect motivation to the work itself: solving a type of problem, serving users, learning, ownership, or seeing measurable improvement."],
+        ],
+      },
+      {
+        title: "Behavioral and situational questions",
+        questions: [
+          ["31. Tell me about a difficult problem you solved.", "Use STAR. Make the constraint clear, explain your reasoning and actions, then quantify the outcome and lesson."],
+          ["32. Tell me about a conflict with a colleague.", "Choose a professional disagreement. Show that you listened, separated facts from assumptions, found shared goals, and preserved the relationship."],
+          ["33. Describe a time you failed.", "Own a meaningful mistake, explain its impact, and spend most of the answer on the corrective action and prevention system."],
+          ["34. Tell me about a time you showed leadership.", "Leadership does not require a title. Show how you created clarity, influenced a decision, supported others, and improved the outcome."],
+          ["35. Describe a time you worked with ambiguity.", "Explain how you identified assumptions, gathered the minimum useful information, proposed a direction, and adjusted as evidence changed."],
+          ["36. Tell me about a time you disagreed with your manager.", "Describe a respectful evidence-based discussion, your effort to understand constraints, and how you supported the final decision."],
+          ["37. Give an example of going above and beyond.", "Choose additional work that created meaningful value, not unsustainable overwork. Explain why you acted and what improved."],
+          ["38. Tell me about a time you improved a process.", "Define the original friction, show how you measured it, explain the change, and report the time, quality, or customer benefit."],
+          ["39. Describe a time you handled multiple priorities.", "Explain your prioritization criteria, stakeholder communication, and the outcome. Mention what you deliberately deferred."],
+          ["40. Tell me about a time you helped a teammate.", "Show how you understood the need, enabled the teammate rather than taking over, and helped the wider team deliver."],
+        ],
+      },
+      {
+        title: "Closing, logistics, and next steps",
+        questions: [
+          ["41. What are your salary expectations?", "Use a researched range appropriate to the role and location, express flexibility based on total compensation, and avoid inventing competing offers."],
+          ["42. When can you start?", "Give an honest date that respects your current obligations. Mention any notice period clearly."],
+          ["43. Are you willing to relocate?", "Answer directly and state any real timing, location, family, or visa constraints so expectations are clear."],
+          ["44. Are you comfortable with remote or hybrid work?", "Explain the environments in which you work effectively and how you communicate, document decisions, and stay accountable."],
+          ["45. What type of manager helps you do your best work?", "Describe useful behaviors such as clear context, candid feedback, autonomy, and regular alignment without implying you can work with only one style."],
+          ["46. What kind of team culture do you prefer?", "Name observable practices such as respectful debate, ownership, documentation, customer focus, or knowledge sharing."],
+          ["47. What would your first 30 days look like?", "Focus on learning the product, people, systems, and success measures before proposing major changes. Include one early contribution."],
+          ["48. Is there anything else we should know?", "Use this chance to add one relevant strength or clarification not yet covered, then restate your interest briefly."],
+          ["49. Do you have any questions for us?", "Ask about priorities, success measures, team workflow, current challenges, and the interviewer's experience. Avoid questions answered on the homepage."],
+          ["50. Why should we not hire you?", "Reframe carefully: name a genuine mismatch that is not core to the role, explain the context, and never disguise a boast as a weakness."],
+        ],
+      },
+    ],
+    faqs: [
+      { q: "What are the most common interview questions?", a: "Tell me about yourself, why this role, why this company, strengths, weaknesses, a difficult problem, conflict, failure, and why should we hire you are among the most common." },
+      { q: "How long should an interview answer be?", a: "Most direct answers should take 30 to 90 seconds. Behavioral STAR answers often need 90 seconds to two minutes." },
+      { q: "Should I memorize interview answers?", a: "No. Memorize your evidence and answer structure, not exact sentences. A rigid script often sounds unnatural and breaks under follow-up questions." },
+    ],
+    links: [["/interview-questions/", "Interview question library"], ["/blog/star-method-behavioral-interview-questions/", "STAR interview method"], ["/blog/questions-to-ask-interviewer-at-end/", "Questions to ask an interviewer"], ["/ai-interview-assistant-for-freshers/", "Interview assistant for freshers"], ["/download/", "Practise with Cluegent"]],
+  },
+  {
+    slug: "python-interview-questions",
+    title: "Python Interview Questions and Answers (2026) | Cluegent",
+    h1: "Python Interview Questions and Answers",
+    description: "Prepare for Python interviews with practical questions and concise answers on data types, functions, OOP, generators, concurrency, testing, and performance.",
+    summary: "A focused Python interview guide covering language fundamentals, practical engineering choices, runtime behavior, and common follow-up questions.",
+    publishedDate: "2026-08-18",
+    modifiedDate: "2026-08-18",
+    sections: [["How to prepare for a Python interview", "Explain the concept first, add a small example, then discuss tradeoffs. Interviewers usually care more about reasoning and readable code than memorized definitions."]],
+    questionGroups: [
+      { title: "Python fundamentals", questions: [
+        ["What is the difference between a list and a tuple?", "Lists are mutable and use square brackets; tuples are immutable and use parentheses. Tuples can be hashable when all elements are hashable, so they may be dictionary keys."],
+        ["What are mutable and immutable objects?", "Mutable objects can change in place, such as lists, dictionaries, and sets. Immutable objects such as integers, strings, and tuples require a new object when their value changes."],
+        ["What is the difference between == and is?", "== compares values using equality logic. is compares object identity and should normally be used for singletons such as None."],
+        ["How do dictionaries and sets work?", "Both are hash-table based. Dictionary keys and set members must be hashable, giving average constant-time lookup while consuming extra memory."],
+        ["What is a list comprehension?", "It is concise syntax for building a list from an iterable with an optional filter. Use a regular loop when the transformation becomes difficult to read."],
+      ]},
+      { title: "Functions and object-oriented Python", questions: [
+        ["What do *args and **kwargs do?", "*args collects extra positional arguments into a tuple, while **kwargs collects extra named arguments into a dictionary."],
+        ["What is a decorator?", "A decorator wraps a function or class to add behavior without editing its core implementation. functools.wraps preserves the wrapped function's metadata."],
+        ["What is a generator?", "A generator yields values lazily, keeping only its current state in memory. It is useful for streams or large datasets that need not be loaded at once."],
+        ["What is a context manager?", "A context manager controls setup and cleanup around a block, commonly through with. Files, locks, and database transactions are typical examples."],
+        ["When would you use a dataclass?", "Use a dataclass for classes primarily holding structured data. It can generate initialization, representation, and equality methods while remaining explicit."],
+      ]},
+      { title: "Runtime, concurrency, and performance", questions: [
+        ["What is the Python GIL?", "In CPython, the Global Interpreter Lock allows one thread to execute Python bytecode at a time. Threads still help with I/O; multiprocessing can help CPU-bound work."],
+        ["Threading or multiprocessing: which should you choose?", "Use threads for I/O-bound work with shared memory and multiprocessing for CPU-bound parallelism, while accounting for serialization and process overhead."],
+        ["How does async and await work?", "async defines a coroutine and await yields control while an operation is waiting. It suits high-concurrency I/O when libraries are asynchronous end to end."],
+        ["What is shallow copy versus deep copy?", "A shallow copy creates a new outer container but shares nested objects. A deep copy recursively copies nested objects, which is safer for isolation but more expensive."],
+        ["How do you improve slow Python code?", "Measure first with profiling, improve the algorithm and data structures, reduce repeated I/O, batch work, cache carefully, and use optimized libraries where justified."],
+      ]},
+      { title: "Practical Python engineering", questions: [
+        ["How should exceptions be handled?", "Catch the narrowest expected exception, add useful context, clean up resources, and avoid swallowing errors. Custom exceptions can clarify domain failures."],
+        ["How do you test Python code?", "Use focused unit tests for behavior, integration tests for boundaries, fixtures for controlled setup, and mocks only where external dependencies cannot be exercised reliably."],
+        ["What is a virtual environment?", "It isolates a project's Python interpreter packages from other projects, making dependencies more reproducible and reducing version conflicts."],
+        ["How do you make a Python module importable?", "Organize code as a package, use clear absolute imports, declare dependencies in project metadata, and install the package in the environment instead of changing sys.path."],
+        ["How would you debug a memory problem?", "Reproduce it with representative load, inspect allocation growth, look for retained references or unbounded caches, and verify the fix with the same measurement."],
+      ]},
+    ],
+    faqs: [{ q: "Are Python interviews only coding tests?", a: "No. Many combine coding with language concepts, debugging, data structures, testing, APIs, databases, and discussion of past projects." }, { q: "What Python version should I prepare?", a: "Prepare modern Python 3 and understand the version used in the job. Be comfortable reading current type hints, async code, and common standard-library tools." }],
+    links: [["/interview-questions/", "Interview question library"], ["/blog/job-interview-questions-and-answers/", "Common job interview questions"], ["/coding-interview-assistant/", "AI coding interview assistant"], ["/download/", "Practise with Cluegent"]],
+  },
+  {
+    slug: "java-interview-questions",
+    title: "Java Interview Questions and Answers (2026) | Cluegent",
+    h1: "Java Interview Questions and Answers",
+    description: "Study practical Java interview questions on the JVM, OOP, collections, exceptions, generics, streams, concurrency, garbage collection, and testing.",
+    summary: "A concise Java interview question bank for junior and experienced developers, with answers designed to support technical follow-up discussion.",
+    publishedDate: "2026-08-18",
+    modifiedDate: "2026-08-18",
+    sections: [["How to answer Java interview questions", "Start with a precise definition, show when the feature matters, and mention one tradeoff or failure mode. Connect theory to code you have actually written."]],
+    questionGroups: [
+      { title: "Java and the JVM", questions: [
+        ["What are the JDK, JRE, and JVM?", "The JVM executes Java bytecode. The JRE combines the JVM with runtime libraries, while the JDK adds development tools such as the compiler and debugger."],
+        ["Why is Java platform independent?", "Java source is compiled to bytecode, which can run on a compatible JVM for each operating system. Native integrations can still introduce platform-specific behavior."],
+        ["What is the difference between == and equals?", "For objects, == compares references. equals compares logical equality when the class implements it. Equal objects must return the same hashCode."],
+        ["Why is String immutable?", "Immutability makes strings safe to share, cache, and use as map keys. Operations that appear to modify a String create a new value."],
+        ["What is garbage collection?", "The JVM reclaims heap objects that are no longer reachable. Collection strategy and pauses vary by collector; developers should still avoid unnecessary retention."],
+      ]},
+      { title: "OOP, collections, and generics", questions: [
+        ["Interface or abstract class?", "Use an interface for a capability or contract across different types. Use an abstract class when related classes share state or implementation as well as a common contract."],
+        ["ArrayList or LinkedList?", "ArrayList usually offers better cache locality and fast indexed access. LinkedList supports constant-time insertion only when the node position is already known and has higher overhead."],
+        ["How does HashMap work?", "It hashes a key to a bucket, then resolves collisions using equality checks and bucket structures. Correct equals and hashCode implementations are essential."],
+        ["What problem do generics solve?", "Generics provide compile-time type safety and reusable algorithms or containers without manual casts. Type erasure removes most generic type information at runtime."],
+        ["What is the difference between Comparable and Comparator?", "Comparable defines a type's natural order. Comparator defines an external or alternative ordering and can be composed for multi-field sorting."],
+      ]},
+      { title: "Exceptions and modern Java", questions: [
+        ["Checked versus unchecked exceptions?", "Checked exceptions must be handled or declared and are suited to recoverable conditions. Unchecked exceptions usually represent programming or invalid-state errors."],
+        ["What are final, finally, and finalize?", "final restricts reassignment, overriding, or inheritance; finally is a cleanup block. finalize was unreliable and is deprecated for removal; use structured resource management instead."],
+        ["What is try-with-resources?", "It closes AutoCloseable resources automatically, including when an exception occurs, and preserves suppressed exceptions correctly."],
+        ["What are Java streams?", "Streams describe transformations over data with operations such as map, filter, and reduce. They improve declarative composition but should not hide complex side effects."],
+        ["When should Optional be used?", "Optional is useful as a return type when absence is expected. It is generally not ideal for every field, parameter, or serialization boundary."],
+      ]},
+      { title: "Concurrency and testing", questions: [
+        ["What does synchronized do?", "It provides mutual exclusion and memory visibility around a monitor. Keep critical sections small and avoid locking on publicly accessible objects."],
+        ["What does volatile do?", "volatile makes reads and writes visible across threads and prevents certain reorderings, but it does not make compound operations such as increment atomic."],
+        ["What is a deadlock?", "A deadlock occurs when threads wait indefinitely for locks held by one another. Consistent lock ordering and reduced shared state help prevent it."],
+        ["ExecutorService or raw threads?", "ExecutorService separates task submission from thread management, supports pools and futures, and is usually easier to control and shut down safely."],
+        ["How do you test Java services?", "Use unit tests for business behavior, integration tests for databases and APIs, contract tests for service boundaries, and a small number of end-to-end tests for critical flows."],
+      ]},
+    ],
+    faqs: [{ q: "What should a fresher study for a Java interview?", a: "Focus on core Java, OOP, collections, exceptions, strings, generics, basic concurrency, SQL, testing, and one project you can explain deeply." }, { q: "Do Java interviews include system design?", a: "Mid-level and senior roles often include API and system design in addition to Java-specific questions." }],
+    links: [["/interview-questions/", "Interview question library"], ["/blog/job-interview-questions-and-answers/", "Common interview questions"], ["/blog/system-design-interview-questions-beginners/", "System design questions"], ["/coding-interview-assistant/", "Coding interview assistant"]],
+  },
+  {
+    slug: "sql-interview-questions",
+    title: "SQL Interview Questions and Answers (2026) | Cluegent",
+    h1: "SQL Interview Questions and Answers",
+    description: "Prepare for SQL interviews with questions and answers on joins, grouping, indexes, CTEs, window functions, transactions, query plans, and analytics tasks.",
+    summary: "Practical SQL interview preparation for developers, analysts, and data candidates, from core query behavior to performance and window functions.",
+    publishedDate: "2026-08-18",
+    modifiedDate: "2026-08-18",
+    sections: [["How to approach SQL interview problems", "Clarify the tables, grain, desired output, null behavior, and duplicate rules before writing SQL. Then explain correctness and likely performance bottlenecks."]],
+    questionGroups: [
+      { title: "SQL fundamentals", questions: [
+        ["What is the difference between WHERE and HAVING?", "WHERE filters rows before grouping. HAVING filters groups after GROUP BY and can use aggregate conditions."],
+        ["INNER JOIN versus LEFT JOIN?", "INNER JOIN returns matching rows from both sides. LEFT JOIN keeps every left-side row and fills unmatched right-side columns with NULL."],
+        ["UNION versus UNION ALL?", "UNION removes duplicate result rows, which requires extra work. UNION ALL concatenates results without deduplication and is usually faster."],
+        ["Primary key versus foreign key?", "A primary key uniquely identifies a row. A foreign key references a key in another table and can enforce referential integrity."],
+        ["How does NULL behave?", "NULL represents missing or unknown data. Compare with IS NULL, not equality, and account for three-valued logic in filters and joins."],
+      ]},
+      { title: "Aggregation and analytical SQL", questions: [
+        ["What does GROUP BY do?", "It collapses rows into groups defined by one or more expressions so aggregate functions can calculate a value per group."],
+        ["What is a window function?", "A window function calculates across related rows without collapsing them. It is useful for ranks, running totals, lagged values, and partition-level metrics."],
+        ["ROW_NUMBER, RANK, and DENSE_RANK: what differs?", "ROW_NUMBER is always unique, RANK leaves gaps after ties, and DENSE_RANK does not leave gaps."],
+        ["How do you calculate a running total?", "Use SUM over a window ordered by the sequence column, with a suitable frame such as rows from unbounded preceding to current row."],
+        ["How do you find duplicate records?", "Group by the candidate key columns and filter groups with COUNT greater than one. Define carefully which columns make a duplicate."],
+      ]},
+      { title: "Data modeling and performance", questions: [
+        ["What is an index?", "An index is an auxiliary structure that speeds selected reads but consumes storage and adds maintenance cost to writes. Column order matters in composite indexes."],
+        ["What is normalization?", "Normalization separates data to reduce duplication and update anomalies. Analytical workloads may deliberately denormalize for simpler or faster reads."],
+        ["What is a query execution plan?", "It shows the operations selected by the optimizer, including scans, joins, sorts, and estimated costs. Compare estimates with actual row counts when diagnosing issues."],
+        ["How do you optimize a slow query?", "Measure the plan, reduce scanned rows, use appropriate indexes, avoid unnecessary columns and repeated work, update statistics, and confirm improvement under realistic load."],
+        ["CTE versus subquery?", "Both can express intermediate results. A CTE often improves readability and recursion support, but performance depends on the database optimizer and materialization behavior."],
+      ]},
+      { title: "Transactions and interview exercises", questions: [
+        ["What does ACID mean?", "Atomicity, consistency, isolation, and durability describe properties that help transactions preserve valid data despite concurrency and failures."],
+        ["What are isolation levels?", "Isolation levels trade concurrency for protection against anomalies such as dirty reads, non-repeatable reads, and phantoms. Exact behavior varies by database."],
+        ["How do you find the second-highest salary?", "One approach uses DENSE_RANK over distinct salaries and selects rank two. Clarify whether ties should return multiple employees."],
+        ["How do you get the latest row per customer?", "Use ROW_NUMBER partitioned by customer and ordered by timestamp descending, then select row number one, with a tie-breaker for determinism."],
+        ["How would you analyze monthly retention?", "Define cohorts by first activity month, join later activity by user, calculate periods since acquisition, and divide retained users by the original cohort size."],
+      ]},
+    ],
+    faqs: [{ q: "Which SQL dialect should I use in interviews?", a: "Use the dialect requested by the employer. When none is specified, state your assumptions and use broadly supported SQL where possible." }, { q: "Are SQL interviews only for data roles?", a: "No. Backend, full-stack, analytics, data science, product, finance, and operations roles commonly test SQL." }],
+    links: [["/interview-questions/", "Interview question library"], ["/blog/data-analyst-interview-questions/", "Data analyst interview questions"], ["/blog/job-interview-questions-and-answers/", "Common interview questions"], ["/download/", "Practise with Cluegent"]],
+  },
+  {
+    slug: "data-analyst-interview-questions",
+    title: "Data Analyst Interview Questions and Answers (2026) | Cluegent",
+    h1: "Data Analyst Interview Questions and Answers",
+    description: "Prepare for data analyst interviews with questions on SQL, statistics, data cleaning, KPIs, dashboards, experiments, business cases, and stakeholder communication.",
+    summary: "A role-specific guide for data analyst candidates covering technical fundamentals, analytical judgment, business communication, and project stories.",
+    publishedDate: "2026-08-18",
+    modifiedDate: "2026-08-18",
+    sections: [["How to answer data analyst interview questions", "State the business decision first, then explain the data, method, validation, and limitations. A clear recommendation with honest uncertainty is stronger than a complicated analysis without a decision."]],
+    questionGroups: [
+      { title: "Analysis process and data quality", questions: [
+        ["How do you approach a new analysis request?", "Clarify the decision, stakeholder, success metric, time horizon, and constraints. Inspect the available data, define the grain, validate quality, analyze, and communicate limitations."],
+        ["How do you clean a dataset?", "Profile schema and distributions, standardize types and categories, investigate duplicates and missing values, validate joins, document changes, and preserve reproducibility."],
+        ["How do you handle missing values?", "First determine why values are missing and whether the pattern is informative. Depending on the use case, exclude, impute, flag, or model them and report the impact."],
+        ["How do you treat outliers?", "Verify whether they are errors or valid extremes, assess their effect on the decision, and use robust statistics, transformations, segmentation, or exclusion only with a documented reason."],
+        ["How do you validate your analysis?", "Reconcile totals with trusted sources, test edge cases, inspect samples, compare alternative methods, review assumptions, and ask a peer to reproduce critical results."],
+      ]},
+      { title: "Statistics and experimentation", questions: [
+        ["Mean or median: when would you use each?", "Use the mean when the distribution is reasonably symmetric and every magnitude matters. Use the median for skewed data or when extremes would distort the typical value."],
+        ["Correlation versus causation?", "Correlation describes association. Causation requires a credible design that rules out confounding, reverse causality, selection effects, and chance."],
+        ["What is a confidence interval?", "It is a range produced by a procedure that would contain the true parameter at the stated rate over repeated samples, under the model assumptions."],
+        ["What does a p-value mean?", "It is the probability, assuming the null model is true, of observing a result at least as extreme as the one measured. It is not the probability that the null is true."],
+        ["How would you design an A/B test?", "Define the hypothesis and primary metric, choose the unit of randomization, estimate sample size, guard against interference, predefine analysis, monitor quality, and interpret practical as well as statistical significance."],
+      ]},
+      { title: "SQL, metrics, and dashboards", questions: [
+        ["Which SQL concepts should a data analyst know?", "Joins, aggregation, CTEs, subqueries, window functions, date logic, NULL handling, deduplication, query plans, and data-grain reasoning are core skills."],
+        ["How do you choose a KPI?", "Start from the business objective and user behavior, select a metric sensitive to meaningful change, define it precisely, and pair it with guardrail metrics."],
+        ["What is funnel analysis?", "Funnel analysis measures progression through defined stages. Specify eligibility, event order, time window, repeated actions, and the denominator at each stage."],
+        ["What is cohort analysis?", "It groups users by a shared starting event or period and compares behavior over time, helping separate lifecycle patterns from calendar effects."],
+        ["What makes a useful dashboard?", "A useful dashboard serves a specific decision, uses clear metric definitions, shows context and trends, highlights exceptions, and avoids decorative charts or excessive filters."],
+      ]},
+      { title: "Business cases and communication", questions: [
+        ["Sales dropped 15%. How would you investigate?", "Validate the metric, decompose by product, market, channel, customer segment, and funnel stage, compare seasonality, inspect operational changes, and prioritize hypotheses by evidence."],
+        ["How would you explain a technical finding to an executive?", "Lead with the decision and impact, show one or two pieces of evidence, quantify uncertainty, and end with a recommendation and next step."],
+        ["Tell me about an ambiguous stakeholder request.", "Use STAR to show how you clarified the real decision, proposed a scoped analysis, aligned on definitions, and delivered an actionable result."],
+        ["Describe an analysis that changed a decision.", "Explain the original belief, the evidence you found, how you communicated it, the action taken, and the measurable outcome or learning."],
+        ["What would you do if a stakeholder rejected your result?", "Ask which assumption or evidence they dispute, review definitions together, test credible alternatives, and distinguish factual disagreement from a different risk preference."],
+      ]},
+    ],
+    faqs: [{ q: "What should I study for a data analyst interview?", a: "Prepare SQL, spreadsheets, statistics, data cleaning, dashboards, business metrics, experiments, and two projects you can explain from question to recommendation." }, { q: "Do data analyst interviews include case studies?", a: "Many do. Expect to clarify a business problem, define metrics, outline analysis, identify limitations, and communicate a recommendation." }],
+    links: [["/interview-questions/", "Interview question library"], ["/blog/sql-interview-questions/", "SQL interview questions"], ["/blog/job-interview-questions-and-answers/", "Common interview questions"], ["/blog/star-method-behavioral-interview-questions/", "STAR interview method"]],
+  }
+);
+
+const interviewClusterLinks = [
+  ["/interview-questions/", "Interview question library"],
+  ["/blog/job-interview-questions-and-answers/", "50 job interview questions and answers"],
+];
+const interviewSupportSlugs = new Set([
+  "questions-to-ask-interviewer-at-end",
+  "behavioral-interview-questions-with-ai",
+  "star-method-behavioral-interview-questions",
+  "tell-me-about-yourself-software-engineer",
+  "mock-interview-with-ai",
+  "javascript-coding-interview-questions",
+  "system-design-interview-questions-beginners",
+  "strengths-and-weaknesses-interview-answers",
+  "software-engineer-behavioral-interview-questions",
+  "resume-based-interview-questions-and-answers",
+]);
+for (const post of blogPosts) {
+  if (!interviewSupportSlugs.has(post.slug)) continue;
+  post.modifiedDate = "2026-08-18";
+  const links = [...(post.links || []), ...interviewClusterLinks];
+  post.links = [...new Map(links.map((link) => [link[0], link])).values()];
+}
+
 const canonicalRedirects = new Map([
   ["/how-to-use.html", "/how-to-use-cluegent/"],
   ["/alternatives/chiku-ai/", "/chiku-ai-alternative/"],
@@ -4821,6 +5218,119 @@ ${head({ title, description, canonical, image, schema })}
 `;
 }
 
+function homepagePricingSection(buttonHref = "/download/") {
+  return `
+      <section class="section pricing-section" id="pricing" aria-labelledby="pricing-title">
+        <div class="section-heading reveal">
+          <p class="section-kicker">Pricing</p>
+          <h2 id="pricing-title">Choose the Cluegent plan that fits your live workflow</h2>
+          <p>Start free, then upgrade when you need more listening time, AI requests, and screenshot analyses.</p>
+        </div>
+
+        <div class="pricing-toolbar reveal">
+          <div class="pricing-currency-toggle" role="group" aria-label="Choose pricing currency" data-pricing-currency-toggle>
+            <button type="button" aria-pressed="true" data-pricing-currency="INR">
+              <span class="pricing-currency-flag pricing-currency-flag--inr" aria-hidden="true"><span></span></span>
+              <span>INR</span>
+            </button>
+            <button type="button" aria-pressed="false" data-pricing-currency="USD">
+              <span class="pricing-currency-flag pricing-currency-flag--usd" aria-hidden="true"><span></span></span>
+              <span>USD</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="pricing-grid reveal">
+          <article class="pricing-card pricing-card--trial">
+            <div class="pricing-card-head">
+              <h3>Free trial</h3>
+              <p class="pricing-price"><span data-pricing-price data-price-inr="₹0" data-price-usd="$0">₹0</span></p>
+              <p class="pricing-note">Try Cluegent before upgrading.</p>
+            </div>
+            <ul>
+              <li>Private desktop overlay</li>
+              <li>Real-time assistant</li>
+              <li>Try listening and typed prompts</li>
+              <li>Screenshot-aware workflow preview</li>
+              <li>Coding + meeting support</li>
+            </ul>
+            <a class="pricing-button" href="${buttonHref}">Start free</a>
+          </article>
+
+          <article class="pricing-card pricing-card--plus">
+            <div class="pricing-card-head">
+              <div class="pricing-title-row">
+                <h3>Plus</h3>
+                <span class="pricing-badge">Starter</span>
+              </div>
+              <p class="pricing-offer" aria-label="50 percent offer, original price 1,998 rupees" data-aria-inr="50 percent offer, original price 1,998 rupees" data-aria-usd="50 percent offer, original price 24 US dollars">
+                <span class="pricing-original" data-pricing-original data-original-inr="₹1,998" data-original-usd="$24">₹1,998</span>
+                <span class="pricing-offer-badge">50% off</span>
+              </p>
+              <p class="pricing-price"><span data-pricing-price data-price-inr="₹999" data-price-usd="$12">₹999</span><small>/month</small></p>
+              <p class="pricing-note">Planned starter upgrade for focused live conversations.</p>
+            </div>
+            <ul>
+              <li>Private desktop overlay for permitted workflows</li>
+              <li>10 hours listening</li>
+              <li>1,000 AI requests</li>
+              <li>1,000 screenshot analyses</li>
+              <li>Real-time assistant</li>
+              <li>Coding + meeting support</li>
+            </ul>
+            <a class="pricing-button" href="${buttonHref}">Upgrade</a>
+          </article>
+
+          <article class="pricing-card pricing-card--pro">
+            <div class="pricing-card-head">
+              <div class="pricing-title-row">
+                <h3>Pro</h3>
+                <span class="pricing-badge">Most Popular</span>
+              </div>
+              <p class="pricing-offer" aria-label="50 percent offer, original price 4,998 rupees" data-aria-inr="50 percent offer, original price 4,998 rupees" data-aria-usd="50 percent offer, original price 58 US dollars">
+                <span class="pricing-original" data-pricing-original data-original-inr="₹4,998" data-original-usd="$58">₹4,998</span>
+                <span class="pricing-offer-badge">50% off</span>
+              </p>
+              <p class="pricing-price"><span data-pricing-price data-price-inr="₹2,499" data-price-usd="$29">₹2,499</span><small>/month</small></p>
+              <p class="pricing-note">For active users handling frequent meetings and calls.</p>
+            </div>
+            <ul>
+              <li>Private desktop overlay for permitted workflows</li>
+              <li>Unlimited listening</li>
+              <li>Unlimited AI requests</li>
+              <li>Unlimited screenshot analyses</li>
+              <li>Real-time assistant</li>
+              <li>Coding + meeting support</li>
+            </ul>
+            <a class="pricing-button" href="${buttonHref}">Upgrade</a>
+          </article>
+
+          <article class="pricing-card pricing-card--power">
+            <div class="pricing-card-head">
+              <h3>Power</h3>
+              <p class="pricing-offer" aria-label="50 percent offer, original price 12,998 rupees" data-aria-inr="50 percent offer, original price 12,998 rupees" data-aria-usd="50 percent offer, original price 138 US dollars">
+                <span class="pricing-original" data-pricing-original data-original-inr="₹12,998" data-original-usd="$138">₹12,998</span>
+                <span class="pricing-offer-badge">50% off</span>
+              </p>
+              <p class="pricing-price"><span data-pricing-price data-price-inr="₹6,499" data-price-usd="$69">₹6,499</span><small>/month</small></p>
+              <p class="pricing-note">For heavy usage, coding rounds, and high-frequency calls.</p>
+            </div>
+            <ul>
+              <li>Private desktop overlay for permitted workflows</li>
+              <li>Unlimited listening</li>
+              <li>Unlimited AI requests</li>
+              <li>Unlimited screenshot analyses</li>
+              <li>Real-time assistant</li>
+              <li>Coding + meeting support</li>
+              <li>Faster responses</li>
+              <li>Priority processing</li>
+            </ul>
+            <a class="pricing-button" href="${buttonHref}">Upgrade</a>
+          </article>
+        </div>
+      </section>`;
+}
+
 function landingTemplate(page) {
   const canonical = `/${page.slug}/`;
   const schema = [
@@ -4835,6 +5345,7 @@ function landingTemplate(page) {
   ];
   const body = `
     <main>
+      ${page.slug === "best-parakeet-ai-alternatives" ? cluegentHomepageHeroSection() : ""}
       <section class="seo-hero">
         <div class="seo-hero-copy reveal">
           <p class="section-kicker">${escapeHtml(page.kicker)}</p>
@@ -4849,6 +5360,7 @@ function landingTemplate(page) {
           <img src="${page.image}" alt="${escapeHtml(page.h1)}"${page.imageWidth ? ` width="${page.imageWidth}" height="${page.imageHeight}"` : ""} decoding="async" />
         </div>
       </section>
+      ${page.slug === "pricing" ? homepagePricingSection() : ""}
       <section>
         <h2>Checklist before you practice</h2>
         <ul>
@@ -4949,7 +5461,16 @@ function landingTemplate(page) {
       </section>
     </main>`;
 
-  return pageShell({ title: page.title, description: page.description, canonical, image: page.image, schema, body, activePath: canonical });
+  return pageShell({
+    title: page.title,
+    description: page.description,
+    canonical,
+    image: page.image,
+    schema,
+    body,
+    activePath: canonical,
+    includeTopDownloadCta: page.slug !== "pricing",
+  });
 }
 
 function competitorSupportLinks(item) {
@@ -5097,6 +5618,7 @@ function alternativeLandingTemplate(item) {
   const pageFaqs = item.faqs ? [...item.faqs, ...sharedFaq] : sharedFaq;
   const body = `
     <main>
+      ${item.slug === "parakeet-ai" ? cluegentHomepageHeroSection() : ""}
       <section class="seo-hero seo-hero--simple">
         <div class="seo-hero-copy reveal">
           <p class="section-kicker">AI interview assistant review</p>
@@ -5251,6 +5773,95 @@ function alternativeLandingTemplate(item) {
   });
 }
 
+function interviewQuestionsHubTemplate() {
+  const canonical = "/interview-questions/";
+  const title = "Interview Questions and Answers by Role | Cluegent";
+  const description = "Browse interview questions and answers for general job interviews, behavioral rounds, Python, Java, SQL, data analyst, JavaScript, and system design interviews.";
+  const faqs = [
+    { q: "What interview questions should I prepare first?", a: "Start with tell me about yourself, why this role, why this company, strengths and weaknesses, a difficult problem, conflict, failure, and questions to ask the interviewer." },
+    { q: "How many interview questions should I practise?", a: "Build a reusable set of six to eight evidence stories, then practise applying them to common and role-specific questions instead of memorizing dozens of scripts." },
+    { q: "How should I prepare for technical interview questions?", a: "Review fundamentals, solve representative problems aloud, explain tradeoffs, test edge cases, and prepare to discuss the architecture and decisions in your own projects." },
+  ];
+  const categories = [
+    ["50 common interview questions", "Introductions, motivation, strengths, behavioral examples, and closing questions.", "/blog/job-interview-questions-and-answers/"],
+    ["Behavioral interview questions", "Build concise STAR stories from your real experience.", "/blog/behavioral-interview-questions-with-ai/"],
+    ["Python interview questions", "Python fundamentals, OOP, generators, concurrency, testing, and performance.", "/blog/python-interview-questions/"],
+    ["Java interview questions", "JVM, collections, exceptions, streams, concurrency, and testing.", "/blog/java-interview-questions/"],
+    ["SQL interview questions", "Joins, grouping, windows, transactions, analytics, and query performance.", "/blog/sql-interview-questions/"],
+    ["Data analyst interview questions", "Statistics, SQL, KPIs, experiments, dashboards, and business cases.", "/blog/data-analyst-interview-questions/"],
+    ["JavaScript interview questions", "Core JavaScript concepts and coding interview preparation.", "/blog/javascript-coding-interview-questions/"],
+    ["System design questions", "A beginner-friendly framework for requirements, scale, data, and tradeoffs.", "/blog/system-design-interview-questions-beginners/"],
+    ["Questions to ask an interviewer", "Choose thoughtful closing questions about priorities, team practices, and success.", "/blog/questions-to-ask-interviewer-at-end/"],
+    ["Interview preparation for freshers", "Prepare evidence from projects, internships, coursework, and volunteering.", "/ai-interview-assistant-for-freshers/"],
+  ];
+  const body = `
+    <main>
+      ${cluegentHomepageHeroSection()}
+      <section class="seo-hero seo-hero--simple interview-library-hero">
+        <div class="seo-hero-copy reveal">
+          <p class="section-kicker">Interview preparation library</p>
+          <h1>Interview Questions and Answers</h1>
+          <p>${description}</p>
+          <div class="seo-actions">
+            <a class="primary-download" href="/blog/job-interview-questions-and-answers/">Start with common questions</a>
+            <a class="secondary-link" href="/download/">Practise with Cluegent</a>
+          </div>
+        </div>
+      </section>
+      <section class="seo-section interview-library-section">
+        <div class="section-heading reveal">
+          <p class="section-kicker">Choose your interview</p>
+          <h2>Question banks by role and round</h2>
+          <p>Each guide explains the reasoning behind a strong answer so you can adapt it honestly to your own experience.</p>
+        </div>
+        <div class="seo-card-grid interview-library-grid">
+          ${categories.map(([heading, copy, href]) => `
+            <article class="seo-panel reveal">
+              <h3>${escapeHtml(heading)}</h3>
+              <p>${escapeHtml(copy)}</p>
+              <a class="secondary-link" href="${href}">Open question guide</a>
+            </article>`).join("")}
+        </div>
+      </section>
+      <section class="seo-section seo-split-section">
+        <div class="section-heading reveal">
+          <p class="section-kicker">A better preparation loop</p>
+          <h2>Turn question lists into interview-ready stories</h2>
+        </div>
+        <div class="seo-steps-grid">
+          <article class="seo-panel reveal"><span>01</span><h3>Choose evidence</h3><p>Match each question with a real project, decision, result, or lesson from your experience.</p></article>
+          <article class="seo-panel reveal"><span>02</span><h3>Structure the answer</h3><p>Use a direct opening and STAR for behavioral examples. Keep only details that support the decision or result.</p></article>
+          <article class="seo-panel reveal"><span>03</span><h3>Practise follow-ups</h3><p>Prepare the tradeoffs, metrics, mistakes, and alternatives an interviewer may ask about next.</p></article>
+        </div>
+      </section>
+      <section class="seo-section seo-cta-band reveal">
+        <div><p class="section-kicker">Responsible assistance</p><h2>Prepare with your real resume and experience</h2><p>Cluegent can help organize resume-aware practice and concise answers. Use AI only where assistance is permitted, and verify every answer before relying on it.</p></div>
+        <div class="seo-actions"><a class="primary-download" href="/download/">Try Cluegent free</a><a class="secondary-link" href="/pricing/">View pricing</a></div>
+      </section>
+      <section class="seo-section seo-faq">
+        <div class="section-heading reveal"><p class="section-kicker">Interview preparation FAQ</p><h2>Common preparation questions</h2></div>
+        <div class="faq-list reveal">
+          ${faqs.map((faq, index) => `<details${index === 0 ? " open" : ""}><summary>${escapeHtml(faq.q)}</summary><p>${escapeHtml(faq.a)}</p></details>`).join("")}
+        </div>
+      </section>
+    </main>`;
+  return pageShell({
+    title,
+    description,
+    canonical,
+    image: defaultImage,
+    schema: [
+      ...baseSchemas(),
+      { "@context": "https://schema.org", "@type": "CollectionPage", name: "Cluegent Interview Questions and Answers", description, url: absolute(canonical), dateModified: "2026-08-18" },
+      faqSchema(faqs),
+      breadcrumbSchema([{ name: "Home", url: "/" }, { name: "Interview Questions", url: canonical }]),
+    ],
+    body,
+    activePath: "/blog/",
+    includeTopDownloadCta: false,
+  });
+}
+
 function blogIndexTemplate() {
   const title = "Cluegent Blog | AI Interview Assistant Guides";
   const description = "Guides on AI interview assistants, coding interviews, screen sharing, STAR answers, JavaScript questions, React questions, and system design prep.";
@@ -5265,6 +5876,14 @@ function blogIndexTemplate() {
         </div>
       </section>
       <section class="seo-section">
+        <div class="seo-featured-resource reveal">
+          <div>
+            <p class="section-kicker">New interview library</p>
+            <h2>Interview questions and answers by role</h2>
+            <p>Prepare common, behavioral, Python, Java, SQL, data analyst, JavaScript, and system design interviews from one organized library.</p>
+          </div>
+          <a class="primary-download" href="/interview-questions/">Browse questions</a>
+        </div>
         <div class="seo-card-grid">
           ${blogPosts
             .filter((post) => !canonicalRedirects.has(`/blog/${post.slug}/`))
@@ -5334,6 +5953,36 @@ function authorityArticleHero(post, modifiedDate) {
     </section>`;
 }
 
+function renderPostContent(post) {
+  if (post.bodyHtml) return post.bodyHtml;
+
+  const sections = (post.sections || [])
+    .map(([title, text]) => `<section><h2>${escapeHtml(title)}</h2><p>${escapeHtml(text)}</p></section>`)
+    .join("");
+  const questionGroups = (post.questionGroups || [])
+    .map(
+      (group) => `
+        <section class="interview-question-group">
+          <h2>${escapeHtml(group.title)}</h2>
+          ${group.intro ? `<p>${escapeHtml(group.intro)}</p>` : ""}
+          <div class="interview-question-list">
+            ${group.questions
+              .map(
+                ([question, answer]) => `
+              <div class="interview-question">
+                <h3>${escapeHtml(question)}</h3>
+                <p>${escapeHtml(answer)}</p>
+              </div>`
+              )
+              .join("")}
+          </div>
+        </section>`
+    )
+    .join("");
+
+  return `${sections}${questionGroups}`;
+}
+
 function articleTemplate(post) {
   const canonical = `/blog/${post.slug}/`;
   const publishedDate = post.publishedDate || generatedDate;
@@ -5385,10 +6034,7 @@ function articleTemplate(post) {
         </header>`
         }
         <div class="seo-article-body reveal">
-          ${
-            post.bodyHtml ||
-            post.sections.map(([title, text]) => `<section><h2>${escapeHtml(title)}</h2><p>${escapeHtml(text)}</p></section>`).join("")
-          }
+          ${renderPostContent(post)}
           ${
             post.sources?.length
               ? `<section class="seo-article-sources">
@@ -5557,6 +6203,7 @@ function buildSitemap() {
     ...landingPages.map((page) => canonicalPath(`/${page.slug}/`)),
     "/alternatives/",
     ...alternatives.map((item) => competitorCanonicalPath(item)),
+    "/interview-questions/",
     "/blog/",
     ...blogPosts
       .map((post) => canonicalPath(`/blog/${post.slug}/`))
@@ -5593,6 +6240,7 @@ for (const item of alternatives) {
 }
 
 writePage("blog/index.html", blogIndexTemplate());
+writePage("interview-questions/index.html", interviewQuestionsHubTemplate());
 for (const post of blogPosts) {
   writePage(`blog/${post.slug}/index.html`, articleTemplate(post));
 }

@@ -4,6 +4,78 @@ const navLinks = document.querySelectorAll(".site-nav a");
 const revealItems = document.querySelectorAll(".reveal");
 const shortcutModifier = /mac|iphone|ipad|ipod/i.test(navigator.platform) ? "Command" : "Ctrl";
 
+const pricingCurrencyToggle = document.querySelector("[data-pricing-currency-toggle]");
+
+if (pricingCurrencyToggle) {
+  const currencyButtons = Array.from(pricingCurrencyToggle.querySelectorAll("[data-pricing-currency]"));
+  const pricingValues = Array.from(document.querySelectorAll("[data-pricing-price]"));
+  const originalPricingValues = Array.from(document.querySelectorAll("[data-pricing-original]"));
+  const pricingOffers = Array.from(document.querySelectorAll(".pricing-offer[data-aria-inr]"));
+  const storageKey = "cluegent-pricing-currency";
+  const supportedCurrencies = ["INR", "USD"];
+
+  const getSavedCurrency = () => {
+    try {
+      const savedCurrency = window.localStorage.getItem(storageKey);
+      return supportedCurrencies.includes(savedCurrency) ? savedCurrency : "INR";
+    } catch {
+      return "INR";
+    }
+  };
+
+  const selectPricingCurrency = (currency, shouldFocus = false) => {
+    const normalizedCurrency = supportedCurrencies.includes(currency) ? currency : "INR";
+    const dataSuffix = normalizedCurrency.toLowerCase();
+
+    pricingValues.forEach((element) => {
+      element.textContent = element.dataset[`price${normalizedCurrency === "INR" ? "Inr" : "Usd"}`] || element.textContent;
+    });
+
+    originalPricingValues.forEach((element) => {
+      element.textContent = element.dataset[`original${normalizedCurrency === "INR" ? "Inr" : "Usd"}`] || element.textContent;
+    });
+
+    pricingOffers.forEach((element) => {
+      element.setAttribute("aria-label", element.dataset[`aria${dataSuffix === "inr" ? "Inr" : "Usd"}`] || "");
+    });
+
+    currencyButtons.forEach((button) => {
+      const isSelected = button.dataset.pricingCurrency === normalizedCurrency;
+      button.setAttribute("aria-pressed", String(isSelected));
+      if (isSelected && shouldFocus) button.focus();
+    });
+
+    try {
+      window.localStorage.setItem(storageKey, normalizedCurrency);
+    } catch {
+      // Pricing remains usable when browser storage is unavailable.
+    }
+  };
+
+  currencyButtons.forEach((button, index) => {
+    button.addEventListener("click", () => {
+      selectPricingCurrency(button.dataset.pricingCurrency || "INR");
+    });
+
+    button.addEventListener("keydown", (event) => {
+      const isNext = event.key === "ArrowRight" || event.key === "ArrowDown";
+      const isPrevious = event.key === "ArrowLeft" || event.key === "ArrowUp";
+      if (!isNext && !isPrevious && event.key !== "Home" && event.key !== "End") return;
+
+      event.preventDefault();
+      let nextIndex = index;
+      if (isNext) nextIndex = (index + 1) % currencyButtons.length;
+      if (isPrevious) nextIndex = (index - 1 + currencyButtons.length) % currencyButtons.length;
+      if (event.key === "Home") nextIndex = 0;
+      if (event.key === "End") nextIndex = currencyButtons.length - 1;
+
+      selectPricingCurrency(currencyButtons[nextIndex].dataset.pricingCurrency || "INR", true);
+    });
+  });
+
+  selectPricingCurrency(getSavedCurrency());
+}
+
 const trackCluegentEvent = (eventName, params = {}) => {
   if (typeof window.gtag !== "function") return;
   window.gtag("event", eventName, {

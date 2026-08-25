@@ -2874,12 +2874,108 @@ kbd {
     #f8fafc;
 }
 
+.pricing-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin: 28px auto 0;
+}
+
+.pricing-currency-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 18px;
+  background: rgba(226, 232, 240, 0.72);
+  box-shadow: 0 14px 38px -30px rgba(15, 23, 42, 0.35);
+}
+
+.pricing-currency-toggle button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 82px;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 14px;
+  color: #64748b;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: color 180ms ease, background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.pricing-currency-toggle button:hover {
+  color: #0f172a;
+}
+
+.pricing-currency-toggle button[aria-pressed="true"] {
+  color: #0f172a;
+  background: #ffffff;
+  box-shadow: 0 10px 24px -18px rgba(15, 23, 42, 0.42);
+}
+
+.pricing-currency-toggle button:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.28);
+  outline-offset: 2px;
+}
+
+.pricing-currency-toggle button:active {
+  transform: scale(0.98);
+}
+
+.pricing-currency-flag {
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.9);
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+}
+
+.pricing-currency-flag--inr {
+  background: linear-gradient(to bottom, #f97316 0 33%, #ffffff 33% 67%, #16a34a 67% 100%);
+}
+
+.pricing-currency-flag--inr span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border: 1px solid #1d4ed8;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+}
+
+.pricing-currency-flag--usd {
+  background: repeating-linear-gradient(to bottom, #dc2626 0 1.4px, #ffffff 1.4px 2.8px);
+}
+
+.pricing-currency-flag--usd span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  background: #1e3a8a;
+}
+
 .pricing-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 20px;
   width: 100%;
-  margin: 38px auto 0;
+  margin: 18px auto 0;
   align-items: stretch;
 }
 
@@ -4423,6 +4519,110 @@ kbd {
   font-size: clamp(24px, 2.2vw, 32px);
 }
 
+.seo-featured-resource,
+.seo-cta-band {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  padding: 30px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+}
+
+.seo-featured-resource > div,
+.seo-cta-band > div:first-child {
+  display: grid;
+  gap: 10px;
+}
+
+.seo-featured-resource h2,
+.seo-cta-band h2,
+.interview-library-grid h3 {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 900;
+  line-height: 1.12;
+}
+
+.seo-featured-resource h2,
+.seo-cta-band h2 {
+  font-size: clamp(28px, 3.2vw, 42px);
+}
+
+.seo-featured-resource p,
+.seo-cta-band p {
+  max-width: 760px;
+  margin: 0;
+  color: #475569;
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.interview-library-grid h3 {
+  font-size: clamp(22px, 2.2vw, 30px);
+}
+
+.seo-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.seo-steps-grid .seo-panel > span {
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.seo-steps-grid h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 24px;
+}
+
+.interview-question-group {
+  gap: 18px !important;
+}
+
+.interview-question-list {
+  display: grid;
+}
+
+.interview-question {
+  display: grid;
+  gap: 8px;
+  padding: 22px 0;
+  border-top: 1px solid #e2e8f0;
+}
+
+.interview-question h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 19px;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.interview-question p {
+  color: #475569;
+}
+
+@media (max-width: 760px) {
+  .seo-featured-resource,
+  .seo-cta-band {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .seo-steps-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .seo-table {
   overflow: hidden;
   border: 1px solid rgba(226, 232, 240, 0.96);
@@ -5321,9 +5521,14 @@ kbd {
 }
 
 @media (max-width: 560px) {
+  .pricing-toolbar {
+    justify-content: center;
+    margin-top: 24px;
+  }
+
   .pricing-grid {
     width: min(calc(100% - 24px), 430px);
-    margin-top: 34px;
+    margin-top: 18px;
   }
 
   .pricing-card {

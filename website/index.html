@@ -37,7 +37,7 @@
       href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500;600&family=Geist:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/styles.css?v=20260705-seo" />
+    <link rel="stylesheet" href="/styles.css?v=20260819-pricing-currency" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -736,11 +736,24 @@
             <p>Start free, then upgrade when you need more listening time, AI requests, and screenshot analyses.</p>
           </div>
 
+          <div class="pricing-toolbar reveal">
+            <div class="pricing-currency-toggle" role="group" aria-label="Choose pricing currency" data-pricing-currency-toggle>
+              <button type="button" aria-pressed="true" data-pricing-currency="INR">
+                <span class="pricing-currency-flag pricing-currency-flag--inr" aria-hidden="true"><span></span></span>
+                <span>INR</span>
+              </button>
+              <button type="button" aria-pressed="false" data-pricing-currency="USD">
+                <span class="pricing-currency-flag pricing-currency-flag--usd" aria-hidden="true"><span></span></span>
+                <span>USD</span>
+              </button>
+            </div>
+          </div>
+
           <div class="pricing-grid reveal">
             <article class="pricing-card pricing-card--trial">
               <div class="pricing-card-head">
                 <h3>Free trial</h3>
-                <p class="pricing-price"><span>₹0</span></p>
+                <p class="pricing-price"><span data-pricing-price data-price-inr="₹0" data-price-usd="$0">₹0</span></p>
                 <p class="pricing-note">Try Cluegent before upgrading.</p>
               </div>
               <ul>
@@ -759,11 +772,11 @@
                   <h3>Plus</h3>
                   <span class="pricing-badge">Starter</span>
                 </div>
-                <p class="pricing-offer" aria-label="50 percent offer, original price 1,998 rupees">
-                  <span class="pricing-original">₹1,998</span>
+                <p class="pricing-offer" aria-label="50 percent offer, original price 1,998 rupees" data-aria-inr="50 percent offer, original price 1,998 rupees" data-aria-usd="50 percent offer, original price 24 US dollars">
+                  <span class="pricing-original" data-pricing-original data-original-inr="₹1,998" data-original-usd="$24">₹1,998</span>
                   <span class="pricing-offer-badge">50% off</span>
                 </p>
-                <p class="pricing-price"><span>₹999</span><small>/month</small></p>
+                <p class="pricing-price"><span data-pricing-price data-price-inr="₹999" data-price-usd="$12">₹999</span><small>/month</small></p>
                 <p class="pricing-note">Planned starter upgrade for focused live conversations.</p>
               </div>
               <ul>
@@ -783,11 +796,11 @@
                   <h3>Pro</h3>
                   <span class="pricing-badge">Most Popular</span>
                 </div>
-                <p class="pricing-offer" aria-label="50 percent offer, original price 4,998 rupees">
-                  <span class="pricing-original">₹4,998</span>
+                <p class="pricing-offer" aria-label="50 percent offer, original price 4,998 rupees" data-aria-inr="50 percent offer, original price 4,998 rupees" data-aria-usd="50 percent offer, original price 58 US dollars">
+                  <span class="pricing-original" data-pricing-original data-original-inr="₹4,998" data-original-usd="$58">₹4,998</span>
                   <span class="pricing-offer-badge">50% off</span>
                 </p>
-                <p class="pricing-price"><span>₹2,499</span><small>/month</small></p>
+                <p class="pricing-price"><span data-pricing-price data-price-inr="₹2,499" data-price-usd="$29">₹2,499</span><small>/month</small></p>
                 <p class="pricing-note">For active users handling frequent meetings and calls.</p>
               </div>
               <ul>
@@ -804,11 +817,11 @@
             <article class="pricing-card pricing-card--power">
               <div class="pricing-card-head">
                 <h3>Power</h3>
-                <p class="pricing-offer" aria-label="50 percent offer, original price 12,998 rupees">
-                  <span class="pricing-original">₹12,998</span>
+                <p class="pricing-offer" aria-label="50 percent offer, original price 12,998 rupees" data-aria-inr="50 percent offer, original price 12,998 rupees" data-aria-usd="50 percent offer, original price 138 US dollars">
+                  <span class="pricing-original" data-pricing-original data-original-inr="₹12,998" data-original-usd="$138">₹12,998</span>
                   <span class="pricing-offer-badge">50% off</span>
                 </p>
-                <p class="pricing-price"><span>₹6,499</span><small>/month</small></p>
+                <p class="pricing-price"><span data-pricing-price data-price-inr="₹6,499" data-price-usd="$69">₹6,499</span><small>/month</small></p>
                 <p class="pricing-note">For heavy usage, coding rounds, and high-frequency calls.</p>
               </div>
               <ul>
@@ -1058,6 +1071,6 @@
       </footer>
     </div>
 
-    <script src="/app.js?v=20260705-seo-conversions"></script>
+    <script src="/app.js?v=20260819-pricing-currency"></script>
   </body>
 </html>
