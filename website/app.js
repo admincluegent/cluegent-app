@@ -415,3 +415,152 @@ if (screenshotDemo) {
     renderScreenshotState();
   }, 2800);
 }
+
+const resourceTool = document.querySelector("[data-resource-tool]");
+if (resourceTool instanceof HTMLElement) {
+  const resourceType = resourceTool.dataset.resourceTool || "resource";
+  const storageKey = resourceTool.dataset.resourceStorage || `cluegent-${resourceType}`;
+  const printButton = resourceTool.querySelector("[data-resource-print]");
+  const resetButton = resourceTool.querySelector("[data-resource-reset]");
+  let hasTrackedStart = false;
+  let hasTrackedComplete = false;
+
+  const trackResourceStart = () => {
+    if (hasTrackedStart) return;
+    hasTrackedStart = true;
+    trackCluegentEvent("resource_start", { resource_type: resourceType });
+  };
+
+  const readResourceState = () => {
+    try {
+      return JSON.parse(window.localStorage.getItem(storageKey) || "{}");
+    } catch {
+      return {};
+    }
+  };
+
+  const writeResourceState = (state) => {
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(state));
+    } catch {
+      // The resource remains usable when private browsing blocks storage.
+    }
+  };
+
+  const checklistItems = Array.from(resourceTool.querySelectorAll("[data-resource-checklist-item]"));
+  const completedElement = resourceTool.querySelector("[data-resource-complete]");
+  const totalElement = resourceTool.querySelector("[data-resource-total]");
+  const progressBar = resourceTool.querySelector("[data-resource-progress-bar]");
+
+  const updateChecklist = () => {
+    const completedValues = checklistItems.filter((item) => item.checked).map((item) => item.value);
+    const progress = checklistItems.length ? completedValues.length / checklistItems.length : 0;
+    if (completedElement) completedElement.textContent = String(completedValues.length);
+    if (totalElement) totalElement.textContent = String(checklistItems.length);
+    if (progressBar instanceof HTMLElement) progressBar.style.transform = `scaleX(${progress})`;
+    writeResourceState({ completedValues });
+
+    if (progress === 1 && !hasTrackedComplete) {
+      hasTrackedComplete = true;
+      trackCluegentEvent("resource_complete", { resource_type: resourceType });
+    }
+  };
+
+  if (checklistItems.length) {
+    const savedValues = new Set(readResourceState().completedValues || []);
+    checklistItems.forEach((item) => {
+      item.checked = savedValues.has(item.value);
+      item.addEventListener("change", () => {
+        trackResourceStart();
+        updateChecklist();
+      });
+    });
+    updateChecklist();
+  }
+
+  const resourceFields = Array.from(resourceTool.querySelectorAll("[data-resource-field]"));
+  if (resourceFields.length) {
+    const savedFields = readResourceState().fields || {};
+    resourceFields.forEach((field) => {
+      const fieldKey = field.dataset.resourceField;
+      if (fieldKey && typeof savedFields[fieldKey] === "string") field.value = savedFields[fieldKey];
+      field.addEventListener("input", () => {
+        trackResourceStart();
+        const fields = Object.fromEntries(
+          resourceFields.map((item) => [item.dataset.resourceField || "field", item.value])
+        );
+        const existingState = readResourceState();
+        writeResourceState({ ...existingState, fields });
+      });
+    });
+  }
+
+  const scoreItems = Array.from(resourceTool.querySelectorAll("[data-resource-score-item]"));
+  const scoreElement = resourceTool.querySelector("[data-resource-score]");
+  const scoreMessage = resourceTool.querySelector("[data-resource-score-message]");
+
+  const updateScore = () => {
+    const scores = Object.fromEntries(
+      scoreItems.map((item) => [item.dataset.resourceScoreItem || "score", Number(item.value)])
+    );
+    const values = Object.values(scores);
+    const total = values.reduce((sum, value) => sum + value, 0);
+    const scoredCount = values.filter((value) => value > 0).length;
+    if (scoreElement) scoreElement.textContent = String(total);
+    if (scoreMessage) {
+      if (scoredCount === 0) scoreMessage.textContent = "Score each category after the mock interview.";
+      else if (scoredCount < scoreItems.length) scoreMessage.textContent = `${scoredCount} of ${scoreItems.length} categories scored.`;
+      else if (total < 21) scoreMessage.textContent = "Choose one weak category and repeat a short practice session.";
+      else if (total < 29) scoreMessage.textContent = "The foundation is working. Improve the lowest-scoring category next.";
+      else scoreMessage.textContent = "Strong practice result. Test the same skills with harder follow-up questions.";
+    }
+    const existingState = readResourceState();
+    writeResourceState({ ...existingState, scores });
+
+    if (scoredCount === scoreItems.length && !hasTrackedComplete) {
+      hasTrackedComplete = true;
+      trackCluegentEvent("resource_complete", { resource_type: resourceType, resource_score: total });
+    }
+  };
+
+  if (scoreItems.length) {
+    const savedScores = readResourceState().scores || {};
+    scoreItems.forEach((item) => {
+      const itemKey = item.dataset.resourceScoreItem;
+      if (itemKey && Number.isFinite(Number(savedScores[itemKey]))) item.value = String(savedScores[itemKey]);
+      item.addEventListener("change", () => {
+        trackResourceStart();
+        updateScore();
+      });
+    });
+    updateScore();
+  }
+
+  printButton?.addEventListener("click", () => {
+    trackCluegentEvent("resource_print", { resource_type: resourceType });
+    window.print();
+  });
+
+  resetButton?.addEventListener("click", () => {
+    const shouldReset = window.confirm("Clear the saved entries for this resource?");
+    if (!shouldReset) return;
+    try {
+      window.localStorage.removeItem(storageKey);
+    } catch {
+      // Continue with the visible reset even if storage is unavailable.
+    }
+    checklistItems.forEach((item) => {
+      item.checked = false;
+    });
+    resourceFields.forEach((field) => {
+      field.value = "";
+    });
+    scoreItems.forEach((item) => {
+      item.value = "0";
+    });
+    updateChecklist();
+    updateScore();
+    hasTrackedComplete = false;
+    trackCluegentEvent("resource_reset", { resource_type: resourceType });
+  });
+}

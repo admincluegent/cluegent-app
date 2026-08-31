@@ -11,6 +11,7 @@ const downloadUrl = "https://apps.microsoft.com/detail/9NXWZPN07THN";
 const macArmDownloadUrl = "https://github.com/admincluegent/cluegent-app/releases/download/v1.0.7/Cluegent-1.0.7-arm64-mac.zip";
 const macIntelDownloadUrl = "https://github.com/admincluegent/cluegent-app/releases/download/v1.0.7/Cluegent-1.0.7-mac.zip";
 const generatedDate = "2026-08-13";
+const resourcePublishedDate = "2026-08-29";
 const defaultImage = "/assets/how-to-use-01.png";
 
 const productLinks = [
@@ -37,6 +38,7 @@ const productLinks = [
 ];
 
 const resourceLinks = [
+  ["Free Interview Resources", "/resources/"],
   ["How to Use", "/how-to-use-cluegent/"],
   ["Blog", "/blog/"],
   ["Interview Questions", "/interview-questions/"],
@@ -45,6 +47,87 @@ const resourceLinks = [
   ["Editorial Policy", "/editorial-policy/"],
   ["Privacy", "/privacy.html"],
   ["Terms", "/terms.html"],
+];
+
+const prepResources = [
+  {
+    slug: "interview-preparation-checklist",
+    title: "Free Interview Preparation Checklist | Cluegent",
+    description:
+      "Use this free interview preparation checklist to organize company research, resume stories, interview questions, technical practice, and day-of setup.",
+    h1: "Interview Preparation Checklist",
+    kicker: "Free printable checklist",
+    lede:
+      "Prepare the evidence, questions, examples, and practical setup you need before an interview. Your progress is saved only in this browser.",
+    type: "checklist",
+    educationalUse: "Interview preparation",
+    faqs: [
+      {
+        q: "When should I start preparing for an interview?",
+        a: "Begin as soon as the interview is scheduled. Use the first session for company and role research, then spend the remaining time practising evidence and realistic follow-up questions.",
+      },
+      {
+        q: "What should I prepare the day before an interview?",
+        a: "Confirm the time, link or location, interviewer names, documents, device setup, clothing, travel plan, and two or three concise questions to ask at the end.",
+      },
+      {
+        q: "Can I print this interview checklist?",
+        a: "Yes. Use the print button to print the checklist or save it as a PDF from your browser's print dialog.",
+      },
+    ],
+  },
+  {
+    slug: "star-interview-worksheet",
+    title: "Free STAR Interview Worksheet and Template | Cluegent",
+    description:
+      "Build truthful behavioral interview answers with this free printable STAR interview worksheet for situation, task, action, result, evidence, and follow-ups.",
+    h1: "STAR Interview Worksheet",
+    kicker: "Free behavioral answer template",
+    lede:
+      "Turn a real experience into a concise behavioral answer. Draft the facts here, then practise speaking naturally instead of memorizing a script.",
+    type: "star",
+    educationalUse: "Behavioral interview preparation",
+    faqs: [
+      {
+        q: "What does STAR stand for in interviews?",
+        a: "STAR stands for Situation, Task, Action, and Result. It helps you explain the context, your responsibility, what you personally did, and what happened afterward.",
+      },
+      {
+        q: "How long should a STAR answer be?",
+        a: "Most STAR answers work well in 60 to 120 seconds. Keep the situation brief and spend most of the time on your actions, decisions, and result.",
+      },
+      {
+        q: "What if my result has no metric?",
+        a: "Use truthful observable evidence such as a decision made, risk prevented, process improved, customer response, lesson learned, or a change adopted by the team. Do not invent a number.",
+      },
+    ],
+  },
+  {
+    slug: "mock-interview-scorecard",
+    title: "Free Mock Interview Scorecard | Cluegent",
+    description:
+      "Score a mock interview for answer structure, evidence, clarity, relevance, technical depth, confidence, and follow-up handling with this free template.",
+    h1: "Mock Interview Scorecard",
+    kicker: "Free interview feedback template",
+    lede:
+      "Review a practice interview consistently. Score observable behavior, record one useful note per category, and choose the next skill to improve.",
+    type: "scorecard",
+    educationalUse: "Mock interview assessment",
+    faqs: [
+      {
+        q: "How should I score a mock interview?",
+        a: "Use the same criteria after every practice session, score specific observable behavior, and add one example explaining each low or high rating.",
+      },
+      {
+        q: "What is a good mock interview score?",
+        a: "The trend matters more than one total. A balanced score with clear evidence and honest follow-up handling is more useful than confident delivery with weak examples.",
+      },
+      {
+        q: "Can an interviewer use this scorecard?",
+        a: "Yes. A peer, mentor, career coach, or study partner can use it during a mock interview and print the completed feedback afterward.",
+      },
+    ],
+  },
 ];
 
 const sharedFaq = [
@@ -3958,15 +4041,19 @@ blogPosts.push(
   },
   {
     slug: "mock-interview-with-ai",
-    title: "How to Run a Mock Interview With AI | Cluegent",
+    title: "Free AI Mock Interview: Practice Guide | Cluegent",
     description:
-      "Run a useful AI mock interview using your resume and job description, realistic follow-ups, answer scoring, reflection, and a repeatable practice routine.",
-    h1: "How to Run a Mock Interview With AI",
+      "Run a free AI mock interview using your resume and job description, realistic follow-ups, answer scoring, reflection, and a repeatable practice routine.",
+    h1: "How to Run a Free AI Mock Interview",
     summary:
-      "An effective AI mock interview is a rehearsal with realistic constraints, follow-up questions, evidence checks, and a clear review process.",
+      "An effective free AI mock interview is a rehearsal with realistic constraints, follow-up questions, evidence checks, and a clear review process.",
     publishedDate: "2026-08-11",
-    modifiedDate: "2026-08-11",
+    modifiedDate: "2026-08-25",
     bodyHtml: `
+      <section>
+        <h2>What to expect from a free AI mock interview</h2>
+        <p>Free access may mean a limited number of questions, a short desktop trial, basic feedback, or a browser practice session. Check the official limits before starting, then use the available time for one realistic interview round rather than a long list of unrelated questions.</p>
+      </section>
       <section>
         <h2>Start with the real job, not a generic question list</h2>
         <p>Provide the job description, your resume, the expected interview round, and the seniority level. Ask the AI to identify the competencies that the employer is likely to test. This produces a more realistic session than requesting ten random interview questions.</p>
@@ -4751,6 +4838,8 @@ blogPosts.push(
 const interviewClusterLinks = [
   ["/interview-questions/", "Interview question library"],
   ["/blog/job-interview-questions-and-answers/", "50 job interview questions and answers"],
+  ["/resources/interview-preparation-checklist/", "Free interview preparation checklist"],
+  ["/resources/mock-interview-scorecard/", "Free mock interview scorecard"],
 ];
 const interviewSupportSlugs = new Set([
   "questions-to-ask-interviewer-at-end",
@@ -4768,6 +4857,9 @@ for (const post of blogPosts) {
   if (!interviewSupportSlugs.has(post.slug)) continue;
   post.modifiedDate = "2026-08-18";
   const links = [...(post.links || []), ...interviewClusterLinks];
+  if (post.slug.includes("behavioral") || post.slug.includes("star")) {
+    links.push(["/resources/star-interview-worksheet/", "Free STAR interview worksheet"]);
+  }
   post.links = [...new Map(links.map((link) => [link[0], link])).values()];
 }
 
@@ -4826,6 +4918,7 @@ function nav(activePath = "") {
     ["Product", "/ai-interview-assistant/"],
     ["Coding", "/coding-interview-assistant/"],
     ["Pricing", "/pricing/"],
+    ["Resources", "/resources/"],
     ["Blog", "/blog/"],
     ["Download", "/download/"],
   ];
@@ -5823,6 +5916,10 @@ function interviewQuestionsHubTemplate() {
             </article>`).join("")}
         </div>
       </section>
+      <section class="seo-section seo-cta-band reveal resource-related">
+        <div><p class="section-kicker">Free preparation resources</p><h2>Print a checklist, STAR worksheet, or mock interview scorecard</h2><p>Move from reading questions to documenting evidence and reviewing a realistic practice session.</p></div>
+        <div class="seo-actions"><a class="primary-download" href="/resources/">Open free resources</a><a class="secondary-link" href="/resources/mock-interview-scorecard/">Use the scorecard</a></div>
+      </section>
       <section class="seo-section seo-split-section">
         <div class="section-heading reveal">
           <p class="section-kicker">A better preparation loop</p>
@@ -5862,6 +5959,527 @@ function interviewQuestionsHubTemplate() {
   });
 }
 
+function resourceToolMarkup(resource) {
+  if (resource.type === "checklist") {
+    const groups = [
+      [
+        "Understand the role",
+        [
+          "Read the job description and mark the five responsibilities that matter most.",
+          "Research the company, product, customers, competitors, and recent official updates.",
+          "Write one sentence explaining why this role fits your next career step.",
+          "Confirm the interview stages, format, duration, and people involved.",
+        ],
+      ],
+      [
+        "Prepare your evidence",
+        [
+          "Match six real stories to leadership, conflict, failure, impact, ambiguity, and learning.",
+          "Prepare a 60-second introduction connected to this role.",
+          "Review every resume claim and prepare the likely follow-up questions.",
+          "Choose two projects you can explain from problem to decision, tradeoff, and result.",
+        ],
+      ],
+      [
+        "Practise the interview",
+        [
+          "Answer common and role-specific questions aloud without reading a script.",
+          "Complete one timed mock interview and record the weak moments.",
+          "Practise concise follow-ups about metrics, mistakes, alternatives, and ownership.",
+          "Prepare four thoughtful questions about priorities, team practices, and success.",
+        ],
+      ],
+      [
+        "Check the practical details",
+        [
+          "Confirm the time zone, meeting link or address, travel plan, and contact details.",
+          "Test the camera, microphone, speakers, network, charger, and permitted software.",
+          "Prepare a quiet space, water, approved notes, resume copies, and identification if required.",
+          "Plan to join or arrive 10 minutes early and silence unrelated notifications.",
+        ],
+      ],
+    ];
+    return `
+      <section class="resource-tool resource-tool--checklist" data-resource-tool="checklist" data-resource-storage="cluegent-interview-preparation-checklist">
+        <div class="resource-tool-bar">
+          <div>
+            <p class="section-kicker">Preparation progress</p>
+            <p class="resource-progress"><strong data-resource-complete>0</strong> of <span data-resource-total>16</span> complete</p>
+          </div>
+          <div class="resource-progress-track" aria-hidden="true"><span data-resource-progress-bar></span></div>
+        </div>
+        <div class="resource-checklist-grid">
+          ${groups
+            .map(
+              ([heading, items], groupIndex) => `
+            <fieldset class="resource-checklist-group">
+              <legend><span>0${groupIndex + 1}</span>${escapeHtml(heading)}</legend>
+              ${items
+                .map(
+                  (item, itemIndex) => `
+                <label>
+                  <input type="checkbox" data-resource-checklist-item value="${groupIndex}-${itemIndex}" />
+                  <span>${escapeHtml(item)}</span>
+                </label>`
+                )
+                .join("")}
+            </fieldset>`
+            )
+            .join("")}
+        </div>
+        ${resourceActionBar("Print or save as PDF")}
+      </section>`;
+  }
+
+  if (resource.type === "star") {
+    const fields = [
+      ["Question", "Which behavioral question are you answering?", "Example: Tell me about a time you resolved a difficult disagreement."],
+      ["Situation", "What context does the interviewer need?", "Keep this brief: team, goal, constraint, and why the situation mattered."],
+      ["Task", "What were you personally responsible for?", "State the outcome you owned, not the whole team's general objective."],
+      ["Action", "What decisions and actions did you take?", "Explain your reasoning, alternatives, collaboration, and personal contribution."],
+      ["Result", "What changed and what evidence supports it?", "Use a truthful metric, observable outcome, prevented risk, or lesson."],
+      ["Follow-ups", "What might the interviewer ask next?", "Prepare tradeoffs, mistakes, what you would change, and how the result was measured."],
+      ["Spoken version", "Rewrite the answer for a 60- to 120-second delivery.", "Use a direct opening, remove background that does not support the decision, and keep the language natural."],
+    ];
+    return `
+      <section class="resource-tool resource-tool--worksheet" data-resource-tool="worksheet" data-resource-storage="cluegent-star-interview-worksheet">
+        <div class="resource-tool-intro">
+          <p class="section-kicker">Your story, not a generated script</p>
+          <h2>Build one defensible STAR answer</h2>
+          <p>Use facts you can explain under follow-up. The worksheet stays in this browser unless you print or save it.</p>
+        </div>
+        <div class="resource-field-grid">
+          ${fields
+            .map(
+              ([label, help, placeholder], index) => `
+            <label class="resource-field${index === fields.length - 1 ? " resource-field--wide" : ""}">
+              <span><strong>${escapeHtml(label)}</strong><small>${escapeHtml(help)}</small></span>
+              <textarea rows="${index === fields.length - 1 ? 6 : 4}" data-resource-field="${index}" placeholder="${escapeHtml(placeholder)}"></textarea>
+            </label>`
+            )
+            .join("")}
+        </div>
+        ${resourceActionBar("Print completed worksheet")}
+      </section>`;
+  }
+
+  const criteria = [
+    ["Relevance", "The answer addresses the exact question and role requirement."],
+    ["Evidence", "Claims are supported by a specific truthful example or technical explanation."],
+    ["Structure", "The answer has a clear opening, logical sequence, and concise close."],
+    ["Ownership", "The candidate separates personal decisions from team activity."],
+    ["Clarity", "Language is direct, understandable, and free of unnecessary detail."],
+    ["Depth", "The candidate can explain reasoning, tradeoffs, constraints, or technical choices."],
+    ["Follow-ups", "The candidate handles probing questions without contradicting the original answer."],
+  ];
+  return `
+    <section class="resource-tool resource-tool--scorecard" data-resource-tool="scorecard" data-resource-storage="cluegent-mock-interview-scorecard">
+      <div class="resource-score-summary" aria-live="polite">
+        <div><p class="section-kicker">Session score</p><p><strong data-resource-score>0</strong><span> / 35</span></p></div>
+        <p data-resource-score-message>Score each category after the mock interview.</p>
+      </div>
+      <div class="resource-score-list">
+        ${criteria
+          .map(
+            ([label, help], index) => `
+          <div class="resource-score-row">
+            <label for="score-${index}"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(help)}</span></label>
+            <select id="score-${index}" data-resource-score-item="${index}">
+              <option value="0">Not scored</option>
+              <option value="1">1 - Missing</option>
+              <option value="2">2 - Weak</option>
+              <option value="3">3 - Adequate</option>
+              <option value="4">4 - Strong</option>
+              <option value="5">5 - Excellent</option>
+            </select>
+          </div>`
+          )
+          .join("")}
+      </div>
+      <label class="resource-field resource-field--wide resource-score-notes">
+        <span><strong>Feedback and next action</strong><small>Record evidence from the session and choose one skill for the next practice.</small></span>
+        <textarea rows="6" data-resource-field="notes" placeholder="Example: Strong technical depth, but the opening was too long. Next session: answer the question directly in the first sentence."></textarea>
+      </label>
+      ${resourceActionBar("Print completed scorecard")}
+    </section>`;
+}
+
+function resourceActionBar(printLabel) {
+  return `
+    <div class="resource-actions">
+      <button class="primary-download" type="button" data-resource-print>${escapeHtml(printLabel)}</button>
+      <button class="secondary-link" type="button" data-resource-reset>Reset</button>
+      <p>Saved locally in this browser. Cluegent does not receive these entries.</p>
+    </div>`;
+}
+
+function resourceFaqMarkup(faqs) {
+  return faqs
+    .map(
+      (faq, index) => `<details${index === 0 ? " open" : ""}><summary>${escapeHtml(faq.q)}</summary><p>${escapeHtml(faq.a)}</p></details>`
+    )
+    .join("");
+}
+
+function resourcesHubTemplate() {
+  const canonical = "/resources/";
+  const title = "Free Interview Preparation Resources | Cluegent";
+  const description =
+    "Use free interview preparation resources from Cluegent, including a printable checklist, STAR interview worksheet, and mock interview scorecard.";
+  const body = `
+    <main class="resource-main">
+      <section class="resource-hub-hero">
+        <div class="resource-hub-copy reveal">
+          <p class="section-kicker">Free interview preparation resources</p>
+          <h1>Prepare with evidence, not memorized scripts</h1>
+          <p>Use practical templates for the work candidates often skip: organizing preparation, building truthful behavioral stories, and reviewing a mock interview consistently.</p>
+          <div class="seo-actions"><a class="primary-download" href="#resource-library">Open the library</a><a class="secondary-link" href="/interview-questions/">Browse interview questions</a></div>
+        </div>
+        <aside class="resource-hub-index reveal" aria-label="Included resources">
+          <p><span>01</span> Interview preparation checklist</p>
+          <p><span>02</span> STAR interview worksheet</p>
+          <p><span>03</span> Mock interview scorecard</p>
+        </aside>
+      </section>
+      <section class="resource-library" id="resource-library">
+        ${prepResources
+          .map(
+            (resource, index) => `
+          <article class="resource-library-row reveal">
+            <span>0${index + 1}</span>
+            <div><p class="section-kicker">${escapeHtml(resource.kicker)}</p><h2>${escapeHtml(resource.h1)}</h2><p>${escapeHtml(resource.lede)}</p></div>
+            <a class="secondary-link" href="/resources/${resource.slug}/">Use free resource</a>
+          </article>`
+          )
+          .join("")}
+      </section>
+      <section class="resource-proof-section">
+        <div><p class="section-kicker">Why these resources exist</p><h2>Useful before, during, and after practice</h2></div>
+        <p>Question lists alone do not create interview readiness. Candidates improve when they connect questions to real evidence, speak answers aloud, receive specific feedback, and repeat the process.</p>
+      </section>
+      <section class="seo-section seo-cta-band reveal resource-related">
+        <div><p class="section-kicker">Practise with context</p><h2>Use Cluegent with your real resume and interview material</h2><p>Cluegent supports typed prompts, resume context, controlled listening, and screenshot-aware questions in a desktop workspace. Use live assistance only where it is permitted.</p></div>
+        <div class="seo-actions"><a class="primary-download" href="${downloadUrl}" data-analytics-event="free_trial_click" data-analytics-location="resource_hub">Try Cluegent free</a><a class="secondary-link" href="/pricing/">View pricing</a></div>
+      </section>
+    </main>`;
+  return pageShell({
+    title,
+    description,
+    canonical,
+    image: defaultImage,
+    schema: [
+      ...baseSchemas(),
+      {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: "Cluegent Interview Preparation Resources",
+        description,
+        url: absolute(canonical),
+        dateModified: resourcePublishedDate,
+        hasPart: prepResources.map((resource) => ({ "@type": "LearningResource", name: resource.h1, url: absolute(`/resources/${resource.slug}/`) })),
+      },
+      breadcrumbSchema([{ name: "Home", url: "/" }, { name: "Resources", url: canonical }]),
+    ],
+    body,
+    activePath: "/resources/",
+    includeTopDownloadCta: false,
+  });
+}
+
+function resourceTemplate(resource) {
+  const canonical = `/resources/${resource.slug}/`;
+  const relatedResources = prepResources.filter((item) => item.slug !== resource.slug);
+  const body = `
+    <main class="resource-main">
+      <section class="resource-page-hero">
+        <div class="resource-page-copy reveal">
+          <p class="section-kicker">${escapeHtml(resource.kicker)}</p>
+          <h1>${escapeHtml(resource.h1)}</h1>
+          <p>${escapeHtml(resource.lede)}</p>
+          <div class="resource-page-meta"><span>Free to use</span><span>Printable</span><span>No account required</span></div>
+        </div>
+        <aside class="resource-page-note reveal"><strong>Use your real experience</strong><p>These resources organize preparation. They should not be used to invent qualifications, projects, results, or interview stories.</p></aside>
+      </section>
+      ${resourceToolMarkup(resource)}
+      <section class="seo-section faq-section resource-faq">
+        <div class="section-heading reveal"><p class="section-kicker">Resource FAQ</p><h2>How to use this template</h2></div>
+        <div class="faq-list reveal">${resourceFaqMarkup(resource.faqs)}</div>
+      </section>
+      <section class="resource-library resource-library--related resource-related">
+        ${relatedResources
+          .map(
+            (item, index) => `<article class="resource-library-row reveal"><span>0${index + 1}</span><div><p class="section-kicker">Next resource</p><h2>${escapeHtml(item.h1)}</h2><p>${escapeHtml(item.lede)}</p></div><a class="secondary-link" href="/resources/${item.slug}/">Open resource</a></article>`
+          )
+          .join("")}
+      </section>
+      <section class="seo-section seo-cta-band reveal resource-related">
+        <div><p class="section-kicker">Continue practising</p><h2>Prepare interview answers with Cluegent</h2><p>Add resume context, practise follow-ups, and organize permitted live workflows in the Cluegent desktop app.</p></div>
+        <div class="seo-actions"><a class="primary-download" href="${downloadUrl}" data-analytics-event="free_trial_click" data-analytics-location="resource_page">Try Cluegent free</a><a class="secondary-link" href="/interview-questions/">Interview question library</a></div>
+      </section>
+    </main>`;
+  return pageShell({
+    title: resource.title,
+    description: resource.description,
+    canonical,
+    image: defaultImage,
+    schema: [
+      ...baseSchemas(),
+      {
+        "@context": "https://schema.org",
+        "@type": "LearningResource",
+        name: resource.h1,
+        description: resource.description,
+        url: absolute(canonical),
+        inLanguage: "en",
+        isAccessibleForFree: true,
+        educationalUse: resource.educationalUse,
+        datePublished: resourcePublishedDate,
+        dateModified: resourcePublishedDate,
+        provider: { "@type": "Organization", name: "Cluegent", url: siteUrl },
+      },
+      faqSchema(resource.faqs),
+      breadcrumbSchema([
+        { name: "Home", url: "/" },
+        { name: "Resources", url: "/resources/" },
+        { name: resource.h1, url: canonical },
+      ]),
+    ],
+    body,
+    activePath: "/resources/",
+    includeTopDownloadCta: false,
+  });
+}
+
+// High-intent interview preparation guides. Generator queries are answered as
+// practical workflows until Cluegent ships the corresponding interactive tools.
+blogPosts.push(
+  {
+    slug: "how-to-use-ai-interview-answer-generator",
+    title: "AI Interview Answer Generator: How to Create Better Answers | Cluegent",
+    description:
+      "Learn how to use an AI interview answer generator with your resume, job description, STAR examples, technical context, and honest follow-up practice.",
+    h1: "How to Use an AI Interview Answer Generator",
+    summary:
+      "An AI interview answer generator is most useful as a drafting and practice partner. The quality of the answer depends on the truthful context, evidence, and constraints you provide.",
+    publishedDate: "2026-08-25",
+    modifiedDate: "2026-08-25",
+    sections: [
+      ["What an interview answer generator should do", "A useful generator turns a real interview question and your own background into a clear answer outline. It should help you select relevant evidence, organize it for spoken delivery, and anticipate follow-up questions. It should not invent projects, metrics, employers, responsibilities, or technical decisions that you cannot explain."],
+      ["Start with the job and question", "Provide the exact interview question, the role title, the most important requirements from the job description, and the answer length you need. A request such as ‘create a 60-second answer for a backend developer role’ gives the AI a clearer target than asking for a generic perfect answer."],
+      ["Add resume evidence", "Choose one project, achievement, or responsibility that directly supports the answer. Include the situation, your personal contribution, important constraints, and the result. Remove confidential information and verify every generated statement against your resume and memory."],
+      ["Choose the right answer structure", "Use STAR for behavioral questions, problem-approach-result for technical projects, and present-past-future for introductions. For coding questions, request a problem restatement, approach, tradeoffs, complexity, edge cases, and a short explanation you could say aloud."],
+      ["Improve the first draft", "Ask for a shorter version, missing evidence, skeptical follow-ups, or language that sounds more natural. Read the answer aloud and replace formal or exaggerated phrases. The final response should sound like you and remain defensible when the interviewer asks why, how, or what changed."],
+      ["How Cluegent supports the workflow", "Cluegent can use typed prompts, resume context, controlled listening, screenshots, and quick actions in one Windows or macOS desktop workspace. Use it for preparation and only in live interviews where AI assistance, transcription, and screenshots are permitted."],
+    ],
+    faqs: [
+      { q: "Is an AI interview answer generator free?", a: "Some websites and desktop products offer free access or a limited trial. Check the official plan, usage limits, privacy terms, and whether the experience supports the context you need." },
+      { q: "Can an answer generator use my resume?", a: "Some tools accept resume context. Remove unnecessary personal information, use an official product, and verify that every generated detail is accurate." },
+      { q: "Should I memorize an AI-generated answer?", a: "No. Learn the facts and structure, then practise explaining them naturally. Memorized scripts often fail when the interviewer asks a follow-up." },
+    ],
+    links: [["/ai-interview-assistant-with-resume-context/", "AI assistant with resume context"], ["/blog/resume-based-interview-questions-and-answers/", "Resume-based interview answers"], ["/blog/star-method-behavioral-interview-questions/", "STAR method guide"], ["/blog/mock-interview-with-ai/", "Free AI mock interview practice"], ["/download/", "Try Cluegent free"]],
+  },
+  {
+    slug: "generate-interview-questions-from-resume",
+    title: "Generate Interview Questions From Your Resume With AI | Cluegent",
+    description:
+      "Learn how to generate realistic interview questions from a resume and job description, then prepare project, behavioral, technical, and follow-up answers.",
+    h1: "How to Generate Interview Questions From Your Resume",
+    summary:
+      "Resume-based questions are valuable because they reveal where an interviewer is likely to test ownership, depth, decisions, results, and relevance to the open role.",
+    publishedDate: "2026-08-25",
+    modifiedDate: "2026-08-25",
+    sections: [
+      ["Prepare safe resume context", "Remove your address, phone number, references, identification numbers, and confidential employer information. Keep the roles, projects, skills, dates, and outcomes needed for interview practice. Add the job description separately so the questions can reflect both your experience and the target role."],
+      ["Generate questions in useful categories", "Request questions about career transitions, project ownership, technical depth, stakeholder decisions, failures, measurable outcomes, and skills named in the job description. Ask for easy, medium, and skeptical follow-ups rather than a single flat list."],
+      ["Test every resume claim", "For each important bullet, prepare what the problem was, what you personally did, why you chose that approach, what alternatives you considered, and how the result was measured. If you cannot answer those questions, rewrite the bullet or prepare the missing detail."],
+      ["Compare the resume with the job description", "Identify requirements with strong evidence, partial evidence, and no direct evidence. Prepare concise examples for the strong matches and honest learning plans for gaps. Do not ask AI to manufacture experience merely to match the vacancy."],
+      ["Build a practice sequence", "Begin with ‘tell me about yourself,’ continue with two project questions, one behavioral question, one technical follow-up, and a question about motivation. Answer aloud and ask for a deeper follow-up after each response."],
+      ["Use resume context in Cluegent", "Cluegent lets you add resume context and customize listening, screenshot, and typed responses. This can keep practice grounded in your real projects, but you remain responsible for accuracy and for following the rules of any live interview."],
+    ],
+    faqs: [
+      { q: "Can AI predict the exact questions from my resume?", a: "No. It can generate plausible questions from prominent claims and role requirements, but the interviewer may focus on different details." },
+      { q: "Should I upload my complete resume?", a: "Share only the information needed for practice and remove sensitive personal or confidential details. Review the product's privacy terms first." },
+      { q: "How many resume questions should I practise?", a: "Start with two or three questions for every important project or role, then add follow-ups about decisions, tradeoffs, results, and lessons." },
+    ],
+    links: [["/ai-interview-assistant-with-resume-context/", "Resume-aware AI assistant"], ["/blog/resume-based-interview-questions-and-answers/", "Resume interview questions and answers"], ["/blog/tell-me-about-yourself-software-engineer/", "Tell me about yourself"], ["/blog/mock-interview-with-ai/", "Practise with an AI mock interview"], ["/download/", "Download Cluegent"]],
+  },
+  {
+    slug: "product-manager-interview-questions-and-answers",
+    title: "Product Manager Interview Questions and Answers | Cluegent",
+    description:
+      "Prepare product manager interview questions about product sense, metrics, prioritization, execution, strategy, leadership, and behavioral examples.",
+    h1: "Product Manager Interview Questions and Answers",
+    summary:
+      "Product manager interviews test how you understand users, frame ambiguous problems, choose metrics, make tradeoffs, and lead without relying on authority.",
+    publishedDate: "2026-08-25",
+    modifiedDate: "2026-08-25",
+    sections: [
+      ["What product manager interviews test", "Most loops combine product sense, analytical thinking, execution, prioritization, strategy, technical collaboration, and behavioral evidence. Clarify the prompt, state assumptions, and make your decision process visible instead of rushing to a feature list."],
+      ["Product sense questions", "Practise questions such as ‘How would you improve a product you use?’, ‘Design a product for a new user group,’ and ‘What user problem should this company solve next?’ Begin with the objective and target user, identify pain points, prioritize one, propose a solution, and define success."],
+      ["Metrics and analytical questions", "Prepare north-star, input, guardrail, adoption, retention, and quality metrics. For a sudden metric change, segment the data, check instrumentation, identify when the change began, form hypotheses, and propose the fastest safe tests."],
+      ["Prioritization and execution", "Explain how you compare user value, strategic fit, evidence, effort, risk, dependencies, and reversibility. Strong answers acknowledge who loses when one option is prioritized and how you would monitor the decision after launch."],
+      ["Behavioral product questions", "Prepare truthful stories about influencing without authority, resolving disagreement, missing a target, using customer evidence, changing direction, and communicating a difficult tradeoff. Make your personal contribution and learning clear."],
+      ["Practise with realistic follow-ups", "After each answer, ask what assumption is weakest, what data is missing, how engineering would challenge the plan, and what would make you reverse the decision. Cluegent can help structure practice questions and follow-ups from your resume context."],
+    ],
+    faqs: [
+      { q: "How should I structure a product design answer?", a: "Clarify the objective, choose a user segment, identify needs, prioritize one problem, propose and compare solutions, define metrics, and discuss risks." },
+      { q: "Do PM interviews include technical questions?", a: "Many include technical collaboration, systems, APIs, experimentation, or data questions. The expected depth varies by company and product." },
+      { q: "How many product examples should I prepare?", a: "Prepare several products you understand well and six to eight behavioral stories covering launches, failures, prioritization, conflict, influence, and customer learning." },
+    ],
+    links: [["/blog/behavioral-interview-questions-with-ai/", "Behavioral interview questions"], ["/blog/job-interview-questions-and-answers/", "Common job interview questions"], ["/blog/mock-interview-with-ai/", "AI mock interview practice"], ["/ai-interview-assistant-with-resume-context/", "Resume-aware answers"], ["/download/", "Practise with Cluegent"]],
+  },
+  {
+    slug: "sales-interview-questions-and-answers",
+    title: "Sales Interview Questions and Answers | Cluegent",
+    description:
+      "Prepare sales interview questions about targets, prospecting, discovery, objections, negotiation, CRM discipline, failures, and customer relationships.",
+    h1: "Sales Interview Questions and Answers",
+    summary:
+      "Sales interviews require evidence: targets, activity, conversion, deal complexity, customer understanding, and what you changed when a strategy did not work.",
+    publishedDate: "2026-08-25",
+    modifiedDate: "2026-08-25",
+    sections: [
+      ["Tell me about your sales experience", "Summarize the customers, product, sales cycle, territory, quota, average deal size, and your role in the process. Use accurate numbers you are allowed to share and distinguish personal results from team results."],
+      ["How do you prospect?", "Describe how you define the ideal customer, research an account, identify a trigger, personalize outreach, and manage follow-up. Explain how you evaluate channel quality rather than measuring success only by message volume."],
+      ["How do you run discovery?", "Show that you can uncover the current process, pain, impact, decision criteria, stakeholders, timing, and alternatives. A strong answer includes listening and qualification, not immediately presenting every product feature."],
+      ["How do you handle objections?", "Acknowledge the concern, ask a clarifying question, confirm the underlying issue, respond with relevant evidence, and agree on a next step. Prepare examples for price, timing, competition, authority, and lack of urgency."],
+      ["Tell me about a lost deal", "Choose a meaningful example, own your contribution, explain the signals you missed, and describe the process change that followed. Interviewers are looking for coachability and judgment rather than a claim that every loss was outside your control."],
+      ["Prepare a truthful performance story", "Build short stories about exceeding a target, recovering a weak pipeline, improving conversion, working with marketing or product, and managing a difficult account. Use Cluegent to practise follow-ups while keeping every claim grounded in your real record."],
+    ],
+    faqs: [
+      { q: "What numbers should I mention in a sales interview?", a: "Where confidentiality allows, discuss quota attainment, pipeline, conversion, deal size, sales-cycle length, retention, or activity quality. Clearly label personal and team figures." },
+      { q: "How do I answer sales questions as a fresher?", a: "Use internships, projects, fundraising, events, customer service, persuasion, or goal-based activities to demonstrate communication, persistence, learning, and measurement." },
+      { q: "Should I prepare a mock sales pitch?", a: "Yes. Research the company, clarify the audience and problem, and practise discovery before pitching. Be prepared for objections and a clear next step." },
+    ],
+    links: [["/blog/job-interview-questions-and-answers/", "Job interview questions and answers"], ["/blog/why-should-we-hire-you-answer/", "Why should we hire you?"], ["/blog/strengths-and-weaknesses-interview-answers/", "Strengths and weaknesses"], ["/blog/mock-interview-with-ai/", "Mock interview with AI"], ["/download/", "Try Cluegent free"]],
+  },
+  {
+    slug: "situational-interview-questions-and-answers",
+    title: "Situational Interview Questions and Answers | Cluegent",
+    description:
+      "Prepare situational interview questions about priorities, conflict, customers, mistakes, leadership, ambiguity, ethics, and changing requirements.",
+    h1: "Situational Interview Questions and Answers",
+    summary:
+      "Situational questions test how you would think and act in a realistic future scenario. Strong answers clarify the facts, identify risks, and explain a defensible sequence of actions.",
+    publishedDate: "2026-08-25",
+    modifiedDate: "2026-08-25",
+    sections: [
+      ["Situational versus behavioral questions", "Behavioral questions ask what you did in the past; situational questions ask what you would do. You can still use relevant past evidence, but first address the hypothetical scenario and explain the assumptions behind your response."],
+      ["Use clarify, prioritize, act, review", "Clarify missing information, identify the people and risks involved, prioritize the objective, describe your immediate and longer-term actions, communicate appropriately, and explain how you would measure or review the outcome."],
+      ["Conflicting deadlines", "Explain how you would compare impact, urgency, dependencies, and consequences; confirm priorities with the relevant owner; communicate tradeoffs early; and protect the minimum quality required. Avoid promising that everything will be completed without changing scope or timing."],
+      ["A difficult customer or stakeholder", "Listen without becoming defensive, confirm the underlying concern, gather the relevant facts, explain what you can do, set a realistic next step, and document the agreement. Escalate when authority, safety, legal, or reputational risk requires it."],
+      ["A mistake or ethical concern", "Protect people and customers first, stop further harm where appropriate, document facts, notify the correct owner, and avoid hiding or altering evidence. Explain how you would support a root-cause review and prevention without assigning blame prematurely."],
+      ["Practise variations and follow-ups", "Ask how your answer changes when time is shorter, data is incomplete, a manager disagrees, or the customer is at risk. Cluegent can help generate follow-up practice from a real job description and resume context."],
+    ],
+    faqs: [
+      { q: "What is a situational interview question?", a: "It presents a hypothetical workplace scenario and asks how you would respond. The interviewer evaluates judgment, priorities, communication, and risk awareness." },
+      { q: "Can I use STAR for situational questions?", a: "You can reference a past example, but a future-focused structure such as clarify, prioritize, act, and review is often more direct." },
+      { q: "What if the scenario does not include enough information?", a: "State the most important questions you would ask, make reasonable assumptions explicit, and explain how different answers would change your action." },
+    ],
+    links: [["/blog/behavioral-interview-questions-with-ai/", "Behavioral interview questions"], ["/blog/star-method-behavioral-interview-questions/", "STAR answer framework"], ["/blog/job-interview-questions-and-answers/", "50 common interview questions"], ["/blog/mock-interview-with-ai/", "Practise interview scenarios"], ["/download/", "Download Cluegent"]],
+  },
+  {
+    slug: "phone-interview-questions-and-answers",
+    title: "Phone Interview Questions and Answers | Cluegent",
+    description:
+      "Prepare phone screening questions about your background, motivation, availability, salary, experience, role fit, and questions for the recruiter.",
+    h1: "Phone Interview Questions and Answers",
+    summary:
+      "A phone interview is usually a short fit and logistics screen. Clear, concise answers help the recruiter understand your experience, motivation, and practical alignment quickly.",
+    publishedDate: "2026-08-25",
+    modifiedDate: "2026-08-25",
+    sections: [
+      ["What a phone interview usually covers", "Expect questions about your current role, relevant experience, interest in the vacancy, reason for leaving, location, work authorization, notice period, availability, and compensation expectations. Some recruiters also ask one or two role-specific screening questions."],
+      ["Prepare a concise introduction", "Use a 60-second present-past-future answer: what you do now, one or two experiences relevant to the opening, and why this opportunity is a logical next step. Keep your resume and the job description nearby for permitted reference."],
+      ["Explain why you want the role", "Mention specific responsibilities, customers, technology, or company direction. Connect those details to evidence from your background. Avoid answers that could be used unchanged for any employer."],
+      ["Handle salary and availability clearly", "Know your researched range, notice period, interview availability, and earliest realistic start date. Clarify whether compensation refers to base or total pay, and do not create a false competing offer or artificial deadline."],
+      ["Improve phone-call delivery", "Use headphones if they improve audio, take the call in a quiet place, keep water nearby, and pause briefly before answering. Because visual cues are missing, signal when you have finished and ask for clarification if the connection or question is unclear."],
+      ["Close with useful questions", "Ask about the immediate need, interview stages, team, work arrangement, timeline, and any essential requirement not yet discussed. Confirm the next step and send a brief thank-you message afterward when appropriate."],
+    ],
+    faqs: [
+      { q: "How long is a phone interview?", a: "Recruiter screens often last 15 to 30 minutes, although technical or hiring-manager phone interviews can be longer." },
+      { q: "Can I use notes during a phone interview?", a: "Follow the interview rules. When notes are allowed, use short prompts rather than reading complete scripted answers." },
+      { q: "What should I ask at the end?", a: "Ask about the role's immediate priority, the remaining interview stages, expected timeline, and anything important the recruiter wants clarified." },
+    ],
+    links: [["/blog/tell-me-about-yourself-software-engineer/", "Tell me about yourself"], ["/blog/salary-expectations-interview-answer/", "Salary expectations answer"], ["/blog/questions-to-ask-interviewer-at-end/", "Questions to ask the interviewer"], ["/blog/follow-up-email-after-interview/", "Follow-up email guide"], ["/download/", "Practise with Cluegent"]],
+  },
+  {
+    slug: "star-interview-answer-template",
+    title: "STAR Interview Answer Template and Examples | Cluegent",
+    description:
+      "Use a practical STAR interview answer template for behavioral questions, with examples, follow-up checks, story-bank guidance, and common mistakes.",
+    h1: "STAR Interview Answer Template and Examples",
+    summary:
+      "The STAR method turns a real experience into a concise behavioral answer by separating context, responsibility, personal action, and evidence of the result.",
+    publishedDate: "2026-08-25",
+    modifiedDate: "2026-08-25",
+    sections: [
+      ["The STAR answer template", "Situation: provide only the context needed to understand the problem. Task: state your responsibility and the desired outcome. Action: explain the decisions and work you personally performed. Result: give the outcome, evidence, lesson, and what changed afterward."],
+      ["A fill-in-the-blank framework", "‘When [situation], I was responsible for [task]. I first [action and reasoning], then [second action or collaboration]. This led to [result or evidence]. I learned [lesson], and since then I have [lasting improvement].’ Replace every placeholder with a truthful, specific detail."],
+      ["Example: resolving disagreement", "Situation: two teams disagreed about releasing before all edge cases were automated. Task: protect reliability without missing a customer commitment. Action: identify the highest-risk cases, review support evidence, and propose a limited rollout with monitoring. Result: launch on time, catch one issue before expansion, and reuse the checklist later."],
+      ["Keep the Action section personal", "Use ‘I’ for your decisions and contribution, then explain where the team collaborated. Include alternatives, constraints, stakeholders, and why you selected the approach. Avoid taking credit for work you did not perform."],
+      ["Make the Result credible", "Use approved metrics where available, or observable evidence such as reduced review time, fewer incidents, clearer ownership, improved adoption, or a prevented risk. Do not invent percentages simply because a generated answer sounds stronger with a number."],
+      ["Build and practise a story bank", "Prepare six to eight stories covering success, failure, conflict, leadership, ambiguity, feedback, customer impact, and a difficult tradeoff. Use Cluegent to shorten a real story and generate follow-ups, then verify every fact before practice."],
+    ],
+    faqs: [
+      { q: "How long should a STAR answer be?", a: "Most answers work well in 60 to 120 seconds. Keep the situation brief and spend most of the time on your actions and result." },
+      { q: "What if I do not have a measurable result?", a: "Use credible observable evidence and explain the lesson or process change. Never invent a metric." },
+      { q: "Can one STAR story answer several questions?", a: "Yes. A strong story can support different themes when you change the emphasis honestly, but the facts should remain consistent." },
+    ],
+    links: [["/blog/star-method-behavioral-interview-questions/", "STAR behavioral questions"], ["/blog/behavioral-interview-questions-with-ai/", "Behavioral interview examples"], ["/blog/how-to-use-ai-interview-answer-generator/", "AI interview answer workflow"], ["/ai-interview-assistant-with-resume-context/", "Resume-aware practice"], ["/download/", "Practise STAR answers in Cluegent"]],
+  },
+  {
+    slug: "follow-up-email-after-interview",
+    title: "Follow-Up Email After an Interview: Templates | Cluegent",
+    description:
+      "Write a concise follow-up email after an interview with thank-you, status request, second follow-up, recruiter, and no-response templates.",
+    h1: "Follow-Up Email After an Interview",
+    summary:
+      "A good interview follow-up is short, specific, and easy to answer. Thank the interviewer, reinforce one relevant point, and make the requested next step clear.",
+    publishedDate: "2026-08-25",
+    modifiedDate: "2026-08-25",
+    sections: [
+      ["When to send a thank-you email", "Send a brief thank-you within 24 hours when appropriate. Mention the role, one specific topic from the conversation, and why it increased your interest. Proofread names, job title, and company details before sending."],
+      ["Thank-you email template", "Subject: Thank you — [Role] interview. ‘Hi [Name], thank you for speaking with me about the [Role] position. I especially appreciated our discussion about [specific topic]. My experience with [relevant evidence] would help me contribute to [priority]. Please let me know if I can provide anything else. Best, [Name].’"],
+      ["When to request an update", "Use the timeline stated during the interview. If no date was given, wait approximately five business days before requesting an update. Account for weekends, holidays, and complex interview loops."],
+      ["Status follow-up template", "Subject: Follow-up — [Role] interview. ‘Hi [Name], I’m following up on the [Role] interview from [date]. I remain interested in the opportunity and enjoyed learning about [specific detail]. Is there an updated timeline for the next step? I’m happy to provide any additional information. Best, [Name].’"],
+      ["A second follow-up", "If the stated timeline has passed and the first message received no response, wait another five to seven business days and send one final concise note. Continue other applications rather than repeatedly contacting the same people."],
+      ["What to avoid", "Do not demand an immediate decision, guilt the recruiter, send daily messages, connect with every employee, or fabricate another offer. If you have a genuine deadline, state the date calmly and ask whether an update is possible."],
+    ],
+    faqs: [
+      { q: "How soon should I follow up after an interview?", a: "Send a thank-you within about 24 hours. For a status update, follow the employer's stated timeline or wait roughly five business days when none was provided." },
+      { q: "Should I follow up after no response?", a: "Yes, one polite status request and one final follow-up are reasonable. Continue your job search and avoid repeated messages." },
+      { q: "What subject line should I use?", a: "Use a clear subject such as ‘Thank you — Product Manager interview’ or ‘Follow-up — Software Engineer interview.’" },
+    ],
+    links: [["/blog/questions-to-ask-interviewer-at-end/", "Questions to ask an interviewer"], ["/blog/phone-interview-questions-and-answers/", "Phone interview guide"], ["/blog/job-interview-questions-and-answers/", "Job interview questions"], ["/blog/salary-expectations-interview-answer/", "Salary expectations"], ["/download/", "Practise interviews with Cluegent"]],
+  },
+  {
+    slug: "customer-service-interview-questions-and-answers",
+    title: "Customer Service Interview Questions and Answers | Cluegent",
+    description:
+      "Prepare customer service interview questions about difficult customers, empathy, prioritization, communication, metrics, teamwork, and service recovery.",
+    h1: "Customer Service Interview Questions and Answers",
+    summary:
+      "Customer service interviews test whether you can understand a customer's problem, communicate calmly, take ownership, use sound judgment, and improve the wider service process.",
+    publishedDate: "2026-08-25",
+    modifiedDate: "2026-08-25",
+    sections: [
+      ["What does good customer service mean to you?", "Define service as understanding the customer's goal, setting accurate expectations, resolving or owning the issue, and making the next step clear. Include both empathy and operational discipline rather than treating friendliness as the complete answer."],
+      ["Tell me about a difficult customer", "Use STAR to explain the concern, why the customer was frustrated, how you listened and clarified, the options you provided, and the outcome. Do not insult or diagnose the customer, and avoid presenting yourself as calm only because they were unreasonable."],
+      ["How do you prioritize several customers?", "Compare urgency, customer impact, safety, contractual commitments, blocked work, and time sensitivity. Acknowledge each request, set realistic expectations, document ownership, and escalate according to the service process."],
+      ["What if you do not know the answer?", "Say that you would not guess. Gather the relevant details, check approved resources, ask the correct subject-matter expert, set a follow-up time, and return with a verified answer. Explain how you would document a recurring gap."],
+      ["How do you measure customer service?", "Discuss customer satisfaction, first-response time, resolution time, reopen rate, quality reviews, retention, escalation rate, and customer effort. Explain that a single speed metric can create poor behavior when quality and resolution are ignored."],
+      ["Prepare evidence from your experience", "Build stories about de-escalation, prioritization, a mistake, teamwork, a process improvement, and difficult feedback. Freshers can use retail, volunteering, college events, hospitality, or group projects when the examples demonstrate real service behavior."],
+    ],
+    faqs: [
+      { q: "How should I answer without customer service experience?", a: "Use any real situation where you understood a person's need, communicated clearly, solved a problem, handled pressure, or took responsibility for a result." },
+      { q: "What is the best way to handle an angry customer?", a: "Listen, acknowledge the impact, clarify facts, explain available options, agree on a next step, and escalate when the issue exceeds your authority or involves significant risk." },
+      { q: "Which customer service metrics should I know?", a: "Common metrics include satisfaction, response time, resolution time, first-contact resolution, reopen rate, quality scores, customer effort, retention, and escalation rate." },
+    ],
+    links: [["/blog/situational-interview-questions-and-answers/", "Situational interview questions"], ["/blog/behavioral-interview-questions-with-ai/", "Behavioral interview answers"], ["/blog/strengths-and-weaknesses-interview-answers/", "Strengths and weaknesses"], ["/blog/why-should-we-hire-you-answer/", "Why should we hire you?"], ["/download/", "Try Cluegent free"]],
+  }
+);
+
 function blogIndexTemplate() {
   const title = "Cluegent Blog | AI Interview Assistant Guides";
   const description = "Guides on AI interview assistants, coding interviews, screen sharing, STAR answers, JavaScript questions, React questions, and system design prep.";
@@ -5883,6 +6501,14 @@ function blogIndexTemplate() {
             <p>Prepare common, behavioral, Python, Java, SQL, data analyst, JavaScript, and system design interviews from one organized library.</p>
           </div>
           <a class="primary-download" href="/interview-questions/">Browse questions</a>
+        </div>
+        <div class="seo-featured-resource reveal resource-featured-library">
+          <div>
+            <p class="section-kicker">Free preparation toolkit</p>
+            <h2>Printable resources that turn reading into practice</h2>
+            <p>Use the interview checklist, STAR worksheet, and mock interview scorecard without creating an account.</p>
+          </div>
+          <a class="primary-download" href="/resources/">Open free resources</a>
         </div>
         <div class="seo-card-grid">
           ${blogPosts
@@ -6204,6 +6830,8 @@ function buildSitemap() {
     "/alternatives/",
     ...alternatives.map((item) => competitorCanonicalPath(item)),
     "/interview-questions/",
+    "/resources/",
+    ...prepResources.map((resource) => `/resources/${resource.slug}/`),
     "/blog/",
     ...blogPosts
       .map((post) => canonicalPath(`/blog/${post.slug}/`))
@@ -6241,6 +6869,10 @@ for (const item of alternatives) {
 
 writePage("blog/index.html", blogIndexTemplate());
 writePage("interview-questions/index.html", interviewQuestionsHubTemplate());
+writePage("resources/index.html", resourcesHubTemplate());
+for (const resource of prepResources) {
+  writePage(`resources/${resource.slug}/index.html`, resourceTemplate(resource));
+}
 for (const post of blogPosts) {
   writePage(`blog/${post.slug}/index.html`, articleTemplate(post));
 }
@@ -6250,4 +6882,4 @@ writePage("editorial-policy/index.html", editorialPolicyTemplate());
 writePage("sitemap.xml", buildSitemap());
 writePage("robots.txt", buildRobots());
 
-console.log(`Generated ${landingPages.length + alternatives.length + blogPosts.length + 6} SEO files in website/`);
+console.log(`Generated ${landingPages.length + alternatives.length * 2 + blogPosts.length + prepResources.length + 7} SEO files in website/`);
