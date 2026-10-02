@@ -242,6 +242,9 @@ export class AppState {
   private _isQuitting: boolean = false;
   private isListeningActive: boolean = false;
   private isMicListeningActive: boolean = false;
+  private listeningSystemEnabled = true;
+  private listeningMicEnabled = true;
+  private configuredAudioKey: string | null = null;
   private _verboseLogging: boolean = false;
   private _disguiseTimers: NodeJS.Timeout[] = []; // Track forceUpdate timeouts
   private _dockDebounceTimer: NodeJS.Timeout | null = null; // Debounce dock state changes
@@ -493,7 +496,7 @@ export class AppState {
   }
 
   private broadcastListeningState(): void {
-    this.broadcast('listening-state-changed', { isListening: this.isListeningActive });
+    this.broadcast('listening-state-changed', { isListening: this.isListeningActive, systemEnabled: this.listeningSystemEnabled, micEnabled: this.listeningMicEnabled });
   }
 
   private initializeRAGManager(): void {
@@ -916,6 +919,17 @@ export class AppState {
     return stt;
   }
 
+  public prepareListeningTokens(): void {
+    if (!this.isMeetingActive) return;
+    this.googleSTT ??= this.createSTTProvider('interviewer');
+    this.googleSTT_User ??= this.createSTTProvider('user');
+    for (const stt of [this.googleSTT, this.googleSTT_User]) {
+      if (stt instanceof FirebaseManagedSTT) {
+        void stt.prefetchAccessToken().catch(error => console.warn('[Listening] Token prefetch failed; will retry on Start:', error.message));
+      }
+    }
+  }
+
   private setupSystemAudioPipeline(mode: 'all' | 'system' | 'mic' = 'all'): void {
     // REMOVED EARLY RETURN: if (this.systemAudioCapture && this.microphoneCapture) return; // Already initialized
 
@@ -1010,6 +1024,9 @@ export class AppState {
   }
 
   private async reconfigureAudio(inputDeviceId?: string, outputDeviceId?: string): Promise<void> {
+    const key = JSON.stringify([inputDeviceId || null, outputDeviceId || null]);
+    if (key === this.configuredAudioKey && this.systemAudioCapture && this.microphoneCapture) return;
+    this.configuredAudioKey = key;
     console.log(`[Main] Reconfiguring Audio: Input=${inputDeviceId}, Output=${outputDeviceId}`);
 
     // 1. System Audio (Output Capture)
@@ -1172,7 +1189,7 @@ export class AppState {
             ? 'system'
             : 'mic';
         this.setupSystemAudioPipeline(mode);
-        if (this.isListeningActive) {
+        if (this.isListeningActive && this.listeningSystemEnabled) {
           this.systemAudioCapture?.start();
           this.googleSTT?.start();
         }
@@ -1210,7 +1227,7 @@ export class AppState {
     if (!this.systemAudioCapture) return;
 
     this.systemAudioCapture.on('error', async (err: Error) => {
-      if (!this.isMeetingActive || !this.isListeningActive) return; // Only recover during active listening sessions
+      if (!this.isMeetingActive || !this.isListeningActive || !this.listeningSystemEnabled) return; // Never restart a disabled source
 
       const now = Date.now();
       this._systemAudioLastFailureAt = now;
@@ -1236,6 +1253,8 @@ export class AppState {
           this._systemAudioRecoveryTimer = setTimeout(resolve, 1500);
         });
         this._systemAudioRecoveryTimer = null;
+
+        if (!this.isMeetingActive || !this.isListeningActive || !this.listeningSystemEnabled) return;
 
         // Restart the audio captures without disturbing the STT provider or the session
         this.systemAudioCapture?.stop();
@@ -1358,11 +1377,7 @@ export class AppState {
       this._systemAudioRecoveryTimer = null;
     }
 
-    if (!(await ensureMacMicrophoneAccess('meeting start'))) {
-      const message = 'Microphone access denied. Please allow microphone access in System Settings.';
-      this.broadcast('meeting-audio-error', message);
-      throw new Error(message);
-    }
+    // First-use permission prompts happen after the overlay becomes visible.
 
     // Check Screen Recording permission required for system audio capture
     // (CoreAudio Global Process Tap + ScreenCaptureKit both need this).
@@ -1412,10 +1427,17 @@ export class AppState {
   }
 
   public async startListening(metadata?: any): Promise<void> {
+    const startupStartedAt = Date.now();
     if (!this.isMeetingActive) {
       await this.startMeeting(metadata);
     }
     if (this.isListeningActive && this.isMicListeningActive) return;
+    this.listeningSystemEnabled = metadata?.sources?.systemEnabled !== false;
+    this.listeningMicEnabled = metadata?.sources?.micEnabled !== false;
+
+    if (this.listeningMicEnabled && !(await ensureMacMicrophoneAccess('listening'))) {
+      throw new Error('Microphone access denied. Enable microphone access in System Settings or turn the mic off.');
+    }
 
     try {
       if (metadata?.audio) {
@@ -1423,17 +1445,18 @@ export class AppState {
       }
 
       this.setupSystemAudioPipeline('all');
+      console.log(`[ListeningTiming] Capture setup ready after ${Date.now() - startupStartedAt}ms`);
 
-      if (!this.isListeningActive) {
+      if (!this.isListeningActive && this.listeningSystemEnabled) {
         this.googleSTT?.setUsageReportingEnabled?.(true);
         this.systemAudioCapture?.start();
         this.googleSTT?.start();
       }
 
-      if (!this.isMicListeningActive) {
+      if (!this.isMicListeningActive && this.listeningMicEnabled) {
         // Combined Start Listening runs microphone STT for context, but usage
         // should be counted once for the listening session, not once per stream.
-        this.googleSTT_User?.setUsageReportingEnabled?.(false);
+        this.googleSTT_User?.setUsageReportingEnabled?.(!this.listeningSystemEnabled);
         this.microphoneCapture?.start();
         this.googleSTT_User?.start();
       }
@@ -1443,7 +1466,7 @@ export class AppState {
       }
 
       this.isListeningActive = true;
-      this.isMicListeningActive = true;
+      this.isMicListeningActive = this.listeningMicEnabled;
       this.broadcastListeningState();
       console.log('[Main] Combined system + microphone listening started.');
     } catch (err) {
@@ -1471,14 +1494,40 @@ export class AppState {
     console.log('[Main] Combined listening stopped.');
   }
 
+  public async setListeningSource(source: 'system' | 'mic', enabled: boolean): Promise<void> {
+    if (!this.isListeningActive) throw new Error('Start listening before changing audio sources.');
+    if (source !== 'system' && source !== 'mic') throw new Error('Invalid audio source.');
+    if (typeof enabled !== 'boolean') throw new Error('Invalid audio state.');
+    const capture = source === 'system' ? this.systemAudioCapture : this.microphoneCapture;
+    const stt = source === 'system' ? this.googleSTT : this.googleSTT_User;
+    if (!capture || !stt) throw new Error('Audio source is unavailable. Restart listening to try again.');
+    if (enabled) {
+      capture.start();
+      stt.start();
+    } else {
+      capture.stop();
+      stt.stop();
+    }
+    if (source === 'system') this.listeningSystemEnabled = enabled;
+    else {
+      this.listeningMicEnabled = enabled;
+      this.isMicListeningActive = enabled;
+    }
+    // Only one active stream reports usage, including microphone-only listening.
+    this.googleSTT?.setUsageReportingEnabled?.(this.listeningSystemEnabled);
+    this.googleSTT_User?.setUsageReportingEnabled?.(!this.listeningSystemEnabled && this.listeningMicEnabled);
+    this.broadcastListeningState();
+  }
+
   public async startMicStt(): Promise<void> {
+    if (!(await ensureMacMicrophoneAccess('voice input'))) throw new Error('Microphone access denied. Enable it in System Settings.');
     if (!this.isMeetingActive) {
       await this.startMeeting();
     }
     if (this.isMicListeningActive) return;
 
     this.setupSystemAudioPipeline('mic');
-    this.googleSTT_User?.setUsageReportingEnabled?.(true);
+    this.googleSTT_User?.setUsageReportingEnabled?.(!this.isListeningActive || !this.listeningSystemEnabled);
     this.microphoneCapture?.start();
     this.googleSTT_User?.start();
     this.isMicListeningActive = true;
@@ -1487,6 +1536,8 @@ export class AppState {
 
   public async stopMicStt(): Promise<void> {
     if (!this.isMicListeningActive) return;
+    // Voice-input completion must not stop a microphone used by live listening.
+    if (this.isListeningActive && this.listeningMicEnabled) return;
 
     this.microphoneCapture?.stop();
     this.googleSTT_User?.stop();
@@ -2592,72 +2643,7 @@ async function initializeApp() {
   // Pre-create settings window in background for faster first open
   appState.settingsWindowHelper.preloadWindow()
 
-  // One-time macOS screen recording permission prompt.
-  //
-  // We must fire this AFTER createWindow() so that:
-  //   1. The Natively launcher window is visible and focused when the TCC dialog
-  //      appears — macOS anchors the dialog to the frontmost app window on Ventura+.
-  //      Without a visible window the dialog can appear behind other apps (Sequoia).
-  //   2. In stealth/undetectable mode the dock icon is hidden, but the window is
-  //      still visible — the dialog still has a surface to attach to.
-  //
-  // The 800ms delay lets the launcher's ready-to-show animation complete so the
-  // window is fully composited before the system sheet appears above it.
-  //
-  // TCC caches the decision permanently after the first response — this block
-  // runs exactly ONCE on the first launch of each unique packaged binary.
-  // On every subsequent launch the status is 'granted' or 'denied', and we skip.
-  if (process.platform === 'darwin') {
-    setTimeout(async () => {
-      try {
-        const screenStatus = systemPreferences.getMediaAccessStatus('screen');
-        console.log(`[Init] Screen recording permission status at startup: ${screenStatus}`);
-
-        if (!app.isPackaged) {
-          console.log('[Init] Ignoring screen recording permission check in development mode');
-          return;
-        }
-
-        if (screenStatus === 'not-determined') {
-          // First launch: trigger the one-time TCC dialog by making a minimal
-          // desktopCapturer call. macOS will show the permission sheet anchored
-          // to our window. The user's response is stored permanently in the TCC
-          // database — we do NOT check status immediately after because the dialog
-          // is still open; the status will be read correctly next time `startMeeting`
-          // is called (which is the correct gate for system audio access).
-          console.log('[Init] Screen recording not-determined — showing one-time TCC dialog...');
-          try {
-            await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 1, height: 1 } });
-          } catch (e) {
-            // On some Electron builds getSources throws when permission is pending —
-            // that's fine; the TCC dialog has still been triggered.
-            console.log('[Init] getSources threw (expected during TCC pending state):', (e as Error).message);
-          }
-          // NOTE: Do NOT read afterStatus here — TCC response is async (dialog still open).
-          // startMeeting() reads the status when the user actually tries to use audio.
-
-        } else if (screenStatus === 'denied') {
-          // Returning user who previously denied — show the banner immediately at startup
-          // so they know system audio won't work before they even start a meeting.
-          console.warn('[Init] Screen recording was previously denied — notifying UI banner.');
-          const { BrowserWindow } = require('electron');
-          BrowserWindow.getAllWindows().forEach((win: Electron.BrowserWindow) => {
-            if (!win.isDestroyed()) {
-              win.webContents.send(
-                'system-audio-permission-denied',
-                'Screen Recording is disabled. System audio capture will not work. Click "Open Settings" to enable it, then restart Cluegent.'
-              );
-            }
-          });
-        } else {
-          // 'granted' or 'restricted' — nothing to do.
-          console.log(`[Init] Screen recording permission already resolved: ${screenStatus}`);
-        }
-      } catch (e) {
-        console.warn('[Init] Startup screen recording permission check failed:', e);
-      }
-    }, 800);
-  }
+  // Permissions are requested only after the session overlay is shown.
 
   // Initialize CalendarManager
   try {

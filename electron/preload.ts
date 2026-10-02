@@ -101,8 +101,9 @@ interface ElectronAPI {
   endMeeting: () => Promise<{ success: boolean; error?: string }>
   startListening: (metadata?: any) => Promise<{ success: boolean; error?: string }>
   stopListening: () => Promise<{ success: boolean; error?: string }>
+  setListeningSource: (source: 'system' | 'mic', enabled: boolean) => Promise<{ success: boolean; error?: string }>
   getListeningActive: () => Promise<boolean>
-  onListeningStateChanged: (callback: (data: { isListening: boolean }) => void) => () => void
+  onListeningStateChanged: (callback: (data: { isListening: boolean; systemEnabled?: boolean; micEnabled?: boolean }) => void) => () => void
   startMicSTT: () => Promise<{ success: boolean; error?: string }>
   stopMicSTT: () => Promise<{ success: boolean; error?: string }>
   finalizeMicSTT: () => Promise<void>
@@ -166,6 +167,8 @@ interface ElectronAPI {
   setOverlayMousePassthrough: (enabled: boolean) => Promise<{ success: boolean }>
   toggleOverlayMousePassthrough: () => Promise<{ success: boolean; enabled: boolean }>
   getOverlayMousePassthrough: () => Promise<boolean>
+  setOverlayHitTestIgnore: (ignore: boolean) => Promise<void>
+  getOverlayCursorPosition: () => Promise<{ x: number; y: number } | null>
   onOverlayMousePassthroughChanged: (callback: (enabled: boolean) => void) => () => void
 
   // Streaming listeners
@@ -232,6 +235,7 @@ interface ElectronAPI {
   profileGetProfile: () => Promise<any>;
   profileOpenResume: () => Promise<{ success: boolean; error?: string }>;
   profileSelectFile: () => Promise<{ success?: boolean; cancelled?: boolean; filePath?: string; error?: string }>;
+  sessionSelectReference: () => Promise<{ success: boolean; cancelled?: boolean; document?: { name: string; content: string }; error?: string }>;
   onProfileStatusChanged: (callback: (status: { hasProfile: boolean; profileMode: boolean; name?: string; role?: string; totalExperienceYears?: number }) => void) => () => void;
 
   // JD & Research API
@@ -478,6 +482,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   setOverlayMousePassthrough: (enabled: boolean) => ipcRenderer.invoke("set-overlay-mouse-passthrough", enabled),
   toggleOverlayMousePassthrough: () => ipcRenderer.invoke("toggle-overlay-mouse-passthrough"),
   getOverlayMousePassthrough: () => ipcRenderer.invoke("get-overlay-mouse-passthrough"),
+  setOverlayHitTestIgnore: (ignore: boolean) => ipcRenderer.invoke('overlay:hit-test-ignore', ignore),
+  getOverlayCursorPosition: () => ipcRenderer.invoke('overlay:cursor-position'),
   setOpenAtLogin: (open: boolean) => ipcRenderer.invoke("set-open-at-login", open),
   getOpenAtLogin: () => ipcRenderer.invoke("get-open-at-login"),
   setDisguise: (mode: 'terminal' | 'settings' | 'activity' | 'none') => ipcRenderer.invoke("set-disguise", mode),
@@ -519,6 +525,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Permissions
   checkPermissions:    () => ipcRenderer.invoke("permissions:check"),
   requestMicPermission: () => ipcRenderer.invoke("permissions:request-mic"),
+  prepareOverlayPermissions: () => ipcRenderer.invoke("permissions:prepare-overlay"),
 
   // STT Provider Management
   setSttProvider: () => ipcRenderer.invoke("set-stt-provider"),
@@ -648,9 +655,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   endMeeting: () => ipcRenderer.invoke("end-meeting"),
   startListening: (metadata?: any) => ipcRenderer.invoke("start-listening", metadata),
   stopListening: () => ipcRenderer.invoke("stop-listening"),
+  setListeningSource: (source: 'system' | 'mic', enabled: boolean) => ipcRenderer.invoke("set-listening-source", source, enabled),
   getListeningActive: () => ipcRenderer.invoke("get-listening-active"),
-  onListeningStateChanged: (callback: (data: { isListening: boolean }) => void) => {
-    const subscription = (_: any, data: { isListening: boolean }) => callback(data);
+  onListeningStateChanged: (callback: (data: { isListening: boolean; systemEnabled?: boolean; micEnabled?: boolean }) => void) => {
+    const subscription = (_: any, data: { isListening: boolean; systemEnabled?: boolean; micEnabled?: boolean }) => callback(data);
     ipcRenderer.on("listening-state-changed", subscription);
     return () => {
       ipcRenderer.removeListener("listening-state-changed", subscription);
@@ -1024,6 +1032,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   profileGetProfile: () => ipcRenderer.invoke('profile:get-profile'),
   profileOpenResume: () => ipcRenderer.invoke('profile:open-resume'),
   profileSelectFile: () => ipcRenderer.invoke('profile:select-file'),
+  sessionSelectReference: () => ipcRenderer.invoke('session:select-reference'),
   onProfileStatusChanged: (callback: (status: { hasProfile: boolean; profileMode: boolean; name?: string; role?: string; totalExperienceYears?: number }) => void) => {
     const subscription = (_: any, status: { hasProfile: boolean; profileMode: boolean; name?: string; role?: string; totalExperienceYears?: number }) => callback(status);
     ipcRenderer.on('profile-status-changed', subscription);

@@ -492,6 +492,19 @@ body {
   color: rgba(255, 255, 255, 0.95);
 }
 
+/* Response pages always use light text, independently of the launcher theme. */
+.cluegent-response-panel {
+  --overlay-text-primary: rgba(255, 255, 255, 0.98);
+  --overlay-text-secondary: rgba(255, 255, 255, 0.82);
+  --overlay-text-muted: rgba(255, 255, 255, 0.65);
+}
+.cluegent-response-panel .text-white,
+.cluegent-response-panel .markdown-content,
+.cluegent-response-panel .markdown-content p,
+.cluegent-response-panel .markdown-content li {
+  color: #fff;
+}
+
 .cluegent-response-card .markdown-content {
   color: rgba(255, 255, 255, 0.95);
 }

@@ -252,11 +252,7 @@ function selectAssistantModelRoute(input: {
   const planPeriodUsage = getPlanPeriodUsage(input.subscription, input.usage);
   const premiumUsedBefore = planPeriodUsage[premiumCounter];
 
-  if (
-    input.hasOpenAiApiKey &&
-    premiumAllowance > 0 &&
-    premiumUsedBefore < premiumAllowance
-  ) {
+  if (input.hasOpenAiApiKey) {
     return {
       provider: "openai",
       modelId: DEFAULT_OPENAI_CHAT_MODEL_ID,
@@ -267,33 +263,7 @@ function selectAssistantModelRoute(input: {
     };
   }
 
-  if (input.hasScreenshot) {
-    if (!input.hasGeminiApiKey) {
-      throw new Error("GEMINI_CONFIG_MISSING");
-    }
-
-    return {
-      provider: "gemini",
-      modelId: "gemini-2.5-flash-lite",
-      premiumApplied: false,
-      premiumAllowance,
-      premiumUsedBefore,
-      premiumCounter: null,
-    };
-  }
-
-  if (!input.hasDeepSeekApiKey) {
-    throw new Error("DEEPSEEK_CONFIG_MISSING");
-  }
-
-  return {
-    provider: "deepseek",
-    modelId: DEFAULT_DEEPSEEK_CHAT_MODEL_ID,
-    premiumApplied: false,
-    premiumAllowance,
-    premiumUsedBefore,
-    premiumCounter: null,
-  };
+  throw new Error("OPENAI_API_KEY is required for GPT-6 Luna responses.");
 }
 
 interface TranscriptionFailureResponse {
@@ -1057,73 +1027,8 @@ export async function processAssistantReplyStreamController(
                 streamDelta
               );
     } catch (error) {
-      if (route.provider !== "openai" || !(error instanceof OpenAiServiceError)) {
-        throw error;
-      }
-
-      console.warn("[processAssistantReplyStream] OpenAI route failed; falling back", {
-        hasScreenshot,
-        model: route.modelId,
-        error: error.message,
-      });
-
-      if (hasScreenshot && geminiApiKey) {
-        resolvedRoute = {
-          provider: "gemini",
-          modelId: "gemini-2.5-flash-lite",
-          premiumApplied: false,
-          premiumAllowance: route.premiumAllowance,
-          premiumUsedBefore: route.premiumUsedBefore,
-          premiumCounter: null,
-        };
-        writeSse(response, {
-          meta: {
-            provider: resolvedRoute.provider,
-            model: resolvedRoute.modelId,
-            fallbackFrom: "openai",
-          },
-        });
-        assistantResult = await streamGeminiReply(
-          {
-            apiKey: geminiApiKey,
-            prompt,
-            screenshotBase64: data.screenshotBase64,
-            screenshotUrl: data.screenshotUrl,
-            systemPrompt: data.systemPrompt,
-            history: data.history,
-            modelId: resolvedRoute.modelId,
-          },
-          streamDelta
-        );
-      } else if (!hasScreenshot && deepseekApiKey) {
-        resolvedRoute = {
-          provider: "deepseek",
-          modelId: DEFAULT_DEEPSEEK_CHAT_MODEL_ID,
-          premiumApplied: false,
-          premiumAllowance: route.premiumAllowance,
-          premiumUsedBefore: route.premiumUsedBefore,
-          premiumCounter: null,
-        };
-        writeSse(response, {
-          meta: {
-            provider: resolvedRoute.provider,
-            model: resolvedRoute.modelId,
-            fallbackFrom: "openai",
-          },
-        });
-        assistantResult = await streamDeepSeekReply(
-          {
-            apiKey: deepseekApiKey,
-            prompt,
-            systemPrompt: data.systemPrompt,
-            history: data.history,
-            modelId: resolvedRoute.modelId,
-          },
-          streamDelta
-        );
-      } else {
-        throw error;
-      }
+      // Keep all session answers on Luna; report provider failures to the client.
+      throw error;
     }
 
     const costEstimate =

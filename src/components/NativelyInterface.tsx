@@ -32,6 +32,11 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 // import { ModelSelector } from './ui/ModelSelector'; // REMOVED
 import TopPill from './ui/TopPill';
 import RollingTranscript from './ui/RollingTranscript';
+import ResizableResponsePanel, { getResponsePanelWidth } from './ui/ResizableResponsePanel';
+import { buildResponsePages } from '../lib/responsePages';
+import { createMessageId } from '../lib/messageIds';
+import { updateLiveTranscript, formatLiveTranscript, type LiveTranscriptTurn } from '../lib/liveTranscript';
+import { useOverlayHitTest } from '../hooks/useOverlayHitTest';
 import { ReportAiContentButton } from './ReportAiContentButton';
 import { NegotiationCoachingCard } from '../premium';
 import ReactMarkdown from 'react-markdown';
@@ -66,6 +71,7 @@ import {
 
 interface Message {
     id: string;
+    requestId?: string;
     role: 'user' | 'system' | 'interviewer';
     text: string;
     isStreaming?: boolean;
@@ -162,6 +168,15 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     const [inputValue, setInputValue] = useState('');
     const { shortcuts, isShortcutPressed } = useShortcuts();
     const [messages, setMessages] = useState<Message[]>([]);
+    const responsePages = useMemo(() => buildResponsePages(messages), [messages]);
+    const [selectedResponsePage, setSelectedResponsePage] = useState<number | null>(null);
+    const responsePageIndex = Math.min(selectedResponsePage ?? responsePages.length - 1, responsePages.length - 1);
+    const visibleResponseMessages = responsePages[responsePageIndex] ?? [];
+    const [responseOpacity, setResponseOpacity] = useState(() => {
+        const saved = Number(localStorage.getItem('cluegent_response_opacity'));
+        return saved >= .2 && saved <= 1 ? saved : 1;
+    });
+    const directScreenshotInProgress = useRef(false);
     const [isConnected, setIsConnected] = useState(false);
     const [isListening, setIsListening] = useState(false);
     const [listeningSeconds, setListeningSeconds] = useState(0);
@@ -174,6 +189,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     const [sttInterviewerError, setSttInterviewerError] = useState<string>('');
     const [sttInterviewerProvider, setSttInterviewerProvider] = useState<string>('');
     const [isProcessing, setIsProcessing] = useState(false);
+    const chatSubmissionInProgress = useRef(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [conversationContext, setConversationContext] = useState<string>('');
     const [isManualRecording, setIsManualRecording] = useState(false);
@@ -301,6 +317,12 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     }, [refreshProfile]);
 
     const [rollingTranscript, setRollingTranscript] = useState('');  // For interviewer rolling text bar
+    const [liveTranscriptTurns, setLiveTranscriptTurns] = useState<LiveTranscriptTurn[]>([]);
+    const [listeningSources, setListeningSources] = useState({ systemEnabled: true, micEnabled: true });
+    const listeningSourcesRef = useRef(listeningSources);
+    listeningSourcesRef.current = listeningSources;
+    const [sourceBusy, setSourceBusy] = useState(false);
+    const [sourceError, setSourceError] = useState('');
     const [isInterviewerSpeaking, setIsInterviewerSpeaking] = useState(false);  // Track if actively speaking
     const rollingTranscriptRef = useRef('');
     const finalizedRollingTranscriptRef = useRef('');  // Stores only committed interviewer turns
@@ -314,7 +336,10 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     const isStealthRef = useRef<boolean>(false); // Tracks if the next expansion should be stealthy
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
+    const [responsePanelWidth, setResponsePanelWidth] = useState(getResponsePanelWidth);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    useEffect(() => { setSelectedResponsePage(null); }, [responsePages.length]);
+    useEffect(() => { if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0; }, [responsePageIndex]);
     const [responsePanelHeight, setResponsePanelHeight] = useState(() => {
         const stored = Number(localStorage.getItem('cluegent_response_panel_height'));
         return Number.isFinite(stored) && stored > 0
@@ -412,6 +437,10 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         }).catch(() => {});
 
         const unsubscribe = window.electronAPI?.onListeningStateChanged?.((data) => {
+            if (data.systemEnabled !== undefined && data.micEnabled !== undefined) {
+                setListeningSources({ systemEnabled: data.systemEnabled, micEnabled: data.micEnabled });
+            }
+            if (isListeningRef.current === data.isListening) return;
             setIsListening(data.isListening);
             isListeningRef.current = data.isListening;
             listeningStartedAtRef.current = data.isListening ? Date.now() : null;
@@ -654,6 +683,8 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         };
     }, []);
 
+    useOverlayHitTest();
+
     // Auto-resize Window
     useLayoutEffect(() => {
         if (!contentRef.current) return;
@@ -714,14 +745,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         userRollingTranscriptRef.current = userRollingTranscript;
     }, [userRollingTranscript]);
 
-    const combinedRollingTranscript = useMemo(() => {
-        const interviewer = rollingTranscript.trim();
-        const microphone = userRollingTranscript.trim();
-        return [
-            interviewer ? `Interviewer: ${interviewer}` : '',
-            microphone ? `You: ${microphone}` : '',
-        ].filter(Boolean).join('   |   ');
-    }, [rollingTranscript, userRollingTranscript]);
+    const combinedRollingTranscript = useMemo(() => formatLiveTranscript(liveTranscriptTurns), [liveTranscriptTurns]);
 
     useEffect(() => {
         const trimContextLine = (value: string, maxLength = 700) => {
@@ -893,6 +917,8 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     useEffect(() => {
         if (!window.electronAPI?.onSessionReset) return;
         const unsubscribe = window.electronAPI.onSessionReset(() => {
+            setLiveTranscriptTurns([]);
+            chatSubmissionInProgress.current = false;
             console.log('[NativelyInterface] Resetting session state...');
             setMessages([]);
             setInputValue('');
@@ -918,6 +944,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
 
     const handleScreenshotAttach = (data: ScreenshotAttachment) => {
+        if (directScreenshotInProgress.current) return;
         setIsExpanded(true);
         setAttachedContext(prev => {
             // Prevent duplicates and cap at 5
@@ -983,6 +1010,11 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
         // Real-time Transcripts
         cleanups.push(window.electronAPI.onNativeAudioTranscript((transcript) => {
+            if (!isRecordingRef.current && ((transcript.speaker === 'user' && !listeningSourcesRef.current.micEnabled) || (transcript.speaker === 'interviewer' && !listeningSourcesRef.current.systemEnabled))) return;
+            if (isListeningRef.current && !isRecordingRef.current && (transcript.speaker === 'user' || transcript.speaker === 'interviewer')) {
+                const speaker = transcript.speaker;
+                setLiveTranscriptTurns(turns => updateLiveTranscript(turns, speaker, transcript.text, transcript.final));
+            }
             // When the manual Mic flow is active, capture USER transcripts for voice input.
             // Use ref to avoid stale closure issue.
             if (isRecordingRef.current && transcript.speaker === 'user') {
@@ -1134,7 +1166,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         cleanups.push(window.electronAPI.onSuggestionGenerated((data) => {
             setIsProcessing(false);
             setMessages(prev => [...prev, {
-                id: Date.now().toString(),
+                id: createMessageId(),
                 role: 'system',
                 text: data.suggestion
             }]);
@@ -1143,7 +1175,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         cleanups.push(window.electronAPI.onSuggestionError((err) => {
             setIsProcessing(false);
             setMessages(prev => [...prev, {
-                id: Date.now().toString(),
+                id: createMessageId(),
                 role: 'system',
                 text: `Error: ${err.error}`
             }]);
@@ -1168,7 +1200,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
                 // Otherwise, start a new one (First token)
                 return [...prev, {
-                    id: Date.now().toString(),
+                    id: createMessageId(),
                     role: 'system',
                     text: data.token,
                     intent: 'what_to_answer',
@@ -1196,7 +1228,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
                 // If we missed the stream (or not streaming), append fresh
                 return [...prev, {
-                    id: Date.now().toString(),
+                    id: createMessageId(),
                     role: 'system',
                     text: data.answer,  // Plain text, no markdown - ready to speak
                     intent: 'what_to_answer'
@@ -1218,7 +1250,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                 }
                 // New stream start (e.g. user clicked Shorten)
                 return [...prev, {
-                    id: Date.now().toString(),
+                    id: createMessageId(),
                     role: 'system',
                     text: data.token,
                     intent: data.intent,
@@ -1241,7 +1273,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                     return updated;
                 }
                 return [...prev, {
-                    id: Date.now().toString(),
+                    id: createMessageId(),
                     role: 'system',
                     text: data.answer,
                     intent: data.intent
@@ -1262,7 +1294,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                     return updated;
                 }
                 return [...prev, {
-                    id: Date.now().toString(),
+                    id: createMessageId(),
                     role: 'system',
                     text: data.token,
                     intent: 'recap',
@@ -1285,7 +1317,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                     return updated;
                 }
                 return [...prev, {
-                    id: Date.now().toString(),
+                    id: createMessageId(),
                     role: 'system',
                     text: data.summary,
                     intent: 'recap'
@@ -1317,7 +1349,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                     return updated;
                 }
                 return [...prev, {
-                    id: Date.now().toString(),
+                    id: createMessageId(),
                     role: 'system',
                     text: data.token,
                     intent: 'follow_up_questions',
@@ -1341,7 +1373,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                     return updated;
                 }
                 return [...prev, {
-                    id: Date.now().toString(),
+                    id: createMessageId(),
                     role: 'system',
                     text: data.questions,
                     intent: 'follow_up_questions'
@@ -1352,7 +1384,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         cleanups.push(window.electronAPI.onIntelligenceManualResult((data) => {
             setIsProcessing(false);
             setMessages(prev => [...prev, {
-                id: Date.now().toString(),
+                id: createMessageId(),
                 role: 'system',
                 text: `ðŸŽ¯ **Answer:**\n\n${data.answer}`
             }]);
@@ -1362,7 +1394,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             setIsProcessing(false);
             const errorText = formatAssistantError(data.error);
             setMessages(prev => [...prev, {
-                id: Date.now().toString(),
+                id: createMessageId(),
                 role: 'system',
                 text: errorText === FREE_PLAN_LIMIT_REACHED_MESSAGE
                     ? errorText
@@ -1403,7 +1435,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                     return updated;
                 }
                 return [...prev, {
-                    id: Date.now().toString(),
+                    id: createMessageId(),
                     role: 'system' as const,
                     text: data.token,
                     intent: 'clarify',
@@ -1422,7 +1454,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                     return updated;
                 }
                 return [...prev, {
-                    id: Date.now().toString(),
+                    id: createMessageId(),
                     role: 'system' as const,
                     text: data.clarification,
                     intent: 'clarify'
@@ -1522,6 +1554,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     };
 
     const handleWhatToSay = async () => {
+        if (isProcessing || chatSubmissionInProgress.current) return;
         setIsExpanded(true);
         setIsProcessing(true);
         analytics.trackCommandExecuted('what_to_say');
@@ -1537,13 +1570,6 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
         if (currentAttachments.length > 0) {
             setAttachedContext([]);
-            setMessages(prev => [...prev, {
-                id: Date.now().toString(),
-                role: 'user',
-                text: 'Screenshot attached',
-                hasScreenshot: true,
-                screenshotPreview: currentAttachments[0]?.preview
-            }]);
             appendLocalMeetingEvent({
                 type: 'prompt',
                 text: 'Screenshot attached',
@@ -1589,7 +1615,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             );
         } catch (err) {
             setMessages(prev => [...prev, {
-                id: Date.now().toString(),
+                id: createMessageId(),
                 role: 'system',
                 text: `Error: ${err}`
             }]);
@@ -1599,6 +1625,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     };
 
     const handleQuickActionPrompt = async (action: QuickActionConfig) => {
+        if (isProcessing || chatSubmissionInProgress.current) return;
         const timingTrace = createAiTimingTrace();
         activeAiTimingRef.current = timingTrace;
         requestStartTimeRef.current = timingTrace.submitStartedAt;
@@ -1636,7 +1663,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
         streamingResponseTextRef.current = '';
         setMessages(prev => [...prev, {
-            id: Date.now().toString(),
+            id: createMessageId(),
             role: 'system',
             text: '',
             isStreaming: true,
@@ -1680,13 +1707,13 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                 const last = prev[prev.length - 1];
                 if (last && last.isStreaming && last.text === '') {
                     return prev.slice(0, -1).concat({
-                        id: Date.now().toString(),
+                        id: createMessageId(),
                         role: 'system',
                         text: `Error starting quick action: ${err}`,
                     });
                 }
                 return [...prev, {
-                    id: Date.now().toString(),
+                    id: createMessageId(),
                     role: 'system',
                     text: `Error: ${err}`,
                 }];
@@ -1695,6 +1722,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     };
 
     const handleFollowUp = async (intent: string = 'rephrase') => {
+        if (isProcessing || chatSubmissionInProgress.current) return;
         setIsExpanded(true);
         setIsProcessing(true);
         analytics.trackCommandExecuted('follow_up_' + intent);
@@ -1703,7 +1731,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             await window.electronAPI.generateFollowUp(intent);
         } catch (err) {
             setMessages(prev => [...prev, {
-                id: Date.now().toString(),
+                id: createMessageId(),
                 role: 'system',
                 text: `Error: ${err}`
             }]);
@@ -1713,6 +1741,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     };
 
     const handleRecap = async () => {
+        if (isProcessing || chatSubmissionInProgress.current) return;
         setIsExpanded(true);
         setIsProcessing(true);
         analytics.trackCommandExecuted('recap');
@@ -1721,7 +1750,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             await window.electronAPI.generateRecap();
         } catch (err) {
             setMessages(prev => [...prev, {
-                id: Date.now().toString(),
+                id: createMessageId(),
                 role: 'system',
                 text: `Error: ${err}`
             }]);
@@ -1731,6 +1760,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     };
 
     const handleFollowUpQuestions = async () => {
+        if (isProcessing || chatSubmissionInProgress.current) return;
         setIsExpanded(true);
         setIsProcessing(true);
         analytics.trackCommandExecuted('suggest_questions');
@@ -1739,7 +1769,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             await window.electronAPI.generateFollowUpQuestions(buildQuickActionInstruction('followUpQuestions'));
         } catch (err) {
             setMessages(prev => [...prev, {
-                id: Date.now().toString(),
+                id: createMessageId(),
                 role: 'system',
                 text: `Error: ${err}`
             }]);
@@ -1749,6 +1779,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     };
 
     const handleClarify = async () => {
+        if (isProcessing || chatSubmissionInProgress.current) return;
         setIsExpanded(true);
         setIsProcessing(true);
         analytics.trackCommandExecuted('clarify');
@@ -1757,7 +1788,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             await window.electronAPI.generateClarify(buildQuickActionInstruction('clarify'));
         } catch (err) {
             setMessages(prev => [...prev, {
-                id: Date.now().toString(),
+                id: createMessageId(),
                 role: 'system',
                 text: `Error: ${err}`
             }]);
@@ -1767,6 +1798,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     };
 
     const handleCodeHint = async () => {
+        if (isProcessing || chatSubmissionInProgress.current) return;
         setIsExpanded(true);
         setIsProcessing(true);
         analytics.trackCommandExecuted('code_hint');
@@ -1776,7 +1808,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             setAttachedContext([]);
             // Show the attached image in chat
             setMessages(prev => [...prev, {
-                id: Date.now().toString(),
+                id: createMessageId(),
                 role: 'user',
                 text: 'Give me a code hint for this',
                 hasScreenshot: true,
@@ -1792,7 +1824,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             await window.electronAPI.generateCodeHint(currentAttachments.length > 0 ? currentAttachments.map(s => s.path) : undefined);
         } catch (err) {
             setMessages(prev => [...prev, {
-                id: Date.now().toString(),
+                id: createMessageId(),
                 role: 'system',
                 text: `Error: ${err}`
             }]);
@@ -1802,6 +1834,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     };
 
     const handleBrainstorm = async () => {
+        if (isProcessing || chatSubmissionInProgress.current) return;
         setIsExpanded(true);
         setIsProcessing(true);
         analytics.trackCommandExecuted('brainstorm');
@@ -1811,7 +1844,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             setAttachedContext([]);
             // Show the attached image in chat
             setMessages(prev => [...prev, {
-                id: Date.now().toString(),
+                id: createMessageId(),
                 role: 'user',
                 text: 'Brainstorm with this context',
                 hasScreenshot: true,
@@ -1831,7 +1864,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             );
         } catch (err) {
             setMessages(prev => [...prev, {
-                id: Date.now().toString(),
+                id: createMessageId(),
                 role: 'system',
                 text: `Error: ${err}`
             }]);
@@ -1895,6 +1928,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
         // Stream Done
         cleanups.push(window.electronAPI.onGeminiStreamDone(() => {
+            chatSubmissionInProgress.current = false;
             const timingTrace = activeAiTimingRef.current;
             if (timingTrace) {
                 logAiTiming(timingTrace, 'stream_done', { componentStage: 'client' });
@@ -1954,6 +1988,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
         // Stream Error
         cleanups.push(window.electronAPI.onGeminiStreamError((error) => {
+            chatSubmissionInProgress.current = false;
             setIsProcessing(false);
             requestStartTimeRef.current = null; // Clear timer on error
             const errorText = formatAssistantError(error);
@@ -1981,7 +2016,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                     return updated;
                 }
                 return [...prev, {
-                    id: Date.now().toString(),
+                    id: createMessageId(),
                     role: 'system',
                     text: errorText === FREE_PLAN_LIMIT_REACHED_MESSAGE
                         ? errorText
@@ -2150,19 +2185,19 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                 // No voice input and no image â€” show real STT error if available
                 if (sttUserStatus === 'failed' && sttUserError) {
                     setMessages(prev => [...prev, {
-                        id: Date.now().toString(),
+                        id: createMessageId(),
                         role: 'system',
                         text: `âŒ STT Error: ${sttUserError}`
                     }]);
                 } else if (sttUserStatus === 'reconnecting') {
                     setMessages(prev => [...prev, {
-                        id: Date.now().toString(),
+                        id: createMessageId(),
                         role: 'system',
                         text: 'â³ STT is reconnecting, try again in a moment.'
                     }]);
                 } else {
                     setMessages(prev => [...prev, {
-                        id: Date.now().toString(),
+                        id: createMessageId(),
                         role: 'system',
                         text: 'âš ï¸ No speech detected. Try speaking closer to your microphone.'
                     }]);
@@ -2177,7 +2212,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                 hasScreenshot: currentAttachments.length > 0,
             }, localMeetingIdRef.current);
             setMessages(prev => [...prev, {
-                id: Date.now().toString(),
+                id: createMessageId(),
                 role: 'user',
                 text: question,
                 hasScreenshot: currentAttachments.length > 0,
@@ -2192,7 +2227,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             // Add placeholder for streaming response
             streamingResponseTextRef.current = '';
             setMessages(prev => [...prev, {
-                id: Date.now().toString(),
+                id: createMessageId(),
                 role: 'system',
                 text: '',
                 isStreaming: true
@@ -2256,13 +2291,13 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                     // If we just added the empty streaming placeholder, remove it or fill it with error
                     if (last && last.isStreaming && last.text === '') {
                         return prev.slice(0, -1).concat({
-                            id: Date.now().toString(),
+                            id: createMessageId(),
                             role: 'system',
                             text: `âŒ Error starting stream: ${err}`
                         });
                     }
                     return [...prev, {
-                        id: Date.now().toString(),
+                        id: createMessageId(),
                         role: 'system',
                         text: `âŒ Error: ${err}`
                     }];
@@ -2274,7 +2309,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
             const micStart = await window.electronAPI.startMicSTT?.();
             if (micStart && !micStart.success) {
                 setMessages(prev => [...prev, {
-                    id: Date.now().toString(),
+                    id: createMessageId(),
                     role: 'system',
                     text: `Mic STT error: ${micStart.error || 'Failed to start microphone transcription'}`
                 }]);
@@ -2298,6 +2333,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
     };
 
     const handleManualSubmit = async () => {
+        if (chatSubmissionInProgress.current || isProcessing) return;
         const rollingPrompt = getLatestRollingTranscript();
         const pending = pendingCaptureRef.current;
         let currentAttachments = attachedContextRef.current;
@@ -2305,6 +2341,8 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
             currentAttachments = [...currentAttachments, pending].slice(-5);
         }
         if (!inputValue.trim() && currentAttachments.length === 0 && !rollingPrompt) return;
+        chatSubmissionInProgress.current = true;
+        const requestId = createMessageId();
 
         const timingTrace = createAiTimingTrace();
         activeAiTimingRef.current = timingTrace;
@@ -2356,7 +2394,8 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
         }, localMeetingIdRef.current);
         if (userText || hasScreenshot) {
             setMessages(prev => [...prev, {
-                id: Date.now().toString(),
+                id: requestId,
+                requestId,
                 role: 'user',
                 text: visiblePromptText || 'Screenshot attached',
                 hasScreenshot,
@@ -2372,7 +2411,8 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
         // Add placeholder for streaming response
         streamingResponseTextRef.current = '';
         setMessages(prev => [...prev, {
-            id: Date.now().toString(),
+            id: createMessageId(),
+            requestId,
             role: 'system',
             text: '',
             isStreaming: true
@@ -2442,17 +2482,19 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                 if (last && last.isStreaming && last.text === '') {
                     // remove the empty placeholder
                     return prev.slice(0, -1).concat({
-                        id: Date.now().toString(),
+                        id: createMessageId(),
                         role: 'system',
                         text: `âŒ Error starting stream: ${err}`
                     });
                 }
                 return [...prev, {
-                    id: Date.now().toString(),
+                    id: createMessageId(),
                     role: 'system',
                     text: `âŒ Error: ${err}`
                 }];
             });
+        } finally {
+            chatSubmissionInProgress.current = false;
         }
     };
 
@@ -2980,10 +3022,6 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
             // with an empty attachedContext and causing silent failures.
             pendingCaptureRef.current = data;
 
-            setAttachedContext(prev => {
-                if (prev.some(s => s.path === data.path)) return prev;
-                return [...prev, data].slice(-5);
-            });
 
             // Use requestAnimationFrame so we wait for at least one paint cycle â€”
             // more reliable than setTimeout(0) under React 18 concurrent scheduling.
@@ -3089,6 +3127,25 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
         window.electronAPI.quitApp();
     };
 
+    const handleToggleListeningSource = async (source: 'system' | 'mic') => {
+        if (sourceBusy || isManualRecording) return;
+        const key = source === 'system' ? 'systemEnabled' : 'micEnabled';
+        const enabled = !listeningSources[key];
+        setSourceError('');
+        if (!isListening) {
+            setListeningSources(current => ({ ...current, [key]: enabled }));
+            return;
+        }
+        setSourceBusy(true);
+        try {
+            const result = await window.electronAPI.setListeningSource(source, enabled);
+            if (!result.success) throw new Error(result.error || 'Could not change audio source.');
+            setListeningSources(current => ({ ...current, [key]: enabled }));
+        } catch (error) {
+            setSourceError(error instanceof Error ? error.message : 'Could not change audio source.');
+        } finally { setSourceBusy(false); }
+    };
+
     const handleToggleListening = async () => {
         try {
             if (isListening) {
@@ -3131,7 +3188,8 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
             }
 
             const result = await window.electronAPI.startListening({
-                audio: { inputDeviceId, outputDeviceId }
+                audio: { inputDeviceId, outputDeviceId },
+                sources: listeningSources
             });
             if (!result?.success && result?.error) {
                 setIsListening(false);
@@ -3156,6 +3214,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
     };
 
     const clearRollingTranscript = () => {
+        setLiveTranscriptTurns([]);
         setRollingTranscript('');
         setIsInterviewerSpeaking(false);
         rollingTranscriptRef.current = '';
@@ -3207,6 +3266,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
     };
 
     const handleToolbarAnswer = () => {
+        if (isProcessing || chatSubmissionInProgress.current) return;
         if (inputValue.trim() || attachedContextRef.current.length > 0) {
             void handleManualSubmit();
             return;
@@ -3215,8 +3275,20 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
         void handleWhatToSay();
     };
 
-    const handleToolbarScreenshot = () => {
-        void generalHandlersRef.current.takeScreenshot();
+    const handleToolbarScreenshot = async () => {
+        if (isProcessing || directScreenshotInProgress.current) return;
+        directScreenshotInProgress.current = true;
+        try {
+            const data = await window.electronAPI.takeScreenshot();
+            if (!data?.path) throw new Error('Screenshot capture did not return an image.');
+            pendingCaptureRef.current = data;
+            await handlersRef.current.handleWhatToSay();
+        } catch (error) {
+            reportScreenshotError(error);
+        } finally {
+            pendingCaptureRef.current = null;
+            directScreenshotInProgress.current = false;
+        }
     };
 
     const handleToolbarChat = () => {
@@ -3241,11 +3313,14 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                         : undefined
                 }
                 onToggleListening={handleToggleListening}
+                sources={listeningSources}
+                sourceBusy={sourceBusy || isManualRecording}
+                onToggleSource={handleToggleListeningSource}
                 onAnswer={handleToolbarAnswer}
                 onScreenshot={handleToolbarScreenshot}
                 onChat={handleToolbarChat}
                 answerShortcut={shortcuts.processScreenshots}
-                screenshotShortcut={shortcuts.takeScreenshot}
+                screenshotShortcut={shortcuts.captureAndProcess}
                 isOptionsOpen={isSettingsOpen}
                 onOptionsClick={handleOptionsClick}
             />
@@ -3260,8 +3335,9 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                         className="flex flex-col items-center gap-2 w-full"
                     >
                         <div
+                            data-overlay-interactive
                             className={`cluegent-overlay-shell relative w-[600px] max-w-none backdrop-blur-2xl border rounded-[24px] overflow-hidden flex flex-col draggable-area overlay-shell-surface ${overlayPanelClass}`}
-                            style={appearance.shellStyle}
+                            style={{ ...appearance.shellStyle, width: responsePanelWidth + 24 }}
                         >
 
 
@@ -3335,18 +3411,19 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                             )}
 
                             {/* Rolling Transcript Bar â€” includes STT status indicator inline */}
-                            {isListening && ((showTranscript && combinedRollingTranscript) || interviewerSttIndicatorStatus !== 'connected' || sttUserStatus !== 'connected') ? (
+                            {isListening ? (
                                 <RollingTranscript
                                     text={showTranscript ? combinedRollingTranscript : ''}
-                                    isActive={isInterviewerSpeaking || isUserSpeaking}
+                                    isActive={listeningSources.systemEnabled || listeningSources.micEnabled}
+                                    sourceError={sourceError}
                                     surfaceStyle={showTranscript ? appearance.transcriptStyle : undefined}
                                     interviewerChannel={{
-                                        status: interviewerSttIndicatorStatus,
+                                        status: listeningSources.systemEnabled ? interviewerSttIndicatorStatus : 'connected',
                                         error: interviewerSttIndicatorError,
                                         provider: sttInterviewerProvider,
                                     }}
                                     microphoneChannel={{
-                                        status: sttUserStatus,
+                                        status: listeningSources.micEnabled ? sttUserStatus : 'connected',
                                         error: sttUserError,
                                         provider: sttUserProvider,
                                     }}
@@ -3357,11 +3434,19 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
 
                             {/* Chat History - Only show if there are messages OR active states */}
                             {(messages.length > 0 || isManualRecording || isProcessing) && (
-                                <div
-                                    className="relative mx-3 mb-2 rounded-[22px] border border-white/10 bg-black/[0.08] no-drag overflow-hidden"
-                                    style={{ height: responsePanelHeight }}
-                                >
-                                    <div className="absolute left-3 right-3 top-2 z-10 flex items-center justify-end pointer-events-none">
+                                <ResizableResponsePanel height={responsePanelHeight} onWidthChange={setResponsePanelWidth} opacity={responseOpacity}>
+                                    <div className="absolute left-3 right-3 top-2 z-10 flex items-center justify-between gap-2">
+                                        <div className="flex shrink-0 items-center gap-1">
+                                            <button type="button" aria-label="Previous response" title="Previous response" disabled={responsePageIndex <= 0} onClick={() => setSelectedResponsePage(responsePageIndex - 1)} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/5 text-white/80 hover:bg-white/10 disabled:opacity-25"><svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="m15 6-6 6 6 6"/></svg></button>
+                                            <button type="button" aria-label="Next response" title="Next response" disabled={responsePageIndex >= responsePages.length - 1} onClick={() => setSelectedResponsePage(responsePageIndex + 1)} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/5 text-white/80 hover:bg-white/10 disabled:opacity-25"><svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="m9 6 6 6-6 6"/></svg></button>
+                                            <span className="text-[10px] font-mono text-white/50">{responsePages.length ? `${responsePageIndex + 1}/${responsePages.length}` : '0/0'}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <label className="flex items-center gap-1.5 text-[9px] uppercase text-white/60">Opacity<input aria-label="Response opacity" type="range" min="20" max="100" step="5" value={Math.round(responseOpacity * 100)} onChange={event => {
+                                                const opacity = Number(event.target.value) / 100;
+                                                setResponseOpacity(opacity);
+                                                localStorage.setItem('cluegent_response_opacity', String(opacity));
+                                            }} className="w-16 accent-white"/><span className="w-7 font-mono">{Math.round(responseOpacity * 100)}%</span></label>
                                         {messages.length > 0 && (
                                             <button
                                                 type="button"
@@ -3372,9 +3457,10 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                                 Clear chat
                                             </button>
                                         )}
+                                        </div>
                                     </div>
                                 <div ref={scrollContainerRef} className="h-full overflow-y-auto p-4 pt-11 pb-6 space-y-3 no-drag" style={{ scrollbarWidth: 'none' }}>
-                                    {messages.map((msg) => (
+                                    {visibleResponseMessages.map((msg) => (
                                         <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}>
                                             <div className={`
                       ${msg.role === 'user' ? 'max-w-[72.25%] px-[13.6px] py-[10.2px]' : 'w-full max-w-full px-4 py-3'} text-[14px] leading-relaxed relative group whitespace-pre-wrap min-w-0
@@ -3383,7 +3469,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                                     : ''
                                                 }
                       ${msg.role === 'system'
-                                                    ? 'cluegent-response-card rounded-[22px] border border-white/10 bg-[#2c2a27]/92 px-5 py-4 text-[16px] font-medium leading-7 text-white shadow-[0_22px_70px_-42px_rgba(0,0,0,0.75)]'
+                                                    ? 'cluegent-response-card rounded-[22px] px-5 py-4 text-[16px] font-medium leading-7 text-white'
                                                     : ''
                                                 }
                       ${msg.role === 'interviewer'
@@ -3473,7 +3559,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                     >
                                         <span className="h-1 w-12 rounded-full bg-white/18 transition group-hover:bg-white/30" />
                                     </div>
-                                </div>
+                                </ResizableResponsePanel>
                             )}
 
                             {isFreePlanExhausted && !isSyncing && (
@@ -3624,7 +3710,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                             <span className="shrink-0">to submit</span>
                                             {/* <span className="opacity-45 shrink-0">â€¢</span> */}
                                             <div className="flex items-center gap-1 opacity-80 shrink-0">
-                                                {(shortcuts.takeScreenshot || ['âŒ˜', '[']).map((key, i) => (
+                                                {(shortcuts.captureAndProcess || ['⌘', '⇧', 'Enter']).map((key, i) => (
                                                     <React.Fragment key={`shot-${i}`}>
                                                         {i > 0 && <span className="text-[10px]">+</span>}
                                                         <kbd className="px-1.5 py-0.5 rounded border text-[10px] font-sans min-w-[20px] text-center overlay-control-surface overlay-text-secondary" style={appearance.controlStyle}>{key}</kbd>

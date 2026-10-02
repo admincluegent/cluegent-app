@@ -2,6 +2,7 @@ import { Camera, ChevronUp, ChevronDown, MessageSquare, SlidersHorizontal, Spark
 import icon from "../icon.png";
 import type { OverlayAppearance } from "../../lib/overlayAppearance";
 import type { MouseEvent } from "react";
+import HoverInfo from './HoverInfo';
 
 interface TopPillProps {
     expanded: boolean;
@@ -13,6 +14,9 @@ interface TopPillProps {
     listeningDuration?: string;
     trialRemainingLabel?: string;
     onToggleListening?: () => void;
+    sources?: { systemEnabled: boolean; micEnabled: boolean };
+    sourceBusy?: boolean;
+    onToggleSource?: (source: 'system' | 'mic') => void;
     onAnswer?: () => void;
     onScreenshot?: () => void;
     onChat?: () => void;
@@ -32,6 +36,9 @@ export default function TopPill({
     listeningDuration = "00:00",
     trialRemainingLabel,
     onToggleListening,
+    sources,
+    sourceBusy,
+    onToggleSource,
     onAnswer,
     onScreenshot,
     onChat,
@@ -60,7 +67,7 @@ export default function TopPill({
 
     return (
         <div className="flex justify-center mt-2 select-none z-50">
-            <div
+            <div data-overlay-interactive
                 className="
           draggable-area
           flex w-fit max-w-full items-center gap-2
@@ -100,11 +107,31 @@ export default function TopPill({
                     />
                 </button>
 
+                {/* AUDIO SOURCES */}
+                {sources && onToggleSource && <div className="flex shrink-0 items-center gap-1">
+                    {(['system', 'mic'] as const).map(source => {
+                        const enabled = source === 'system' ? sources.systemEnabled : sources.micEnabled;
+                        const label = source === 'system' ? 'System audio' : 'Microphone';
+                        const state = enabled ? (isListening ? 'capturing' : 'ready') : 'muted';
+                        return <HoverInfo key={source} text={`${label}: ${state} (click to ${enabled ? 'mute' : 'unmute'})`}>
+                            <button type="button" aria-label={`${enabled ? 'Mute' : 'Unmute'} ${label.toLowerCase()}`} aria-pressed={enabled} disabled={sourceBusy} onClick={() => onToggleSource(source)} className={`relative no-drag flex h-8 w-8 items-center justify-center rounded-full border border-white/10 transition-colors active:scale-95 disabled:opacity-40 ${enabled ? 'bg-white/5 text-white hover:bg-white/15' : 'bg-red-500/15 text-red-300 hover:bg-red-500/25'}`}>
+                                <span aria-hidden="true" data-audio-status={enabled ? 'on' : 'off'} className={`absolute right-0 top-0 h-2 w-2 rounded-full ring-2 ring-[#191b20] ${enabled ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                                <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    {source === 'system' ? <><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></> : <><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></>}
+                                    {!enabled && <path d="M3 3l18 18"/>}
+                                </svg>
+                            </button>
+                        </HoverInfo>;
+                    })}
+                </div>}
+
                 {/* LISTENING CONTROL */}
+                <HoverInfo text={`Click to ${isListening ? 'stop' : 'start'} listening to the meeting.`}>
                 <button
                     onClick={onToggleListening}
+                    aria-label={isListening ? 'Stop listening' : 'Start listening'}
                     className={`
-            flex flex-col items-center justify-center
+            no-drag flex items-center justify-center
             gap-0.5
             px-3 py-1
             rounded-full
@@ -119,15 +146,12 @@ export default function TopPill({
                     style={isListening ? undefined : appearance.chipStyle}
                 >
                     <span className="flex items-center gap-1.5 leading-none">
-                        <span className={`h-1.5 w-1.5 rounded-full ${isListening ? "bg-emerald-300 animate-pulse" : "bg-white/45"}`} />
+                        <svg aria-hidden="true" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">{isListening ? <rect x="5" y="5" width="14" height="14" rx="2"/> : <path d="M7 4v16l14-8z"/>}</svg>
                         {isListening ? "Stop listening" : "Start listening"}
                     </span>
-                    {isListening || trialRemainingLabel ? (
-                        <span className="font-mono text-[9px] leading-none opacity-80">
-                            {trialRemainingLabel ?? listeningDuration}
-                        </span>
-                    ) : null}
                 </button>
+                </HoverInfo>
+                {isListening || trialRemainingLabel ? <span aria-label={trialRemainingLabel ? 'Listening time remaining' : 'Listening duration'} className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5 font-mono text-[11px] tabular-nums text-white/80">{trialRemainingLabel ?? listeningDuration}</span> : null}
 
                 {/* PRIMARY ACTIONS */}
                 <div className="flex items-center gap-1.5 border-l border-white/10 pl-2">
@@ -150,8 +174,8 @@ export default function TopPill({
                         onClick={onScreenshot}
                         className={actionButtonClass}
                         style={appearance.chipStyle}
-                        aria-label="Attach screenshot"
-                        title="Screenshot"
+                        aria-label="Capture and analyze screenshot"
+                        title="Capture and analyze screenshot"
                     >
                         <Camera className="w-3.5 h-3.5 text-sky-300" />
                         <span>Screenshot</span>
@@ -221,8 +245,10 @@ export default function TopPill({
                 </button>
 
                 {/* STOP / QUIT BUTTON */}
+                <HoverInfo text="End session">
                 <button
                     onClick={onQuit}
+                    aria-label="End session"
                     className={`
             w-8 h-8
             rounded-full
@@ -237,6 +263,7 @@ export default function TopPill({
                 >
                     <div className="w-3.5 h-3.5 rounded-[3px] bg-current opacity-80" />
                 </button>
+                </HoverInfo>
             </div>
         </div>
     );

@@ -302,6 +302,27 @@ export class LocalProfileManager {
     fs.renameSync(tmpPath, this.profilePath);
   }
 
+  public async selectSessionReference(): Promise<{ success: boolean; cancelled?: boolean; document?: { name: string; content: string }; error?: string }> {
+    try {
+      const { dialog } = require('electron');
+      const result = await dialog.showOpenDialog({
+        title: 'Choose a reference document',
+        properties: ['openFile'],
+        filters: [{ name: 'Documents', extensions: ['pdf', 'docx', 'txt', 'md'] }],
+      });
+      if (result.canceled || !result.filePaths[0]) return { success: false, cancelled: true };
+      const filePath = result.filePaths[0];
+      const ext = path.extname(filePath).toLowerCase();
+      if (!['.pdf', '.docx', '.txt', '.md'].includes(ext)) throw new Error('Choose a PDF, DOCX, TXT or Markdown file.');
+      if (fs.statSync(filePath).size > 10 * 1024 * 1024) throw new Error('Choose a document smaller than 10 MB.');
+      const content = normalizeText(await this.extractText(filePath, ext)).slice(0, 3000);
+      if (!content) throw new Error('This document has no readable text. Try a text-based document.');
+      return { success: true, document: { name: path.basename(filePath), content } };
+    } catch (e) {
+      return { success: false, error: e instanceof Error ? e.message : 'Could not read document.' };
+    }
+  }
+
   private async extractText(filePath: string, ext: string): Promise<string> {
     if (ext === '.pdf') {
       const { PDFParse } = require('pdf-parse');

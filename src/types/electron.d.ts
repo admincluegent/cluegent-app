@@ -59,6 +59,8 @@ export interface ElectronAPI {
   setOverlayMousePassthrough: (enabled: boolean) => Promise<{ success: boolean }>
   toggleOverlayMousePassthrough: () => Promise<{ success: boolean; enabled: boolean }>
   getOverlayMousePassthrough: () => Promise<boolean>
+  setOverlayHitTestIgnore: (ignore: boolean) => Promise<void>
+  getOverlayCursorPosition?: () => Promise<{ x: number; y: number } | null>
   onOverlayMousePassthroughChanged: (callback: (enabled: boolean) => void) => () => void
   setDisguise: (mode: 'terminal' | 'settings' | 'activity' | 'none') => Promise<{ success: boolean; error?: string }>
   getDisguise: () => Promise<'none' | 'terminal' | 'settings' | 'activity'>
@@ -85,6 +87,7 @@ export interface ElectronAPI {
   // Permissions
   checkPermissions:     () => Promise<{ microphone: 'granted'|'denied'|'not-determined'|'restricted'; screen: 'granted'|'denied'|'not-determined'|'restricted'; platform: string }>
   requestMicPermission: () => Promise<boolean>
+  prepareOverlayPermissions: () => Promise<{ microphone: string; screen: string }>
 
 
   // STT Provider Management
@@ -159,8 +162,9 @@ export interface ElectronAPI {
   endMeeting: () => Promise<{ success: boolean; error?: string }>
   startListening: (metadata?: any) => Promise<{ success: boolean; error?: string }>
   stopListening: () => Promise<{ success: boolean; error?: string }>
+  setListeningSource: (source: 'system' | 'mic', enabled: boolean) => Promise<{ success: boolean; error?: string }>
   getListeningActive: () => Promise<boolean>
-  onListeningStateChanged: (callback: (data: { isListening: boolean }) => void) => () => void
+  onListeningStateChanged: (callback: (data: { isListening: boolean; systemEnabled?: boolean; micEnabled?: boolean }) => void) => () => void
   startMicSTT: () => Promise<{ success: boolean; error?: string }>
   stopMicSTT: () => Promise<{ success: boolean; error?: string }>
   finalizeMicSTT: () => Promise<void>
@@ -283,6 +287,7 @@ export interface ElectronAPI {
   profileGetProfile: () => Promise<any>
   profileOpenResume: () => Promise<{ success: boolean; error?: string }>
   profileSelectFile: () => Promise<{ success?: boolean; cancelled?: boolean; filePath?: string; error?: string }>
+  sessionSelectReference: () => Promise<{ success: boolean; cancelled?: boolean; document?: { name: string; content: string }; error?: string }>
   onProfileStatusChanged: (callback: (status: { hasProfile: boolean; profileMode: boolean; name?: string; role?: string; totalExperienceYears?: number }) => void) => () => void
 
   // JD & Research API

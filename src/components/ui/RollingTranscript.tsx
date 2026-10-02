@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { categorizeSttError, type SttErrorCategory } from '../../lib/sttErrorMapper';
 
 import ChannelCard from './ChannelCard';
+import ListeningBars from './ListeningBars';
 
 interface ChannelStatus {
     status: 'connected' | 'reconnecting' | 'failed';
@@ -20,13 +21,14 @@ interface RollingTranscriptProps {
     microphoneChannel?: ChannelStatus;
     onCopyDiagnostics?: () => void;
     onClearTranscript?: () => void;
+    sourceError?: string;
 }
 
 const RollingTranscript: React.FC<RollingTranscriptProps> = ({
     text, isActive = true, surfaceStyle,
     interviewerChannel, microphoneChannel,
     onCopyDiagnostics,
-    onClearTranscript
+    onClearTranscript, sourceError
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [copied, setCopied] = useState(false);
@@ -83,31 +85,24 @@ const RollingTranscript: React.FC<RollingTranscriptProps> = ({
                 className="relative w-full overflow-hidden"
                 style={{
                     ...stateSurface,
-                    maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
-                    WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
                 }}
             >
                 {anyFailed && <div className="absolute inset-0 bg-red-500/10 stt-pulse-red" />}
                 {anyReconnecting && !anyFailed && <div className="absolute inset-0 bg-amber-500/10 stt-pulse-amber" />}
                 {/* 90% centered content */}
-                <div className="w-[90%] mx-auto pt-2">
-                    <div className="flex items-center gap-2">
+                <div className="mx-3 pt-2 pb-2">
+                    <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#111214] p-2 text-white no-drag">
+                        <ListeningBars active={isActive && !anyFailed && !anyReconnecting} />
                         <div
                             ref={containerRef}
-                            className="min-w-0 flex-1 overflow-hidden whitespace-nowrap scroll-smooth overlay-transcript-surface transition-all duration-500 text-right"
+                            className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap scroll-smooth rounded-lg px-2 text-left"
                             style={{
-                                ...surfaceStyle,
-                                maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
+                                ...surfaceStyle, background: '#111214', color: '#fff', scrollbarWidth: 'none',
                             }}
                         >
                         {isNormal && (
-                            <span className="inline-flex items-center text-[13px] italic leading-7 text-[var(--overlay-text-muted)] transition-all duration-300">
-                                {text || 'Listening…'}
-                                {isActive && (
-                                    <span className="inline-flex items-center ml-2">
-                                        <span className="w-[3px] h-[3px] bg-emerald-400/70 rounded-full animate-pulse" />
-                                    </span>
-                                )}
+                            <span className="inline-flex items-center text-[13px] leading-7 text-white">
+                                {text || (isActive ? 'Listening…' : 'Audio paused')}
                             </span>
                         )}
 
@@ -133,6 +128,7 @@ const RollingTranscript: React.FC<RollingTranscriptProps> = ({
                         )}
                     </div>
                 </div>
+                {sourceError && <p role="alert" className="mx-4 mb-2 text-xs text-red-300">{sourceError}</p>}
 
                 {/* Error chips row — both channels visible */}
                 {(anyFailed || anyReconnecting) && (

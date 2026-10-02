@@ -117,6 +117,7 @@ export class FirebaseManagedSTT extends EventEmitter {
   private lastTurnOrder: number | null = null;
   private lastTurnTranscript = "";
   private readonly tokenEndpoint: string;
+  private prefetchedAccessToken: { token: Promise<string>; validUntil: number } | null = null;
   private readonly trackUsageEndpoint: string;
 
   constructor(
@@ -160,6 +161,7 @@ export class FirebaseManagedSTT extends EventEmitter {
   public setCredentials(_path: string): void {}
 
   public setUsageReportingEnabled(enabled: boolean): void {
+    if (this.usageReportingEnabled && !enabled) void this.flushUsage(true);
     this.usageReportingEnabled = enabled;
   }
 
@@ -176,6 +178,7 @@ export class FirebaseManagedSTT extends EventEmitter {
   }
 
   public stop(): void {
+    this.prefetchedAccessToken = null;
     this.shouldReconnect = false;
     this.clearTimers();
     void this.flushUsage(true);
@@ -206,9 +209,9 @@ export class FirebaseManagedSTT extends EventEmitter {
   public write(chunk: Buffer): void {
     if (!this.isActive) return;
 
-    this.sentAudioSeconds +=
-      chunk.length / Math.max(this.sampleRate * this.numChannels * 2, 1);
     if (this.usageReportingEnabled) {
+      this.sentAudioSeconds +=
+        chunk.length / Math.max(this.sampleRate * this.numChannels * 2, 1);
       void this.flushUsage(false);
     }
 
@@ -264,16 +267,19 @@ export class FirebaseManagedSTT extends EventEmitter {
 
   private async connect(): Promise<void> {
     if (this.isConnecting || !this.isActive) return;
+    const connectionStartedAt = Date.now();
     this.isConnecting = true;
 
     try {
       const accessToken = await this.fetchAssemblyAccessToken();
+      console.log(`[ListeningTiming] Token ready after ${Date.now() - connectionStartedAt}ms`);
       this.ws = new WebSocket(this.buildStreamingUrl(accessToken));
 
       this.ws.on("open", () => {
         this.isConnecting = false;
         this.isOpen = true;
         console.log("[FirebaseManagedSTT] Connected to AssemblyAI realtime");
+        console.log(`[ListeningTiming] WebSocket ready after ${Date.now() - connectionStartedAt}ms`);
         this.emit("connected");
 
         const buffered = this.buffer.splice(0);
@@ -539,7 +545,22 @@ export class FirebaseManagedSTT extends EventEmitter {
     }
   }
 
+  public async prefetchAccessToken(): Promise<void> {
+    if (this.prefetchedAccessToken && this.prefetchedAccessToken.validUntil > Date.now()) return;
+    const entry = { token: this.requestAssemblyAccessToken(), validUntil: Date.now() + (TOKEN_TTL_SECONDS - 10) * 1000 };
+    this.prefetchedAccessToken = entry;
+    try { await entry.token; }
+    catch (error) { if (this.prefetchedAccessToken === entry) this.prefetchedAccessToken = null; throw error; }
+  }
+
   private async fetchAssemblyAccessToken() {
+    const cached = this.prefetchedAccessToken;
+    this.prefetchedAccessToken = null; // Consume once; never share a token between streams.
+    if (cached && cached.validUntil > Date.now()) return cached.token;
+    return this.requestAssemblyAccessToken();
+  }
+
+  private async requestAssemblyAccessToken() {
     const idToken = FirebaseSessionManager.getInstance().getIdToken();
 
     if (!idToken) {

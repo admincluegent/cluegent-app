@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from "react" // forcing refresh
+import React, { useState, useEffect, useRef } from "react" // forcing refresh
 import { QueryClient, QueryClientProvider } from "react-query"
 import { ToastProvider, ToastViewport } from "./components/ui/toast"
 import NativelyInterface from "./components/NativelyInterface"
 import SettingsPopup from "./components/SettingsPopup" // Keeping for legacy/specific window support if needed
 import Launcher from "./components/Launcher"
+import SessionSetup from "./components/SessionSetup"
+import { buildSessionContext, SESSION_CONTEXT_KEY, SessionSetupDetails } from "./lib/sessionSetup"
 import SettingsOverlay from "./components/SettingsOverlay"
 import StartupSequence from "./components/StartupSequence"
 import { AnimatePresence, motion } from "framer-motion"
@@ -15,10 +17,13 @@ import { analytics } from "./lib/analytics/analytics.service"
 import { beginLocalMeeting, finishCurrentLocalMeeting } from "./lib/localMeetingStorage"
 import { ErrorBoundary } from "./components/ErrorBoundary"
 import ModesSettings from "./components/settings/ModesSettings"
+import { useAuth } from "./contexts/auth.context"
 
 const queryClient = new QueryClient()
 
 const App: React.FC = () => {
+  const { user } = useAuth();
+  const setupShownForUser = useRef<string | null>(null);
   const isSettingsWindow = new URLSearchParams(window.location.search).get('window') === 'settings';
   const isLauncherWindow = new URLSearchParams(window.location.search).get('window') === 'launcher';
   const isOverlayWindow = new URLSearchParams(window.location.search).get('window') === 'overlay';
@@ -77,6 +82,27 @@ const App: React.FC = () => {
     return localStorage.getItem('cluegent_consent_v1') === 'accepted';
   });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSessionSetupOpen, setIsSessionSetupOpen] = useState(false);
+  const [sessionSource, setSessionSource] = useState<{ title?: string; calendarEventId?: string; source?: string }>({});
+
+  useEffect(() => {
+    if (!(isLauncherWindow || isDefault) || showStartup || !hasAcceptedConsent || !user || setupShownForUser.current === user.uid) return;
+    let cancelled = false;
+    window.electronAPI.getMeetingActive().then(active => {
+      if (cancelled) return;
+      setupShownForUser.current = user.uid;
+      if (!active) {
+        setSessionSource({});
+        setIsSessionSetupOpen(true);
+      }
+    }).catch(() => {
+      if (!cancelled) {
+        setupShownForUser.current = user.uid;
+        setIsSessionSetupOpen(true);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [user?.uid, showStartup, hasAcceptedConsent, isLauncherWindow, isDefault]);
   const [settingsInitialTab, setSettingsInitialTab] = useState('general');
   const [isModesOpen, setIsModesOpen] = useState(false);
   const [isPremiumActive, setIsPremiumActive] = useState(false);
@@ -181,8 +207,15 @@ const App: React.FC = () => {
     }
   };
 
-  const handleStartMeeting = async () => {
+  const handleStartMeeting = async (details: SessionSetupDetails) => {
     try {
+      const visibilityResult = await window.electronAPI.setUndetectable(true);
+      if (!visibilityResult.success) throw new Error(visibilityResult.error || 'Could not set overlay visibility.');
+      const languageResult = await window.electronAPI.setRecognitionLanguage(details.language);
+      if (!languageResult.success) throw new Error(languageResult.error || 'Could not set conversation language.');
+      const resumeResult = await window.electronAPI.profileSetMode(details.useResume);
+      if (!resumeResult.success) throw new Error(resumeResult.error || 'Could not set resume context.');
+      localStorage.setItem(SESSION_CONTEXT_KEY, buildSessionContext(details));
       localStorage.setItem('natively_last_meeting_start', Date.now().toString());
       const inputDeviceId = localStorage.getItem('preferredInputDeviceId');
       let outputDeviceId = localStorage.getItem('preferredOutputDeviceId');
@@ -198,18 +231,25 @@ const App: React.FC = () => {
       }
 
       const result = await window.electronAPI.startMeeting({
+        ...sessionSource,
+        ...details,
+        title: details.title || sessionSource.title,
         audio: { inputDeviceId, outputDeviceId }
       });
       if (result.success) {
-        beginLocalMeeting();
+        beginLocalMeeting(details.sessionType === 'interview' ? [details.company, details.position].filter(Boolean).join(' · ') || 'Interview' : details.title || 'Meeting');
         analytics.trackMeetingStarted();
         await window.electronAPI.setWindowMode('overlay');
+        setIsSessionSetupOpen(false);
+        // Prompt only after the overlay is visible; denial must not close the session.
+        void window.electronAPI.prepareOverlayPermissions().catch(error => console.warn('[App] Permission preparation failed:', error));
       } else {
         console.error("Failed to start meeting:", result.error);
         await window.electronAPI.setWindowMode('launcher');
         throw new Error(result.error || 'Failed to start Cluegent');
       }
     } catch (err) {
+      localStorage.removeItem(SESSION_CONTEXT_KEY);
       console.error("Failed to start meeting:", err);
       await window.electronAPI.setWindowMode('launcher');
       throw err;
@@ -221,6 +261,7 @@ const App: React.FC = () => {
     analytics.trackMeetingEnded();
     try {
       await window.electronAPI.endMeeting();
+      localStorage.removeItem(SESSION_CONTEXT_KEY);
       finishCurrentLocalMeeting();
       console.log("[App.tsx] endMeeting IPC completed");
       
@@ -319,7 +360,10 @@ const App: React.FC = () => {
               <ToastProvider>
                 <div id="launcher-container" className="h-screen w-screen relative overflow-hidden bg-bg-primary">
                   <Launcher
-                    onStartMeeting={handleStartMeeting}
+                    onStartMeeting={(metadata = {}) => {
+                      setSessionSource(metadata);
+                      setIsSessionSetupOpen(true);
+                    }}
                     onOpenSettings={(tab = 'general') => {
                       setSettingsInitialTab(tab);
                       setIsSettingsOpen(true);
@@ -327,6 +371,14 @@ const App: React.FC = () => {
                     onOpenModes={() => setIsModesOpen(true)}
                     onPageChange={setIsLauncherMainView}
                   />
+                  {isSessionSetupOpen && <SessionSetup
+                    onCancel={() => setIsSessionSetupOpen(false)}
+                    onUpgrade={() => {
+                      setSettingsInitialTab('billing');
+                      setIsSettingsOpen(true);
+                    }}
+                    onComplete={handleStartMeeting}
+                  />}
                 </div>
                 <SettingsOverlay
                   isOpen={isSettingsOpen}

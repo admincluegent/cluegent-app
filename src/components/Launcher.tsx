@@ -13,7 +13,6 @@ import { useResolvedTheme } from '../hooks/useResolvedTheme';
 import { isMac } from '../utils/platformUtils';
 import WindowControls from './WindowControls';
 import {
-    beginLocalMeeting,
     deleteLocalMeeting,
     formatLocalMeetingDuration,
     getLocalMeetingById,
@@ -103,7 +102,7 @@ const localMeetingToMeeting = (meeting: LocalMeetingRecord): Meeting => {
 };
 
 interface LauncherProps {
-    onStartMeeting: () => void | Promise<void>;
+    onStartMeeting: (metadata?: { title?: string; calendarEventId?: string; source?: string }) => void | Promise<void>;
     onOpenSettings: (tab?: string) => void;
     onOpenModes?: () => void;
     onPageChange?: (isMain: boolean) => void;
@@ -377,16 +376,11 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
         if (!preparedEvent) return;
         analytics.trackCommandExecuted('start_prepared_meeting');
         try {
-            const inputDeviceId = localStorage.getItem('preferredInputDeviceId');
-            const outputDeviceId = localStorage.getItem('preferredOutputDeviceId');
-
-            await window.electronAPI.startMeeting({
+            await onStartMeeting({
                 title: preparedEvent.title,
                 calendarEventId: preparedEvent.id,
                 source: 'calendar',
-                audio: { inputDeviceId, outputDeviceId }
             });
-            beginLocalMeeting(preparedEvent.title);
             setIsPrepared(false);
         } catch (e) {
             console.error("Failed to start prepared meeting", e);

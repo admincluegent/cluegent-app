@@ -22,6 +22,8 @@ export function initializeIpcHandlers(appState: AppState): void {
     ipcMain.handle(channel, listener);
   };
 
+  safeHandle('session:select-reference', () => LocalProfileManager.getInstance().selectSessionReference());
+
   /**
    * Legacy premium feature gate. Cluegent billing is enforced through Firebase
    * entitlements; this only keeps optional bundled premium modules from opening
@@ -682,6 +684,21 @@ export function initializeIpcHandlers(appState: AppState): void {
     return appState.getOverlayMousePassthrough()
   })
 
+  safeHandle('overlay:hit-test-ignore', (event, ignore: boolean) => {
+    const helper = appState.getWindowHelper();
+    if (event.sender !== helper.getOverlayWindow()?.webContents || typeof ignore !== 'boolean') return;
+    helper.setOverlayHitTestIgnore(ignore);
+  });
+
+  safeHandle('overlay:cursor-position', event => {
+    const win = appState.getWindowHelper().getOverlayWindow();
+    if (!win || win.isDestroyed() || event.sender !== win.webContents) return null;
+    const cursor = screen.getCursorScreenPoint();
+    const bounds = win.getContentBounds();
+    const zoom = win.webContents.getZoomFactor();
+    return { x: (cursor.x - bounds.x) / zoom, y: (cursor.y - bounds.y) / zoom };
+  });
+
   safeHandle("get-disguise", async () => {
     return appState.getDisguise()
   })
@@ -1073,6 +1090,15 @@ export function initializeIpcHandlers(appState: AppState): void {
 
   safeHandle("get-listening-active", async () => {
     return appState.getIsListeningActive();
+  });
+
+  safeHandle("set-listening-source", async (_event, source: 'system' | 'mic', enabled: boolean) => {
+    try {
+      await appState.setListeningSource(source, enabled);
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
   });
 
   safeHandle("start-mic-stt", async () => {
@@ -2038,6 +2064,28 @@ export function initializeIpcHandlers(appState: AppState): void {
       return false
     }
   })
+
+  safeHandle("permissions:prepare-overlay", async () => {
+    if (process.platform !== 'darwin') {
+      appState.prepareListeningTokens();
+      return { microphone: 'granted', screen: 'granted' };
+    }
+    if (systemPreferences.getMediaAccessStatus('microphone') === 'not-determined') {
+      await systemPreferences.askForMediaAccess('microphone');
+    }
+    if (systemPreferences.getMediaAccessStatus('screen') === 'not-determined') {
+      // Request Screen Recording without saving a screenshot or starting audio capture.
+      try { await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 1, height: 1 } }); }
+      catch (error) { console.warn('[Permissions] Screen permission request pending or denied:', error); }
+    }
+    const microphone = systemPreferences.getMediaAccessStatus('microphone');
+    const screenPermission = systemPreferences.getMediaAccessStatus('screen');
+    if (screenPermission === 'denied' || microphone === 'denied') {
+      appState.getWindowHelper().getOverlayWindow()?.webContents.send('system-audio-permission-denied', 'Microphone or Screen Recording permission is disabled. Enable Cluegent in System Settings → Privacy & Security before using audio or screenshots.');
+    }
+    appState.prepareListeningTokens();
+    return { microphone, screen: screenPermission };
+  });
 
   // ==========================================
   // Modes IPC Handlers

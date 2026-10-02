@@ -31,6 +31,7 @@ export class WindowHelper {
   private appState: AppState
   private contentProtection: boolean = false
   private opacityTimeout: NodeJS.Timeout | null = null
+  private overlayHitTestIgnore = false
 
   // Constants
   private static readonly OVERLAY_DEFAULT_WIDTH = 1180;
@@ -445,7 +446,7 @@ export class WindowHelper {
   public syncOverlayInteractionPolicy(): void {
     if (!this.overlayWindow || this.overlayWindow.isDestroyed()) return;
 
-    const passthrough = this.appState.getOverlayMousePassthrough();
+    const passthrough = this.appState.getOverlayMousePassthrough() || this.overlayHitTestIgnore;
     if (passthrough) {
       // forward: true — pointer events are still delivered to the OS layer beneath.
       // NOTE: We intentionally do NOT call setFocusable(false) here.
@@ -458,13 +459,17 @@ export class WindowHelper {
       // Keeping the window focusable costs nothing: in passthrough mode the
       // user is in another app and will not accidentally focus the overlay.
       this.overlayWindow.setIgnoreMouseEvents(true, { forward: true });
-      console.log('[WindowHelper] Overlay mouse passthrough ON');
     } else {
       this.overlayWindow.setIgnoreMouseEvents(false);
       // Restore full interactivity when passthrough is turned off.
       this.overlayWindow.setFocusable(true);
-      console.log('[WindowHelper] Overlay mouse passthrough OFF');
     }
+  }
+
+  public setOverlayHitTestIgnore(ignore: boolean): void {
+    if (this.overlayHitTestIgnore === ignore) return;
+    this.overlayHitTestIgnore = ignore;
+    this.syncOverlayInteractionPolicy();
   }
 
   // Show overlay directly without going through full switchToOverlay flow.
