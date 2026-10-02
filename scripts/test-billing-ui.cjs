@@ -49,6 +49,10 @@ test('billing tabs display server prices and checkout verifies its own order', a
     await page.goto(`http://127.0.0.1:${server.address().port}`);
     await page.getByText('₹3,499',{exact:true}).waitFor();
     assert.equal(await page.getByRole('article').count(),2);
+    const enlarged = await page.getByRole('article').first().evaluate(card => ({width:card.getBoundingClientRect().width, height:card.getBoundingClientRect().height, text:getComputedStyle(card.querySelector('ul')).fontSize}));
+    assert.equal(enlarged.width,330);
+    assert.ok(enlarged.height>=430);
+    assert.equal(enlarged.text,'13px');
     await page.getByText('₹7,999',{exact:true}).waitFor();
     assert.deepEqual(await page.locator('del').allTextContents(), ['₹6,499','₹10,499']);
     await page.getByRole('tab',{name:'Hourly'}).click();
@@ -131,6 +135,32 @@ test('billing tabs display server prices and checkout verifies its own order', a
     await exhausted.getByRole('button',{name:'Add hours',exact:true}).first().click();
     await exhausted.getByText('Payment verified. Your plan is active.').waitFor();
     const offline = await browser.newPage();
+    const cancelled = await browser.newPage();
+    await cancelled.addInitScript(() => {
+      window.Razorpay = class {
+        constructor(options) { window.checkoutOptions = options; }
+        open() {}
+        on() {}
+      };
+    });
+    await cancelled.goto(`http://127.0.0.1:${server.address().port}`);
+    await cancelled.getByText('₹3,499', {exact:true}).waitFor();
+    await cancelled.getByRole('button', {name:'Upgrade', exact:true}).first().click();
+    await cancelled.waitForFunction(() => !!window.checkoutOptions);
+    assert.equal(await cancelled.getByRole('button', {name:'USD', exact:true}).isDisabled(), true);
+    await cancelled.evaluate(() => window.checkoutOptions.modal.ondismiss());
+    await cancelled.getByText('Checkout cancelled. You can choose a plan again.').waitFor();
+    assert.equal(await cancelled.getByRole('button', {name:'Upgrade', exact:true}).first().isEnabled(), true);
+    assert.equal(await cancelled.getByRole('button', {name:'USD', exact:true}).isEnabled(), true);
+    await cancelled.getByRole('button', {name:'USD', exact:true}).click();
+    await cancelled.getByRole('button', {name:'Upgrade', exact:true}).first().click();
+    await cancelled.waitForFunction(() => window.checkoutOptions.currency === 'USD');
+    await cancelled.evaluate(() => {
+      window.checkoutOptions.handler({razorpay_order_id:'order-test',razorpay_payment_id:'pay-test',razorpay_signature:'valid'});
+      window.checkoutOptions.modal.ondismiss();
+    });
+    await cancelled.getByText('Payment verified. Your plan is active.').waitFor();
+    assert.equal(await cancelled.getByText('Checkout cancelled. You can choose a plan again.').count(), 0);
     await offline.addInitScript(()=>{window.failPrices=true;});
     await offline.goto(`http://127.0.0.1:${server.address().port}`);
     await offline.getByText('Could not load current prices. Retry before purchasing.').waitFor();

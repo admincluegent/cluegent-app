@@ -623,15 +623,6 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                         </div>
                     )}
 
-                    <button
-                        onClick={() => {
-                            onOpenSettings();
-                        }}
-                        title="Settings"
-                        className={`p-2 text-text-secondary hover:text-text-primary transition-all duration-300 ${isLight ? 'hover:drop-shadow-[0_0_6px_rgba(0,0,0,0.25)]' : 'hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]'}`}
-                    >
-                        <Settings size={18} />
-                    </button>
                     {!isMac && <WindowControls />}
                 </div>
             </header>
@@ -765,7 +756,7 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
 
                                         <div className="flex-1" />
 
-                                        <div className="flex shrink-0 flex-col items-end gap-3">
+                                        <div className="flex shrink-0 items-center gap-3">
                                         {/* Unified CTA pill — same jelly shape, morphs between idle and active-meeting state */}
                                         <motion.button
                                             onClick={() => {
@@ -864,6 +855,15 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                                                 </AnimatePresence>
                                             </div>
                                         </motion.button>
+                                        <button
+                                            type="button"
+                                            onClick={() => onOpenSettings()}
+                                            aria-label="Settings"
+                                            title="Settings"
+                                            className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-bg-card text-text-secondary transition-colors hover:bg-bg-item-active hover:text-text-primary active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                                        >
+                                            <Settings size={20} />
+                                        </button>
                                         </div>
                                     </div>
 

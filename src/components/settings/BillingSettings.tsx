@@ -130,7 +130,15 @@ export const BillingSettings: React.FC = () => {
             finally { setBusy(null); }
           })();
         },
-        modal: { ondismiss: () => { if (!verificationStarted) { setBusy(null); setMessage('Checkout closed. Waiting briefly for any completed payment.'); } } },
+        modal: { ondismiss: () => {
+          // An abandoned order is not a payment awaiting verification.
+          // Keep the verification lock only if Razorpay delivered a success callback.
+          if (!verificationStarted) {
+            setPending(null); setBusy(null); setMessage('Checkout cancelled. You can choose a plan again.');
+            // Refresh without blocking retries; server webhooks still reconcile captured payments.
+            void refreshProfile().catch(() => {});
+          }
+        } },
       });
       checkout.on?.('payment.failed', data => { setError(data.error?.description || 'Payment failed. Please retry checkout.'); setBusy(null); setPending(null); });
       checkout.open();
@@ -181,26 +189,26 @@ export const BillingSettings: React.FC = () => {
           </div>
         </div>}
         {loading ? <p role="status" className="text-center text-slate-500">Loading current prices…</p> :
-          <div id="billing-plans" role="tabpanel" aria-labelledby={`billing-${category}`} className="mx-auto flex max-w-[640px] flex-wrap justify-center gap-3">
+          <div id="billing-plans" role="tabpanel" aria-labelledby={`billing-${category}`} className="mx-auto flex max-w-[640px] min-[900px]:max-w-[680px] flex-wrap justify-center gap-3">
             {CARDS.filter(card => card.category === category).map((card, index) => {
               const price = prices.find(price => price.planId === card.id && price.interval === card.interval && price.currency === currency);
               const accent = card.category === 'year' ? { border: 'border-slate-500', bullet: 'text-slate-600', button: 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700' } : index === 0 ? { border: 'border-emerald-400', bullet: 'text-emerald-500', button: 'border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800' } : { border: 'border-blue-400', bullet: 'text-orange-500', button: 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700' };
               const active = subscription?.status === 'active' && subscription.plan === card.id;
-              return <article key={card.id} className={`relative flex min-h-[400px] w-full max-w-[310px] min-w-0 flex-col rounded-[24px] border-2 bg-white p-3 text-slate-950 shadow-[0_22px_70px_-46px_rgba(15,23,42,0.45)] ${accent.border}`}>
-                <h3 className="text-lg font-semibold">{card.name}</h3>
+              return <article key={card.id} className={`relative flex min-h-[400px] min-[900px]:min-h-[430px] w-full max-w-[310px] min-[900px]:max-w-[330px] min-w-0 flex-col rounded-[24px] border-2 bg-white p-3 min-[900px]:p-4 text-slate-950 shadow-[0_22px_70px_-46px_rgba(15,23,42,0.45)] ${accent.border}`}>
+                <h3 className="text-lg min-[900px]:text-xl font-semibold">{card.name}</h3>
                 <div className="mt-3 flex flex-wrap items-baseline gap-1.5">
-                  {price && <del aria-label="Original price" className="text-sm font-medium text-slate-400 decoration-2">{ORIGINAL_PRICES[currency][card.id]}</del>}
-                  <p className={`text-[1.75rem] font-semibold tracking-tight ${price ? 'billing-sparkle billing-price-sparkle' : ''}`}>{price?.displayPrice ?? 'Unavailable'}</p>
-                  {['hour10','quarterly200','annual200'].includes(card.id) && <span className="rounded-full border border-orange-200 bg-orange-50 px-1.5 py-0.5 text-[9px] font-semibold text-orange-700">Most Popular</span>}
+                  {price && <del aria-label="Original price" className="text-sm min-[900px]:text-base font-medium text-slate-400 decoration-2">{ORIGINAL_PRICES[currency][card.id]}</del>}
+                  <p className={`text-[1.75rem] min-[900px]:text-[1.875rem] font-semibold tracking-tight ${price ? 'billing-sparkle billing-price-sparkle' : ''}`}>{price?.displayPrice ?? 'Unavailable'}</p>
+                  {['hour10','quarterly200','annual200'].includes(card.id) && <span className="rounded-full border border-orange-200 bg-orange-50 px-1.5 py-0.5 text-[9px] min-[900px]:text-[10px] font-semibold text-orange-700">Most Popular</span>}
                 </div>
                 <p className="mt-1 text-[13px] leading-5 text-slate-500">{card.months > 1 ? `${price?.displayMonthlyPrice ?? '—'}/month equivalent · paid upfront for ${card.months} months` : card.months === 1 ? '' : ''}</p>
                 {card.months > 0 && <p className="mt-1 text-xs leading-4 text-slate-500"></p>}
-                <ul className="my-2 space-y-1 text-xs leading-4 text-slate-700">
+                <ul className="my-2 space-y-1 min-[900px]:space-y-1.5 text-xs min-[900px]:text-[13px] leading-4 min-[900px]:leading-5 text-slate-700">
                   {cardHighlights(card).map(item => <li key={item} className="flex gap-2"><Check size={14} className={`mt-0.5 shrink-0 ${accent.bullet}`} /><span className={/^(Undetectability|Real-time|Coding|Unlimited)/.test(item) ? 'font-semibold' : undefined}>{item}</span></li>)}
                 </ul>
                 <button disabled={!price || !!busy || !!pending || (active && card.interval !== 'hour')}
                   aria-label={busy === card.id ? 'Processing…' : active && card.interval !== 'hour' ? 'Current plan' : card.interval === 'hour' && subscription?.billingInterval === 'hour' ? 'Add hours' : 'Upgrade'}
-                  onClick={() => void buy(card)} className={`billing-sparkle billing-upgrade-sparkle mt-auto inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-2.5 text-[13px] font-semibold shadow-[0_14px_36px_-28px_rgba(15,23,42,0.35)] transition-colors active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed ${accent.button}`}>
+                  onClick={() => void buy(card)} className={`billing-sparkle billing-upgrade-sparkle mt-auto inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-2.5 text-[13px] min-[900px]:text-sm font-semibold shadow-[0_14px_36px_-28px_rgba(15,23,42,0.35)] transition-colors active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed ${accent.button}`}>
                   {busy === card.id ? <><Loader2 size={16} className="animate-spin" />Processing…</> : active && card.interval !== 'hour' ? 'Current plan' : card.interval === 'hour' && subscription?.billingInterval === 'hour' ? 'Add hours' : 'Upgrade'}
                 </button>
               </article>;

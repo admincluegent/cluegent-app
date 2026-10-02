@@ -1416,7 +1416,8 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                         onClick={() => setActiveTab('resume-builder')}
                                         className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${activeTab === 'resume-builder' ? 'bg-bg-item-active text-text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-bg-item-active/50'}`}
                                     >
-                                        <FileText size={16} className="shrink-0" /> AI Resume Builder
+                                        <FileText size={16} className="shrink-0 text-blue-500" />
+                                        <span className="bg-gradient-to-r from-blue-600 via-violet-600 to-pink-600 bg-clip-text font-semibold text-transparent">AI Resume Builder</span>
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('recent-meetings')}
