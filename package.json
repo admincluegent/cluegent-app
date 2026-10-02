@@ -5,7 +5,8 @@
   "description": "Cluegent is an AI copilot that helps with live conversation, screen context, and meeting assistance.",
   "scripts": {
     "clean": "rimraf dist dist-electron",
-    "dev": "vite",
+    "dev": "npm run app:dev",
+    "renderer:dev": "vite",
     "build": "npm run clean && tsc && vite build",
     "build:electron": "node scripts/build-electron.js",
     "build:electron:tsc": "tsc -p electron/tsconfig.json",
@@ -14,7 +15,7 @@
     "postinstall": "cross-env SHARP_IGNORE_GLOBAL_LIBVIPS=1 npm rebuild sharp && node scripts/patch-electron-plist.js",
     "electron:dev": "npm run build:electron && cross-env NODE_ENV=development VITE_DEV_SERVER_URL=http://127.0.0.1:5180 electron .",
     "electron:build": "npm run build:electron && cross-env NODE_ENV=production electron .",
-    "app:dev": "concurrently \"npm run dev -- --host 127.0.0.1 --port 5180 --strictPort\" \"wait-on http://127.0.0.1:5180 && npm run electron:dev\"",
+    "app:dev": "concurrently \"npm run renderer:dev -- --host 127.0.0.1 --port 5180 --strictPort\" \"wait-on http://127.0.0.1:5180 && npm run electron:dev\"",
     "app:build": "npm run build && npm run build:electron && cross-env NATIVELY_BUILD_ALL_MAC_ARCHES=1 npm run build:native && electron-builder",
     "app:build:store": "npm run build && npm run build:electron && npm run build:native && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win appx --x64",
     "watch": "tsc -p electron/tsconfig.json --watch",

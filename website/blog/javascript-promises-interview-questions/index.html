@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JavaScript Promises Interview Questions &amp; Output | Cluegent</title>
+    <meta name="description" content="Prepare JavaScript promise interview answers on output order, Promise.all, error propagation, missing returns, and concurrency with runnable examples." />
+    <meta name="author" content="Cluegent" />
+    <link rel="canonical" href="https://www.cluegent.com/blog/javascript-promises-interview-questions/" />
+    <meta property="og:title" content="JavaScript Promises Interview Questions &amp; Output | Cluegent" />
+    <meta property="og:description" content="Prepare JavaScript promise interview answers on output order, Promise.all, error propagation, missing returns, and concurrency with runnable examples." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.cluegent.com/blog/javascript-promises-interview-questions/" />
+    <meta property="og:image" content="https://www.cluegent.com/assets/how-to-use-01.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="JavaScript Promises Interview Questions &amp; Output | Cluegent" />
+    <meta name="twitter:description" content="Prepare JavaScript promise interview answers on output order, Promise.all, error propagation, missing returns, and concurrency with runnable examples." />
+    <meta name="twitter:image" content="https://www.cluegent.com/assets/how-to-use-01.png" />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="icon" type="image/png" href="/assets/icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500;600&family=Geist:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css?v=20260730-cta" />
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CCH0Y2SN4G"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag("js", new Date());
+      gtag("config", "G-CCH0Y2SN4G");
+    </script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Cluegent","url":"https://www.cluegent.com","logo":"https://www.cluegent.com/assets/icon.png","email":"admincluegent@gmail.com","sameAs":["https://github.com/admincluegent/cluegent-app"]}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Cluegent","url":"https://www.cluegent.com"}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"JavaScript Promises Interview Questions with Output and Error Examples","description":"Prepare JavaScript promise interview answers on output order, Promise.all, error propagation, missing returns, and concurrency with runnable examples.","datePublished":"2026-09-19","dateModified":"2026-09-19","author":{"@type":"Organization","name":"Cluegent Editorial Team","url":"https://www.cluegent.com/about/"},"publisher":{"@type":"Organization","name":"Cluegent","logo":{"@type":"ImageObject","url":"https://www.cluegent.com/assets/icon.png"}},"mainEntityOfPage":"https://www.cluegent.com/blog/javascript-promises-interview-questions/"}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does Promise.all cancel other work after a rejection?","acceptedAnswer":{"@type":"Answer","text":"No. A rejected combined promise does not automatically cancel the other operations. Cancellation requires support and handling in the underlying operations."}},{"@type":"Question","name":"Does Promise.all preserve input order?","acceptedAnswer":{"@type":"Answer","text":"Yes. Its fulfillment values correspond to input order rather than the order in which the operations completed."}}]}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.cluegent.com/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https://www.cluegent.com/blog/"},{"@type":"ListItem","position":3,"name":"JavaScript Promises Interview Questions with Output and Error Examples","item":"https://www.cluegent.com/blog/javascript-promises-interview-questions/"}]}</script>
+  </head>
+<body>
+  <div class="page-shell seo-shell">
+
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Cluegent home">
+        <span class="brand-icon"><img src="/assets/icon.png" alt="Cluegent logo" /></span>
+        <span>Cluegent</span>
+      </a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open navigation">
+        <span></span><span></span>
+      </button>
+      <nav class="site-nav" id="site-nav">
+        <a href="/ai-interview-assistant/">Product</a><a href="/coding-interview-assistant/">Coding</a><a href="/pricing/">Pricing</a><a href="/resources/">Resources</a><a href="/blog/" aria-current="page">Blog</a><a href="/download/">Download</a>
+        <a class="nav-button" href="https://apps.microsoft.com/detail/9NXWZPN07THN">Get Cluegent</a>
+      </nav>
+    </header>
+
+    <main>
+
+      <section class="hero-section hero-section--blog-review" id="cluegent-home-section">
+        <div class="hero-bg" aria-hidden="true">
+          <div class="hero-orb hero-orb--blue"></div>
+          <div class="hero-orb hero-orb--gold"></div>
+          <div class="hero-grid"></div>
+        </div>
+
+        <div class="hero-content">
+          <div class="hero-copy reveal">
+            <p class="trust-line">Free AI interview assistant</p>
+            <h2>
+              <span>Undetectable AI</span>
+              <span>Interview Assistant</span>
+            </h2>
+            <div class="hero-screen-line">Invisible During Screen Sharing for Live Calls</div>
+            <p class="hero-subtitle">
+              Cluegent gives real-time interview answers, coding help, screenshot-aware context, and meeting support
+              <span>from a private Windows and macOS desktop overlay for Zoom, Meet, Teams, and technical calls.</span>
+            </p>
+            <div class="hero-actions" id="download-cluegent-from-chiku-review">
+              <a class="primary-download primary-download--free" href="https://apps.microsoft.com/detail/9NXWZPN07THN" data-analytics-event="free_trial_click" data-analytics-location="blog_home_hero">
+                <span>Try for free</span>
+                <span class="hero-arrow" aria-hidden="true">→</span>
+              </a>
+              <div class="download-menu" data-download-menu>
+                <button
+                  class="secondary-download secondary-download--mac"
+                  type="button"
+                  aria-haspopup="menu"
+                  aria-expanded="false"
+                  aria-controls="blog-home-macos-download-options"
+                  data-download-trigger
+                  data-analytics-location="blog_home_hero"
+                >
+                  <span class="mac-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" role="presentation"><path fill="currentColor" d="M17.1 12.7c0-2 1.7-3 1.8-3.1-1-1.4-2.5-1.6-3-1.6-1.3-.1-2.4.7-3.1.7-.6 0-1.6-.7-2.7-.7-1.4 0-2.7.8-3.4 2.1-1.5 2.6-.4 6.5 1.1 8.6.7 1 1.6 2.2 2.7 2.1 1.1 0 1.5-.7 2.8-.7s1.7.7 2.9.7 1.9-1 2.6-2.1c.8-1.2 1.1-2.3 1.1-2.4 0-.1-2.8-1.1-2.8-3.6ZM15 6.6c.6-.7 1-1.7.9-2.6-.9 0-1.9.6-2.5 1.3-.6.7-1 1.6-.9 2.6 1 0 1.9-.5 2.5-1.3Z"/></svg></span>
+                  <span>Get for macOS</span>
+                  <span class="download-chevron" aria-hidden="true"><svg viewBox="0 0 16 16" role="presentation"><path d="M4 6 8 10l4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </button>
+                <div class="download-options" id="blog-home-macos-download-options" role="menu" data-download-options hidden>
+                  <p>Choose your Mac chip</p>
+                  <a class="download-option download-option--apple" href="https://github.com/admincluegent/cluegent-app/releases/download/v1.0.7/Cluegent-1.0.7-arm64-mac.zip" role="menuitem" target="_blank" rel="noreferrer">
+                    <strong>Apple Silicon Mac</strong>
+                    <span>M1, M2, M3, M4, M5</span>
+                  </a>
+                  <a class="download-option download-option--intel" href="https://github.com/admincluegent/cluegent-app/releases/download/v1.0.7/Cluegent-1.0.7-mac.zip" role="menuitem" target="_blank" rel="noreferrer">
+                    <strong>Intel Mac</strong>
+                    <span>Older Macs with Intel processor</span>
+                  </a>
+                </div>
+              </div>
+              <div class="hero-platform-row" id="download-options-from-blog-hero">
+                <a class="secondary-download" href="https://apps.microsoft.com/detail/9NXWZPN07THN" data-analytics-event="download_click" data-analytics-location="blog_home_hero">
+                  <span class="windows-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" role="presentation"><path d="M2 3.6 10.2 2v9H2V3.6Zm9.8-1.8L22 0v11h-10.2V1.8ZM2 12.9h8.2v9L2 20.3v-7.4Zm9.8 0H22v11l-10.2-1.8v-9.2Z" fill="currentColor"/></svg></span>
+                  <span>Get for Windows</span>
+                </a>
+                <div class="hero-proof" aria-label="Cluegent user rating">
+                  <div class="hero-proof-avatars" aria-hidden="true">
+                    <img class="hero-proof-avatar" src="/assets/review-avatar-1.png" alt="" width="34" height="34" decoding="async" />
+                    <img class="hero-proof-avatar" src="/assets/review-avatar-2.png" alt="" width="34" height="34" decoding="async" />
+                    <img class="hero-proof-avatar" src="/assets/review-avatar-3.png" alt="" width="34" height="34" decoding="async" />
+                  </div>
+                  <div class="hero-proof-copy">
+                    <p>Used by <strong>4,000+</strong> people</p>
+                    <div class="hero-proof-rating">
+                      <span class="hero-proof-stars" aria-hidden="true">★★★★★</span>
+                      <strong>Live</strong>
+                      <span>desktop AI copilot</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="hero-trust-bar" aria-label="Cluegent trust signals">
+              <span>Resume-aware answers</span>
+              <span>Screenshot coding help</span>
+              <span>Zoom · Meet · Teams</span>
+            </div>
+          </div>
+
+          <div class="hero-preview reveal">
+            <div class="preview-glow"></div>
+            <div class="desktop-preview">
+              <div class="desktop-topbar">
+                <span class="window-dot window-dot--red"></span>
+                <span class="window-dot window-dot--yellow"></span>
+                <span class="window-dot window-dot--green"></span>
+              </div>
+
+              <div class="desktop-scene">
+                <div class="demo-video-frame">
+                  <video
+                    class="demo-video"
+                    src="/assets/cluegent-how-to-full.mp4"
+                    controls
+                    playsinline
+                    poster="/assets/how-to-use-01.png"
+                    preload="none"
+                    aria-label="Cluegent walkthrough video"
+                  ></video>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <article class="seo-article seo-article--after-hero">
+        <header class="seo-article-header reveal">
+          <p class="section-kicker">Practical interview preparation</p>
+          <h1>JavaScript Promises Interview Questions with Output and Error Examples</h1>
+          <p>Promise questions test sequencing and failure behavior, not just syntax. For each example, predict the output, explain why it occurs, and describe how an error would change the result.</p>
+          <p class="seo-article-meta">Reviewed by <a href="/about/">Cluegent Editorial Team</a> · Updated <time datetime="2026-09-19">September 19, 2026</time></p>
+        </header>
+        <div class="seo-article-body reveal">
+
+    <nav aria-label="On this page"><h2>On this page</h2><ul><li><a href="#section-1">1. What prints first in this promise example?</a></li><li><a href="#section-2">2. Does Promise.all return completion order?</a></li><li><a href="#section-3">3. What happens when a callback forgets to return?</a></li><li><a href="#section-4">4. Where should you catch an error?</a></li><li><a href="#section-5">5. Why can sequential awaits be unnecessarily slow?</a></li><li><a href="#section-6">A practical promise interview exercise</a></li></ul></nav>
+    <section><h2 id="section-1" style="scroll-margin-top:110px">1. What prints first in this promise example?</h2><p>In the example below, A and B print during the current synchronous execution, and C prints afterward from the promise reaction. The output is A, B, C. A resolved promise does not make its then callback execute inline at the point where then is called.</p><p>Explain the boundary rather than memorizing a slogan about JavaScript being single-threaded. This exercise deliberately excludes timers and Node-specific scheduling APIs so the ordering being tested is clear. If an interviewer adds another scheduling mechanism, reason about that environment instead of assuming every asynchronous callback uses the same queue.</p><pre style="overflow-x:auto;max-width:100%;padding:1rem;background:#f1f5f9;border-radius:12px"><code>console.log(&#39;A&#39;);
+Promise.resolve().then(() =&gt; console.log(&#39;C&#39;));
+console.log(&#39;B&#39;);</code></pre></section><section><h2 id="section-2" style="scroll-margin-top:110px">2. Does Promise.all return completion order?</h2><p>No. Its fulfillment values follow input order, even if the individual operations finish in a different order. It rejects when one input rejects, but that rejection does not automatically cancel the other operations. If partial outcomes matter, consider whether an all-settled style of result handling better fits the requirement.</p><p>Our example is loading a profile and preferences. If both are required, a combined failure may be appropriate. If preferences are optional, define a fallback explicitly instead of letting a convenient combinator decide the product behavior. Also distinguish starting operations from awaiting them: Promise.all does not itself provide a limit on in-flight requests.</p></section><section><h2 id="section-3" style="scroll-margin-top:110px">3. What happens when a callback forgets to return?</h2><p>A then callback that starts an operation without returning its promise breaks the intended chain. The next callback can proceed without waiting for that operation, and its failure may no longer be handled by the catch you expected. Return the nested operation when it is part of the work represented by the chain.</p><p>In the working example below, the first callback returns a transformed value, so the next receives 6. Change the first callback to a block body with no return and the next receives undefined. That tiny edit is a useful interview test because the code can look almost identical while its data flow changes completely.</p><pre style="overflow-x:auto;max-width:100%;padding:1rem;background:#f1f5f9;border-radius:12px"><code>Promise.resolve(3)
+  .then((value) =&gt; value * 2)
+  .then((value) =&gt; console.log(value)); // 6</code></pre></section><section><h2 id="section-4" style="scroll-margin-top:110px">4. Where should you catch an error?</h2><p>Catch where you can make a meaningful decision: recover with a valid fallback, add useful context and propagate, or present a failure at the boundary. Returning a fallback from catch turns that part of the chain into a fulfilled path. Throwing again keeps the failure visible to downstream handling.</p><p>For an interview scenario, a profile request fails because authentication expired. Replacing the result with an empty profile may make the interface appear successful while losing the real cause. Explain whether the correct behavior is re-authentication, a visible error, or a retry. Do not describe every exception as a transient network problem.</p></section><section><h2 id="section-5" style="scroll-margin-top:110px">5. Why can sequential awaits be unnecessarily slow?</h2><p>If two operations are independent, starting the second only after the first completes adds waiting time. Starting both before awaiting the combined result can overlap their waits. But if the second requires the first result, sequential execution may be necessary. Identify the dependency graph before rewriting the code.</p><p>Now change the exercise from two requests to twenty thousand. Starting everything simultaneously may overload a service. A correct answer introduces bounded concurrency, cancellation where supported, and a deadline. The goal is not maximum simultaneous activity; it is useful throughput without exhausting the caller or its dependencies.</p></section><section><h2 id="section-6" style="scroll-margin-top:110px">A practical promise interview exercise</h2><p>Design a page that needs a required account record and optional recommendations. State what the user sees when either fails, which operations can start together, and when loading ends. Add a route change while requests are in flight. Explain how stale results are prevented from overwriting the new page&#39;s state.</p><p>Write a tiny test for success, required failure, optional failure, and out-of-order completion. During preparation, use Cluegent to challenge your assumptions, then explain the sequence unaided. The Node.js guide below extends the same reasoning to service capacity, while the React hooks guide applies it to component lifecycle and cleanup.</p></section>
+          <section class="seo-article-sources">
+            <h2>Sources checked</h2>
+            <p>These official references support the guide. Product details and technical documentation can change; check the linked source for current information.</p>
+            <ul>
+              <li><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises" target="_blank" rel="noreferrer">MDN: promise chaining and error propagation</a></li><li><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all" target="_blank" rel="noreferrer">MDN: Promise.all behavior</a></li>
+            </ul>
+          </section>
+          <section>
+            <h2>Where Cluegent helps</h2>
+            <p>Cluegent supports permitted live workflows with transcript context, typed prompts, screenshot-aware answers, resume context, custom response behavior, quick action buttons, and a private desktop overlay. It is most useful when you already understand the subject and need help staying structured under pressure.</p>
+          </section>
+          <section>
+            <h2>Frequently asked questions</h2>
+            <h3>Does Promise.all cancel other work after a rejection?</h3><p>No. A rejected combined promise does not automatically cancel the other operations. Cancellation requires support and handling in the underlying operations.</p><h3>Does Promise.all preserve input order?</h3><p>Yes. Its fulfillment values correspond to input order rather than the order in which the operations completed.</p>
+          </section>
+        </div>
+      </article>
+      <section class="seo-section seo-related">
+        <h2>Related resources</h2>
+        <div>
+          <a href="/blog/javascript-coding-interview-questions/">JavaScript coding practice</a><a href="/blog/nodejs-interview-questions/">Node.js concurrency and latency</a><a href="/blog/react-hooks-interview-questions/">React hooks and asynchronous updates</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-brand">
+        <span class="brand-icon"><img src="/assets/icon.png" alt="" /></span>
+        <strong>Cluegent</strong>
+        <p>Private AI interview and meeting assistance for real-time answers, coding support, screenshots, and desktop context.</p>
+      </div>
+      <div class="footer-grid">
+        <div>
+          <h3>Product</h3>
+          <a href="/ai-interview-assistant/">AI Interview Assistant</a><a href="/ai-interview-assistant-india/">AI Interview Assistant India</a><a href="/ai-interview-assistant-for-freshers/">AI Interview Assistant for Freshers</a><a href="/ai-interview-assistant-for-zoom/">AI Interview Assistant for Zoom</a><a href="/ai-interview-assistant-for-google-meet/">AI Interview Assistant for Google Meet</a><a href="/ai-interview-assistant-for-teams/">AI Interview Assistant for Teams</a><a href="/ai-interview-assistant-for-developers/">AI Interview Assistant for Developers</a><a href="/ai-interview-assistant-for-screen-sharing/">AI Interview Assistant for Screen Sharing</a><a href="/ai-interview-assistant-for-leetcode/">AI Interview Assistant for LeetCode</a><a href="/ai-interview-assistant-for-hackerrank/">AI Interview Assistant for HackerRank</a><a href="/ai-interview-assistant-with-resume-context/">Resume Context Assistant</a><a href="/ai-interview-assistant-with-screenshot-analysis/">Screenshot Analysis</a><a href="/affordable-ai-interview-assistant/">Affordable AI Interview Assistant</a><a href="/cheap-ai-interview-assistant-india/">Cheap AI Interview Assistant India</a><a href="/ai-interview-assistant-under-1000/">AI Interview Assistant Under 1000</a><a href="/coding-interview-assistant/">Coding Interview Assistant</a><a href="/undetectable-ai-interview-assistant/">Private Overlay</a><a href="/ai-meeting-assistant/">AI Meeting Assistant</a><a href="/pricing/">Pricing</a><a href="/download/">Download</a>
+        </div>
+        <div>
+          <h3>Resources</h3>
+          <a href="/resources/">Free Interview Resources</a><a href="/how-to-use-cluegent/">How to Use</a><a href="/blog/">Blog</a><a href="/interview-questions/">Interview Questions</a><a href="/alternatives/">Alternatives</a><a href="/about/">About</a><a href="/editorial-policy/">Editorial Policy</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a>
+        </div>
+        <div>
+          <h3>Compare</h3>
+          <a href="/lockedin-ai-alternative/">LockedIn AI Alternative</a><a href="/blog/cluegent-vs-final-round-ai/">Final Round AI Alternative</a><a href="/parakeet-ai-alternative/">Parakeet AI Review 2026: Pricing and Alternative</a><a href="/chiku-ai-alternative/">Chiku AI Review 2026: Pricing, Features and Alternative</a>
+        </div>
+        <div>
+          <h3>Support</h3>
+          <a href="mailto:admincluegent@gmail.com">Contact</a>
+          <a href="mailto:admincluegent@gmail.com?subject=Cluegent%20Bug%20Report">Report bug</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 Cluegent. All rights reserved.</span>
+        <span class="footer-disclaimer">Use only where AI assistance, capture, and transcription are permitted.</span>
+      </div>
+    </footer>
+  </div>
+  <script src="/app.js?v=20260730-cta"></script>
+</body>
+</html>

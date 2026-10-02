@@ -1,0 +1,29 @@
+import { readFileSync } from "node:fs";
+import { discoveryClusters } from "./seo-discovery-improvements.mjs";
+import { growthPostsBatch6, growthBacklinksBatch6 } from "./seo-growth-posts-batch-6.mjs";
+
+const origin = "https://www.cluegent.com";
+const key = readFileSync(new URL("../website/cluegent-indexnow-key.txt", import.meta.url), "utf8").trim();
+const keyLocation = `${origin}/cluegent-indexnow-key.txt`;
+const paths = process.argv.includes("--batch6") ? ["/blog/", ...growthPostsBatch6.map(post => `/blog/${post.slug}/`), ...growthBacklinksBatch6.map(([slug]) => `/blog/${slug}/`)] : ["/blog/", "/blog/parakeet-ai/", "/blog/system-design-interview-questions-beginners/", "/blog/how-to-prepare-for-coding-interview-in-7-days/", ...discoveryClusters.flatMap(group => group.slugs.map(slug => `/blog/${slug}/`))];
+const urls = [...new Set(paths)].map(path => origin + path);
+if (!/^[a-zA-Z0-9-]{8,128}$/.test(key)) throw new Error("Invalid IndexNow key format");
+if (!process.argv.includes("--submit")) {
+  console.log(JSON.stringify({ mode: "preview", urlCount: urls.length, urls }, null, 2));
+} else {
+  const verification = await fetch(keyLocation, { signal: AbortSignal.timeout(20000) });
+  if (!verification.ok || (await verification.text()).trim() !== key) throw new Error("Deploy the matching public key before submitting");
+  for (const url of urls) {
+    const response = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(20000) });
+    const html = await response.text();
+    if (response.status !== 200 || /noindex/i.test(html) || !html.includes(`rel="canonical" href="${url}"`)) throw new Error(`URL is not a live, indexable canonical: ${url}`);
+  }
+  const response = await fetch("https://api.indexnow.org/indexnow", {
+    method: "POST",
+    headers: { "Content-Type": "application/json; charset=utf-8" },
+    body: JSON.stringify({ host: new URL(origin).host, key, keyLocation, urlList: urls }),
+    signal: AbortSignal.timeout(30000),
+  });
+  console.log(JSON.stringify({ status: response.status, urlCount: urls.length, meaning: response.status === 200 ? "Received; indexing not guaranteed" : response.status === 202 ? "Received; key verification pending" : await response.text() }));
+  if (![200, 202].includes(response.status)) process.exitCode = 1;
+}

@@ -1,6 +1,13 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { growthPosts } from "./seo-growth-posts.mjs";
+import { growthPostsBatch2 } from "./seo-growth-posts-batch-2.mjs";
+import { competitorPostsBatch3 } from "./seo-competitor-posts-batch-3.mjs";
+import { growthPostsBatch4, growthBacklinksBatch4 } from "./seo-growth-posts-batch-4.mjs";
+import { growthPostsBatch5, growthBacklinksBatch5 } from "./seo-growth-posts-batch-5.mjs";
+import { improveDiscovery } from "./seo-discovery-improvements.mjs";
+import { growthPostsBatch6, growthBacklinksBatch6 } from "./seo-growth-posts-batch-6.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, "..");
@@ -2580,7 +2587,7 @@ const blogPosts = [
     summary:
       "This independent guide consolidates the questions candidates ask about Parakeet AI, ParakeetAI, reviews, pricing, downloads, live interview use, Reddit feedback, and alternatives.",
     publishedDate: "2026-07-30",
-    modifiedDate: "2026-08-11",
+    modifiedDate: "2026-09-14",
     authorityPage: true,
     authorityKicker: "Independent product guide",
     authoritySecondaryHref: "/parakeet-ai-alternative/",
@@ -2588,7 +2595,7 @@ const blogPosts = [
     authorityFacts: [
       ["Product category", "Real-time AI interview assistant"],
       ["Research method", "Official product pages and workflow comparison"],
-      ["Last reviewed", "August 11, 2026"],
+      ["Last reviewed", "September 14, 2026"],
       ["Best next step", "Verify current plans, then run a permitted practice call"],
     ],
     authoritySources: [
@@ -2607,6 +2614,232 @@ const blogPosts = [
       ["Responsible use", "Interview rules differ by employer, recruiter, school, assessment platform, and jurisdiction. Use AI, transcription, screenshots, or an overlay only where they are allowed. No product should be treated as a guarantee that it avoids every recording, monitoring, or proctoring method."],
     ],
     links: [["/blog/parakeet-ai-pricing/", "Parakeet AI pricing guide"], ["/parakeet-ai-alternative/", "Parakeet AI alternative comparison"], ["/best-parakeet-ai-alternatives/", "Best Parakeet AI alternatives"], ["/coding-interview-assistant/", "Coding interview assistant"], ["/download/", "Try Cluegent"]],
+    sources: [
+      ["https://www.parakeet-ai.com/", "Parakeet AI official product, feature, platform and pricing information"],
+      ["https://www.parakeet-ai.com/mock-interview", "Parakeet AI official mock interview page"],
+      ["https://www.parakeet-ai.com/privacy-policy", "Parakeet AI privacy policy"],
+      ["https://www.parakeet-ai.com/terms-and-conditions", "Parakeet AI terms and conditions"],
+    ],
+  },
+  {
+    slug: "parakeet-ai-competitors",
+    title: "Parakeet AI Competitors: 6 Alternatives Compared (2026)",
+    description:
+      "Compare Parakeet AI competitors including Cluegent, LockedIn AI, Final Round AI, Interview Sidekick, Beyz AI, and Interview Coder using official sources.",
+    h1: "Parakeet AI Competitors and Alternatives Compared",
+    summary:
+      "Parakeet AI competes with a mix of live interview copilots, preparation suites, and coding-focused desktop assistants. This source-backed guide explains the meaningful differences without treating vendor claims as independent test results.",
+    publishedDate: "2026-09-14",
+    modifiedDate: "2026-09-14",
+    authorityPage: true,
+    authorityKicker: "Source-backed competitor guide",
+    authoritySecondaryHref: "/ai-interview-assistant/",
+    authoritySecondaryLabel: "Compare Cluegent features",
+    authorityFacts: [
+      ["Products compared", "6 interview-assistant options"],
+      ["Research method", "Current official product and help pages"],
+      ["Last reviewed", "September 14, 2026"],
+      ["Best next step", "Shortlist by workflow, then run a permitted practice test"],
+    ],
+    authoritySources: [
+      ["https://www.parakeet-ai.com/", "Parakeet AI official website"],
+      ["https://docs.lockedinai.com/docs/using", "LockedIn AI official documentation"],
+      ["https://www.finalroundai.com/", "Final Round AI official website"],
+      ["/editorial-policy/", "Cluegent editorial policy"],
+    ],
+    bodyHtml: `
+      <section>
+        <h2>Quick comparison of the closest Parakeet AI competitors</h2>
+        <p>The products below overlap, but they are not interchangeable. Parakeet AI currently presents a real-time call assistant that works through a desktop app, desktop Chrome, and a mobile web experience. Its public site highlights live answers, coding support, uploaded resumes and documents, mock interviews, call notes, 50-plus languages, subscriptions, and non-expiring credit packs. Compare that workflow with the alternatives rather than choosing from a headline claim alone.</p>
+        <div class="seo-table-wrap">
+          <table>
+            <thead><tr><th>Product</th><th>Public positioning</th><th>Useful distinction to verify</th><th>Official source</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Cluegent</strong></td><td>Windows and macOS desktop interview and meeting assistant</td><td>User-controlled listening, typed prompts, screenshots, resume context, custom response modes, quick actions, and local meeting history</td><td><a href="/ai-interview-assistant/">Cluegent product guide</a></td></tr>
+              <tr><td><strong>Parakeet AI</strong></td><td>Real-time AI call assistant for interviews, meetings, and other conversations</td><td>Desktop, Chrome, and mobile-web access; subscription or credit-based purchasing; broad language support</td><td><a href="https://www.parakeet-ai.com/" target="_blank" rel="noreferrer">Official website</a></td></tr>
+              <tr><td><strong>LockedIn AI</strong></td><td>Interview copilot and career platform</td><td>Live, mock, coding, phone, and professional-meeting modes; model choice; document context; VS Code workflow; credit and unlimited plans</td><td><a href="https://docs.lockedinai.com/docs/using" target="_blank" rel="noreferrer">Official documentation</a></td></tr>
+              <tr><td><strong>Final Round AI</strong></td><td>Preparation, live Interview Copilot, and post-interview debriefs</td><td>Job-specific Goals connect resume materials, practice, live help, screen help, and automatic debriefs</td><td><a href="https://www.finalroundai.com/" target="_blank" rel="noreferrer">Official website</a></td></tr>
+              <tr><td><strong>Interview Sidekick</strong></td><td>Before, during, and after-interview suite</td><td>Question bank, mock interviews, live transcription and answers, coding help, transcripts, and feedback</td><td><a href="https://interviewsidekick.com/" target="_blank" rel="noreferrer">Official website</a></td></tr>
+              <tr><td><strong>Beyz AI</strong></td><td>Desktop interview assistant with live, coding, practice, and preparation tools</td><td>Interview cheat sheets, phone assistant, coding support on selected plans, and separate commitment lengths</td><td><a href="https://beyz.ai/" target="_blank" rel="noreferrer">Official website</a></td></tr>
+              <tr><td><strong>Interview Coder</strong></td><td>Desktop assistant focused on technical interviews</td><td>Coding-first scope, screen context, and paid AI access rather than a broad behavioral-preparation suite</td><td><a href="https://www.interviewcoder.co/" target="_blank" rel="noreferrer">Official website</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section>
+        <h2>Which Parakeet AI alternative fits each workflow?</h2>
+        <p><strong>Choose Cluegent for a focused desktop workflow.</strong> Cluegent is the most relevant comparison when you want to move among live transcript context, a typed question, a screenshot, and resume-aware guidance without building a large job-preparation workspace first. Its response behavior and quick-action buttons can be customized by input mode.</p>
+        <p><strong>Choose LockedIn AI for configuration breadth.</strong> LockedIn AI's documentation describes multiple session types, selectable models, document controls, coding-assessment tools, a VS Code extension, mock interviews, reports, and an optional remote-helper workflow. That breadth can be useful, but it also makes plan and setup comparison important.</p>
+        <p><strong>Choose Final Round AI for a connected interview loop.</strong> Final Round AI organizes the job, resume, supporting materials, practice, live assistance, and post-session debrief around a Goal. Candidates preparing across several rounds may value that continuity more than a standalone live-answer window.</p>
+        <p><strong>Choose Interview Sidekick for practice content plus live help.</strong> Its public pages emphasize a large interview-question bank, mock practice, real-time assistance, coding support, transcripts, and feedback. Verify whether its short free live test is enough to evaluate the specific platform and interview type you use.</p>
+        <p><strong>Choose Beyz AI when cheat sheets and coding preparation matter.</strong> Beyz combines live prompts with practice, role-specific cheat sheets, phone workflows, and coding features on selected plans. Its monthly, quarterly, and semiannual offers have different effective prices and inclusions, so compare the total commitment rather than only the displayed monthly equivalent.</p>
+        <p><strong>Choose Interview Coder for a coding-first evaluation.</strong> Interview Coder is narrower than the broad interview suites. Its public terms describe screen-based contextual assistance for coding-interview preparation, and its site separates free app exploration from paid AI features.</p>
+      </section>
+      <section>
+        <h2>How Parakeet AI currently differs</h2>
+        <p>Parakeet AI's current public site extends beyond interviews and describes interviews, regular calls, meetings, coding questions, Google Voice phone calls, and mobile-browser access. It also offers both subscriptions and credits. That purchasing choice is a real differentiator for candidates who prefer a fixed allowance over another recurring subscription, although the cost per hour and included privacy features should be verified on the day of purchase.</p>
+        <p>The site also markets strong privacy and accuracy claims. Treat those as vendor statements. Test screen sharing, recording, window switching, audio capture, and code visibility on the same operating system and meeting platform you expect to use. No public phrase such as “invisible” or “undetectable” can replace a controlled test or the rules of the interview.</p>
+      </section>
+      <section>
+        <h2>A repeatable way to compare every product</h2>
+        <ol>
+          <li><strong>Define the allowed workflow.</strong> Confirm whether AI, audio processing, screenshots, or external assistance are permitted.</li>
+          <li><strong>Use the same context.</strong> Add the same resume, job description, and short instruction to every tool.</li>
+          <li><strong>Run the same five prompts.</strong> Include a behavioral question, resume follow-up, domain question, visible coding or screen task, and correction.</li>
+          <li><strong>Measure useful latency.</strong> Time how long it takes to receive a response you can understand and verify, not merely the first token.</li>
+          <li><strong>Score answer quality.</strong> Check relevance, factuality, speakability, follow-up handling, and whether the response reflects your actual experience.</li>
+          <li><strong>Test the failure path.</strong> Disconnect audio, switch windows, use a noisy recording, and check what happens when a free allowance or credit balance ends.</li>
+          <li><strong>Compare total cost.</strong> Include renewal, taxes, commitment length, expiration, refunds, and the number of realistic sessions you receive.</li>
+        </ol>
+      </section>
+      <section>
+        <h2>Why Cluegent belongs on the shortlist</h2>
+        <p>Cluegent combines live context, direct typed prompts, screenshot analysis, resume context, per-mode instructions, quick actions, and meeting history in a desktop app for Windows and macOS. The practical test is simple: install it, add only the context needed for a practice scenario, run the comparison checklist above, and decide whether the responses are useful enough to keep. Start with the free evaluation before comparing a paid commitment.</p>
+      </section>
+      <section>
+        <h2>Research limitations and responsible use</h2>
+        <p>This comparison was researched from public first-party pages on September 14, 2026. We did not independently verify every vendor's latency, accuracy, privacy, detection, user-count, or outcome claims. Features and prices can change after publication. Follow employer, recruiter, assessment-platform, school, and local rules; use these products only when assistance and capture are permitted.</p>
+      </section>`,
+    faqs: [
+      { q: "What are the closest Parakeet AI competitors?", a: "The closest current competitors include Cluegent, LockedIn AI, Final Round AI, Interview Sidekick, Beyz AI, and Interview Coder. The right choice depends on whether you prioritize a focused desktop workflow, a broad preparation suite, coding support, mobile access, or a particular billing model." },
+      { q: "Is Cluegent a Parakeet AI alternative?", a: "Yes. Cluegent is a Windows and macOS desktop alternative with controlled listening, typed prompts, screenshot-aware questions, resume context, customizable response modes, quick actions, and local meeting history." },
+      { q: "How should I compare AI interview assistants?", a: "Use the same permitted practice call, resume context, questions, visible task, and follow-up in every product. Compare time to a useful answer, relevance, factuality, readability, setup friction, failure behavior, and total cost." },
+      { q: "Are vendor privacy and undetectability claims guaranteed?", a: "No. Treat them as vendor claims and test the exact operating system, meeting platform, sharing mode, and recording setup yourself. Always follow the rules that apply to the interview." },
+    ],
+    links: [["/blog/parakeet-ai-vs-lockedin-ai/", "Parakeet AI vs LockedIn AI"], ["/blog/parakeet-ai-vs-final-round-ai/", "Parakeet AI vs Final Round AI"], ["/parakeet-ai-alternative/", "Cluegent as a Parakeet AI alternative"], ["/pricing/", "Cluegent pricing"], ["/download/", "Try Cluegent"]],
+    sources: [
+      ["https://www.parakeet-ai.com/", "Parakeet AI official product, platform, FAQ and pricing information"],
+      ["https://www.parakeet-ai.com/mock-interview", "Parakeet AI official mock interview page"],
+      ["https://docs.lockedinai.com/docs/using", "LockedIn AI official product documentation"],
+      ["https://www.lockedinai.com/support", "LockedIn AI official support and plan information"],
+      ["https://www.finalroundai.com/", "Final Round AI official product and plan overview"],
+      ["https://docs.finalroundai.com/docs/getting-started/subscribe-and-plans", "Final Round AI official subscription documentation"],
+      ["https://interviewsidekick.com/", "Interview Sidekick official product page"],
+      ["https://interviewsidekick.com/pricing", "Interview Sidekick official pricing page"],
+      ["https://beyz.ai/", "Beyz AI official product and pricing page"],
+      ["https://www.interviewcoder.co/", "Interview Coder official product and pricing page"],
+      ["https://www.interviewcoder.co/policies/terms", "Interview Coder official terms"],
+    ],
+  },
+  {
+    slug: "parakeet-ai-vs-lockedin-ai",
+    title: "Parakeet AI vs LockedIn AI: 2026 Comparison | Cluegent",
+    description:
+      "Compare Parakeet AI vs LockedIn AI for live interviews, coding, resume context, platforms, free access, plan structure, and Cluegent as an alternative.",
+    h1: "Parakeet AI vs LockedIn AI",
+    summary:
+      "Parakeet AI emphasizes accessible real-time call assistance across desktop, browser, and mobile web, while LockedIn AI exposes a broader configurable interview platform. This comparison uses current official documentation.",
+    publishedDate: "2026-09-14",
+    modifiedDate: "2026-09-14",
+    authorityPage: true,
+    authorityKicker: "Direct product comparison",
+    authoritySecondaryHref: "/parakeet-ai-alternative/",
+    authoritySecondaryLabel: "Compare Cluegent",
+    authorityFacts: [
+      ["Compared", "Parakeet AI and LockedIn AI"],
+      ["Research method", "Official websites and documentation"],
+      ["Last reviewed", "September 14, 2026"],
+      ["Alternative included", "Cluegent desktop assistant"],
+    ],
+    authoritySources: [
+      ["https://www.parakeet-ai.com/", "Parakeet AI official website"],
+      ["https://docs.lockedinai.com/docs/using", "LockedIn AI official documentation"],
+      ["/editorial-policy/", "Cluegent editorial policy"],
+    ],
+    bodyHtml: `
+      <section>
+        <h2>Parakeet AI vs LockedIn AI at a glance</h2>
+        <div class="seo-table-wrap"><table>
+          <thead><tr><th>Area</th><th>Parakeet AI</th><th>LockedIn AI</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Core positioning</strong></td><td>Real-time AI call assistant for interviews, meetings, and other conversations</td><td>Interview copilot and career platform with live, mock, coding, phone, and professional-meeting sessions</td></tr>
+            <tr><td><strong>Access</strong></td><td>Windows/macOS desktop app, desktop Chrome, and mobile web; Linux through desktop Chrome</td><td>Desktop and web workflows described across the official product and documentation</td></tr>
+            <tr><td><strong>Context</strong></td><td>Resume or CV, documents, session instructions, transcript, and typed messages</td><td>Documents, scenarios, prompts, presets, response preferences, and model selection</td></tr>
+            <tr><td><strong>Coding</strong></td><td>Listens for coding questions and reads code visible on screen</td><td>Screenshot context, coding-assessment mode, and a VS Code extension</td></tr>
+            <tr><td><strong>Practice and review</strong></td><td>Mock interviews, saved transcripts, and AI call notes</td><td>Mock interviews, session history, reports, summaries, and transcripts</td></tr>
+            <tr><td><strong>Free evaluation</strong></td><td>Official site currently advertises ten free sessions and a ten-minute free-session path</td><td>Official support currently describes five starting credits, equal to ten Copilot minutes</td></tr>
+            <tr><td><strong>Paid structure</strong></td><td>Weekly, monthly, yearly, and non-expiring call-credit options are displayed</td><td>Unlimited General, Unlimited Pro, credit plans, and a Lifetime option are described</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+      <section><h2>The biggest difference is product breadth</h2><p>Parakeet AI currently presents a relatively direct call workflow across desktop, browser, and mobile web. It adds documents, coding, notes, mock sessions, model choice, and more than 50 languages, but the public journey remains centered on starting a call session. LockedIn AI exposes more interview configuration: session types, scenarios, presets, selectable models, document controls, coding-assessment tools, a VS Code extension, spoken answer playback, web search, a teleprompter, mock interviews, reports, and LockedIn Duo.</p><p>More capability is not automatically better. Candidates who want a quick browser or phone-accessible session may prefer Parakeet AI's access choices. Candidates who want fine-grained setup, model selection, editor integration, or a broader career workflow may prefer LockedIn AI. Compare how long it takes to configure and start the specific task you need.</p></section>
+      <section><h2>Free access and pricing require different comparisons</h2><p>Parakeet AI's public page currently advertises ten free sessions, subscriptions with unlimited call time, and call credits that do not expire. LockedIn AI's support page currently describes a small free starting balance, unlimited plans, credit plans, and lifetime access. It also says that Stealth Mode and LockedIn Duo require paid access.</p><p>Do not compare only the cheapest displayed number. Record the billing interval, included minutes or credits, session cap, access to privacy features, model restrictions, renewal behavior, refund terms, and whether credits expire. Verify both official pricing pages immediately before paying because offers can change.</p></section>
+      <section><h2>How Cluegent compares</h2><p>Cluegent is a focused Windows and macOS option for candidates who want user-controlled listening, typed questions, screenshots, resume context, distinct instructions for each response mode, quick-action buttons, and local meeting history. It does not need to win every row in a generic feature table. Its strongest comparison is workflow clarity: how quickly you can move from what you heard, typed, or see on screen to a concise response you can verify.</p><p>Run the same permitted practice call in all three products. Use one behavioral question, one resume follow-up, one coding screenshot, and one correction. Measure time to a useful answer, context accuracy, readability, setup friction, and total cost for the number of sessions you actually expect.</p></section>
+      <section><h2>Research limitations</h2><p>This is a documentation-based comparison reviewed on September 14, 2026. Vendor statements about speed, privacy, accuracy, detection behavior, popularity, and outcomes were not independently verified. Product behavior can vary by operating system, meeting platform, permissions, audio routing, and product version.</p></section>`,
+    faqs: [
+      { q: "What is the main difference between Parakeet AI and LockedIn AI?", a: "Parakeet AI emphasizes a direct real-time call assistant available through desktop, Chrome, and mobile web. LockedIn AI documents a broader configurable platform with multiple session types, model choices, coding tools, a VS Code extension, mock interviews, reports, and optional remote assistance." },
+      { q: "Do Parakeet AI and LockedIn AI offer free access?", a: "Their official sites currently describe limited free evaluation paths. Parakeet AI advertises free sessions, while LockedIn AI describes a small starting credit balance. Verify current allowances and feature restrictions before testing." },
+      { q: "What is an alternative to both Parakeet AI and LockedIn AI?", a: "Cluegent is a Windows and macOS desktop alternative with controlled listening, typed prompts, screenshot-aware questions, resume context, custom response modes, quick actions, and local meeting history." },
+    ],
+    links: [["/blog/parakeet-ai-competitors/", "All Parakeet AI competitors"], ["/blog/parakeet-ai-vs-final-round-ai/", "Parakeet AI vs Final Round AI"], ["/lockedin-ai-alternative/", "LockedIn AI alternative"], ["/parakeet-ai-alternative/", "Parakeet AI alternative"], ["/download/", "Try Cluegent"]],
+    sources: [
+      ["https://www.parakeet-ai.com/", "Parakeet AI official product, platform, FAQ and pricing information"],
+      ["https://www.parakeet-ai.com/privacy-policy", "Parakeet AI privacy policy"],
+      ["https://www.parakeet-ai.com/terms-and-conditions", "Parakeet AI terms and conditions"],
+      ["https://docs.lockedinai.com/docs/using", "LockedIn AI official product documentation"],
+      ["https://www.lockedinai.com/support", "LockedIn AI official support and plan information"],
+      ["https://www.lockedinai.com/pricing", "LockedIn AI official pricing page"],
+    ],
+  },
+  {
+    slug: "parakeet-ai-vs-final-round-ai",
+    title: "Parakeet AI vs Final Round AI: 2026 Comparison",
+    description:
+      "Compare Parakeet AI vs Final Round AI for live answers, practice, coding, screen help, platforms, pricing structure, and Cluegent as an alternative.",
+    h1: "Parakeet AI vs Final Round AI",
+    summary:
+      "Parakeet AI starts from a live call-assistant workflow, while Final Round AI organizes preparation, live assistance, and debriefs around each job. This guide compares their current public product information.",
+    publishedDate: "2026-09-14",
+    modifiedDate: "2026-09-14",
+    authorityPage: true,
+    authorityKicker: "Direct product comparison",
+    authoritySecondaryHref: "/parakeet-ai-alternative/",
+    authoritySecondaryLabel: "Compare Cluegent",
+    authorityFacts: [
+      ["Compared", "Parakeet AI and Final Round AI"],
+      ["Research method", "Current official product documentation"],
+      ["Last reviewed", "September 14, 2026"],
+      ["Alternative included", "Cluegent desktop assistant"],
+    ],
+    authoritySources: [
+      ["https://www.parakeet-ai.com/", "Parakeet AI official website"],
+      ["https://www.finalroundai.com/", "Final Round AI official website"],
+      ["/editorial-policy/", "Cluegent editorial policy"],
+    ],
+    bodyHtml: `
+      <section>
+        <h2>Parakeet AI vs Final Round AI at a glance</h2>
+        <div class="seo-table-wrap"><table>
+          <thead><tr><th>Area</th><th>Parakeet AI</th><th>Final Round AI</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Product center</strong></td><td>Real-time assistant for calls, interviews, coding, and meetings</td><td>A job-specific Goal connecting preparation, live Copilot sessions, and debriefs</td></tr>
+            <tr><td><strong>Platforms</strong></td><td>Windows/macOS desktop, desktop Chrome, mobile web, and Linux through Chrome</td><td>Official site lists macOS 14.4 or later and Windows desktop support</td></tr>
+            <tr><td><strong>Live workflow</strong></td><td>Audio transcription, automatic or requested answers, screen/code context, documents, and messages</td><td>Live answers based on the Goal, resume, job description, and materials</td></tr>
+            <tr><td><strong>Screen tasks</strong></td><td>Screenshot and coding support from visible screen context</td><td>Automatic screen capture when useful plus an on-demand Solve Screen workflow</td></tr>
+            <tr><td><strong>Practice</strong></td><td>Mock interview mode using the call-assistant experience</td><td>Eight documented practice types connected to the same Goal and earlier weak areas</td></tr>
+            <tr><td><strong>After the session</strong></td><td>Saved transcript and AI-generated call notes</td><td>Automatic debriefs that feed readiness signals into the next round</td></tr>
+            <tr><td><strong>Free access</strong></td><td>Official site currently advertises ten free sessions</td><td>Free setup and preparation basics; official site says live Copilot requires Pro and has no free live trial</td></tr>
+            <tr><td><strong>Paid approach</strong></td><td>Subscriptions or non-expiring call credits</td><td>Live Interview Copilot is included with Pro, currently advertised from $25 per month</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+      <section><h2>Choose based on the interview lifecycle</h2><p>Parakeet AI is a closer fit when the immediate requirement is “help me during this call” and access flexibility matters. Its public site describes desktop, browser, and mobile-web paths, regular-call and interview modes, uploaded documents, more than 50 languages, call notes, and both subscription and credit purchases.</p><p>Final Round AI is structured around a longer loop. A Goal stores the job, resume, materials, and target round. The same context powers practice and the live Interview Copilot, and an automatic debrief informs the next session. That can reduce repeated setup across a multi-round process, but it may be more structure than someone seeking a lightweight live assistant wants.</p></section>
+      <section><h2>Coding and visible-screen questions</h2><p>Both vendors publicly describe support for questions visible on screen. Parakeet AI says it can read code on screen and discuss coding questions during a live call. Final Round AI describes Auto-capture, an on-demand Solve Screen action, and full coding or system-design solutions in a separate results panel.</p><p>Test the same realistic task before choosing: one algorithm prompt, one error message, and one system-design diagram. Score problem capture, factual correctness, edge cases, complexity analysis, and whether the short spoken guidance stays aligned with the longer solution.</p></section>
+      <section><h2>Pricing is not a like-for-like comparison</h2><p>Parakeet AI currently offers a free-session path, recurring unlimited options, and non-expiring call credits. Final Round AI currently allows free setup and preparation basics, while its official page states that live Interview Copilot requires a Pro subscription and advertises Pro from $25 per month.</p><p>The right calculation is the total cost of the workflow you will actually use. Compare live-session access, practice limits, screen help, renewal, commitment length, refunds, and whether unused credits remain. Recheck the official pages at checkout because plan details can change.</p></section>
+      <section><h2>Where Cluegent fits</h2><p>Cluegent is a more focused Windows and macOS desktop alternative. It combines user-controlled live listening, typed prompts, screenshots, resume-aware context, custom instructions for each response mode, quick actions, and local meeting history. Candidates who do not need a large preparation suite can evaluate that direct workflow before committing to a broader subscription.</p><p>Use the same permitted test across all three products. Record setup time, time to a useful response, relevance to the resume and role, screen-task accuracy, readability beside the meeting, and cost for the number of rounds you expect.</p></section>
+      <section><h2>Research limitations and responsible use</h2><p>This comparison was reviewed from public first-party pages on September 14, 2026. Vendor claims about latency, accuracy, privacy, popularity, detection behavior, and interview outcomes were not independently verified. Use AI, transcription, recordings, screenshots, and overlays only where the employer, interviewer, assessment platform, school, and applicable law permit them.</p></section>`,
+    faqs: [
+      { q: "What is the main difference between Parakeet AI and Final Round AI?", a: "Parakeet AI centers on real-time assistance across calls and multiple access methods. Final Round AI centers on a job-specific Goal that connects preparation, practice, live Interview Copilot sessions, and automatic debriefs." },
+      { q: "Does Final Round AI have a free live Copilot trial?", a: "Its official website currently says there is no free live trial. Free access covers setup and preparation basics, while live Interview Copilot requires a Pro subscription. Verify the current offer before subscribing." },
+      { q: "What is an alternative to Parakeet AI and Final Round AI?", a: "Cluegent is a focused Windows and macOS desktop alternative with controlled listening, typed prompts, screenshot-aware questions, resume context, custom response modes, quick actions, and local meeting history." },
+    ],
+    links: [["/blog/parakeet-ai-competitors/", "All Parakeet AI competitors"], ["/blog/parakeet-ai-vs-lockedin-ai/", "Parakeet AI vs LockedIn AI"], ["/blog/cluegent-vs-final-round-ai/", "Cluegent vs Final Round AI"], ["/parakeet-ai-alternative/", "Parakeet AI alternative"], ["/download/", "Try Cluegent"]],
+    sources: [
+      ["https://www.parakeet-ai.com/", "Parakeet AI official product, platform, FAQ and pricing information"],
+      ["https://www.parakeet-ai.com/mock-interview", "Parakeet AI official mock interview page"],
+      ["https://www.finalroundai.com/", "Final Round AI official product and plan overview"],
+      ["https://docs.finalroundai.com/docs/getting-started/subscribe-and-plans", "Final Round AI official subscription documentation"],
+    ],
   },
   {
     slug: "parakeet-ai-review-reddit",
@@ -4965,7 +5198,6 @@ function footer() {
           <h3>Support</h3>
           <a href="mailto:admincluegent@gmail.com">Contact</a>
           <a href="mailto:admincluegent@gmail.com?subject=Cluegent%20Bug%20Report">Report bug</a>
-          <a href="https://github.com/admincluegent/cluegent-app" target="_blank" rel="noreferrer">GitHub</a>
         </div>
       </div>
       <div class="footer-bottom">
@@ -5187,15 +5419,15 @@ function cluegentHomepageHeroSection() {
 
         <div class="hero-content">
           <div class="hero-copy reveal">
-            <p class="trust-line">AI copilot for live meetings</p>
+            <p class="trust-line">Free AI interview assistant</p>
             <h2>
-              <span>AI Copilot</span>
-              <span>for Live Meetings</span>
+              <span>Undetectable AI</span>
+              <span>Interview Assistant</span>
             </h2>
-            <div class="hero-screen-line">Real-Time Answers From Transcript and Screen Context</div>
+            <div class="hero-screen-line">Invisible During Screen Sharing for Live Calls</div>
             <p class="hero-subtitle">
-              Cluegent gives real-time answers, live transcript context, screenshot-aware help, and meeting support
-              <span>from a Windows and macOS desktop workspace for Zoom, Meet, Teams, learning sessions, and technical calls.</span>
+              Cluegent gives real-time interview answers, coding help, screenshot-aware context, and meeting support
+              <span>from a private Windows and macOS desktop overlay for Zoom, Meet, Teams, and technical calls.</span>
             </p>
             <div class="hero-actions" id="download-cluegent-from-chiku-review">
               <a class="primary-download primary-download--free" href="${downloadUrl}" data-analytics-event="free_trial_click" data-analytics-location="blog_home_hero">
@@ -5240,7 +5472,7 @@ function cluegentHomepageHeroSection() {
                     <img class="hero-proof-avatar" src="/assets/review-avatar-3.png" alt="" width="34" height="34" decoding="async" />
                   </div>
                   <div class="hero-proof-copy">
-                    <p>Used by early <strong>Cluegent</strong> customers</p>
+                    <p>Used by <strong>4,000+</strong> people</p>
                     <div class="hero-proof-rating">
                       <span class="hero-proof-stars" aria-hidden="true">★★★★★</span>
                       <strong>Live</strong>
@@ -6480,6 +6712,45 @@ blogPosts.push(
   }
 );
 
+// New guides lead the index; established guides link back into the new cluster.
+blogPosts.unshift(...growthPostsBatch6, ...growthPostsBatch5, ...growthPostsBatch4, ...competitorPostsBatch3, ...growthPostsBatch2, ...growthPosts);
+const growthBacklinks = [
+  ...growthBacklinksBatch6,
+  ...growthBacklinksBatch5,
+  ...growthBacklinksBatch4,
+  ["interview-sidekick-review", "interview-sidekick-alternatives", "Compare Interview Sidekick alternatives"],
+  ["beyz-ai-review", "beyz-ai-alternatives", "Compare Beyz AI alternatives"],
+  ["interview-coder-review", "interview-coder-alternatives", "Evaluate Interview Coder alternatives"],
+  ["parakeet-ai-competitors", "parakeet-ai-vs-interview-sidekick", "Parakeet AI vs Interview Sidekick"],
+  ["remote-video-interview-checklist", "ai-interview-assistant-for-mac", "Mac permissions and audio checklist"],
+  ["phone-interview-questions-and-answers", "ai-phone-interview-assistant", "Phone interview assistant audio setup"],
+  ["mock-interview-with-ai", "system-design-mock-interview-with-ai", "Run a system design mock interview"],
+  ["resume-based-interview-questions-and-answers", "how-to-explain-project-in-interview", "Explain your project in two minutes"],
+  ["software-engineer-behavioral-interview-questions", "engineering-manager-interview-questions", "Engineering manager interview questions"],
+  ["react-interview-questions-with-answers", "frontend-coding-interview-practice", "Build a search UI in a practice interview"],
+  ["system-design-interview-questions-beginners", "aws-solutions-architect-interview-questions", "AWS solutions architect scenarios"],
+  ["how-to-prepare-for-coding-interview-in-7-days", "devops-engineer-interview-questions", "DevOps interview questions"],
+  ["software-engineer-behavioral-interview-questions", "sre-interview-questions", "SRE interview questions"],
+  ["situational-interview-questions-and-answers", "cloud-security-engineer-interview-questions", "Cloud security scenarios"],
+  ["product-manager-interview-questions-and-answers", "business-analyst-interview-questions", "Business analyst questions"],
+  ["sql-interview-questions", "data-engineer-interview-questions", "Data engineer pipeline questions"],
+  ["python-interview-questions", "machine-learning-engineer-interview-questions", "Machine learning engineer questions"],
+  ["react-interview-questions-with-answers", "nextjs-interview-questions-and-answers", "Next.js interview questions"],
+  ["javascript-coding-interview-questions", "postman-interview-questions", "Postman API testing questions"],
+  ["ai-interview-tools-for-coding", "ci-cd-interview-questions", "CI/CD interview questions"],
+];
+for (const [sourceSlug, targetSlug, label] of growthBacklinks) {
+  const source = blogPosts.find((post) => post.slug === sourceSlug);
+  if (!source) throw new Error(`Missing internal-link source: ${sourceSlug}`);
+  source.links = [...(source.links || []), [`/blog/${targetSlug}/`, label]];
+}
+
+const discoveryGroups = improveDiscovery(blogPosts);
+const batch6Parents = new Set(growthBacklinksBatch6.map(([slug]) => slug));
+for (const post of blogPosts) {
+  if (batch6Parents.has(post.slug)) post.modifiedDate = "2026-09-29";
+}
+
 function blogIndexTemplate() {
   const title = "Cluegent Blog | AI Interview Assistant Guides";
   const description = "Guides on AI interview assistants, coding interviews, screen sharing, STAR answers, JavaScript questions, React questions, and system design prep.";
@@ -6491,6 +6762,9 @@ function blogIndexTemplate() {
           <p class="section-kicker">Cluegent blog</p>
           <h1>AI Interview Assistant Guides</h1>
           <p>${description}</p>
+          <nav aria-label="Browse interview guides by topic">
+            ${discoveryGroups.map(group => `<section><h2>${escapeHtml(group.title)}</h2><ul>${group.posts.map(post => `<li><a href="/blog/${post.slug}/">${escapeHtml(post.h1)}</a></li>`).join("")}</ul></section>`).join("")}
+          </nav>
         </div>
       </section>
       <section class="seo-section">
@@ -6542,41 +6816,6 @@ function blogIndexTemplate() {
     activePath: "/blog/",
     includeTopDownloadCta: false,
   });
-}
-
-function authorityArticleHero(post, modifiedDate) {
-  const facts = post.authorityFacts || [];
-  const sources = post.authoritySources || [];
-  return `
-    <section class="authority-hero">
-      <div class="authority-hero__copy reveal">
-        <p class="section-kicker">${escapeHtml(post.authorityKicker || "Independent product guide")}</p>
-        <h1>${escapeHtml(post.h1)}</h1>
-        <p class="authority-hero__summary">${escapeHtml(post.summary)}</p>
-        <p class="seo-article-meta">Reviewed by <a href="/about/">Cluegent Editorial Team</a> · Updated <time datetime="${modifiedDate}">${new Date(`${modifiedDate}T00:00:00Z`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })}</time></p>
-        <div class="authority-hero__actions">
-          <a class="primary-download" href="${downloadUrl}" data-analytics-event="free_trial_click" data-analytics-location="authority_guide">Try Cluegent free</a>
-          <a class="secondary-link" href="${canonicalPath(post.authoritySecondaryHref || "/alternatives/")}">${escapeHtml(post.authoritySecondaryLabel || "Compare alternatives")}</a>
-        </div>
-        <div class="authority-hero__sources" aria-label="Sources used for this guide">
-          <strong>Sources checked</strong>
-          ${sources
-            .map(([href, label]) => `<a href="${href}"${href.startsWith("http") ? ' target="_blank" rel="noreferrer"' : ""}>${escapeHtml(label)}</a>`)
-            .join("")}
-        </div>
-      </div>
-      <aside class="authority-facts reveal" aria-label="Guide summary">
-        ${facts
-          .map(
-            ([label, value]) => `
-          <div>
-            <span>${escapeHtml(label)}</span>
-            <strong>${escapeHtml(value)}</strong>
-          </div>`
-          )
-          .join("")}
-      </aside>
-    </section>`;
 }
 
 function renderPostContent(post) {
@@ -6647,25 +6886,21 @@ function articleTemplate(post) {
   ];
   const body = `
     <main>
-      ${post.authorityPage ? authorityArticleHero(post, modifiedDate) : cluegentHomepageHeroSection()}
-      <article class="seo-article${post.authorityPage ? " seo-article--authority" : ""}">
-        ${
-          post.authorityPage
-            ? ""
-            : `<header class="seo-article-header reveal">
-          <p class="section-kicker">AI interview guide</p>
+      ${cluegentHomepageHeroSection()}
+      <article class="seo-article seo-article--after-hero">
+        <header class="seo-article-header reveal">
+          <p class="section-kicker">${escapeHtml(post.authorityKicker || "AI interview guide")}</p>
           <h1>${escapeHtml(post.h1)}</h1>
           <p>${escapeHtml(post.summary)}</p>
           <p class="seo-article-meta">Reviewed by <a href="/about/">Cluegent Editorial Team</a> · Updated <time datetime="${modifiedDate}">${new Date(`${modifiedDate}T00:00:00Z`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })}</time></p>
-        </header>`
-        }
+        </header>
         <div class="seo-article-body reveal">
           ${renderPostContent(post)}
           ${
             post.sources?.length
               ? `<section class="seo-article-sources">
             <h2>Sources checked</h2>
-            <p>Product features, plans, and offers can change. These first-party sources were checked for this guide:</p>
+            <p>These official references support the guide. Product details and technical documentation can change; check the linked source for current information.</p>
             <ul>
               ${post.sources
                 .map(
@@ -6838,8 +7073,9 @@ function buildSitemap() {
       .filter((path) => path.startsWith("/blog/")),
   ]);
 
+  const growthModifiedDates = new Map(blogPosts.filter(post => post.modifiedDate).map((post) => [canonicalPath(`/blog/${post.slug}/`), post.modifiedDate]));
   const urls = [...paths]
-    .map((path) => `  <url><loc>${absolute(path)}</loc></url>`)
+    .map((path) => `  <url><loc>${absolute(path)}</loc>${growthModifiedDates.has(path) ? `<lastmod>${growthModifiedDates.get(path)}</lastmod>` : ""}</url>`)
     .join("\n");
 
   return `<?xml version="1.0" encoding="UTF-8"?>

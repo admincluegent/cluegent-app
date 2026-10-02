@@ -1,0 +1,377 @@
+{
+  "status": "ILLUSTRATIVE_PROJECTIONS_NOT_GUARANTEES",
+  "baseline": {
+    "snapshot": "2026-09-24T15:41:55.009Z",
+    "websiteActiveUsers": 1341,
+    "websitePeriod": "2026-08-25 to 2026-09-23",
+    "activeLivePaidEntitlements": 11,
+    "source": "CLUEGENT_METRICS.json",
+    "caveat": "Website audience and paid entitlements are different populations. Neither supplies a measured funnel or verified MRR."
+  },
+  "assumptions": "All future values, activity cadences, conversion rates, churn, revenue per payer and traffic targets are analyst planning assumptions; not calibrated forecasts. No marketing budget or signed partner commitments were supplied.",
+  "mrrDefinition": "Conditional modeled MRR = end-of-month active paying customers × assumed monthly recurring revenue per customer. Requires monthly subscriptions/renewals and excludes fees, tax treatment, refunds, AI costs and marketing costs. Until recurrence is verified, treat this as a monthly revenue run-rate scenario, not reportable actual MRR.",
+  "formulas": {
+    "traffic": "Linear interpolation between month 0 = 1341 and scenario traffic anchors at months 2, 6 and 12. Not a fitted growth curve.",
+    "signups": "monthly traffic × visitor-to-signup rate",
+    "newPaying": "monthly signups × signup-to-paid rate; same-month conversion assumed",
+    "activePaying": "prior-month active paying × (1 - monthly churn) + new paying; initial stock = 11",
+    "mrr": "active paying × assumed recurring revenue per paying customer",
+    "rounding": "Keep expected values unrounded in calculations; display people to nearest whole person and revenue to nearest INR 100."
+  },
+  "scenarios": [
+    {
+      "name": "Conservative",
+      "traffic": [
+        1600,
+        2200,
+        3200
+      ],
+      "signupRate": 0.06,
+      "payerConversion": 0.05,
+      "monthlyChurn": 0.15,
+      "arppuINR": 1200,
+      "activities": {
+        "seo": "Publish or substantially improve 2 high-intent pages per month; fix indexing and internal links.",
+        "marketing": "Founder-led product demos and permission-based community distribution; no assumed paid-spend commitment.",
+        "partnerships": "Aim for 1 active career-coach or mock-interview partner by month 6; partner traffic is conditional on execution.",
+        "product": "Fix onboarding and update failures; clarify pricing and free-to-paid value. Only modest traffic and conversion improvements are assumed."
+      },
+      "series": [
+        {
+          "month": 1,
+          "traffic": 1470.5,
+          "signups": 88.22999999999999,
+          "newPaying": 4.411499999999999,
+          "activePaying": 13.761499999999998,
+          "conditionalMRR_INR": 16513.8
+        },
+        {
+          "month": 2,
+          "traffic": 1600,
+          "signups": 96,
+          "newPaying": 4.800000000000001,
+          "activePaying": 16.497275,
+          "conditionalMRR_INR": 19796.73
+        },
+        {
+          "month": 3,
+          "traffic": 1750,
+          "signups": 105,
+          "newPaying": 5.25,
+          "activePaying": 19.27268375,
+          "conditionalMRR_INR": 23127.2205
+        },
+        {
+          "month": 4,
+          "traffic": 1900,
+          "signups": 114,
+          "newPaying": 5.7,
+          "activePaying": 22.0817811875,
+          "conditionalMRR_INR": 26498.137424999997
+        },
+        {
+          "month": 5,
+          "traffic": 2050,
+          "signups": 123,
+          "newPaying": 6.15,
+          "activePaying": 24.919514009375,
+          "conditionalMRR_INR": 29903.41681125
+        },
+        {
+          "month": 6,
+          "traffic": 2200,
+          "signups": 132,
+          "newPaying": 6.6000000000000005,
+          "activePaying": 27.78158690796875,
+          "conditionalMRR_INR": 33337.9042895625
+        },
+        {
+          "month": 7,
+          "traffic": 2366.6666666666665,
+          "signups": 141.99999999999997,
+          "newPaying": 7.099999999999999,
+          "activePaying": 30.714348871773435,
+          "conditionalMRR_INR": 36857.21864612812
+        },
+        {
+          "month": 8,
+          "traffic": 2533.3333333333335,
+          "signups": 152,
+          "newPaying": 7.6000000000000005,
+          "activePaying": 33.70719654100742,
+          "conditionalMRR_INR": 40448.635849208906
+        },
+        {
+          "month": 9,
+          "traffic": 2700,
+          "signups": 162,
+          "newPaying": 8.1,
+          "activePaying": 36.751117059856306,
+          "conditionalMRR_INR": 44101.34047182756
+        },
+        {
+          "month": 10,
+          "traffic": 2866.6666666666665,
+          "signups": 171.99999999999997,
+          "newPaying": 8.6,
+          "activePaying": 39.83844950087786,
+          "conditionalMRR_INR": 47806.13940105343
+        },
+        {
+          "month": 11,
+          "traffic": 3033.3333333333335,
+          "signups": 182,
+          "newPaying": 9.1,
+          "activePaying": 42.96268207574618,
+          "conditionalMRR_INR": 51555.218490895415
+        },
+        {
+          "month": 12,
+          "traffic": 3200,
+          "signups": 192,
+          "newPaying": 9.600000000000001,
+          "activePaying": 46.118279764384255,
+          "conditionalMRR_INR": 55341.935717261105
+        }
+      ]
+    },
+    {
+      "name": "Base",
+      "traffic": [
+        2200,
+        4500,
+        9000
+      ],
+      "signupRate": 0.08,
+      "payerConversion": 0.08,
+      "monthlyChurn": 0.1,
+      "arppuINR": 1500,
+      "activities": {
+        "seo": "Publish or improve 4 high-intent pages per month, with practical examples, comparisons and search-performance iteration.",
+        "marketing": "Regular demos, opt-in nurture and bounded creative tests. Paid scaling requires a separately approved budget and measured acquisition cost.",
+        "partnerships": "Aim for 3 active career-coach, training or preparation-community partners by month 6; use tracked referral links.",
+        "product": "Streamline install-to-first-value, improve reliability and explain plan benefits. Assume stronger signup and upgrade conversion plus repeat use."
+      },
+      "series": [
+        {
+          "month": 1,
+          "traffic": 1770.5,
+          "signups": 141.64000000000001,
+          "newPaying": 11.3312,
+          "activePaying": 21.2312,
+          "conditionalMRR_INR": 31846.800000000003
+        },
+        {
+          "month": 2,
+          "traffic": 2200,
+          "signups": 176,
+          "newPaying": 14.08,
+          "activePaying": 33.18808,
+          "conditionalMRR_INR": 49782.12
+        },
+        {
+          "month": 3,
+          "traffic": 2775,
+          "signups": 222,
+          "newPaying": 17.76,
+          "activePaying": 47.629272,
+          "conditionalMRR_INR": 71443.908
+        },
+        {
+          "month": 4,
+          "traffic": 3350,
+          "signups": 268,
+          "newPaying": 21.44,
+          "activePaying": 64.3063448,
+          "conditionalMRR_INR": 96459.5172
+        },
+        {
+          "month": 5,
+          "traffic": 3925,
+          "signups": 314,
+          "newPaying": 25.12,
+          "activePaying": 82.99571032,
+          "conditionalMRR_INR": 124493.56548
+        },
+        {
+          "month": 6,
+          "traffic": 4500,
+          "signups": 360,
+          "newPaying": 28.8,
+          "activePaying": 103.496139288,
+          "conditionalMRR_INR": 155244.20893199998
+        },
+        {
+          "month": 7,
+          "traffic": 5250,
+          "signups": 420,
+          "newPaying": 33.6,
+          "activePaying": 126.7465253592,
+          "conditionalMRR_INR": 190119.7880388
+        },
+        {
+          "month": 8,
+          "traffic": 6000,
+          "signups": 480,
+          "newPaying": 38.4,
+          "activePaying": 152.47187282328,
+          "conditionalMRR_INR": 228707.80923492
+        },
+        {
+          "month": 9,
+          "traffic": 6750,
+          "signups": 540,
+          "newPaying": 43.2,
+          "activePaying": 180.424685540952,
+          "conditionalMRR_INR": 270637.028311428
+        },
+        {
+          "month": 10,
+          "traffic": 7500,
+          "signups": 600,
+          "newPaying": 48,
+          "activePaying": 210.3822169868568,
+          "conditionalMRR_INR": 315573.3254802852
+        },
+        {
+          "month": 11,
+          "traffic": 8250,
+          "signups": 660,
+          "newPaying": 52.800000000000004,
+          "activePaying": 242.14399528817114,
+          "conditionalMRR_INR": 363215.9929322567
+        },
+        {
+          "month": 12,
+          "traffic": 9000,
+          "signups": 720,
+          "newPaying": 57.6,
+          "activePaying": 275.52959575935404,
+          "conditionalMRR_INR": 413294.39363903104
+        }
+      ]
+    },
+    {
+      "name": "High growth",
+      "traffic": [
+        3000,
+        8000,
+        18000
+      ],
+      "signupRate": 0.1,
+      "payerConversion": 0.1,
+      "monthlyChurn": 0.08,
+      "arppuINR": 1800,
+      "activities": {
+        "seo": "Publish or improve 6 differentiated pages per month, with demonstrations, case studies and earned relevant links.",
+        "marketing": "Consistent creator/demo distribution and validated campaign scaling; requires capacity, measured demand and additional approved funding.",
+        "partnerships": "Aim for 6 active distribution partners by month 6, with co-marketing and referral support; no signed partnerships are assumed as fact.",
+        "product": "Remove onboarding friction, improve activation and renewal experience, and validate a higher-value plan mix. This is an upside execution case, not an expected outcome."
+      },
+      "series": [
+        {
+          "month": 1,
+          "traffic": 2170.5,
+          "signups": 217.05,
+          "newPaying": 21.705000000000002,
+          "activePaying": 31.825000000000003,
+          "conditionalMRR_INR": 57285.00000000001
+        },
+        {
+          "month": 2,
+          "traffic": 3000,
+          "signups": 300,
+          "newPaying": 30,
+          "activePaying": 59.279,
+          "conditionalMRR_INR": 106702.20000000001
+        },
+        {
+          "month": 3,
+          "traffic": 4250,
+          "signups": 425,
+          "newPaying": 42.5,
+          "activePaying": 97.03668,
+          "conditionalMRR_INR": 174666.024
+        },
+        {
+          "month": 4,
+          "traffic": 5500,
+          "signups": 550,
+          "newPaying": 55,
+          "activePaying": 144.2737456,
+          "conditionalMRR_INR": 259692.74208000003
+        },
+        {
+          "month": 5,
+          "traffic": 6750,
+          "signups": 675,
+          "newPaying": 67.5,
+          "activePaying": 200.23184595200001,
+          "conditionalMRR_INR": 360417.3227136
+        },
+        {
+          "month": 6,
+          "traffic": 8000,
+          "signups": 800,
+          "newPaying": 80,
+          "activePaying": 264.21329827584003,
+          "conditionalMRR_INR": 475583.93689651205
+        },
+        {
+          "month": 7,
+          "traffic": 9666.666666666666,
+          "signups": 966.6666666666666,
+          "newPaying": 96.66666666666667,
+          "activePaying": 339.74290108043954,
+          "conditionalMRR_INR": 611537.2219447911
+        },
+        {
+          "month": 8,
+          "traffic": 11333.333333333334,
+          "signups": 1133.3333333333335,
+          "newPaying": 113.33333333333336,
+          "activePaying": 425.89680232733775,
+          "conditionalMRR_INR": 766614.2441892079
+        },
+        {
+          "month": 9,
+          "traffic": 13000,
+          "signups": 1300,
+          "newPaying": 130,
+          "activePaying": 521.8250581411507,
+          "conditionalMRR_INR": 939285.1046540714
+        },
+        {
+          "month": 10,
+          "traffic": 14666.666666666668,
+          "signups": 1466.666666666667,
+          "newPaying": 146.6666666666667,
+          "activePaying": 626.7457201565254,
+          "conditionalMRR_INR": 1128142.2962817457
+        },
+        {
+          "month": 11,
+          "traffic": 16333.333333333334,
+          "signups": 1633.3333333333335,
+          "newPaying": 163.33333333333337,
+          "activePaying": 739.9393958773368,
+          "conditionalMRR_INR": 1331890.9125792063
+        },
+        {
+          "month": 12,
+          "traffic": 18000,
+          "signups": 1800,
+          "newPaying": 180,
+          "activePaying": 860.7442442071499,
+          "conditionalMRR_INR": 1549339.6395728698
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "rows": 9,
+    "allPositive": true,
+    "anchorTargetsMatch": true,
+    "recurrenceReconciles": true
+  }
+}

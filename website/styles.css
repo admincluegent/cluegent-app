@@ -4891,6 +4891,10 @@ kbd {
   padding-top: 12px;
 }
 
+.seo-article--after-hero {
+  padding-top: clamp(72px, 8vw, 112px);
+}
+
 .seo-article-header {
   display: grid;
   gap: 18px;
@@ -4944,6 +4948,50 @@ kbd {
 
 .seo-article-body .seo-table {
   margin-top: 8px;
+}
+
+.seo-table-wrap {
+  max-width: 100%;
+  margin-top: 8px;
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+}
+
+.seo-table-wrap table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  color: #475569;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.seo-table-wrap th,
+.seo-table-wrap td {
+  padding: 16px 18px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: top;
+}
+
+.seo-table-wrap th {
+  color: #0f172a;
+  background: #f8fafc;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.seo-table-wrap tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.seo-table-wrap tbody tr:hover {
+  background: #f8fafc;
 }
 
 .seo-source-note {
