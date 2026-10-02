@@ -1,0 +1,28 @@
+.billing-sparkle { position: relative; overflow: hidden; isolation: isolate; }
+.billing-sparkle::before, .billing-sparkle::after {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  animation: billing-sparkle-sweep 6s linear infinite;
+}
+.billing-sparkle::before {
+  content: '';
+  background: linear-gradient(105deg, transparent 34%, rgb(255 255 255 / 28%) 49%, transparent 64%);
+}
+.billing-sparkle::after {
+  content: '✦'; display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: #fff2ba;
+}
+.billing-price-sparkle::before {
+  background: linear-gradient(105deg, transparent 34%, rgb(251 191 36 / 15%) 49%, transparent 64%);
+}
+.billing-price-sparkle::after { color: #b45309; font-size: 11px; }
+.billing-upgrade-sparkle::before, .billing-upgrade-sparkle::after { animation-delay: 1.2s; }
+.billing-upgrade-sparkle:disabled::before, .billing-upgrade-sparkle:disabled::after { animation: none; }
+@keyframes billing-sparkle-sweep {
+  0% { transform: translateX(-110%); opacity: 0; }
+  5% { opacity: .8; }
+  25% { transform: translateX(110%); opacity: .8; }
+  26%, 100% { transform: translateX(110%); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .billing-sparkle::before, .billing-sparkle::after { animation: none; }
+}

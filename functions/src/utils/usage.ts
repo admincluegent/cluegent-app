@@ -4,6 +4,7 @@ import {
   DEFAULT_PLAN_ID,
   DEFAULT_PLAN,
   PLAN_CONFIGS,
+  isNewPaidPlan,
   type PlanConfig,
   type PlanId,
   type SubscriptionStatus,
@@ -11,7 +12,7 @@ import {
 import { getMonthKey } from "./monthKey.js";
 
 export type UsageActionType = "stt" | "prompt" | "screenshot";
-export type BillingInterval = "month" | "year";
+export type BillingInterval = "hour" | "month" | "quarter" | "year";
 export type BillingProvider = "razorpay";
 export type BillingProviderMode = "test" | "live";
 
@@ -68,6 +69,10 @@ export interface UsageDoc {
 }
 
 export interface MaterializedSubscription {
+  orderId?: string | null;
+  prepaidSecondsGranted?: number;
+  planSttSecondsUsed?: number;
+  usageWindowStart?: string | null;
   plan: PlanId;
   status: SubscriptionStatus;
   promptLimit: number;
@@ -136,6 +141,9 @@ export function buildPlanLimitRefresh(
   }
 
   const plan = PLAN_CONFIGS[planId as PlanId];
+  if (isNewPaidPlan(planId) && planId.startsWith('hour')) {
+    return null; // Purchased credits are cumulative, not a static per-month limit.
+  }
   if (
     raw.promptLimit === plan.promptLimit &&
     raw.screenshotLimit === plan.screenshotLimit &&
@@ -261,8 +269,14 @@ export function materializeSubscription(
     status: raw?.status ?? "active",
     promptLimit: fallbackPlan.promptLimit,
     screenshotLimit: fallbackPlan.screenshotLimit,
-    sttSecondsLimit: fallbackPlan.sttSecondsLimit,
+    sttSecondsLimit: isNewPaidPlan(planId) && planId.startsWith('hour')
+      ? Math.max(fallbackPlan.sttSecondsLimit, raw?.prepaidSecondsGranted ?? 0)
+      : fallbackPlan.sttSecondsLimit,
+    prepaidSecondsGranted: raw?.prepaidSecondsGranted ?? 0,
+    planSttSecondsUsed: raw?.planSttSecondsUsed ?? 0,
+    usageWindowStart: raw?.usageWindowStart ?? null,
     provider: raw?.provider ?? null,
+    orderId: raw?.orderId ?? null,
     providerMode: raw?.providerMode ?? null,
     billingInterval: raw?.billingInterval ?? null,
     customerId: raw?.customerId ?? null,
@@ -337,6 +351,7 @@ export function needsPaidUsageBaseline(
   usage: MaterializedUsage
 ) {
   return (
+    !isNewPaidPlan(subscription.plan) &&
     subscription.plan !== "free" &&
     subscription.status === "active" &&
     subscription.usageBaseline?.monthKey !== usage.monthKey
@@ -365,6 +380,11 @@ export function getPlanPeriodUsage(
   subscription: MaterializedSubscription,
   usage: MaterializedUsage
 ): MaterializedUsage {
+  if (isNewPaidPlan(subscription.plan)) {
+    const periodStart = getListeningWindowStart(subscription);
+    return { ...usage, sttSecondsUsed: subscription.usageWindowStart === periodStart
+      ? Math.max(0, subscription.planSttSecondsUsed ?? 0) : 0 };
+  }
   const baseline =
     subscription.plan !== "free" &&
     subscription.usageBaseline?.monthKey === usage.monthKey
@@ -396,6 +416,27 @@ export function getPlanPeriodUsage(
       0
     ),
   };
+}
+
+// Anchor resets to the purchase date, clamping month-end anniversaries (Jan 31 → Feb 28).
+export function addBillingMonths(start: Date, months: number): Date {
+  const date = new Date(start);
+  const day = date.getUTCDate();
+  date.setUTCDate(1);
+  date.setUTCMonth(date.getUTCMonth() + months);
+  const lastDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
+  date.setUTCDate(Math.min(day, lastDay));
+  return date;
+}
+
+export function getListeningWindowStart(subscription: MaterializedSubscription, now = new Date()): string | null {
+  if (!isNewPaidPlan(subscription.plan) || !subscription.startedAt) return null;
+  if (subscription.billingInterval === 'hour') return subscription.startedAt;
+  const start = new Date(subscription.startedAt);
+  if (Number.isNaN(start.getTime())) return null;
+  let months = Math.max(0, (now.getUTCFullYear() - start.getUTCFullYear()) * 12 + now.getUTCMonth() - start.getUTCMonth());
+  if (addBillingMonths(start, months).getTime() > now.getTime()) months = Math.max(0, months - 1);
+  return addBillingMonths(start, months).toISOString();
 }
 
 export function serializeForClient<T>(value: T): T {
@@ -582,7 +623,7 @@ export function assertUsageAvailable(
   if (actionType === "stt" && status.remaining.sttSeconds <= 0) {
     throw new HttpsError(
       "resource-exhausted",
-      "You have reached your monthly listening limit. Limits will reset every month."
+      "Listening limit reached. Add hours or wait for your next monthly allowance."
     );
   }
 

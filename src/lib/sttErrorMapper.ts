@@ -82,7 +82,7 @@ export function categorizeSttError(rawError: string): SttErrorCategory {
     ) {
         return {
             title: 'Listening Limit Reached',
-            body: 'You have reached your plan limit. Limits will reset every month.',
+            body: 'Your listening allowance is used up. Open Billing to buy more hours or upgrade your plan.',
             category: 'quota',
         };
     }

@@ -1,890 +1,218 @@
-import React, { useEffect, useMemo, useState } from "react";
-import {
-  Activity,
-  CheckCircle2,
-  Check,
-  Loader2,
-} from "lucide-react";
-import {
-  createRazorpayLiveOrder,
-  createRazorpayTestSubscription,
-  getLiveBillingPlans,
-  verifyRazorpayLiveOrderPayment,
-  verifyRazorpayTestPayment,
-} from "@/services/backendApi";
-import { useAuth } from "@/contexts/auth.context";
-import { FEATURES } from "@/lib/featureFlags";
-import type { BillingCurrency, LiveBillingPlanPrice } from "@/types/backend";
-import type { BillingInterval } from "@/types/firebase";
+import React, { useEffect, useState } from 'react';
+import { Check, Loader2 } from 'lucide-react';
+import { createRazorpayLiveOrder, getLiveBillingPlans, verifyRazorpayLiveOrderPayment } from '@/services/backendApi';
+import { useAuth } from '@/contexts/auth.context';
+import type { NewPaidPlan, BillingInterval } from '@/types/firebase';
+import type { BillingCurrency, LiveBillingPlanPrice } from '@/types/backend';
+import './BillingSettings.css';
 
-const BILLING_CHECKOUT_SYNC_WINDOW_MS = 60_000;
-const BILLING_PENDING_POLL_MS = 4_000;
-const RAZORPAY_CHECKOUT_SCRIPT_URL = "https://checkout.razorpay.com/v1/checkout.js";
-const UNLIMITED_USAGE_LIMIT = Number.MAX_SAFE_INTEGER;
-
-type RazorpayPaymentResponse = {
-  razorpay_payment_id: string;
-  razorpay_subscription_id?: string;
-  razorpay_order_id?: string;
-  razorpay_signature: string;
+type Category = 'hour' | 'month' | 'year';
+const ORIGINAL_PRICES: Record<BillingCurrency, Record<NewPaidPlan, string>> = {
+  INR: { hour3: '₹999', hour10: '₹2,499', monthly200: '₹6,499', quarterly200: '₹10,499', annual200: '₹42,499' },
+  USD: { hour3: '$12', hour10: '$29', monthly200: '$69', quarterly200: '$120', annual200: '$480' },
 };
-
-type RazorpayCheckoutOptions = {
-  key: string;
-  subscription_id?: string;
-  order_id?: string;
-  name: string;
-  description: string;
-  prefill: {
-    name: string;
-    email: string;
-  };
-  notes: Record<string, string>;
-  theme: {
-    color: string;
-  };
-  handler: (response: RazorpayPaymentResponse) => void;
-  modal: {
-    ondismiss: () => void;
-  };
-};
-
-declare global {
-  interface Window {
-    Razorpay?: new (options: RazorpayCheckoutOptions) => {
-      open: () => void;
-    };
-  }
-}
-
-type CheckoutCard = {
-  id: "plus" | "pro" | "power";
-  interval: BillingInterval;
-  name: string;
-  accent: "emerald" | "sky" | "violet";
-  eyebrow: string;
-  price: string;
-  priceSuffix: string;
-  savings?: string;
-  tagline: string;
-  sttSecondsLimit: number;
-  promptLimit: number;
-  screenshotLimit: number;
-  highlights: string[];
-};
-
-type BillingProviderMode = "test" | "live";
-
-const CHECKOUT_CARDS: CheckoutCard[] = [
-  {
-    id: "plus",
-    interval: "month",
-    name: "Plus",
-    accent: "emerald",
-    eyebrow: "Plus",
-    price: "₹999",
-    priceSuffix: "/month",
-    tagline: "For focused interview preparation with more listening and screenshot capacity.",
-    sttSecondsLimit: 36000,
-    promptLimit: 1000,
-    screenshotLimit: 1000,
-    highlights: [
-      "Undetectability - Cluegent stays invisible during screen sharing",
-      "10 hours listening",
-      "1,000 AI requests",
-      "1,000 screenshot analyses",
-      "Real-time assistant",
-      "Coding + meeting support",
-    ],
-  },
-  {
-    id: "plus",
-    interval: "year",
-    name: "Plus",
-    accent: "emerald",
-    eyebrow: "Plus",
-    price: "₹833",
-    priceSuffix: "/month, billed yearly",
-    savings: "Save ₹1,998",
-    tagline: "Annual Plus access for steady interview prep at a lower yearly price.",
-    sttSecondsLimit: 36000,
-    promptLimit: 1000,
-    screenshotLimit: 1000,
-    highlights: [
-      "Undetectability - Cluegent stays invisible during screen sharing",
-      "10 hours/month listening",
-      "1,000 AI requests/month",
-      "1,000 screenshot analyses/month",
-      "Real-time assistant",
-      "Coding + meeting support",
-    ],
-  },
-  {
-    id: "pro",
-    interval: "month",
-    name: "Pro",
-    accent: "sky",
-    eyebrow: "Most Popular",
-    price: "₹2,499",
-    priceSuffix: "/month",
-    tagline: "For regular meetings, technical conversations, and real-time assistant support.",
-    sttSecondsLimit: UNLIMITED_USAGE_LIMIT,
-    promptLimit: UNLIMITED_USAGE_LIMIT,
-    screenshotLimit: UNLIMITED_USAGE_LIMIT,
-    highlights: [
-      "Undetectability - Cluegent stays invisible during screen sharing",
-      "Unlimited listening",
-      "Unlimited AI requests",
-      "Unlimited screenshot analyses",
-      "Real-time assistant",
-      "Coding + meeting support",
-    ],
-  },
-  {
-    id: "pro",
-    interval: "year",
-    name: "Pro",
-    accent: "sky",
-    eyebrow: "Most Popular",
-    price: "₹2,083",
-    priceSuffix: "/month, billed yearly",
-    savings: "Save ₹4,998",
-    tagline: "Annual Pro access with the same core assistant limits at a lower yearly price.",
-    sttSecondsLimit: UNLIMITED_USAGE_LIMIT,
-    promptLimit: UNLIMITED_USAGE_LIMIT,
-    screenshotLimit: UNLIMITED_USAGE_LIMIT,
-    highlights: [
-      "Undetectability - Cluegent stays invisible during screen sharing",
-      "Unlimited listening",
-      "Unlimited AI requests",
-      "Unlimited screenshot analyses",
-      "Real-time assistant",
-      "Coding + meeting support",
-    ],
-  },
-  {
-    id: "power",
-    interval: "month",
-    name: "Power",
-    accent: "violet",
-    eyebrow: "Power",
-    price: "₹6,499",
-    priceSuffix: "/month",
-    tagline: "For heavy users who need more assistant capacity and faster responses.",
-    sttSecondsLimit: UNLIMITED_USAGE_LIMIT,
-    promptLimit: UNLIMITED_USAGE_LIMIT,
-    screenshotLimit: UNLIMITED_USAGE_LIMIT,
-    highlights: [
-      "Undetectability - Cluegent stays invisible during screen sharing",
-      "Unlimited listening",
-      "Unlimited AI requests",
-      "Unlimited screenshot analyses",
-      "Real-time assistant",
-      "Coding + meeting support",
-      "Faster responses",
-      "Priority processing",
-    ],
-  },
-  {
-    id: "power",
-    interval: "year",
-    name: "Power",
-    accent: "violet",
-    eyebrow: "Power",
-    price: "₹5,416",
-    priceSuffix: "/month, billed yearly",
-    savings: "Save ₹12,998",
-    tagline: "Annual Power access for high-volume meetings, coding support, and screenshots.",
-    sttSecondsLimit: UNLIMITED_USAGE_LIMIT,
-    promptLimit: UNLIMITED_USAGE_LIMIT,
-    screenshotLimit: UNLIMITED_USAGE_LIMIT,
-    highlights: [
-      "Undetectability - Cluegent stays invisible during screen sharing",
-      "Unlimited listening/month",
-      "Unlimited AI requests/month",
-      "Unlimited screenshot analyses/month",
-      "Real-time assistant",
-      "Coding + meeting support",
-      "Faster responses",
-      "Priority processing",
-    ],
-  },
+const CARDS: Array<{ id: NewPaidPlan; category: Category; interval: BillingInterval; name: string; hours: number; months: number }> = [
+  { id: 'hour3', category: 'hour', interval: 'hour', name: '3 Hour Pack', hours: 3, months: 0 },
+  { id: 'hour10', category: 'hour', interval: 'hour', name: '10 Hour Pack', hours: 10, months: 0 },
+  { id: 'monthly200', category: 'month', interval: 'month', name: 'Monthly', hours: 200, months: 1 },
+  { id: 'quarterly200', category: 'month', interval: 'quarter', name: '3 Months', hours: 200, months: 3 },
+  { id: 'annual200', category: 'year', interval: 'year', name: 'Yearly', hours: 200, months: 12 },
 ];
 
-const USD_CHECKOUT_PRICING: Record<
-  "plus" | "pro" | "power",
-  Record<BillingInterval, { price: string; savings?: string }>
-> = {
-  plus: {
-    month: {
-      price: "$12",
-    },
-    year: {
-      price: "$10",
-      savings: "Save $24",
-    },
-  },
-  pro: {
-    month: {
-      price: "$29",
-    },
-    year: {
-      price: "$24.17",
-      savings: "Save $58",
-    },
-  },
-  power: {
-    month: {
-      price: "$69",
-    },
-    year: {
-      price: "$57.50",
-      savings: "Save $138",
-    },
-  },
+function cardHighlights(card: typeof CARDS[number]): string[] {
+  const common = [
+    'Undetectability - Cluegent stays invisible during screen sharing',
+    'Screen capture analysis',
+    'Real-time assistant',
+    'Coding + meeting support',
+  ];
+  if (card.category === 'hour') return [
+    `${card.hours} hours of live interview help`, ...common,
+    `${card.id === 'hour3' ? 30 : 75} AI Resume Builder (all templates)`,
+    'Watermark-free resumes.',
+  ];
+  return [
+    common[0], 'Unlimited AI interview assistance', 'Unlimited AI requests',
+    'Unlimited Screen capture analysis', common[2], common[3],
+    'Unlimited AI Resume Builder (all templates)', 'Watermark-free resumes.',
+  ];
+}
+
+type Payment = { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string };
+type CheckoutOptions = {
+  key: string; order_id: string; amount: number; currency: string; name: string; description: string;
+  prefill: { name: string; email: string }; notes: Record<string, string>; theme: { color: string };
+  handler: (payment: Payment) => void; modal: { ondismiss: () => void };
 };
-
-const FREE_PLAN_CARD = {
-  id: "free" as const,
-  name: "Free",
-  eyebrow: "Free Trial",
-  tagline: "Limited usage.",
-  sttSecondsLimit: 720,
-  promptLimit: Number.MAX_SAFE_INTEGER,
-  screenshotLimit: Number.MAX_SAFE_INTEGER,
-  highlights: [
-    "12 min total Cluegent usage",
-    "Try live answers",
-    "Try screenshot analysis",
-    "Subscribe to continue",
-  ],
-};
-
-function isCheckoutCardEnabled(plan: CheckoutCard) {
-  return FEATURES.POWER_YEARLY_ENABLED || plan.id !== "power" || plan.interval !== "year";
+declare global {
+  interface Window { Razorpay?: new (options: CheckoutOptions) => { open: () => void; on?: (event: string, callback: (data: { error?: { description?: string } }) => void) => void }; }
 }
-
-function getCheckoutPricingKey(
-  planId: "plus" | "pro" | "power",
-  interval: BillingInterval,
-  currency: BillingCurrency
-) {
-  return `${currency}-${planId}-${interval}`;
-}
-
-function indexLivePricing(prices: LiveBillingPlanPrice[]) {
-  return prices.reduce<Record<string, LiveBillingPlanPrice>>((indexed, price) => {
-    indexed[getCheckoutPricingKey(price.planId, price.interval, price.currency)] = price;
-    return indexed;
-  }, {});
-}
-
-function getFallbackCheckoutCardPricing(plan: CheckoutCard, currency: BillingCurrency) {
-  if (currency === "INR") {
-    return {
-      price: plan.price,
-      savings: plan.savings,
-    };
-  }
-
-  return USD_CHECKOUT_PRICING[plan.id][plan.interval];
-}
-
-function getCheckoutCardPricing(
-  plan: CheckoutCard,
-  currency: BillingCurrency,
-  livePricingByKey: Record<string, LiveBillingPlanPrice>
-) {
-  const livePricing = livePricingByKey[getCheckoutPricingKey(plan.id, plan.interval, currency)];
-
-  if (livePricing) {
-    return {
-      price: livePricing.displayMonthlyPrice,
-      savings: livePricing.savingsLabel,
-    };
-  }
-
-  return getFallbackCheckoutCardPricing(plan, currency);
-}
-
-function getOfferOriginalPrice(displayPrice: string) {
-  const parsed = displayPrice.match(/^([₹$])\s?([\d,]+)$/);
-
-  if (!parsed) {
-    return null;
-  }
-
-  const [, symbol, amountText] = parsed;
-  const amount = Number(amountText.replace(/,/g, ""));
-
-  if (!Number.isFinite(amount)) {
-    return null;
-  }
-
-  return `${symbol}${Math.round(amount * 2).toLocaleString("en-US")}`;
-}
-
-function BillingCurrencyFlag({ currency }: { currency: BillingCurrency }) {
-  if (currency === "INR") {
-    return (
-      <span
-        aria-hidden="true"
-        className="relative h-4 w-4 shrink-0 overflow-hidden rounded-full border border-slate-300/90 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.18)]"
-      >
-        <span className="absolute inset-x-0 top-0 h-1/3 bg-orange-500" />
-        <span className="absolute inset-x-0 bottom-0 h-1/3 bg-emerald-600" />
-        <span className="absolute left-1/2 top-1/2 h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-700" />
-      </span>
-    );
-  }
-
-  return (
-    <span
-      aria-hidden="true"
-      className="relative h-4 w-4 shrink-0 overflow-hidden rounded-full border border-slate-300/90 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.18)]"
-    >
-      <span className="absolute inset-0 bg-[repeating-linear-gradient(to_bottom,#b91c1c_0,#b91c1c_1.25px,#fff_1.25px,#fff_2.5px)]" />
-      <span className="absolute left-0 top-0 h-[8px] w-[8px] bg-blue-900" />
-    </span>
-  );
-}
-
-function getAccentClasses(accent: CheckoutCard["accent"]) {
-  if (accent === "emerald") {
-    return {
-      border: "border-emerald-400",
-      badge:
-        "border-emerald-200 bg-emerald-50 text-emerald-700",
-      button:
-        "border border-slate-300 bg-white text-slate-950 shadow-[0_14px_36px_-28px_rgba(15,23,42,0.35)] hover:border-emerald-500 hover:bg-emerald-50",
-      card: "bg-white",
-      glow: "from-transparent via-transparent to-transparent",
-      bullet: "text-emerald-500",
-    };
-  }
-
-  if (accent === "sky") {
-    return {
-      border: "border-orange-400",
-      badge:
-        "border-orange-200 bg-orange-50 text-orange-700",
-      button:
-        "border border-slate-300 bg-white text-slate-950 shadow-[0_14px_36px_-28px_rgba(15,23,42,0.35)] hover:border-orange-500 hover:bg-orange-50",
-      card: "bg-white",
-      glow: "from-transparent via-transparent to-transparent",
-      bullet: "text-orange-500",
-    };
-  }
-
-  return {
-    border: "border-slate-500",
-    badge:
-      "border-slate-300 bg-slate-100 text-slate-700",
-    button:
-      "border border-slate-300 bg-white text-slate-950 shadow-[0_14px_36px_-28px_rgba(15,23,42,0.35)] hover:border-slate-700 hover:bg-slate-50",
-    card: "bg-white",
-    glow: "from-transparent via-transparent to-transparent",
-    bullet: "text-slate-600",
-  };
-}
-
-function ensureRazorpayCheckoutLoaded() {
-  if (window.Razorpay) {
-    return Promise.resolve();
-  }
-
-  return new Promise<void>((resolve, reject) => {
-    const timeoutId = window.setTimeout(() => {
-      reject(new Error("Timed out loading Razorpay Checkout. Check network/CSP settings."));
-    }, 15_000);
-    const resolveOnce = () => {
-      window.clearTimeout(timeoutId);
-      resolve();
-    };
-    const rejectOnce = (error: Error) => {
-      window.clearTimeout(timeoutId);
-      reject(error);
-    };
-    const existingScript = document.querySelector<HTMLScriptElement>(
-      `script[src="${RAZORPAY_CHECKOUT_SCRIPT_URL}"]`
-    );
-
-    if (existingScript) {
-      existingScript.addEventListener("load", resolveOnce, { once: true });
-      existingScript.addEventListener(
-        "error",
-        () => rejectOnce(new Error("Failed to load Razorpay Checkout.")),
-        { once: true }
-      );
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = RAZORPAY_CHECKOUT_SCRIPT_URL;
-    script.async = true;
-    script.onload = resolveOnce;
-    script.onerror = () => rejectOnce(new Error("Failed to load Razorpay Checkout."));
+let checkoutScript: Promise<void> | null = null;
+function loadCheckout(): Promise<void> {
+  if (window.Razorpay) return Promise.resolve();
+  if (checkoutScript) return checkoutScript;
+  checkoutScript = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    const timer = window.setTimeout(() => fail(), 20000);
+    const fail = () => { window.clearTimeout(timer); script.remove(); checkoutScript = null; reject(new Error('Could not load payment checkout. Please retry.')); };
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => { window.clearTimeout(timer); if (window.Razorpay) resolve(); else fail(); };
+    script.onerror = fail;
     document.head.appendChild(script);
   });
+  return checkoutScript;
 }
 
 export const BillingSettings: React.FC = () => {
-  const { profile, subscription, planStatus, refreshProfile, isSyncing } = useAuth();
-  const [busyKey, setBusyKey] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [pendingCheckoutKey, setPendingCheckoutKey] = useState<string | null>(null);
-  const [checkoutStartedAt, setCheckoutStartedAt] = useState<number | null>(null);
-  const [selectedInterval, setSelectedInterval] = useState<BillingInterval>("month");
-  const [selectedCurrency, setSelectedCurrency] = useState<BillingCurrency>("INR");
-  const [livePricingByKey, setLivePricingByKey] = useState<
-    Record<string, LiveBillingPlanPrice>
-  >({});
-
-  useEffect(() => {
-    void refreshProfile();
-
-    const refreshNow = () => {
-      void refreshProfile();
-    };
-
-    window.addEventListener("focus", refreshNow);
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        refreshNow();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener("focus", refreshNow);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [refreshProfile]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    getLiveBillingPlans()
-      .then((pricing) => {
-        if (isMounted) {
-          setLivePricingByKey(indexLivePricing(pricing.prices));
-        }
-      })
-      .catch((pricingError) => {
-        console.warn("Failed to load live billing pricing; using bundled fallback.", pricingError);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!pendingCheckoutKey || !checkoutStartedAt) {
-      return;
-    }
-
-    const hasPendingWindowExpired =
-      Date.now() - checkoutStartedAt > BILLING_CHECKOUT_SYNC_WINDOW_MS;
-    if (hasPendingWindowExpired) {
-      setPendingCheckoutKey(null);
-      setCheckoutStartedAt(null);
-      return;
-    }
-
-    const intervalId = window.setInterval(() => {
-      void refreshProfile();
-    }, BILLING_PENDING_POLL_MS);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [checkoutStartedAt, pendingCheckoutKey, refreshProfile]);
-
-  const handleOpenRazorpayCheckout = async (
-    planId: "plus" | "pro" | "power",
-    interval: BillingInterval,
-    providerMode: BillingProviderMode = "test"
-  ) => {
-    if (!FEATURES.POWER_YEARLY_ENABLED && planId === "power" && interval === "year") {
-      setMessage(null);
-      setError("Power yearly checkout is temporarily unavailable. Please choose Power monthly or contact support for manual yearly billing.");
-      return;
-    }
-
-    const requestKey = `${providerMode}-${planId}-${interval}`;
-    setBusyKey(requestKey);
-    setMessage(null);
-    setError(null);
-
-    try {
-      await ensureRazorpayCheckoutLoaded();
-      const result =
-        providerMode === "live"
-          ? await createRazorpayLiveOrder(planId, interval, selectedCurrency)
-          : await createRazorpayTestSubscription(planId, interval);
-      setPendingCheckoutKey(requestKey);
-      setCheckoutStartedAt(Date.now());
-
-      const checkoutOptions: RazorpayCheckoutOptions = {
-        key: result.keyId,
-        name: result.name,
-        description: result.description,
-        prefill: result.prefill,
-        notes: result.notes,
-        theme: {
-          color: "#2563eb",
-        },
-        handler: (paymentResponse) => {
-          void handleRazorpayPaymentVerified(paymentResponse, requestKey, providerMode);
-        },
-        modal: {
-          ondismiss: () => {
-            setBusyKey(null);
-            setMessage("Razorpay checkout was closed before payment completion.");
-          },
-        },
-      };
-
-      if ("orderId" in result) {
-        checkoutOptions.order_id = result.orderId;
-      } else {
-        checkoutOptions.subscription_id = result.subscriptionId;
-      }
-
-      const checkout = new window.Razorpay!(checkoutOptions);
-
-      checkout.open();
-      setMessage(
-        providerMode === "live"
-          ? "Opened Razorpay live checkout. Complete payment to unlock your plan."
-          : "Opened Razorpay test checkout. Complete payment to unlock your plan."
-      );
-      setBusyKey(null);
-    } catch (checkoutError) {
-      setError(
-        checkoutError instanceof Error
-          ? checkoutError.message
-          : "Failed to create the Razorpay checkout."
-      );
-      setPendingCheckoutKey(null);
-      setCheckoutStartedAt(null);
-      setBusyKey(null);
-    }
+  const { subscription, planStatus, refreshProfile } = useAuth();
+  const [category, setCategory] = useState<Category>('month');
+  const [currency, setCurrency] = useState<BillingCurrency>('INR');
+  const [prices, setPrices] = useState<LiveBillingPlanPrice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState<NewPaidPlan | null>(null);
+  const [pending, setPending] = useState<{ id: NewPaidPlan; orderId: string; since: number } | null>(null);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const hourlyExhausted = (planStatus?.plan === 'hour3' || planStatus?.plan === 'hour10') && planStatus.remaining.sttSeconds <= 0;
+  const fetchPrices = async () => {
+    setLoading(true); setError('');
+    try { const result = await getLiveBillingPlans(); setPrices(result.prices); }
+    catch { setError('Could not load current prices. Retry before purchasing.'); }
+    finally { setLoading(false); }
   };
-
-  const handleRazorpayPaymentVerified = async (
-    paymentResponse: RazorpayPaymentResponse,
-    requestKey: string,
-    providerMode: BillingProviderMode
-  ) => {
-    setBusyKey(requestKey);
-    setMessage("Verifying Razorpay payment...");
-    setError(null);
-
-    try {
-      if (providerMode === "live") {
-        if (!paymentResponse.razorpay_order_id) {
-          throw new Error("Razorpay order id was missing from the payment response.");
-        }
-
-        await verifyRazorpayLiveOrderPayment({
-          razorpay_payment_id: paymentResponse.razorpay_payment_id,
-          razorpay_order_id: paymentResponse.razorpay_order_id,
-          razorpay_signature: paymentResponse.razorpay_signature,
-        });
-      } else {
-        if (!paymentResponse.razorpay_subscription_id) {
-          throw new Error("Razorpay subscription id was missing from the payment response.");
-        }
-
-        await verifyRazorpayTestPayment({
-          razorpay_payment_id: paymentResponse.razorpay_payment_id,
-          razorpay_subscription_id: paymentResponse.razorpay_subscription_id,
-          razorpay_signature: paymentResponse.razorpay_signature,
-        });
-      }
-      await refreshProfile();
-      setMessage("Payment verified. Your Cluegent plan is active.");
-      setPendingCheckoutKey(null);
-      setCheckoutStartedAt(null);
-    } catch (verificationError) {
-      setError(
-        verificationError instanceof Error
-          ? verificationError.message
-          : "Razorpay payment verification failed."
-      );
-    } finally {
-      setBusyKey(null);
-    }
-  };
-
-  const visiblePaidCards = useMemo(
-    () =>
-      CHECKOUT_CARDS.filter(
-        (plan) =>
-          plan.interval === selectedInterval &&
-          isCheckoutCardEnabled(plan)
-      ),
-    [selectedInterval]
-  );
-
+  useEffect(() => { void fetchPrices(); void refreshProfile(); }, []);
   useEffect(() => {
-    if (subscription?.billingInterval) {
-      setSelectedInterval(subscription.billingInterval);
-    }
+    const interval = subscription?.billingInterval;
+    if (interval) setCategory(interval === 'hour' ? 'hour' : interval === 'year' ? 'year' : 'month');
   }, [subscription?.billingInterval]);
-
   useEffect(() => {
-    if (!pendingCheckoutKey || !subscription) {
-      return;
+    const refresh = () => { void refreshProfile(); };
+    window.addEventListener('focus', refresh);
+    return () => window.removeEventListener('focus', refresh);
+  }, [refreshProfile]);
+  useEffect(() => {
+    if (!pending) return;
+    const timer = window.setInterval(() => {
+      if (Date.now() - pending.since > 60000) { setPending(null); setBusy(null); setMessage('If you completed payment, refresh billing to check activation.'); return; }
+      void refreshProfile();
+    }, 4000);
+    return () => window.clearInterval(timer);
+  }, [pending, refreshProfile]);
+  useEffect(() => {
+    if (pending && subscription?.orderId === pending.orderId && subscription.plan === pending.id) {
+      setPending(null); setBusy(null); setMessage('Payment verified. Your plan is active.');
     }
+  }, [subscription, pending]);
 
-    const [, planId, interval] = pendingCheckoutKey.split("-");
-    if (subscription.plan === planId && subscription.billingInterval === interval) {
-      setPendingCheckoutKey(null);
-      setCheckoutStartedAt(null);
-    }
-  }, [pendingCheckoutKey, subscription]);
+  const buy = async (card: typeof CARDS[number]) => {
+    if (busy || pending) return;
+    const currentPaid = subscription?.plan !== 'free' && subscription?.status === 'active';
+    const topup = subscription?.billingInterval === 'hour' && card.interval === 'hour';
+    if (currentPaid && !topup && !window.confirm('This purchase replaces your current plan and its remaining allowance. Continue?')) return;
+    setBusy(card.id); setError(''); setMessage('');
+    try {
+      await loadCheckout();
+      const order = await createRazorpayLiveOrder(card.id, card.interval, currency);
+      setPending({ id: card.id, orderId: order.orderId, since: Date.now() });
+      let verificationStarted = false;
+      const checkout = new window.Razorpay!({
+        key: order.keyId, order_id: order.orderId, amount: order.amount, currency: order.currency,
+        name: order.name, description: order.description, prefill: order.prefill, notes: order.notes, theme: { color: '#2563eb' },
+        handler: payment => {
+          verificationStarted = true;
+          void (async () => {
+            setMessage('Verifying payment…');
+            try {
+              if (payment.razorpay_order_id !== order.orderId) throw new Error('Payment order did not match checkout.');
+              await verifyRazorpayLiveOrderPayment(payment);
+              await refreshProfile(); setMessage('Payment verified. Your plan is active.'); setPending(null);
+            } catch (err) { setError(err instanceof Error ? err.message : 'Payment verification failed. Refresh billing to retry activation.'); }
+            finally { setBusy(null); }
+          })();
+        },
+        modal: { ondismiss: () => { if (!verificationStarted) { setBusy(null); setMessage('Checkout closed. Waiting briefly for any completed payment.'); } } },
+      });
+      checkout.on?.('payment.failed', data => { setError(data.error?.description || 'Payment failed. Please retry checkout.'); setBusy(null); setPending(null); });
+      checkout.open();
+    } catch (err) { setError(err instanceof Error ? err.message : 'Could not open checkout.'); setBusy(null); setPending(null); }
+  };
 
   return (
-    <div className="-m-6 min-h-full bg-white p-6 text-slate-950 animated fadeIn">
-      <section className="space-y-4">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <div className="w-full max-w-[1120px]">
-            <h2 className="text-[2.45rem] font-semibold leading-none tracking-[-0.055em] text-slate-950">
-              Choose your plan
-            </h2>
-            <p className="mt-3 text-base font-medium text-slate-500">
-              Choose a plan to unlock Cluegent
-            </p>
-          </div>
-
-          <div className="inline-flex rounded-2xl border border-slate-200 bg-slate-100 p-1 shadow-[0_18px_60px_-45px_rgba(15,23,42,0.35)]">
-            {(["month", "year"] as BillingInterval[]).map((interval) => {
-              const isSelected = selectedInterval === interval;
-
-              return (
-                <button
-                  key={interval}
-                  type="button"
-                  onClick={() => {
-                    setSelectedInterval(interval);
-                  }}
-                  className={`min-w-[124px] rounded-xl px-5 py-2.5 text-sm font-semibold transition ${
-                    isSelected
-                      ? interval === "month"
-                        ? "bg-gradient-to-r from-amber-300 via-orange-500 to-red-600 text-white shadow-[0_14px_30px_-18px_rgba(249,115,22,0.65)]"
-                        : "bg-gradient-to-r from-slate-800 via-slate-700 to-zinc-600 text-white shadow-[0_14px_30px_-18px_rgba(24,24,27,0.65)]"
-                      : "text-slate-500 hover:text-slate-950"
-                  }`}
-                >
-                  {interval === "month" ? "Monthly" : "Yearly (Save 20%)"}
-                </button>
-              );
-            })}
-          </div>
-
+    <div className="min-h-full bg-white p-4 text-slate-950 animated fadeIn">
+      <section className="mx-auto max-w-[800px] space-y-3">
+        <header className="text-center">
+          <h2 className="text-[2rem] font-semibold leading-none tracking-[-0.055em]">Choose your plan</h2>
+          <p className="mt-2 text-sm text-slate-500">Hourly packs or prepaid access with a fresh monthly listening allowance.</p>
+        </header>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div role="tablist" aria-label="Billing plans" className="flex w-fit rounded-2xl border border-slate-200 bg-slate-100 p-1 shadow-[0_18px_60px_-45px_rgba(15,23,42,0.35)]">
+          {(['hour', 'month', 'year'] as Category[]).map(tab => (
+            <button key={tab} role="tab" id={`billing-${tab}`} aria-selected={category === tab} aria-controls="billing-plans"
+              aria-label={tab === 'hour' ? 'Hourly' : tab === 'month' ? 'Monthly' : 'Yearly'} aria-describedby={tab === 'year' ? 'billing-year-offer' : undefined}
+              tabIndex={category === tab ? 0 : -1}
+              onKeyDown={event => {
+                const tabs: Category[] = ['hour', 'month', 'year'];
+                const index = tabs.indexOf(tab);
+                const next = event.key === 'ArrowRight' ? tabs[(index + 1) % tabs.length] : event.key === 'ArrowLeft' ? tabs[(index + tabs.length - 1) % tabs.length] : event.key === 'Home' ? tabs[0] : event.key === 'End' ? tabs[2] : null;
+                if (next) { event.preventDefault(); setCategory(next); document.getElementById(`billing-${next}`)?.focus(); }
+              }}
+              onClick={() => setCategory(tab)} className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition active:scale-[0.97] ${category === tab ? tab === 'year' ? 'bg-gradient-to-r from-slate-800 via-slate-700 to-zinc-600 text-white' : 'bg-gradient-to-r from-amber-300 via-orange-500 to-red-600 text-white' : 'text-slate-500 hover:text-slate-950'}`}>
+              {tab === 'hour' ? 'Hourly' : tab === 'month' ? 'Monthly' : 'Yearly'}
+              {tab === 'year' && <span id="billing-year-offer" className="ml-1.5 inline-block rounded-full bg-orange-100 px-1.5 py-0.5 text-[9px] font-bold text-orange-700">50% off</span>}
+            </button>
+          ))}
         </div>
-
-        <div className="space-y-4">
-          <div className="mx-auto flex w-full max-w-[1120px] justify-end">
-            <div className="inline-flex rounded-[18px] border border-slate-200 bg-slate-100/90 p-0.5 shadow-[0_14px_38px_-30px_rgba(15,23,42,0.35)]">
-              {(["INR", "USD"] as BillingCurrency[]).map((currency) => {
-                const isSelected = selectedCurrency === currency;
-
-                return (
-                  <button
-                    key={currency}
-                    type="button"
-                    onClick={() => {
-                      setSelectedCurrency(currency);
-                    }}
-                    className={`min-w-[82px] rounded-[14px] px-3 py-2 text-sm font-semibold transition active:scale-[0.98] ${
-                      isSelected
-                        ? "bg-white text-slate-950 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.42)]"
-                        : "text-slate-500 hover:text-slate-950"
-                    }`}
-                  >
-                    <span className="inline-flex items-center justify-center gap-1.5">
-                      <BillingCurrencyFlag currency={currency} />
-                      {currency}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+        <div className="flex justify-end">
+          <div role="group" aria-label="Billing currency" className="inline-flex rounded-[18px] border border-slate-200 bg-slate-100/90 p-0.5">
+            {(['INR', 'USD'] as BillingCurrency[]).map(value => <button key={value} type="button" aria-pressed={currency === value}
+              disabled={!!busy || !!pending} onClick={() => setCurrency(value)}
+              className={`min-w-[82px] rounded-[14px] px-3 py-2 text-sm font-semibold transition active:scale-[0.98] disabled:opacity-50 ${currency === value ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-950'}`}>
+              <span aria-hidden="true" className="mr-1.5">{value === 'INR' ? '🇮🇳' : '🇺🇸'}</span>{value}
+            </button>)}
           </div>
-
-          <div className="mx-auto flex w-full max-w-[1120px] snap-x gap-3 overflow-x-auto pb-4 [-webkit-overflow-scrolling:touch]">
-            {visiblePaidCards.map((plan) => {
-              const accent = getAccentClasses(plan.accent);
-              const pricing = getCheckoutCardPricing(
-                plan,
-                selectedCurrency,
-                livePricingByKey
-              );
-              const originalPrice = getOfferOriginalPrice(pricing.price);
-              const cardKey = `${plan.id}-${plan.interval}`;
-              const liveCardKey = `live-${cardKey}`;
-              const isBusy = busyKey === cardKey || busyKey === liveCardKey;
-              const isActive =
-                subscription?.plan === plan.id && subscription?.billingInterval === plan.interval;
-              const isPlusLimitReached =
-                plan.id === "plus" &&
-                planStatus?.plan === "plus" &&
-                ((planStatus.remaining.prompts ?? 0) <= 0 ||
-                  (planStatus.remaining.screenshots ?? 0) <= 0 ||
-                  (planStatus.remaining.sttSeconds ?? 0) <= 0);
-              const canBuyAgain = isActive && isPlusLimitReached;
-
-              return (
-                <article
-                  key={cardKey}
-                  className={`relative flex min-h-[430px] w-[252px] shrink-0 snap-start flex-col overflow-hidden rounded-[24px] border-2 p-5 text-slate-950 shadow-[0_22px_70px_-46px_rgba(15,23,42,0.45)] sm:w-[270px] ${accent.card} ${accent.border}`}
-                >
-                  <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accent.glow}`} />
-
-                  <div className="relative">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h4 className="text-[1.45rem] font-semibold leading-none tracking-[-0.04em] text-slate-950">
-                        {plan.name}
-                      </h4>
-                      {(plan.id === "plus" || plan.id === "pro") && (
-                        <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${accent.badge}`}>
-                          {plan.id === "pro" ? "Most Popular" : "Starter"}
-                        </span>
-                      )}
-                    </div>
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      {originalPrice && (
-                        <span className="text-sm font-semibold leading-none text-slate-400 line-through decoration-slate-400 decoration-2">
-                          {originalPrice}
-                        </span>
-                      )}
-                      <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${accent.badge}`}>
-                        50% off
-                      </span>
-                    </div>
-                    <div className="mt-2 flex flex-wrap items-end gap-2">
-                      <span className="text-[1.5rem] font-semibold leading-none tracking-[-0.03em] text-slate-950 sm:text-[1.65rem]">
-                        {plan.interval === "year" ? (
-                          <>
-                            {pricing.price}
-                            <span className="ml-1 text-[11px] font-medium tracking-normal text-slate-500">
-                              /month
-                            </span>
-                          </>
-                        ) : (
-                          pricing.price
-                        )}
-                      </span>
-                      {plan.interval === "month" && (
-                        <span className="whitespace-nowrap pb-0.5 text-[11px] font-medium leading-snug text-slate-500">
-                          {plan.priceSuffix}
-                        </span>
-                      )}
-                      {plan.interval === "year" && (
-                        <span className={`mb-0.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${accent.badge}`}>
-                          billed yearly
-                        </span>
-                      )}
-                      {pricing.savings && (
-                        <span className={`mb-0.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${accent.badge}`}>
-                          {pricing.savings}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="relative mt-5 space-y-2.5 text-[13px] leading-5 text-slate-700">
-                    {plan.highlights.map((item) => (
-                      <div key={item} className="flex items-start gap-2.5">
-                        <Check size={14} className={`mt-0.5 shrink-0 ${accent.bullet}`} />
-                        <span>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="relative mt-auto pt-6">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        void handleOpenRazorpayCheckout(plan.id, plan.interval, "live");
-                      }}
-                      disabled={isBusy || (isActive && !canBuyAgain)}
-                      className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-[13px] font-semibold transition ${
-                        isActive && !canBuyAgain
-                          ? "border border-slate-300 bg-slate-100 text-slate-600"
-                          : accent.button
-                      } ${isBusy ? "opacity-70" : ""}`}
-                    >
-                      {isBusy ? (
-                        <>
-                          <Loader2 size={15} className="animate-spin" />
-                          Opening
-                        </>
-                      ) : canBuyAgain ? (
-                        "Buy again"
-                      ) : isActive ? (
-                        "Current Plan"
-                      ) : (
-                        "Upgrade"
-                      )}
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
+        </div>
+        </div>
+        {hourlyExhausted && <div role="status" className="rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-slate-800">
+          <h3 className="font-semibold">Hours exhausted</h3>
+          <p className="mt-1">Buy another hourly pack or switch to a monthly plan to continue listening. Your balance updates after payment is verified.</p>
+          <div className="mt-3 flex flex-wrap gap-3">
+            <button onClick={() => setCategory('hour')} className="rounded-xl border border-emerald-400 bg-white px-4 py-2 font-semibold hover:bg-emerald-50">Buy hourly pack</button>
+            <button onClick={() => setCategory('month')} className="rounded-xl border border-blue-400 bg-white px-4 py-2 font-semibold hover:bg-blue-100">Switch to monthly</button>
           </div>
-
-          <article className="mx-auto flex w-full max-w-[980px] flex-col rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_24px_80px_-58px_rgba(15,23,42,0.45)]">
-            <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-              <div className="max-w-[280px]">
-                <p className="text-sm font-semibold text-slate-500">{FREE_PLAN_CARD.eyebrow}</p>
-                <h4 className="mt-2 text-[2rem] font-semibold leading-none tracking-[-0.04em] text-slate-950">
-                  {FREE_PLAN_CARD.name}
-                </h4>
-                <p className="mt-3 text-sm leading-6 text-slate-500">{FREE_PLAN_CARD.tagline}</p>
-                <div
-                  className={`mt-4 inline-flex w-full items-center justify-center rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                    subscription?.plan === "free"
-                      ? "border border-emerald-500/30 bg-emerald-500/12 text-emerald-300"
-                      : "border border-border-subtle bg-black/25 text-text-secondary"
-                  }`}
-                >
-                  {subscription?.plan === "free" ? "Current Plan" : "Trial Access"}
+        </div>}
+        {loading ? <p role="status" className="text-center text-slate-500">Loading current prices…</p> :
+          <div id="billing-plans" role="tabpanel" aria-labelledby={`billing-${category}`} className="mx-auto flex max-w-[640px] flex-wrap justify-center gap-3">
+            {CARDS.filter(card => card.category === category).map((card, index) => {
+              const price = prices.find(price => price.planId === card.id && price.interval === card.interval && price.currency === currency);
+              const accent = card.category === 'year' ? { border: 'border-slate-500', bullet: 'text-slate-600', button: 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700' } : index === 0 ? { border: 'border-emerald-400', bullet: 'text-emerald-500', button: 'border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800' } : { border: 'border-blue-400', bullet: 'text-orange-500', button: 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700' };
+              const active = subscription?.status === 'active' && subscription.plan === card.id;
+              return <article key={card.id} className={`relative flex min-h-[400px] w-full max-w-[310px] min-w-0 flex-col rounded-[24px] border-2 bg-white p-3 text-slate-950 shadow-[0_22px_70px_-46px_rgba(15,23,42,0.45)] ${accent.border}`}>
+                <h3 className="text-lg font-semibold">{card.name}</h3>
+                <div className="mt-3 flex flex-wrap items-baseline gap-1.5">
+                  {price && <del aria-label="Original price" className="text-sm font-medium text-slate-400 decoration-2">{ORIGINAL_PRICES[currency][card.id]}</del>}
+                  <p className={`text-[1.75rem] font-semibold tracking-tight ${price ? 'billing-sparkle billing-price-sparkle' : ''}`}>{price?.displayPrice ?? 'Unavailable'}</p>
+                  {['hour10','quarterly200','annual200'].includes(card.id) && <span className="rounded-full border border-orange-200 bg-orange-50 px-1.5 py-0.5 text-[9px] font-semibold text-orange-700">Most Popular</span>}
                 </div>
-              </div>
-
-              <div className="mt-2 grid max-w-[440px] grid-cols-1 gap-x-8 gap-y-3 text-sm text-slate-800 sm:grid-cols-2 md:mt-6">
-                {FREE_PLAN_CARD.highlights.map((item) => (
-                  <div key={item} className="flex items-start gap-3 font-medium">
-                    <Check size={16} className="mt-0.5 shrink-0 text-emerald-500" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </article>
-        </div>
-
-        {message && (
-          <div className="flex items-center gap-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-            <CheckCircle2 size={16} />
-            {message}
-          </div>
-        )}
-
-        {error && (
-          <div className="flex items-center gap-2 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-            <Activity size={16} />
-            {error}
-          </div>
-        )}
+                <p className="mt-1 text-[13px] leading-5 text-slate-500">{card.months > 1 ? `${price?.displayMonthlyPrice ?? '—'}/month equivalent · paid upfront for ${card.months} months` : card.months === 1 ? '' : ''}</p>
+                {card.months > 0 && <p className="mt-1 text-xs leading-4 text-slate-500"></p>}
+                <ul className="my-2 space-y-1 text-xs leading-4 text-slate-700">
+                  {cardHighlights(card).map(item => <li key={item} className="flex gap-2"><Check size={14} className={`mt-0.5 shrink-0 ${accent.bullet}`} /><span className={/^(Undetectability|Real-time|Coding|Unlimited)/.test(item) ? 'font-semibold' : undefined}>{item}</span></li>)}
+                </ul>
+                <button disabled={!price || !!busy || !!pending || (active && card.interval !== 'hour')}
+                  aria-label={busy === card.id ? 'Processing…' : active && card.interval !== 'hour' ? 'Current plan' : card.interval === 'hour' && subscription?.billingInterval === 'hour' ? 'Add hours' : 'Upgrade'}
+                  onClick={() => void buy(card)} className={`billing-sparkle billing-upgrade-sparkle mt-auto inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-2.5 text-[13px] font-semibold shadow-[0_14px_36px_-28px_rgba(15,23,42,0.35)] transition-colors active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed ${accent.button}`}>
+                  {busy === card.id ? <><Loader2 size={16} className="animate-spin" />Processing…</> : active && card.interval !== 'hour' ? 'Current plan' : card.interval === 'hour' && subscription?.billingInterval === 'hour' ? 'Add hours' : 'Upgrade'}
+                </button>
+              </article>;
+            })}
+          </div>}
+        <section aria-label="Free trial" className="mx-auto flex max-w-[640px] flex-wrap items-center justify-between gap-3 rounded-[28px] border border-slate-200 bg-white p-4 shadow-[0_24px_80px_-58px_rgba(15,23,42,0.45)]">
+          <div><p className="text-sm font-semibold text-slate-500">Free Trial</p><h3 className="mt-1 text-xl font-semibold tracking-[-0.04em]">Free</h3><p className="mt-1 text-xs text-slate-500">12 minutes total Cluegent usage</p></div>
+          <ul className="grid gap-2 text-xs text-slate-800 sm:grid-cols-2">{['Try live answers', 'Try screenshot analysis', 'Real-time assistant', 'Upgrade to continue'].map(item => <li key={item} className="flex gap-2"><Check size={14} className="text-emerald-500" />{item}</li>)}</ul>
+        </section>
+        <p className="text-xs text-slate-500">Prices in {currency}. Prepaid plans do not automatically charge again. Your 12-minute free trial remains available before upgrading.</p>
+        {message && <p role="status" className="rounded-xl bg-blue-50 p-4 text-sm text-blue-800">{message}</p>}
+        {error && <div role="alert" className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}<button className="ml-3 underline" onClick={() => void fetchPrices()}>Reload prices</button></div>}
       </section>
     </div>
   );

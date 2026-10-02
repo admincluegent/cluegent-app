@@ -11,6 +11,7 @@ import {
 import { analytics } from '../lib/analytics/analytics.service';
 import { AboutSection } from './AboutSection';
 import { HelpSettings } from './settings/HelpSettings';
+import { AIResumeBuilder } from './settings/AIResumeBuilder';
 import { BillingSettings } from './settings/BillingSettings';
 import { RecentLocalMeetings } from './settings/RecentLocalMeetings';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -515,7 +516,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
     const [themeMode, setThemeMode] = useState<'system' | 'light' | 'dark'>('system');
     const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
     const [isAiLangDropdownOpen, setIsAiLangDropdownOpen] = useState(false);
-    const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'uptodate' | 'store' | 'error'>('idle');
+    const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'downloading' | 'available' | 'uptodate' | 'store' | 'error'>('idle');
     const themeDropdownRef = React.useRef<HTMLDivElement>(null);
     const aiLangDropdownRef = React.useRef<HTMLDivElement>(null);
 
@@ -1055,8 +1056,10 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                 setUpdateStatus('checking');
             }),
             window.electronAPI.onUpdateAvailable(() => {
+                setUpdateStatus('downloading');
+            }),
+            window.electronAPI.onUpdateDownloaded(() => {
                 setUpdateStatus('available');
-                // Don't close settings - let user see the button change to "Update Available"
             }),
             window.electronAPI.onUpdateNotAvailable(() => {
                 setUpdateStatus('uptodate');
@@ -1410,6 +1413,12 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                         <User size={16} /> Customize
                                     </button>
                                     <button
+                                        onClick={() => setActiveTab('resume-builder')}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${activeTab === 'resume-builder' ? 'bg-bg-item-active text-text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-bg-item-active/50'}`}
+                                    >
+                                        <FileText size={16} className="shrink-0" /> AI Resume Builder
+                                    </button>
+                                    <button
                                         onClick={() => setActiveTab('recent-meetings')}
                                         className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${activeTab === 'recent-meetings' ? 'bg-bg-item-active text-text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-bg-item-active/50'}`}
                                     >
@@ -1474,7 +1483,8 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                         </div>
 
                         {/* Content */}
-                        <div className="flex-1 bg-bg-main overflow-y-auto p-9">
+                        <div className={`min-w-0 flex-1 bg-bg-main overflow-y-auto ${activeTab === 'billing' ? 'p-0' : 'p-9'}`}>
+                            <div hidden={activeTab !== 'resume-builder'}><AIResumeBuilder active={activeTab === 'resume-builder' && isOpen} onSubscribe={() => setActiveTab('billing')} /></div>
                             {activeTab === 'account' && (
                                 <div className="space-y-6 animated fadeIn">
                                     <div>
@@ -1833,11 +1843,15 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                     </div>
                                                     <button
                                                         onClick={async () => {
+                                                            if (updateStatus === 'store') {
+                                                                await window.electronAPI.openExternal('ms-windows-store://downloadsandupdates');
+                                                                return;
+                                                            }
                                                             if (updateStatus === 'available') {
                                                                 try {
-                                                                    // @ts-ignore
-                                                                    await window.electronAPI.downloadUpdate();
-                                                                    onClose(); // Close settings to show the banner
+                                                                    const result = await window.electronAPI.restartAndInstall();
+                                                                    if (!result.success) throw new Error(result.error);
+                                                                    onClose();
                                                                 } catch (err) {
                                                                     console.error("Failed to start download:", err);
                                                                 }
@@ -1845,7 +1859,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                                 handleCheckForUpdates();
                                                             }
                                                         }}
-                                                        disabled={updateStatus === 'checking'}
+                                                disabled={updateStatus === 'checking' || updateStatus === 'downloading'}
                                                         className={`px-5 py-2 rounded-lg text-[13px] font-bold transition-all flex items-center gap-2 shrink-0 ${updateStatus === 'checking' ? 'bg-bg-input text-text-tertiary cursor-wait' :
                                                             updateStatus === 'available' ? 'bg-accent-primary text-white hover:bg-accent-secondary shadow-lg shadow-blue-500/20' :
                                                                 updateStatus === 'uptodate' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
@@ -1854,15 +1868,15 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                                             'bg-bg-component hover:bg-bg-input text-text-primary'
                                                             }`}
                                                     >
-                                                        {updateStatus === 'checking' ? (
+                                                        {updateStatus === 'checking' || updateStatus === 'downloading' ? (
                                                             <>
                                                                 <RefreshCw size={14} className="animate-spin" />
-                                                                Checking...
+                                                                {updateStatus === 'downloading' ? 'Downloading update…' : 'Checking…'}
                                                             </>
                                                         ) : updateStatus === 'available' ? (
                                                             <>
                                                                 <ArrowDown size={14} />
-                                                                Update Available
+                                                                Restart to update
                                                             </>
                                                         ) : updateStatus === 'uptodate' ? (
                                                             <>

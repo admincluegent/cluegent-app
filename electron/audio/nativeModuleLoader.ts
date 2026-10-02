@@ -6,6 +6,7 @@ export interface AudioDeviceInfo {
 }
 
 export interface NativeModule {
+  updateFromStore?: (windowHandle: Buffer, install: boolean) => Promise<'current' | 'ready' | 'installed' | 'store-required'>;
   getHardwareId(): string;
   verifyGumroadKey(licenseKey: string): Promise<string>;
   // Dodo Payments — all three require a binary rebuild (cargo build --release)

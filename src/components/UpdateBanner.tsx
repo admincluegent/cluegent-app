@@ -1,131 +1,59 @@
 import React, { useEffect, useState } from 'react';
-import UpdateModal from './UpdateModal';
 
+// Downloads are quiet: only a completed update needs user attention.
 const UpdateBanner: React.FC = () => {
-    const [updateInfo, setUpdateInfo] = useState<any>(null);
-    const [parsedNotes, setParsedNotes] = useState<any>(null);
-    const [isVisible, setIsVisible] = useState(false);
-    const [downloadProgress, setDownloadProgress] = useState(0);
-    const [status, setStatus] = useState<'idle' | 'downloading' | 'ready' | 'error' | 'instructions'>('idle');
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const [instructionsArch, setInstructionsArch] = useState<'arm64' | 'intel' | null>(null);
+    const [ready, setReady] = useState(false);
+    const [storeRequired, setStoreRequired] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        // Listen for update available
-        const unsubAvailable = window.electronAPI.onUpdateAvailable((info: any) => {
-            console.log('[UpdateBanner] Update available:', info);
-            setUpdateInfo(info);
-            setErrorMessage(null);
-            setStatus('idle'); // Reset from any prior error/state before showing update info
-            // If parsed notes are included in the info object (from our backend change)
-            if (info.parsedNotes) {
-                setParsedNotes(info.parsedNotes);
-            }
-            setIsVisible(true);
+        let mounted = true;
+        let eventReceived = false;
+        const downloaded = window.electronAPI.onUpdateDownloaded(() => {
+            eventReceived = true;
+            setReady(true);
+            setStoreRequired(false);
+            setError(null);
         });
-
-        // Listen for download progress
-        const unsubProgress = window.electronAPI.onDownloadProgress((progressObj) => {
-            // Ensure modal is visible if download starts
-            setIsVisible(true);
-            setStatus('downloading');
-            setDownloadProgress(progressObj.percent);
+        const managed = window.electronAPI.onUpdateManagedByStore(() => {
+            eventReceived = true;
+            setStoreRequired(true);
+            setReady(false);
         });
-
-        // Listen for update-downloaded event
-        const unsubDownloaded = window.electronAPI.onUpdateDownloaded((info) => {
-            console.log('[UpdateBanner] Update downloaded:', info);
-            setUpdateInfo(info); // Update info again just in case
-            if (info.parsedNotes) setParsedNotes(info.parsedNotes);
-
-            setStatus('ready');
-            setIsVisible(true);
-        });
-
-        // Listen for update errors
-        const unsubError = window.electronAPI.onUpdateError((err: string) => {
-            console.error('[UpdateBanner] Update error:', err);
-            setStatus('error');
-            setErrorMessage(err);
-        });
-
-        return () => {
-            unsubAvailable();
-            unsubProgress();
-            unsubDownloaded();
-            unsubError();
-        };
+        // Recover state if a window mounts after the download completed.
+        void window.electronAPI.getUpdateState().then(state => {
+            if (!mounted || eventReceived) return;
+            setReady(state.status === 'ready');
+            setStoreRequired(state.status === 'store');
+        }).catch(console.error);
+        return () => { mounted = false; downloaded(); managed(); };
     }, []);
 
-    // Demo/Test mode: Press Cmd+I to trigger backend test-fetch or Cmd+J for UI mock
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (!import.meta.env.DEV) return;
-            
-            if (e.metaKey && !e.shiftKey && e.key.toLowerCase() === 'i') {
-                e.preventDefault();
-                console.log("[UpdateBanner] Cmd+I pressed: Triggering Test Release Fetch...");
-                window.electronAPI.testReleaseFetch().catch(console.error);
-            }
-            
-            if (e.metaKey && !e.shiftKey && e.key.toLowerCase() === 'j') {
-                e.preventDefault();
-                console.log("[UpdateBanner] Cmd+J pressed: Triggering Instruction UI mock...");
-                setUpdateInfo({ version: '2.0.8' });
-                setParsedNotes({ summary: 'Test Update', fullBody: 'Testing', sections: [{ title: 'Notes', items: ['UI Test'] }] });
-                setStatus('idle');
-                setIsVisible(true);
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
-
-    const handleInstall = async () => {
-        if (window.electronAPI.platform === 'darwin') {
-            try {
-                const arch = await window.electronAPI.getArch();
-                const isArm = arch === 'arm64';
-                const macArch = isArm ? 'arm64' : 'intel';
-                setInstructionsArch(macArch);
-                const version = updateInfo?.version ? updateInfo.version.replace(/^v/, '') : '1.0.0';
-                const fileName = isArm
-                    ? `Cluegent-${version}-arm64-mac.zip`
-                    : `Cluegent-${version}-mac.zip`;
-                const url = `https://github.com/admincluegent/cluegent-app/releases/download/v${version}/${fileName}`;
-                await window.electronAPI.openExternal(url);
-                setStatus('instructions');
-            } catch (err) {
-                console.error("Failed to open macOS update download", err);
-                setStatus('error');
-                setErrorMessage('Could not open the macOS update download.');
-            }
-        } else {
-            setStatus('downloading');
-            // Trigger download via IPC
-            window.electronAPI.downloadUpdate();
-        }
+    const restart = async () => {
+        if (busy) return;
+        setBusy(true);
+        setError(null);
+        try {
+            const result = await window.electronAPI.restartAndInstall();
+            if (!result.success) throw new Error(result.error || 'Could not install the update.');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Could not install the update.');
+        } finally { setBusy(false); }
     };
 
-    const handleDismiss = () => {
-        setIsVisible(false);
-        setStatus('idle'); // Reset error/downloading state so next event starts clean
-    };
-
-    if (!isVisible) return null;
-
+    if (!ready && !storeRequired) return null;
     return (
-        <UpdateModal
-            isOpen={isVisible}
-            updateInfo={updateInfo}
-            parsedNotes={parsedNotes}
-            onDismiss={handleDismiss}
-            onInstall={handleInstall}
-            downloadProgress={downloadProgress}
-            status={status}
-            errorMessage={errorMessage}
-            instructionsArch={instructionsArch}
-        />
+        <aside role="status" aria-live="polite"
+            className="fixed bottom-4 right-4 z-[9999] max-w-sm rounded-xl border border-white/15 bg-[#17191f] p-4 text-white shadow-xl"
+            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+            <p className="text-sm mb-3">{ready ? 'A Cluegent update is ready. Restart when you’ve finished your session.' : 'Updates are managed by Microsoft Store. Open Store to finish updating.'}</p>
+            {error && <p role="alert" className="text-sm text-red-300 mb-3">{error}</p>}
+            <button disabled={busy} onClick={ready ? restart : () => void window.electronAPI.openExternal('ms-windows-store://downloadsandupdates')}
+                className="rounded-lg bg-blue-500 hover:bg-blue-600 disabled:opacity-50 px-4 py-2 text-sm font-medium">
+                {busy ? 'Installing…' : ready ? 'Restart to update' : 'Open Microsoft Store'}
+            </button>
+        </aside>
     );
 };
 

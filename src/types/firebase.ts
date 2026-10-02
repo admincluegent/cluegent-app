@@ -1,4 +1,5 @@
-export type UserPlan = "free" | "livetest" | "plus" | "pro" | "power";
+export type NewPaidPlan = "hour3" | "hour10" | "monthly200" | "quarterly200" | "annual200";
+export type UserPlan = "free" | "livetest" | "plus" | "pro" | "power" | NewPaidPlan;
 export type SubscriptionStatus =
   | "active"
   | "inactive"
@@ -7,7 +8,7 @@ export type SubscriptionStatus =
   | "on_hold"
   | "failed"
   | "expired";
-export type BillingInterval = "month" | "year";
+export type BillingInterval = "hour" | "month" | "quarter" | "year";
 export type BillingProvider = "razorpay";
 export type BillingProviderMode = "test" | "live";
 
@@ -27,6 +28,10 @@ export interface FirestoreUserProfile {
 }
 
 export interface UserSubscription {
+  orderId?: string | null;
+  prepaidSecondsGranted?: number;
+  planSttSecondsUsed?: number;
+  usageWindowStart?: string | null;
   plan: UserPlan;
   status: SubscriptionStatus;
   promptLimit: number;

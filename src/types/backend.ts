@@ -52,7 +52,7 @@ export type BillingCurrency = "INR" | "USD";
 
 export interface LiveBillingPlanPrice {
   providerMode: "live";
-  planId: Extract<UserPlan, "plus" | "pro" | "power">;
+  planId: Exclude<UserPlan, "free">;
   interval: BillingInterval;
   currency: BillingCurrency;
   amountSubunits: number;

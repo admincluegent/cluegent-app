@@ -28,6 +28,7 @@ import {
   isCreateDeepgramTokenData,
   isTrackSttUsageData,
   processAssistantReplyStreamController,
+  generateResumeController,
   trackSttUsageForAuthenticatedUser,
   trackSttUsageController,
 } from "./controllers/assistantController.js";
@@ -417,3 +418,8 @@ function isHttpsError(error: unknown): error is HttpsError {
     typeof error.code === "string"
   );
 }
+
+export const generateResumeAsia = onCall(
+  { region: 'asia-south1', cors: true, timeoutSeconds: 120, memory: '512MiB', maxInstances: 10, secrets: [openAiApiKey] },
+  request => generateResumeController(request, openAiApiKey.value())
+);

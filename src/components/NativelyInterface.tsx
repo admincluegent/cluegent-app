@@ -208,6 +208,10 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     const streamingResponseTextRef = useRef('');
     const localMeetingIdRef = useRef<string | null>(getCurrentLocalMeetingId());
     const isPaidListeningExhausted = !!planStatus && planStatus.plan !== 'free' && (planStatus.remaining.sttSeconds ?? 0) <= 0;
+    const isHourlyPlan = planStatus?.plan === 'hour3' || planStatus?.plan === 'hour10';
+    useEffect(() => {
+        if (isPaidListeningExhausted) setIsExpanded(true);
+    }, [isPaidListeningExhausted]);
     const formatDuration = (seconds: number) => (
         `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`
     );
@@ -3589,17 +3593,19 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                     <div className="flex items-center justify-between gap-3">
                                         <div>
                                             <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-amber-200">
-                                                Listening Limit Reached
+                                                {isHourlyPlan ? 'Hours exhausted' : 'Listening Limit Reached'}
                                             </p>
                                             <p className="mt-1 text-[12px] leading-5 text-white/85">
-                                                You have reached your plan limit. Limits will reset every month. You can still use AI requests and screenshot analyses.
+                                                {isHourlyPlan
+                                                    ? 'Your listening hours are used up. Buy another hourly pack or switch to a monthly plan to continue listening.'
+                                                    : 'Your monthly listening allowance is used up. Open Billing to view your plan or upgrade.'}
                                             </p>
                                         </div>
                                         <button
                                             onClick={() => void window.electronAPI?.openSettingsTab?.('billing')}
                                             className="inline-flex shrink-0 items-center gap-2 rounded-full bg-amber-300 px-4 py-2 text-[12px] font-semibold text-black transition hover:bg-amber-200"
                                         >
-                                            View Plan
+                                            {isHourlyPlan ? 'Buy hours or upgrade' : 'View Plan'}
                                         </button>
                                     </div>
                                 </div>

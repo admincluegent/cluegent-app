@@ -1,4 +1,5 @@
 import { mkdirSync, writeFileSync } from "node:fs";
+import { websitePricingSection } from "./website-pricing.mjs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { growthPosts } from "./seo-growth-posts.mjs";
@@ -5543,118 +5544,7 @@ ${head({ title, description, canonical, image, schema })}
 `;
 }
 
-function homepagePricingSection(buttonHref = "/download/") {
-  return `
-      <section class="section pricing-section" id="pricing" aria-labelledby="pricing-title">
-        <div class="section-heading reveal">
-          <p class="section-kicker">Pricing</p>
-          <h2 id="pricing-title">Choose the Cluegent plan that fits your live workflow</h2>
-          <p>Start free, then upgrade when you need more listening time, AI requests, and screenshot analyses.</p>
-        </div>
-
-        <div class="pricing-toolbar reveal">
-          <div class="pricing-currency-toggle" role="group" aria-label="Choose pricing currency" data-pricing-currency-toggle>
-            <button type="button" aria-pressed="true" data-pricing-currency="INR">
-              <span class="pricing-currency-flag pricing-currency-flag--inr" aria-hidden="true"><span></span></span>
-              <span>INR</span>
-            </button>
-            <button type="button" aria-pressed="false" data-pricing-currency="USD">
-              <span class="pricing-currency-flag pricing-currency-flag--usd" aria-hidden="true"><span></span></span>
-              <span>USD</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="pricing-grid reveal">
-          <article class="pricing-card pricing-card--trial">
-            <div class="pricing-card-head">
-              <h3>Free trial</h3>
-              <p class="pricing-price"><span data-pricing-price data-price-inr="₹0" data-price-usd="$0">₹0</span></p>
-              <p class="pricing-note">Try Cluegent before upgrading.</p>
-            </div>
-            <ul>
-              <li>Private desktop overlay</li>
-              <li>Real-time assistant</li>
-              <li>Try listening and typed prompts</li>
-              <li>Screenshot-aware workflow preview</li>
-              <li>Coding + meeting support</li>
-            </ul>
-            <a class="pricing-button" href="${buttonHref}">Start free</a>
-          </article>
-
-          <article class="pricing-card pricing-card--plus">
-            <div class="pricing-card-head">
-              <div class="pricing-title-row">
-                <h3>Plus</h3>
-                <span class="pricing-badge">Starter</span>
-              </div>
-              <p class="pricing-offer" aria-label="50 percent offer, original price 1,998 rupees" data-aria-inr="50 percent offer, original price 1,998 rupees" data-aria-usd="50 percent offer, original price 24 US dollars">
-                <span class="pricing-original" data-pricing-original data-original-inr="₹1,998" data-original-usd="$24">₹1,998</span>
-                <span class="pricing-offer-badge">50% off</span>
-              </p>
-              <p class="pricing-price"><span data-pricing-price data-price-inr="₹999" data-price-usd="$12">₹999</span><small>/month</small></p>
-              <p class="pricing-note">Planned starter upgrade for focused live conversations.</p>
-            </div>
-            <ul>
-              <li>Private desktop overlay for permitted workflows</li>
-              <li>10 hours listening</li>
-              <li>1,000 AI requests</li>
-              <li>1,000 screenshot analyses</li>
-              <li>Real-time assistant</li>
-              <li>Coding + meeting support</li>
-            </ul>
-            <a class="pricing-button" href="${buttonHref}">Upgrade</a>
-          </article>
-
-          <article class="pricing-card pricing-card--pro">
-            <div class="pricing-card-head">
-              <div class="pricing-title-row">
-                <h3>Pro</h3>
-                <span class="pricing-badge">Most Popular</span>
-              </div>
-              <p class="pricing-offer" aria-label="50 percent offer, original price 4,998 rupees" data-aria-inr="50 percent offer, original price 4,998 rupees" data-aria-usd="50 percent offer, original price 58 US dollars">
-                <span class="pricing-original" data-pricing-original data-original-inr="₹4,998" data-original-usd="$58">₹4,998</span>
-                <span class="pricing-offer-badge">50% off</span>
-              </p>
-              <p class="pricing-price"><span data-pricing-price data-price-inr="₹2,499" data-price-usd="$29">₹2,499</span><small>/month</small></p>
-              <p class="pricing-note">For active users handling frequent meetings and calls.</p>
-            </div>
-            <ul>
-              <li>Private desktop overlay for permitted workflows</li>
-              <li>Unlimited listening</li>
-              <li>Unlimited AI requests</li>
-              <li>Unlimited screenshot analyses</li>
-              <li>Real-time assistant</li>
-              <li>Coding + meeting support</li>
-            </ul>
-            <a class="pricing-button" href="${buttonHref}">Upgrade</a>
-          </article>
-
-          <article class="pricing-card pricing-card--power">
-            <div class="pricing-card-head">
-              <h3>Power</h3>
-              <p class="pricing-offer" aria-label="50 percent offer, original price 12,998 rupees" data-aria-inr="50 percent offer, original price 12,998 rupees" data-aria-usd="50 percent offer, original price 138 US dollars">
-                <span class="pricing-original" data-pricing-original data-original-inr="₹12,998" data-original-usd="$138">₹12,998</span>
-                <span class="pricing-offer-badge">50% off</span>
-              </p>
-              <p class="pricing-price"><span data-pricing-price data-price-inr="₹6,499" data-price-usd="$69">₹6,499</span><small>/month</small></p>
-              <p class="pricing-note">For heavy usage, coding rounds, and high-frequency calls.</p>
-            </div>
-            <ul>
-              <li>Private desktop overlay for permitted workflows</li>
-              <li>Unlimited listening</li>
-              <li>Unlimited AI requests</li>
-              <li>Unlimited screenshot analyses</li>
-              <li>Real-time assistant</li>
-              <li>Coding + meeting support</li>
-              <li>Faster responses</li>
-              <li>Priority processing</li>
-            </ul>
-            <a class="pricing-button" href="${buttonHref}">Upgrade</a>
-          </article>
-        </div>
-      </section>`;
-}
+function homepagePricingSection(buttonHref = "/download/") { return websitePricingSection(buttonHref); }
 
 function landingTemplate(page) {
   const canonical = `/${page.slug}/`;

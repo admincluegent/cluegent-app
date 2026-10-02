@@ -96,13 +96,13 @@ export async function createRazorpayLiveSubscription(
 }
 
 export async function createRazorpayLiveOrder(
-  planId: Extract<UserPlan, "plus" | "pro" | "power">,
+  planId: Exclude<UserPlan, "free">,
   interval: BillingInterval,
   currency: "INR" | "USD" = "INR"
 ) {
   const callable = httpsCallable<
     {
-      planId: Extract<UserPlan, "plus" | "pro" | "power">;
+      planId: Exclude<UserPlan, "free">;
       interval: BillingInterval;
       currency: "INR" | "USD";
     },

@@ -12,6 +12,7 @@ import { AudioDevices } from "./audio/AudioDevices";
 import { startFirebaseGoogleSignIn } from "./services/FirebaseAuthManager";
 import { FirebaseSessionManager } from "./services/FirebaseSessionManager";
 import { LocalProfileManager } from "./services/LocalProfileManager";
+import { importResumeDocument, exportResumePdf } from "./services/ResumeBuilder";
 
 
 import { RECOGNITION_LANGUAGES, AI_RESPONSE_LANGUAGES } from "./config/languages"
@@ -21,6 +22,9 @@ export function initializeIpcHandlers(appState: AppState): void {
     ipcMain.removeHandler(channel);
     ipcMain.handle(channel, listener);
   };
+
+  safeHandle('resume-builder:import', () => importResumeDocument());
+  safeHandle('resume-builder:export', (_, input) => exportResumePdf(input));
 
   safeHandle('session:select-reference', () => LocalProfileManager.getInstance().selectSessionReference());
 
@@ -555,6 +559,8 @@ export function initializeIpcHandlers(appState: AppState): void {
   safeHandle("quit-app", () => {
     app.quit()
   })
+
+  safeHandle("get-update-state", () => appState.getUpdateState())
 
   safeHandle("quit-and-install-update", async () => {
     try {

@@ -145,7 +145,7 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [showNotification, setShowNotification] = useState(false);
     const [showProfileCard, setShowProfileCard] = useState(false);
-    const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'uptodate' | 'store' | 'error'>('idle');
+    const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'downloading' | 'available' | 'uptodate' | 'store' | 'error'>('idle');
     const [isStartingCluegent, setIsStartingCluegent] = useState(false);
     const [startupProgress, setStartupProgress] = useState(0);
 
@@ -307,6 +307,9 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                 setUpdateStatus('checking');
             }),
             window.electronAPI?.onUpdateAvailable?.(() => {
+                setUpdateStatus('downloading');
+            }),
+            window.electronAPI?.onUpdateDownloaded?.(() => {
                 setUpdateStatus('available');
             }),
             window.electronAPI?.onUpdateNotAvailable?.(() => {
@@ -493,12 +496,16 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
     };
 
     const handleLauncherUpdateAction = async () => {
+        if (updateStatus === 'store') {
+            await window.electronAPI.openExternal('ms-windows-store://downloadsandupdates');
+            return;
+        }
         if (updateStatus === 'available') {
             onOpenSettings('general');
             return;
         }
 
-        if (updateStatus === 'checking') {
+        if (updateStatus === 'checking' || updateStatus === 'downloading') {
             return;
         }
 
@@ -707,7 +714,7 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
 
                                             <button
                                                 onClick={handleLauncherUpdateAction}
-                                                disabled={updateStatus === 'checking'}
+                                                disabled={updateStatus === 'checking' || updateStatus === 'downloading'}
                                                 className={`inline-flex min-w-[210px] items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
                                                     updateStatus === 'checking'
                                                         ? 'cursor-wait border-border-subtle bg-bg-item-surface text-text-secondary'
@@ -722,15 +729,15 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
                                                                     : 'border-border-subtle bg-bg-elevated text-text-primary hover:bg-bg-item-active'
                                                 }`}
                                             >
-                                                {updateStatus === 'checking' ? (
+                                                {updateStatus === 'checking' || updateStatus === 'downloading' ? (
                                                     <>
                                                         <RefreshCw size={14} className="animate-spin" />
-                                                        Checking for updates
+                                                        {updateStatus === 'downloading' ? 'Downloading update…' : 'Checking for updates'}
                                                     </>
                                                 ) : updateStatus === 'available' ? (
                                                     <>
                                                         <Download size={14} />
-                                                        Update available
+                                                        Restart to update
                                                     </>
                                                 ) : updateStatus === 'uptodate' ? (
                                                     <>

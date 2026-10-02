@@ -1,4 +1,7 @@
 export interface ElectronAPI {
+  resumeBuilderImport: () => Promise<{ success: boolean; cancelled?: boolean; error?: string; document?: { name: string; content: string } }>;
+  resumeBuilderExport: (input: { resume: import('../../shared/resume').ResumeData; template: import('../../shared/resume').ResumeTemplate; color: string }) => Promise<{ success: boolean; cancelled?: boolean; error?: string; path?: string }>;
+
   updateContentDimensions: (dimensions: {
     width: number
     height: number
@@ -254,7 +257,8 @@ export interface ElectronAPI {
   onUpdateManagedByStore: (callback: (info: any) => void) => () => void
   onUpdateError: (callback: (err: string) => void) => () => void
   onDownloadProgress: (callback: (progressObj: any) => void) => () => void
-  restartAndInstall: () => Promise<void>
+  getUpdateState: () => Promise<{ status: string; info?: any; error?: string }>
+  restartAndInstall: () => Promise<{ success: boolean; error?: string }>
   checkForUpdates: () => Promise<void>
   downloadUpdate: () => Promise<void>
   testReleaseFetch: () => Promise<{ success: boolean; error?: string }>

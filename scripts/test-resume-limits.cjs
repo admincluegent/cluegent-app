@@ -1,0 +1,56 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const os = require('node:os');
+const { build, buildSync } = require('esbuild');
+const root = path.resolve(__dirname, '..');
+const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'cluegent-resume-limits-'));
+(async () => {
+  buildSync({ entryPoints: [path.join(root, 'functions/src/utils/resumeAccess.ts')], outfile: path.join(temp, 'policy.cjs'), platform: 'node', format: 'cjs' });
+  const { getResumeAccess, getResumePurchaseAllocation } = require(path.join(temp, 'policy.cjs'));
+  const active = { plan: 'hour3', status: 'active' };
+  assert.equal(getResumeAccess({ ...active, resumeGenerationsUsed: 29 }, 1).remaining, 1);
+  assert.equal(getResumeAccess({ ...active, resumeGenerationsUsed: 30 }, 1).allowed, false);
+  assert.equal(getResumeAccess({ ...active, plan: 'hour10', resumeGenerationsUsed: 74 }, 1).remaining, 1);
+  assert.equal(getResumeAccess({ ...active, plan: 'hour10', resumeGenerationsUsed: 75 }, 1).allowed, false);
+  for (const plan of ['monthly200', 'quarterly200', 'annual200']) assert.deepEqual([getResumeAccess({ ...active, plan, resumeGenerationsUsed: 100000 }, 1).allowed, getResumeAccess({ ...active, plan }, 1).limit], [true, null]);
+  for (const status of ['inactive', 'expired', 'canceled', 'pending', 'on_hold', 'failed']) assert.equal(getResumeAccess({ ...active, status }, 100).allowed, false);
+  assert.equal(getResumeAccess({ ...active, expiresAt: new Date(Date.now() - 1000).toISOString() }, 100).allowed, false);
+  assert.equal(getResumeAccess(active, 0).allowed, false);
+  assert.equal(getResumeAccess({ plan: 'free', status: 'active' }, 100).allowed, false);
+  assert.equal(getResumeAccess({ plan: 'free', status: 'active' }, 100).message, 'Subscribe to use AI Resume Builder. Resume generation is not available on the free trial.');
+  assert.deepEqual(getResumePurchaseAllocation('hour10', { plan: 'hour3', resumeGenerationsUsed: 20 }, true), { resumeGenerationsGranted: 105, resumeGenerationsUsed: 20 });
+  assert.deepEqual(getResumePurchaseAllocation('hour3', { plan: 'hour10', resumeGenerationsGranted: 75, resumeGenerationsUsed: 70 }, false), { resumeGenerationsGranted: 30, resumeGenerationsUsed: 0 });
+  assert.deepEqual(getResumePurchaseAllocation('annual200', {}, false), { resumeGenerationsGranted: null, resumeGenerationsUsed: 0 });
+
+  const docs = new Map(); let tail = Promise.resolve();
+  global.__resumeTestDb = { doc: key => ({ key }), runTransaction: fn => {
+    const run = tail.then(() => fn({ get: async ref => ({ data: () => docs.get(ref.key) }), set: (ref, data) => docs.set(ref.key, { ...(docs.get(ref.key) || {}), ...data }) }));
+    tail = run.catch(() => {}); return run;
+  } };
+  await build({ entryPoints: [path.join(root, 'functions/src/utils/resumeUsage.ts')], outfile: path.join(temp, 'usage.cjs'), bundle: true, platform: 'node', format: 'cjs', plugins: [{ name: 'test-firestore', setup(b) {
+    b.onResolve({ filter: /\/auth\.js$/ }, () => ({ path: 'auth', namespace: 'mock' }));
+    b.onResolve({ filter: /\/usageController\.js$/ }, () => ({ path: 'ensure', namespace: 'mock' }));
+    b.onResolve({ filter: /^firebase-admin\/firestore$/ }, () => ({ path: 'firestore', namespace: 'mock' }));
+    b.onResolve({ filter: /^firebase-functions\/v2\/https$/ }, () => ({ path: 'https', namespace: 'mock' }));
+    b.onLoad({ filter: /.*/, namespace: 'mock' }, ({ path: name }) => ({ loader: 'js', contents: ({ auth: 'export const db=global.__resumeTestDb;', ensure: 'export async function ensureUsageDocuments(){}', firestore: 'export const FieldValue={serverTimestamp:()=>0}; export class Timestamp {}', https: 'export class HttpsError extends Error { constructor(code,message){super(message);this.code=code;} }' })[name] }));
+  } }] });
+  const { prepareResumeUsage, refundResumeUsage } = require(path.join(temp, 'usage.cjs'));
+  const key = 'users/test/subscriptions/current';
+  const startedAt = new Date().toISOString();
+  const subscription = { ...active, startedAt, usageWindowStart: startedAt, planSttSecondsUsed: 0, billingInterval: 'hour', resumeGenerationsUsed: 29 };
+  docs.set(key, subscription);
+  const concurrent = await Promise.allSettled([prepareResumeUsage({ uid: 'test' }, true), prepareResumeUsage({ uid: 'test' }, true)]);
+  assert.equal(concurrent.filter(r => r.status === 'fulfilled').length, 1);
+  assert.equal(docs.get(key).resumeGenerationsUsed, 30);
+  assert.equal((await prepareResumeUsage({ uid: 'test' }, false)).access.allowed, false);
+  assert.equal(docs.get(key).resumeGenerationsUsed, 30);
+  await refundResumeUsage('test', startedAt);
+  assert.equal(docs.get(key).resumeGenerationsUsed, 29);
+  docs.set(key, { ...subscription, startedAt: 'new-purchase', resumeGenerationsUsed: 8 });
+  await refundResumeUsage('test', startedAt);
+  assert.equal(docs.get(key).resumeGenerationsUsed, 8);
+  docs.set(key, { ...subscription, planSttSecondsUsed: 10800 });
+  await assert.rejects(() => prepareResumeUsage({ uid: 'test' }, true), /used up/);
+  console.log('PASS: 30/75 caps, unlimited subscription plans, expiry/exhaustion gates, top-up allocation, concurrent last-credit reservation, read-only status, and safe failure refunds.');
+})().catch(e => { console.error(e); process.exitCode = 1; });

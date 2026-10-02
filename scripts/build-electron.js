@@ -36,6 +36,9 @@ if (fs.existsSync(premiumDir)) {
   entryPoints.push(...findTs(premiumDir).map(f => path.relative(rootDir, f)));
 }
 
+const sharedDir = path.resolve(rootDir, 'shared');
+if (fs.existsSync(sharedDir)) entryPoints.push(...findTs(sharedDir).map(f => path.relative(rootDir, f)));
+
 const start = Date.now();
 
 build({

@@ -1,7 +1,8 @@
+import { getResumePurchaseAllocation } from '../utils/resumeAccess.js';
 import { FieldValue } from "firebase-admin/firestore";
 import { type Request, type Response } from "express";
 import { type CallableRequest, HttpsError } from "firebase-functions/v2/https";
-import { DEFAULT_PLAN_ID, PLAN_CONFIGS, type PlanId } from "../config/plans.js";
+import { DEFAULT_PLAN_ID, PLAN_CONFIGS, NEW_PAID_PLANS, isNewPaidPlan, type PlanId } from "../config/plans.js";
 import {
   cancelRazorpayTestSubscription,
   createRazorpayOrder,
@@ -29,6 +30,9 @@ import {
   materializeSubscription,
   materializeUsage,
   type BillingInterval,
+  addBillingMonths,
+  getListeningWindowStart,
+  getPlanPeriodUsage,
 } from "../utils/usage.js";
 import { ensureUsageDocuments } from "./usageController.js";
 
@@ -55,7 +59,7 @@ interface VerifyRazorpayLiveOrderPaymentData {
 
 interface LiveBillingPlanPrice {
   providerMode: "live";
-  planId: Extract<PaidPlanId, "plus" | "pro" | "power">;
+  planId: PaidPlanId;
   interval: BillingInterval;
   currency: RazorpayCurrency;
   amountSubunits: number;
@@ -118,7 +122,7 @@ const LIVE_YEAR_DURATION_MS = 365 * 24 * 60 * 60 * 1000;
 const DEFAULT_LIVE_ORDER_CURRENCY: RazorpayCurrency = "INR";
 const LIVE_ORDER_PRICES_SUBUNITS: Record<
   RazorpayCurrency,
-  Record<PaidPlanId, Partial<Record<BillingInterval, number>>>
+  Partial<Record<PaidPlanId, Partial<Record<BillingInterval, number>>>>
 > = {
   INR: {
     livetest: {
@@ -428,17 +432,10 @@ export async function createRazorpayLiveOrderController(
   const interval = request.data?.interval;
   const currency = request.data?.currency ?? DEFAULT_LIVE_ORDER_CURRENCY;
 
-  if (!isSupportedPaidPlan(planId as PaidPlanId, interval as BillingInterval)) {
+  if (!isNewPaidPlan(planId) || NEW_PAID_PLANS[planId].interval !== interval) {
     throw new HttpsError(
       "invalid-argument",
-      "Choose a valid Plus, Pro, or Power monthly/yearly plan."
-    );
-  }
-
-  if (planId === LIVE_TEST_PLAN_ID) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Live Test checkout is no longer available."
+      "Choose a valid hourly, monthly, three-month, or yearly plan."
     );
   }
 
@@ -1608,13 +1605,15 @@ async function applyRazorpayOrderEntitlement(input: {
   const orderRef = db.collection(LIVE_ORDERS_COLLECTION).doc(input.orderId);
   const customerRef = db.collection(LIVE_CUSTOMERS_COLLECTION).doc(input.uid);
   const startedAt = new Date();
-  const expiresAt = new Date(startedAt.getTime() + pricing.durationMs);
+  const newPlan = isNewPaidPlan(input.mappedPlan.planId) ? NEW_PAID_PLANS[input.mappedPlan.planId] : null;
+  const expiresAt = newPlan ? (newPlan.months ? addBillingMonths(startedAt, newPlan.months) : null) : new Date(startedAt.getTime() + pricing.durationMs);
   const currentMonthKey = refs.usagePath.split("/").pop();
 
   await db.runTransaction(async (transaction) => {
-    const [usageSnap, currentOrderSnap] = await Promise.all([
+    const [usageSnap, currentOrderSnap, subscriptionSnap] = await Promise.all([
       transaction.get(usageRef),
       transaction.get(orderRef),
+      transaction.get(userSubscriptionRef),
     ]);
     const currentOrder = currentOrderSnap.data();
     if (currentOrder?.status === "paid") {
@@ -1634,6 +1633,11 @@ async function applyRazorpayOrderEntitlement(input: {
         currentMonthKey
       )
     );
+    const previous = materializeSubscription(subscriptionSnap.data() as ReturnType<typeof materializeSubscription>);
+    const isHourlyTopup = newPlan?.interval === 'hour' && previous.billingInterval === 'hour' && previous.status === 'active' && isNewPaidPlan(previous.plan);
+    const previousUsed = isHourlyTopup ? getPlanPeriodUsage(previous, materializeUsage()).sttSecondsUsed : 0;
+    const grantedSeconds = (isHourlyTopup ? previous.sttSecondsLimit : 0) + planConfig.sttSecondsLimit;
+    const effectiveStartedAt = isHourlyTopup ? previous.startedAt! : startedAt.toISOString();
 
     transaction.set(
       customerRef,
@@ -1678,7 +1682,7 @@ async function applyRazorpayOrderEntitlement(input: {
         status: "active",
         promptLimit: planConfig.promptLimit,
         screenshotLimit: planConfig.screenshotLimit,
-        sttSecondsLimit: planConfig.sttSecondsLimit,
+        sttSecondsLimit: newPlan?.interval === 'hour' ? grantedSeconds : planConfig.sttSecondsLimit,
         provider: "razorpay",
         providerMode: "live",
         billingInterval: input.mappedPlan.interval,
@@ -1686,9 +1690,13 @@ async function applyRazorpayOrderEntitlement(input: {
         subscriptionId: null,
         orderId: input.orderId,
         paymentId: input.paymentId,
-        startedAt: startedAt.toISOString(),
+        startedAt: effectiveStartedAt,
         renewsAt: null,
-        expiresAt: expiresAt.toISOString(),
+        expiresAt: expiresAt?.toISOString() ?? null,
+        prepaidSecondsGranted: newPlan?.interval === 'hour' ? grantedSeconds : 0,
+        ...getResumePurchaseAllocation(planConfig.id, subscriptionSnap.data() || {}, isHourlyTopup),
+        planSttSecondsUsed: previousUsed,
+        usageWindowStart: effectiveStartedAt,
         cancelAtPeriodEnd: false,
         lastWebhookEventId: input.paymentId,
         isTestEntitlement: false,
@@ -1777,6 +1785,7 @@ function getRazorpayCollections(providerMode: RazorpayProviderMode) {
 }
 
 function isSupportedPaidPlan(planId: PaidPlanId, interval: BillingInterval) {
+  if (isNewPaidPlan(planId)) return NEW_PAID_PLANS[planId].interval === interval;
   return (
     (planId === "plus" && (interval === "month" || interval === "year")) ||
     (planId === "pro" && (interval === "month" || interval === "year")) ||
@@ -1808,6 +1817,10 @@ function getLiveOrderPricing(
   if (!currency || !isSupportedPaidPlan(planId, interval)) {
     return null;
   }
+  if (isNewPaidPlan(planId)) {
+    const plan = NEW_PAID_PLANS[planId];
+    return { amount: currency === 'USD' ? plan.usdAmount : plan.amount, currency, durationMs: 0, description: `Cluegent ${plan.label} — ${plan.hours} hours${plan.months ? ' per month' : ' total'}` };
+  }
 
   const amount = LIVE_ORDER_PRICES_SUBUNITS[currency][planId]?.[interval];
   if (!amount) {
@@ -1836,6 +1849,20 @@ function getLiveOrderPricing(
 }
 
 function buildLiveBillingPlanPrices(): LiveBillingPlanPrice[] {
+  return (['INR', 'USD'] as RazorpayCurrency[]).flatMap(currency =>
+    Object.entries(NEW_PAID_PLANS).map(([planId, plan]) => {
+      const amount = currency === 'USD' ? plan.usdAmount : plan.amount;
+      return {
+        providerMode: 'live', planId: planId as PaidPlanId, interval: plan.interval, currency,
+        amountSubunits: amount, displayPrice: formatCurrencySubunits(amount, currency, currency === 'USD' ? 2 : 0),
+        displayMonthlyPrice: formatCurrencyMajor(amount / 100 / Math.max(1, plan.months), currency, 2, 2),
+        description: `${plan.hours} hours${plan.months ? ' per month' : ' total'}`,
+      };
+    })
+  );
+}
+
+function buildLegacyBillingPlanPrices(): LiveBillingPlanPrice[] {
   const currencies: RazorpayCurrency[] = ["INR", "USD"];
   const planIds: Array<Extract<PaidPlanId, "plus" | "pro" | "power">> = [
     "plus",

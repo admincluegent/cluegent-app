@@ -1,38 +1,44 @@
 .session-setup-backdrop {
-    background: rgba(5, 7, 12, 0.32);
+    background: rgba(226, 232, 240, 0.58);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
 }
 
 .cluegent-session-setup {
-    color: rgba(255, 255, 255, 0.98);
-    color-scheme: dark;
+    color: #172033;
+    color-scheme: light;
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(148, 163, 184, 0.34);
+    border-radius: 24px;
+    box-shadow: 0 26px 70px rgba(51, 65, 85, 0.22), 0 2px 8px rgba(51, 65, 85, 0.08);
     animation: session-setup-enter 180ms ease-out;
 }
 
-.cluegent-session-setup .text-text-primary { color: rgba(255, 255, 255, 0.98); }
-.cluegent-session-setup .text-text-secondary { color: rgba(255, 255, 255, 0.76); }
-.cluegent-session-setup .text-text-tertiary { color: rgba(255, 255, 255, 0.56); }
-.cluegent-session-setup .border-border-subtle { border-color: var(--session-border); }
-.cluegent-session-setup .bg-bg-input { background-color: var(--session-input-bg); }
-.cluegent-session-setup .bg-bg-item-surface { background-color: var(--session-subtle-bg); }
+.cluegent-session-setup .text-text-primary { color: #172033; }
+.cluegent-session-setup .text-text-secondary { color: #596579; }
+.cluegent-session-setup .text-text-tertiary { color: #8791a2; }
+.cluegent-session-setup .border-border-subtle { border-color: #dce2ea; }
+.cluegent-session-setup .bg-bg-input { background-color: #f4f6f9; }
+.cluegent-session-setup .bg-bg-item-surface { background-color: #f7f8fa; }
+.cluegent-session-setup .session-setup-header { background: #f7f8fa; border-color: #e2e7ee; }
+.cluegent-session-setup .session-setup-chip { color: #475569; background: #fff; border-color: #dce2ea; }
 .cluegent-session-setup input::placeholder,
-.cluegent-session-setup textarea::placeholder { color: rgba(255, 255, 255, 0.45); }
-.cluegent-session-setup select option { background: #252a34; color: #fff; }
+.cluegent-session-setup textarea::placeholder { color: #929baa; }
+.cluegent-session-setup select option { background: #fff; color: #172033; }
 .cluegent-session-setup button:hover { filter: brightness(1.1); }
 .cluegent-session-setup button:disabled { filter: none; }
 .cluegent-session-setup button:focus-visible {
-    outline: 2px solid rgba(255, 255, 255, 0.65);
+    outline: 2px solid #3b82f6;
     outline-offset: 3px;
 }
 .cluegent-session-setup .session-setup-primary {
     background: #3b82f6;
     color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid #3b82f6;
 }
 .cluegent-session-setup .session-setup-primary:hover { background: #2563eb; }
 .cluegent-session-setup ::-webkit-scrollbar { width: 5px; }
-.cluegent-session-setup ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 8px; }
+.cluegent-session-setup ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
 
 @keyframes session-setup-enter {
     from { opacity: 0; transform: translateY(8px) scale(0.99); }

@@ -18,6 +18,7 @@ import { beginLocalMeeting, finishCurrentLocalMeeting } from "./lib/localMeeting
 import { ErrorBoundary } from "./components/ErrorBoundary"
 import ModesSettings from "./components/settings/ModesSettings"
 import { useAuth } from "./contexts/auth.context"
+import { getPlanStatus } from './services/backendApi'
 
 const queryClient = new QueryClient()
 
@@ -208,7 +209,12 @@ const App: React.FC = () => {
   };
 
   const handleStartMeeting = async (details: SessionSetupDetails) => {
+    let started = false;
     try {
+      // Read authoritative entitlement at launch, not a stale renderer snapshot.
+      const current = await getPlanStatus();
+      const hourly = current.planStatus.plan === 'hour3' || current.planStatus.plan === 'hour10';
+      if (hourly && current.planStatus.remaining.sttSeconds <= 0) throw new Error('Your hourly listening balance is empty. Add hours in Billing.');
       const visibilityResult = await window.electronAPI.setUndetectable(true);
       if (!visibilityResult.success) throw new Error(visibilityResult.error || 'Could not set overlay visibility.');
       const languageResult = await window.electronAPI.setRecognitionLanguage(details.language);
@@ -237,18 +243,34 @@ const App: React.FC = () => {
         audio: { inputDeviceId, outputDeviceId }
       });
       if (result.success) {
+        started = true;
         beginLocalMeeting(details.sessionType === 'interview' ? [details.company, details.position].filter(Boolean).join(' · ') || 'Interview' : details.title || 'Meeting');
         analytics.trackMeetingStarted();
         await window.electronAPI.setWindowMode('overlay');
         setIsSessionSetupOpen(false);
         // Prompt only after the overlay is visible; denial must not close the session.
-        void window.electronAPI.prepareOverlayPermissions().catch(error => console.warn('[App] Permission preparation failed:', error));
+        if (hourly) {
+          // The overlay is visible before permission prompts; capture and its timer
+          // start together once allowed. Failed permissions never silently bill.
+          await window.electronAPI.prepareOverlayPermissions();
+          const listening = await window.electronAPI.startListening();
+          if (!listening.success) {
+            throw new Error(listening.error || 'Could not start listening. Check audio permissions and retry.');
+          }
+        } else {
+          void window.electronAPI.prepareOverlayPermissions().catch(error => console.warn('[App] Permission preparation failed:', error));
+        }
       } else {
         console.error("Failed to start meeting:", result.error);
         await window.electronAPI.setWindowMode('launcher');
         throw new Error(result.error || 'Failed to start Cluegent');
       }
     } catch (err) {
+      if (started) {
+        await window.electronAPI.endMeeting().catch(console.error);
+        finishCurrentLocalMeeting();
+        localStorage.removeItem('natively_last_meeting_start');
+      }
       localStorage.removeItem(SESSION_CONTEXT_KEY);
       console.error("Failed to start meeting:", err);
       await window.electronAPI.setWindowMode('launcher');

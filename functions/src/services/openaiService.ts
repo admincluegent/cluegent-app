@@ -14,6 +14,7 @@ export interface GenerateOpenAiReplyInput {
   systemPrompt?: string;
   history?: AssistantHistoryEntry[];
   modelId?: string;
+  resumeResponse?: boolean;
 }
 
 export interface GenerateOpenAiReplyResult {
@@ -190,7 +191,8 @@ export async function generateOpenAiReply(
         messages: buildMessages(input),
         temperature: model.temperature,
         reasoning_effort: model.reasoningEffort,
-        max_completion_tokens: model.maxCompletionTokens,
+        max_completion_tokens: input.resumeResponse ? 6000 : model.maxCompletionTokens,
+        ...(input.resumeResponse ? { response_format: { type: "json_object" } } : {}),
         stream: false,
       }),
     });

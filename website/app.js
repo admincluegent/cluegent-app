@@ -5,6 +5,34 @@ const revealItems = document.querySelectorAll(".reveal");
 const shortcutModifier = /mac|iphone|ipad|ipod/i.test(navigator.platform) ? "Command" : "Ctrl";
 
 const pricingCurrencyToggle = document.querySelector("[data-pricing-currency-toggle]");
+const pricingCategoryToggle = document.querySelector('[data-pricing-category-toggle]');
+if (pricingCategoryToggle) {
+  const buttons = Array.from(pricingCategoryToggle.querySelectorAll('[data-pricing-tab]'));
+  const panel = document.getElementById('website-pricing-plans');
+  const select = (index, focus = false) => {
+    const category = buttons[index].dataset.pricingTab;
+    buttons.forEach((button, i) => {
+      button.setAttribute('aria-selected', String(i === index));
+      button.tabIndex = i === index ? 0 : -1;
+    });
+    panel.setAttribute('aria-labelledby', buttons[index].id);
+    panel.querySelectorAll('[data-pricing-category]').forEach(card => {
+      card.hidden = card.dataset.pricingCategory !== category;
+    });
+    if (focus) buttons[index].focus();
+  };
+  buttons.forEach((button, index) => {
+    button.addEventListener('click', () => select(index));
+    button.addEventListener('keydown', event => {
+      let next;
+      if (event.key === 'ArrowRight') next = (index + 1) % buttons.length;
+      if (event.key === 'ArrowLeft') next = (index + buttons.length - 1) % buttons.length;
+      if (event.key === 'Home') next = 0;
+      if (event.key === 'End') next = buttons.length - 1;
+      if (next !== undefined) { event.preventDefault(); select(next, true); }
+    });
+  });
+}
 
 if (pricingCurrencyToggle) {
   const currencyButtons = Array.from(pricingCurrencyToggle.querySelectorAll("[data-pricing-currency]"));

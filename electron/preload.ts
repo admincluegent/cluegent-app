@@ -201,7 +201,8 @@ interface ElectronAPI {
   onUpdateManagedByStore: (callback: (info: any) => void) => () => void
   onUpdateError: (callback: (err: string) => void) => () => void
   onDownloadProgress: (callback: (progressObj: any) => void) => () => void
-  restartAndInstall: () => Promise<void>
+  getUpdateState: () => Promise<{ status: string; info?: any; error?: string }>
+  restartAndInstall: () => Promise<{ success: boolean; error?: string }>
   checkForUpdates: () => Promise<void>
   downloadUpdate: () => Promise<void>
   testReleaseFetch: () => Promise<{ success: boolean; error?: string }>
@@ -307,6 +308,8 @@ export const PROCESSING_EVENTS = {
 
 // Expose the Electron API to the renderer process
 contextBridge.exposeInMainWorld("electronAPI", {
+  resumeBuilderImport: () => ipcRenderer.invoke('resume-builder:import'),
+  resumeBuilderExport: (input: { resume: import('../shared/resume').ResumeData; template: import('../shared/resume').ResumeTemplate; color: string }) => ipcRenderer.invoke('resume-builder:export', input),
   updateContentDimensions: (dimensions: { width: number; height: number }) =>
     ipcRenderer.invoke("update-content-dimensions", dimensions),
   getRecognitionLanguages: () => ipcRenderer.invoke("get-recognition-languages"),
@@ -951,6 +954,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.removeListener("download-progress", subscription)
     }
   },
+  getUpdateState: () => ipcRenderer.invoke("get-update-state"),
   restartAndInstall: () => ipcRenderer.invoke("quit-and-install-update"),
   checkForUpdates: () => ipcRenderer.invoke("check-for-updates"),
   downloadUpdate: () => ipcRenderer.invoke("download-update"),

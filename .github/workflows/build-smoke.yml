@@ -29,3 +29,20 @@ jobs:
 
       - name: Verify packaged entrypoint exists
         run: test -f dist-electron/electron/main.js
+
+      - name: Verify update lifecycle
+        run: node --test scripts/test-updates.cjs
+
+      - name: Install backend dependencies
+        run: npm ci --prefix functions
+
+      - name: Verify billing and hourly session lifecycle
+        run: node --test scripts/test-billing.cjs scripts/test-hourly-session.cjs
+
+  windows-store-native-check:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check Store bridge and Windows native code
+        run: cargo check --manifest-path native-module/Cargo.toml --locked

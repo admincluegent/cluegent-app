@@ -4,7 +4,7 @@ import type { BillingInterval } from "../utils/usage.js";
 
 const RAZORPAY_API_BASE_URL = "https://api.razorpay.com/v1";
 
-export type PaidPlanId = Extract<PlanId, "livetest" | "plus" | "pro" | "power">;
+export type PaidPlanId = Exclude<PlanId, "free">;
 export type RazorpayProviderMode = "test" | "live";
 export type RazorpayCurrency = "INR" | "USD";
 

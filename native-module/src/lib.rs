@@ -17,6 +17,8 @@ pub mod license;
 pub mod microphone;
 pub mod silence_suppression;
 pub mod speaker;
+#[cfg(target_os = "windows")]
+pub mod store_updates;
 
 use crate::audio_config::DSP_POLL_MS;
 use crate::silence_suppression::{FrameAction, SilenceSuppressionConfig, SilenceSuppressor};

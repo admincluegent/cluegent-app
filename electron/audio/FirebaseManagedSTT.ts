@@ -1,4 +1,5 @@
 import { EventEmitter } from "events";
+import { randomUUID } from 'crypto';
 import WebSocket from "ws";
 import { RECOGNITION_LANGUAGES } from "../config/languages";
 import { FirebaseSessionManager } from "../services/FirebaseSessionManager";
@@ -113,6 +114,7 @@ export class FirebaseManagedSTT extends EventEmitter {
   private sentAudioSeconds = 0;
   private reportedAudioSeconds = 0;
   private usageReportInFlight: Promise<void> | null = null;
+  private pendingUsageReport: { id: string; seconds: number } | null = null;
   private usageReportingEnabled = true;
   private lastTurnOrder: number | null = null;
   private lastTurnTranscript = "";
@@ -161,7 +163,7 @@ export class FirebaseManagedSTT extends EventEmitter {
   public setCredentials(_path: string): void {}
 
   public setUsageReportingEnabled(enabled: boolean): void {
-    if (this.usageReportingEnabled && !enabled) void this.flushUsage(true);
+    if (this.usageReportingEnabled && !enabled) void this.flushUsage(true).catch(console.error);
     this.usageReportingEnabled = enabled;
   }
 
@@ -170,8 +172,8 @@ export class FirebaseManagedSTT extends EventEmitter {
     this.isActive = true;
     this.shouldReconnect = true;
     this.reconnectAttempts = 0;
-    this.sentAudioSeconds = 0;
-    this.reportedAudioSeconds = 0;
+    // Keep accounting cumulative across restarts: a final report may still be
+    // in flight when listening resumes, and must not consume the new session twice.
     this.lastTurnOrder = null;
     this.lastTurnTranscript = "";
     void this.connect();
@@ -181,7 +183,7 @@ export class FirebaseManagedSTT extends EventEmitter {
     this.prefetchedAccessToken = null;
     this.shouldReconnect = false;
     this.clearTimers();
-    void this.flushUsage(true);
+    void this.flushUsage(true).catch(console.error);
 
     if (this.ws) {
       try {
@@ -212,7 +214,7 @@ export class FirebaseManagedSTT extends EventEmitter {
     if (this.usageReportingEnabled) {
       this.sentAudioSeconds +=
         chunk.length / Math.max(this.sampleRate * this.numChannels * 2, 1);
-      void this.flushUsage(false);
+      void this.flushUsage(false).catch(console.error);
     }
 
     if (!this.isOpen) {
@@ -611,9 +613,12 @@ export class FirebaseManagedSTT extends EventEmitter {
       return;
     }
 
-    this.usageReportInFlight = this.reportUsage(secondsToReport)
+    const report = this.pendingUsageReport ?? { id: randomUUID(), seconds: secondsToReport };
+    this.pendingUsageReport = report;
+    this.usageReportInFlight = this.reportUsage(report.seconds, report.id)
       .then(() => {
-        this.reportedAudioSeconds += secondsToReport;
+        this.reportedAudioSeconds += report.seconds;
+        if (this.pendingUsageReport === report) this.pendingUsageReport = null;
       })
       .finally(() => {
         this.usageReportInFlight = null;
@@ -622,7 +627,7 @@ export class FirebaseManagedSTT extends EventEmitter {
     await this.usageReportInFlight;
   }
 
-  private async reportUsage(durationSeconds: number) {
+  private async reportUsage(durationSeconds: number, reportId: string) {
     const idToken = FirebaseSessionManager.getInstance().getIdToken();
 
     if (!idToken) {
@@ -638,6 +643,7 @@ export class FirebaseManagedSTT extends EventEmitter {
       body: JSON.stringify({
         data: {
           durationSeconds,
+          reportId,
         },
       }),
     });
@@ -666,7 +672,12 @@ export class FirebaseManagedSTT extends EventEmitter {
         return;
       }
 
-      console.warn("[FirebaseManagedSTT] Usage report failed", errorMessage);
+      throw new Error(errorMessage);
+    }
+    if (result?.success === true && result.remaining.sttSecondsRemaining <= 0) {
+      this.shouldReconnect = false;
+      this.emit('error', new Error('Listening limit reached. Add hours or wait for your next allowance.'));
+      this.stop();
     }
   }
 }
