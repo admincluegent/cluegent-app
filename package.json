@@ -1,6 +1,6 @@
 {
   "name": "cluegent",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "main": "dist-electron/electron/main.js",
   "description": "Cluegent is an AI copilot that helps with live conversation, screen context, and meeting assistance.",
   "scripts": {
