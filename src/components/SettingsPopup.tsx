@@ -97,7 +97,6 @@ const SettingsPopup = () => {
 
         const observer = new ResizeObserver((entries) => {
             for (const entry of entries) {
-                const rect = entry.target.getBoundingClientRect();
                 // Send exact dimensions to Electron
                 try {
                     // @ts-ignore
@@ -126,26 +125,26 @@ const SettingsPopup = () => {
 
     return (
         <div
-            className="w-[270px] inline-flex flex-col text-white"
+            className="w-[270px] min-w-[270px] inline-flex flex-col text-white"
             style={{ backgroundColor: '#05070c' }}
         >
             <div
                 ref={contentRef}
-                className={`w-[270px] border rounded-[18px] overflow-hidden p-2 inline-flex flex-col text-white ${popupPanelClass}`}
+                className={`w-[270px] shrink-0 border rounded-[18px] overflow-hidden p-2 inline-flex flex-col text-white ${popupPanelClass}`}
                 style={{ backgroundColor: '#05070c' }}
             >
                 <div className="flex flex-col">
 
                 {/* Undetectability */}
                 <div className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors duration-200 group cursor-default ${itemHoverClass}`}>
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-3 pr-2">
                         <CustomGhost
-                            className="w-4 h-4 transition-colors text-white"
+                            className="w-4 h-4 shrink-0 transition-colors text-white"
                             fill={isUndetectable ? "currentColor" : "none"}
                             stroke={isUndetectable ? "none" : "currentColor"}
                             eyeColor={isUndetectable ? "black" : "white"}
                         />
-                        <span className={`text-[12px] font-medium transition-colors ${isUndetectable ? 'text-white' : labelInactiveClass}`}>{isUndetectable ? 'Undetectable' : 'Detectable'}</span>
+                        <span className={`truncate text-[12px] font-medium transition-colors ${isUndetectable ? 'text-white' : labelInactiveClass}`}>{isUndetectable ? 'Undetectable' : 'Detectable'}</span>
                     </div>
                     <button
                         onClick={() => {
@@ -166,12 +165,12 @@ const SettingsPopup = () => {
 
                 {/* Interviewer Transcript Toggle */}
                 <div className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors duration-200 group cursor-default ${itemHoverClass}`}>
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-3 pr-2">
                         <MessageSquare
-                            className="w-3.5 h-3.5 transition-colors text-white"
+                            className="w-3.5 h-3.5 shrink-0 transition-colors text-white"
                             fill={showTranscript ? "currentColor" : "none"}
                         />
-                        <span className={`text-[12px] font-medium transition-colors ${showTranscript ? 'text-white' : labelInactiveClass}`}>Transcript</span>
+                        <span className={`truncate text-[12px] font-medium transition-colors ${showTranscript ? 'text-white' : labelInactiveClass}`}>Transcript</span>
                     </div>
                     <button
                         onClick={() => {
@@ -191,12 +190,12 @@ const SettingsPopup = () => {
 
                 {/* Resume Context Toggle */}
                 <div className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors duration-200 group ${hasProfile ? `${itemHoverClass} cursor-default` : 'opacity-50 cursor-not-allowed'}`} title={hasProfile ? 'Use uploaded resume when relevant' : 'Upload a resume in Customize first'}>
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-3 pr-2">
                         <User
-                            className="w-3.5 h-3.5 transition-colors text-white"
+                            className="w-3.5 h-3.5 shrink-0 transition-colors text-white"
                             fill={profileMode ? "currentColor" : "none"}
                         />
-                        <span className={`text-[12px] font-medium transition-colors ${profileMode ? 'text-white' : labelInactiveClass}`}>Resume Context</span>
+                        <span className={`truncate text-[12px] font-medium transition-colors ${profileMode ? 'text-white' : labelInactiveClass}`}>Resume Context</span>
                     </div>
                     <button
                         onClick={async () => {

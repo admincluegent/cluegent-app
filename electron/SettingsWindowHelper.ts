@@ -24,11 +24,20 @@ export class SettingsWindowHelper {
     public setWindowDimensions(win: BrowserWindow, width: number, height: number): void {
         if (!win || win.isDestroyed() || !Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return
 
-        const currentBounds = win.getBounds()
+        // Renderer measurements are CSS pixels; Electron content sizes are DIP.
+        // Account for page zoom and size the client area rather than the OS frame.
+        const zoom = win.webContents.getZoomFactor()
+        const contentWidth = Math.ceil(width * zoom)
+        const contentHeight = Math.ceil(height * zoom)
+        const currentBounds = win.getContentBounds()
         // Only update if dimensions actually change (avoid infinite loops)
-        if (currentBounds.width === width && currentBounds.height === height) return
+        if (Math.abs(currentBounds.width - contentWidth) <= 1 && Math.abs(currentBounds.height - contentHeight) <= 1) return
 
-        win.setSize(width, height)
+        // On Windows, preserve the native resizable style so frame insets are
+        // calculated correctly at fractional display scaling. User resizing is
+        // blocked separately in createWindow().
+        win.setContentSize(contentWidth, contentHeight)
+        this.ensureVisibleOnScreen()
     }
 
     // Store offsets relative to main window
@@ -154,9 +163,10 @@ export class SettingsWindowHelper {
         const windowSettings: Electron.BrowserWindowConstructorOptions = {
             width: 270,
             height: 236,
+            useContentSize: true,
             frame: false,
             transparent: false,
-            resizable: false,
+            resizable: process.platform === 'win32',
             fullscreenable: false,
             hasShadow: true,
             alwaysOnTop: true,
@@ -177,6 +187,10 @@ export class SettingsWindowHelper {
         }
 
         this.settingsWindow = new BrowserWindow(windowSettings)
+        if (process.platform === 'win32') {
+            this.settingsWindow.on('will-resize', event => event.preventDefault())
+        }
+        this.setWindowDimensions(this.settingsWindow, 270, 236)
 
         if (process.platform === "darwin") {
             this.settingsWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
