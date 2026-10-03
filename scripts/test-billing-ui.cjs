@@ -8,12 +8,12 @@ const esbuild = require('esbuild');
 const { chromium } = require('@playwright/test');
 test('billing tabs display server prices and checkout verifies its own order', async () => {
   const catalog = [
-    ['hour3','hour',49900,'₹499','₹499'], ['hour10','hour',149900,'₹1,499','₹1,499'],
+    ['hour3','hour',49900,'₹499 [7-day validity]','₹499'], ['hour10','hour',149900,'₹1,499 [15-day validity]','₹1,499'],
     ['monthly200','month',349900,'₹3,499','₹3,499'], ['quarterly200','quarter',799900,'₹7,999','₹2,666.33'],
     ['annual200','year',1949900,'₹19,499','₹1,624.92'],
   ].map(([planId,interval,amountSubunits,displayPrice,displayMonthlyPrice]) => ({planId,interval,amountSubunits,displayPrice,displayMonthlyPrice,currency:'INR'}));
   catalog.push(...[
-    ['hour3','hour',599,'$5.99','$5.99'], ['hour10','hour',1699,'$16.99','$16.99'],
+    ['hour3','hour',599,'$5.99 [7-day validity]','$5.99'], ['hour10','hour',1699,'$16.99 [15-day validity]','$16.99'],
     ['monthly200','month',3999,'$39.99','$39.99'], ['quarterly200','quarter',8999,'$89.99','$30.00'],
     ['annual200','year',21999,'$219.99','$18.33'],
   ].map(([planId,interval,amountSubunits,displayPrice,displayMonthlyPrice]) => ({planId,interval,amountSubunits,displayPrice,displayMonthlyPrice,currency:'USD'})));
@@ -58,6 +58,11 @@ test('billing tabs display server prices and checkout verifies its own order', a
     await page.getByRole('tab',{name:'Hourly'}).click();
     await page.getByText('₹499',{exact:true}).waitFor();
     await page.getByText('₹1,499',{exact:true}).waitFor();
+    for (const label of ['7-day validity', '15-day validity']) {
+      const belowPrice = await page.getByText(label, {exact:true}).evaluate(el =>
+        el.getBoundingClientRect().top >= el.previousElementSibling.getBoundingClientRect().bottom);
+      assert.ok(belowPrice, `${label} appears below the price row`);
+    }
     assert.deepEqual(await page.locator('del').allTextContents(), ['₹999','₹2,499']);
     assert.equal(await page.getByText('3 hours of live interview help',{exact:true}).count(),1);
     assert.equal(await page.getByText('10 hours of live interview help',{exact:true}).count(),1);
@@ -105,6 +110,8 @@ test('billing tabs display server prices and checkout verifies its own order', a
     await page.getByRole('tab',{name:'Hourly',exact:true}).click();
     await page.getByText('$5.99',{exact:true}).waitFor();
     await page.getByText('$16.99',{exact:true}).waitFor();
+    assert.equal(await page.getByText('7-day validity',{exact:true}).count(),1);
+    assert.equal(await page.getByText('15-day validity',{exact:true}).count(),1);
     assert.deepEqual(await page.locator('del').allTextContents(), ['$12','$29']);
     await page.getByRole('button',{name:'Upgrade',exact:true}).first().click();
     await page.waitForFunction(()=>window.checkoutRequest.currency==='USD' && window.verifiedPayment);

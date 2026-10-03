@@ -67,6 +67,7 @@ export class WindowHelper {
     windows.forEach(win => {
       if (win && !win.isDestroyed()) {
         win.setContentProtection(enable);
+        if (process.platform === 'win32') win.setSkipTaskbar(enable || win === this.overlayWindow);
       }
     });
   }
@@ -167,6 +168,7 @@ export class WindowHelper {
       resizable: true,
       movable: true,
       center: true,
+      skipTaskbar: this.contentProtection,
       icon: (() => {
         const isMac = process.platform === "darwin";
         const isWin = process.platform === "win32";
@@ -276,6 +278,7 @@ export class WindowHelper {
     // --- 3. Startup Sequence ---
     this.launcherWindow.once('ready-to-show', () => {
       this.switchToLauncher()
+      if (this.appState.getUndetectable()) this.appState.setUndetectable(true, true);
       this.isWindowVisible = true
     })
 
@@ -498,6 +501,9 @@ export class WindowHelper {
       // setAlwaysOnTop is already set at creation; a focus() call alone is safe.
       this.overlayWindow.focus();
     }
+    // Showing a window can restore the macOS Dock entry even when the saved
+    // stealth setting is already true. Reapply after native show/focus.
+    if (this.appState.getUndetectable()) this.appState.setUndetectable(true, true);
   }
 
   // Hide overlay directly without switching to launcher.
@@ -633,6 +639,7 @@ export class WindowHelper {
     if (this.launcherWindow && !this.launcherWindow.isDestroyed()) {
       this.launcherWindow.hide();
     }
+    if (this.appState.getUndetectable()) this.appState.setUndetectable(true, true);
   }
 
   public switchToLauncher(inactive?: boolean): void {
@@ -677,6 +684,7 @@ export class WindowHelper {
       this.switchToLauncher(inactive);
     } else {
       this.switchToOverlay(inactive);
+      this.appState.startHourlyOverlayUsage();
     }
   }
 

@@ -66,6 +66,7 @@ interface AssistantHistoryEntry {
 interface TrackSttUsageData {
   durationSeconds: number;
   reportId?: string;
+  hourlySession?: boolean;
 }
 
 interface CreateDeepgramTokenData {
@@ -1235,6 +1236,9 @@ export async function trackSttUsageForAuthenticatedUser(
     );
     const planStatus = buildPlanStatus(subscription, usage, freeTrialUsage);
 
+    if (data?.hourlySession === true && !['hour3', 'hour10'].includes(planStatus.plan)) {
+      return trackUsageFailure('STT_LIMIT_EXCEEDED', 'Your hourly plan has ended. Open a new session with your current plan.');
+    }
     if (!reportId && isFreeTrialExhausted(planStatus)) {
       return trackUsageFailure(
         "STT_LIMIT_EXCEEDED",
@@ -1281,6 +1285,9 @@ export async function trackSttUsageForAuthenticatedUser(
         latestFreeTrialUsage
       );
 
+      if (data?.hourlySession === true && !['hour3', 'hour10'].includes(latestPlanStatus.plan)) {
+        throw new Error('STT_LIMIT_EXCEEDED');
+      }
       if (isFreeTrialExhausted(latestPlanStatus)) {
         throw new Error("FREE_TRIAL_LIMIT_EXCEEDED");
       }

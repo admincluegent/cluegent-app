@@ -1,11 +1,14 @@
 import { readFileSync } from "node:fs";
 import { discoveryClusters } from "./seo-discovery-improvements.mjs";
 import { growthPostsBatch6, growthBacklinksBatch6 } from "./seo-growth-posts-batch-6.mjs";
+import { growthPostsBatch7, growthBacklinksBatch7 } from "./seo-growth-posts-batch-7.mjs";
 
 const origin = "https://www.cluegent.com";
 const key = readFileSync(new URL("../website/cluegent-indexnow-key.txt", import.meta.url), "utf8").trim();
 const keyLocation = `${origin}/cluegent-indexnow-key.txt`;
-const paths = process.argv.includes("--batch6") ? ["/blog/", ...growthPostsBatch6.map(post => `/blog/${post.slug}/`), ...growthBacklinksBatch6.map(([slug]) => `/blog/${slug}/`)] : ["/blog/", "/blog/parakeet-ai/", "/blog/system-design-interview-questions-beginners/", "/blog/how-to-prepare-for-coding-interview-in-7-days/", ...discoveryClusters.flatMap(group => group.slugs.map(slug => `/blog/${slug}/`))];
+const selectedPosts = process.argv.includes("--batch7") ? growthPostsBatch7 : growthPostsBatch6;
+const selectedBacklinks = process.argv.includes("--batch7") ? growthBacklinksBatch7 : growthBacklinksBatch6;
+const paths = process.argv.includes("--batch6") || process.argv.includes("--batch7") ? ["/blog/", ...selectedPosts.map(post => `/blog/${post.slug}/`), ...selectedBacklinks.map(([slug]) => `/blog/${slug}/`)] : ["/blog/", "/blog/parakeet-ai/", "/blog/system-design-interview-questions-beginners/", "/blog/how-to-prepare-for-coding-interview-in-7-days/", ...discoveryClusters.flatMap(group => group.slugs.map(slug => `/blog/${slug}/`))];
 const urls = [...new Set(paths)].map(path => origin + path);
 if (!/^[a-zA-Z0-9-]{8,128}$/.test(key)) throw new Error("Invalid IndexNow key format");
 if (!process.argv.includes("--submit")) {

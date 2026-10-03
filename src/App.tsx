@@ -250,8 +250,8 @@ const App: React.FC = () => {
         setIsSessionSetupOpen(false);
         // Prompt only after the overlay is visible; denial must not close the session.
         if (hourly) {
-          // The overlay is visible before permission prompts; capture and its timer
-          // start together once allowed. Failed permissions never silently bill.
+          // Hourly session time starts when the overlay opens, independently
+          // of capture. Audio still starts automatically after permissions.
           await window.electronAPI.prepareOverlayPermissions();
           const listening = await window.electronAPI.startListening();
           if (!listening.success) {

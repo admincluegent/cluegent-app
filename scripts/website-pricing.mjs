@@ -5,7 +5,7 @@ export function websitePricingSection(buttonHref = '/download/') {
     ['hour','10 Hour Pack','₹1,499','$16.99','₹2,499','$29',10,0,true],
     ['month','Monthly','₹3,499','$39.99','₹6,499','$69',0,1,false],
     ['month','3 Months','₹7,999','$89.99','₹10,499','$120',0,3,true],
-    ['year','Yearly','₹19,499','$219.99','₹42,499','$480',0,12,true],
+    ['year','Yearly','₹19,499','$202','₹42,499','$480',0,12,true],
   ];
   const cards = plans.map(([category,name,inr,usd,oldInr,oldUsd,hours,months,popular]) => {
     const features = [
@@ -17,7 +17,7 @@ export function websitePricingSection(buttonHref = '/download/') {
       `${hours === 3 ? '30' : hours === 10 ? '75' : 'Unlimited'} AI Resume Builder (all templates)`,
       'Watermark-free resumes.',
     ];
-    const equivalent = months === 3 ? ['₹2,666.33','$30.00'] : ['₹1,624.92','$18.33'];
+    const equivalent = months === 3 ? ['₹2,666.33','$30.00'] : ['₹1,624.92','$16.83'];
     return `<article class="pricing-card ${popular ? 'pricing-card--pro' : 'pricing-card--green'}" data-pricing-category="${category}" ${category !== 'month' ? 'hidden' : ''}>
       <div class="pricing-card-head">
         <h3>${name}</h3>

@@ -2,8 +2,8 @@
 
 | Tab | Product ID | INR payment | USD payment | Listening allowance | Access term |
 | --- | --- | --- | --- | --- | --- |
-| Hourly | hour3 | ₹499 | $5.99 | 3 hours total | No expiry |
-| Hourly | hour10 | ₹1,499 | $16.99 | 10 hours total | No expiry |
+| Hourly | hour3 | ₹499 | $5.99 | 3 hours total | 7 days |
+| Hourly | hour10 | ₹1,499 | $16.99 | 10 hours total | 15 days |
 | Monthly | monthly200 | ₹3,499 | $39.99 | 200 hours per month | 1 calendar month |
 | Monthly | quarterly200 | ₹7,999 | $89.99 | 200 hours per month | 3 calendar months |
 | Yearly | annual200 | ₹19,499 | $219.99 | 200 hours per month | 12 calendar months |
@@ -12,7 +12,7 @@ Three-month equivalent: ₹2,666.33 or $30.00/month (rounded). Yearly equivalent
 
 ## Allowance behavior
 
-Hourly packs have no monthly reset or expiry. Purchasing another hourly pack adds its hours to the existing purchased balance without discarding used/remaining hours. When opening an hourly Cluegent session, fetch the authoritative entitlement, open the overlay, prepare permissions, and start both listening sources automatically. The existing listening timer starts with capture. Permission/start failure closes the incomplete session. Listening time, not silent time spent in setup, is charged. Manual stopping/muting remains available.
+New hourly purchases expire after 7 days (3-hour pack) or 15 days (10-hour pack) from payment activation, or when their listening allowance is exhausted, whichever comes first. There is no monthly reset. Existing purchases with no expiry retain their original terms until another purchase. The backend displayPrice includes the validity label for both INR and USD; numeric payment amounts are unchanged. Purchasing another hourly pack before expiry preserves remaining credits and restarts validity from the new purchase; expired unused credits are discarded. When opening an hourly Cluegent session, fetch the authoritative entitlement, open the overlay, prepare permissions, and start both listening sources automatically. The listening timer starts with capture. Permission/start failure closes the incomplete session. Listening time, not silent time spent in setup, is charged. Manual stopping/muting remains available.
 
 Monthly allowances reset at each purchase-date anniversary, not at the calendar month boundary. Month-end anniversaries clamp to the last day (January 31 → February 28/29 → March 31). The three-month and yearly products grant 200 hours in each monthly window, never 600/2,400 upfront. Unused hours do not roll over. Usage/status reads compute the active window even if the user hasn't opened the app for months; the next metering transaction persists its new counter. Expiration uses calendar months and the existing server entitlement expiration path.
 

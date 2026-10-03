@@ -26,7 +26,7 @@ test('website pricing matches billing in both currencies and at mobile widths', 
       const cards = section.locator('[data-pricing-category]:visible');
       for (const [currency, expected] of [
         ['INR', [['₹499','₹1,499'],['₹3,499','₹7,999'],['₹19,499']]],
-        ['USD', [['$5.99','$16.99'],['$39.99','$89.99'],['$219.99']]],
+        ['USD', [['$5.99','$16.99'],['$39.99','$89.99'],['$202']]],
       ]) {
         await section.getByRole('button', {name: currency, exact: true}).click();
         for (const [i, name] of ['Hourly','Monthly','Yearly'].entries()) {

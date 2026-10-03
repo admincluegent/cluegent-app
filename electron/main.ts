@@ -3,6 +3,8 @@ import path from "path"
 import fs from "fs"
 import { autoUpdater } from "electron-updater"
 import { loadNativeModule } from './audio/nativeModuleLoader';
+import { HourlyUsageMeter } from './services/HourlyUsageMeter';
+import { FirebaseSessionManager } from './services/FirebaseSessionManager';
 if (!app.isPackaged) {
   require('dotenv').config();
 }
@@ -258,6 +260,29 @@ export class AppState {
 
   private hasDebugged: boolean = false
   private isMeetingActive: boolean = false; // Guard for session state leaks
+  private hourlySession = false;
+  private hourlyUsageMeter = new HourlyUsageMeter();
+
+  public startHourlyOverlayUsage(): void {
+    if (!this.isMeetingActive || !this.hourlySession) return;
+    const idToken = FirebaseSessionManager.getInstance().getIdToken();
+    this.hourlyUsageMeter.start(async (durationSeconds, reportId) => {
+      const base = process.env.FIREBASE_FUNCTIONS_BASE_URL || 'https://us-central1-cluegent-2514d.cloudfunctions.net';
+      const response = await fetch(`${base}/trackSttUsage`, {
+        method: 'POST', signal: AbortSignal.timeout(10000),
+        headers: { Authorization: `Bearer ${FirebaseSessionManager.getInstance().getIdToken() || idToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: { durationSeconds, reportId, hourlySession: true } })
+      });
+      const json = await response.json() as any;
+      if (json.result?.success === false || json.result?.remaining?.sttSecondsRemaining === 0) {
+        this.hourlyUsageMeter.stop();
+        void this.stopListening();
+      }
+      if (json.result?.code === 'STT_LIMIT_EXCEEDED') return;
+      if (!response.ok || !json.result?.success) throw new Error(json.error?.message || json.result?.message || 'Hourly usage sync failed');
+      this.broadcast('hourly-balance-updated', json.result.remaining.sttSecondsRemaining);
+    });
+  }
   private _isQuitting: boolean = false;
   private isListeningActive: boolean = false;
   private isMicListeningActive: boolean = false;
@@ -1361,6 +1386,20 @@ export class AppState {
 
   public async startMeeting(metadata?: any): Promise<void> {
     console.log('[Main] Starting Meeting...', metadata);
+    // Resolve entitlement in the main process as well: audio billing must not
+    // depend on an untrusted/stale renderer plan flag.
+    const base = process.env.FIREBASE_FUNCTIONS_BASE_URL || 'https://us-central1-cluegent-2514d.cloudfunctions.net';
+    const token = FirebaseSessionManager.getInstance().getIdToken();
+    const entitlement = await fetch(`${base}/getPlanStatus`, {
+      method: 'POST', signal: AbortSignal.timeout(10000),
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: {} })
+    });
+    const payload = await entitlement.json() as any;
+    const status = payload.result?.data?.planStatus;
+    if (!entitlement.ok || !status) throw new Error('Could not verify session allowance. Please retry.');
+    this.hourlySession = status.plan === 'hour3' || status.plan === 'hour10';
+    if (this.hourlySession && status.remaining.sttSeconds <= 0) throw new Error('Your hourly balance is empty. Add hours in Billing.');
 
     // PR #173: Reset audio recovery state for fresh session
     this._systemAudioRecoveryInProgress = false;
@@ -1442,7 +1481,7 @@ export class AppState {
       console.log(`[ListeningTiming] Capture setup ready after ${Date.now() - startupStartedAt}ms`);
 
       if (!this.isListeningActive && this.listeningSystemEnabled) {
-        this.googleSTT?.setUsageReportingEnabled?.(true);
+        this.googleSTT?.setUsageReportingEnabled?.(!this.hourlySession);
         this.systemAudioCapture?.start();
         this.googleSTT?.start();
       }
@@ -1450,7 +1489,7 @@ export class AppState {
       if (!this.isMicListeningActive && this.listeningMicEnabled) {
         // Combined Start Listening runs microphone STT for context, but usage
         // should be counted once for the listening session, not once per stream.
-        this.googleSTT_User?.setUsageReportingEnabled?.(!this.listeningSystemEnabled);
+        this.googleSTT_User?.setUsageReportingEnabled?.(!this.hourlySession && !this.listeningSystemEnabled);
         this.microphoneCapture?.start();
         this.googleSTT_User?.start();
       }
@@ -1508,8 +1547,8 @@ export class AppState {
       this.isMicListeningActive = enabled;
     }
     // Only one active stream reports usage, including microphone-only listening.
-    this.googleSTT?.setUsageReportingEnabled?.(this.listeningSystemEnabled);
-    this.googleSTT_User?.setUsageReportingEnabled?.(!this.listeningSystemEnabled && this.listeningMicEnabled);
+    this.googleSTT?.setUsageReportingEnabled?.(!this.hourlySession && this.listeningSystemEnabled);
+    this.googleSTT_User?.setUsageReportingEnabled?.(!this.hourlySession && !this.listeningSystemEnabled && this.listeningMicEnabled);
     this.broadcastListeningState();
   }
 
@@ -1521,7 +1560,7 @@ export class AppState {
     if (this.isMicListeningActive) return;
 
     this.setupSystemAudioPipeline('mic');
-    this.googleSTT_User?.setUsageReportingEnabled?.(!this.isListeningActive || !this.listeningSystemEnabled);
+    this.googleSTT_User?.setUsageReportingEnabled?.(!this.hourlySession && (!this.isListeningActive || !this.listeningSystemEnabled));
     this.microphoneCapture?.start();
     this.googleSTT_User?.start();
     this.isMicListeningActive = true;
@@ -1541,6 +1580,7 @@ export class AppState {
 
   public async endMeeting(): Promise<void> {
     console.log('[Main] Ending Meeting...');
+    this.hourlyUsageMeter.stop();
     this.isMeetingActive = false; // Block new data immediately
     this.isListeningActive = false;
     this.isMicListeningActive = false;
@@ -2217,10 +2257,10 @@ export class AppState {
     return this.hasDebugged
   }
 
-  public setUndetectable(state: boolean): void {
+  public setUndetectable(state: boolean, reapplyNativeState = false): void {
     // Guard: skip if state hasn't actually changed to prevent
     // duplicate dock hide/show cycles from renderer feedback loops
-    if (this.isUndetectable === state) return;
+    if (this.isUndetectable === state && !reapplyNativeState) return;
 
     console.log(`[Stealth] setUndetectable(${state}) called`);
 

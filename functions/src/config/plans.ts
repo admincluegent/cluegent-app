@@ -19,11 +19,11 @@ export interface PlanConfig {
 export const UNLIMITED_USAGE_LIMIT = Number.MAX_SAFE_INTEGER;
 
 export const NEW_PAID_PLANS = {
-  hour3: { label: "3 Hour Pack", interval: "hour", amount: 49_900, usdAmount: 599, hours: 3, months: 0 },
-  hour10: { label: "10 Hour Pack", interval: "hour", amount: 149_900, usdAmount: 1699, hours: 10, months: 0 },
+  hour3: { label: "3 Hour Pack", interval: "hour", amount: 49_900, usdAmount: 599, hours: 3, months: 0, validityDays: 7 },
+  hour10: { label: "10 Hour Pack", interval: "hour", amount: 149_900, usdAmount: 1699, hours: 10, months: 0, validityDays: 15 },
   monthly200: { label: "Monthly", interval: "month", amount: 349_900, usdAmount: 3999, hours: 200, months: 1 },
   quarterly200: { label: "3 Months", interval: "quarter", amount: 799_900, usdAmount: 8999, hours: 200, months: 3 },
-  annual200: { label: "Yearly", interval: "year", amount: 1_949_900, usdAmount: 21999, hours: 200, months: 12 },
+  annual200: { label: "Yearly", interval: "year", amount: 1_949_900, usdAmount: 20200, hours: 200, months: 12 },
 } as const;
 export type NewPaidPlanId = keyof typeof NEW_PAID_PLANS;
 export function isNewPaidPlan(id: unknown): id is NewPaidPlanId {

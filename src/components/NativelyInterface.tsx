@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect, useRef, useLayoutEffect, useMemo, useCallback } from 'react';
+import { remainingListeningSeconds, formatListeningDuration } from '../lib/listeningBalance';
 import {
     Sparkles,
     Pencil,
@@ -207,14 +208,34 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     const activeAiTimingRef = useRef<AiTimingTrace | null>(null);
     const streamingResponseTextRef = useRef('');
     const localMeetingIdRef = useRef<string | null>(getCurrentLocalMeetingId());
-    const isPaidListeningExhausted = !!planStatus && planStatus.plan !== 'free' && (planStatus.remaining.sttSeconds ?? 0) <= 0;
     const isHourlyPlan = planStatus?.plan === 'hour3' || planStatus?.plan === 'hour10';
+    const hourlyBalanceRef = useRef({ seconds: planStatus?.remaining.sttSeconds ?? 0, at: Date.now(), snapshot: planStatus, listening: isCluegentSessionActive });
+    if (hourlyBalanceRef.current.snapshot !== planStatus || hourlyBalanceRef.current.listening !== isCluegentSessionActive) {
+        const previous = hourlyBalanceRef.current;
+        const serverBalance = planStatus?.remaining.sttSeconds ?? 0;
+        const previousEstimate = remainingListeningSeconds(previous.seconds, previous.listening ? (Date.now() - previous.at) / 1000 : 0);
+        // Usage reports may lag by a few seconds. Do not move the countdown backwards
+        // unless a purchase or plan change actually increased the server balance.
+        const seconds = previous.snapshot?.plan === planStatus?.plan && serverBalance <= (previous.snapshot?.remaining.sttSeconds ?? 0)
+            ? Math.min(serverBalance, previousEstimate) : serverBalance;
+        hourlyBalanceRef.current = { seconds, at: Date.now(), snapshot: planStatus, listening: isCluegentSessionActive };
+    }
+    const hourlyRemainingSeconds = isHourlyPlan
+        ? remainingListeningSeconds(hourlyBalanceRef.current.seconds, isCluegentSessionActive ? (Date.now() - hourlyBalanceRef.current.at) / 1000 : 0)
+        : null;
+    const isPaidListeningExhausted = !!planStatus && planStatus.plan !== 'free' && (isHourlyPlan ? hourlyRemainingSeconds === 0 : (planStatus.remaining.sttSeconds ?? 0) <= 0);
+    useEffect(() => {
+        if (!isListening && !(isHourlyPlan && isCluegentSessionActive)) return;
+        const timer = window.setInterval(() => { void refreshProfile(); }, 15000);
+        return () => window.clearInterval(timer);
+    }, [isListening, isHourlyPlan, isCluegentSessionActive, refreshProfile]);
+    useEffect(() => {
+        if (isPaidListeningExhausted && isListening) void window.electronAPI?.stopListening();
+    }, [isPaidListeningExhausted, isListening]);
     useEffect(() => {
         if (isPaidListeningExhausted) setIsExpanded(true);
     }, [isPaidListeningExhausted]);
-    const formatDuration = (seconds: number) => (
-        `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`
-    );
+    const formatDuration = formatListeningDuration;
     const freeTrialUsageStorageKey = user?.uid
         ? `cluegent_free_trial_local_used_seconds_${user.uid}`
         : null;
@@ -224,6 +245,12 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     const freeTrialUsageReportInFlightRef = useRef(false);
     const freeTrialLimitOpenedRef = useRef(false);
     const wasCluegentSessionActiveRef = useRef(false);
+    useEffect(() => {
+        if (!planStatus || planStatus.plan === 'free') return;
+        freeTrialLimitOpenedRef.current = false;
+        setSttInterviewerError(current => /free trial limit/i.test(current) ? '' : current);
+        setSttUserError(current => /free trial limit/i.test(current) ? '' : current);
+    }, [planStatus?.plan]);
     const serverFreeTrialUsedSeconds = planStatus?.plan === 'free'
         ? Math.max(
             0,
@@ -245,7 +272,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     const listeningDuration =
         freeTrialRemainingSeconds !== null
             ? `${formatDuration(freeTrialRemainingSeconds)} left`
-            : formatDuration(listeningSeconds);
+            : hourlyRemainingSeconds !== null ? `${formatDuration(hourlyRemainingSeconds)} left` : formatDuration(listeningSeconds);
 
     useEffect(() => {
         freeTrialLocalUsedSecondsRef.current = freeTrialLocalUsedSeconds;
@@ -460,13 +487,13 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     }, []);
 
     useEffect(() => {
-        if (!isListening) return;
+        if (!isListening && !(isHourlyPlan && isCluegentSessionActive)) return;
         const timer = window.setInterval(() => {
             const startedAt = listeningStartedAtRef.current ?? Date.now();
             setListeningSeconds(Math.max(0, Math.floor((Date.now() - startedAt) / 1000)));
         }, 1000);
         return () => window.clearInterval(timer);
-    }, [isListening]);
+    }, [isListening, isHourlyPlan, isCluegentSessionActive]);
 
     useEffect(() => {
         let disposed = false;
@@ -3314,7 +3341,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                 trialRemainingLabel={
                     freeTrialRemainingSeconds !== null
                         ? `${formatDuration(freeTrialRemainingSeconds)} left`
-                        : undefined
+                        : hourlyRemainingSeconds !== null ? `${formatDuration(hourlyRemainingSeconds)} left` : undefined
                 }
                 onToggleListening={handleToggleListening}
                 sources={listeningSources}

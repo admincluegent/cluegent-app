@@ -446,7 +446,7 @@ const getResumeFileIcon = (fileName?: string | null) => {
 const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, initialTab = 'general', isTrialActive = false }) => {
     const isLight = useResolvedTheme() === 'light';
     const [activeTab, setActiveTab] = useState(normalizeSettingsTab(initialTab));
-    const { profile, subscription, logoutUser, refreshProfile } = useAuth();
+    const { profile, subscription, planStatus, logoutUser, refreshProfile } = useAuth();
     const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
     const [isCancellingSubscription, setIsCancellingSubscription] = useState(false);
     const [cancelMessage, setCancelMessage] = useState<string | null>(null);
@@ -1527,6 +1527,11 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                         <p className="mt-1 text-sm text-text-secondary">
                                                             {subscription?.plan === 'free' ? 'Free plan is active.' : planRenewalLabel}
                                                         </p>
+                                                        {(planStatus?.plan === 'hour3' || planStatus?.plan === 'hour10') && (
+                                                            <p className="mt-2 text-sm font-semibold tabular-nums text-text-primary">
+                                                                {Math.floor(Math.max(0, planStatus.remaining.sttSeconds) / 3600)}h {Math.floor(Math.max(0, planStatus.remaining.sttSeconds) % 3600 / 60)}m left
+                                                            </p>
+                                                        )}
                                                     </div>
 
                                                     {isPaidSubscription && (

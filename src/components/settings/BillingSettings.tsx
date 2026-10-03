@@ -100,6 +100,7 @@ export const BillingSettings: React.FC = () => {
   }, [pending, refreshProfile]);
   useEffect(() => {
     if (pending && subscription?.orderId === pending.orderId && subscription.plan === pending.id) {
+      localStorage.setItem('cluegent_billing_updated', `${Date.now()}-${pending.orderId}`);
       setPending(null); setBusy(null); setMessage('Payment verified. Your plan is active.');
     }
   }, [subscription, pending]);
@@ -125,7 +126,9 @@ export const BillingSettings: React.FC = () => {
             try {
               if (payment.razorpay_order_id !== order.orderId) throw new Error('Payment order did not match checkout.');
               await verifyRazorpayLiveOrderPayment(payment);
-              await refreshProfile(); setMessage('Payment verified. Your plan is active.'); setPending(null);
+              await refreshProfile();
+              localStorage.setItem('cluegent_billing_updated', `${Date.now()}-${order.orderId}`);
+              setMessage('Payment verified. Your plan is active.'); setPending(null);
             } catch (err) { setError(err instanceof Error ? err.message : 'Payment verification failed. Refresh billing to retry activation.'); }
             finally { setBusy(null); }
           })();
@@ -150,7 +153,7 @@ export const BillingSettings: React.FC = () => {
       <section className="mx-auto max-w-[800px] space-y-3">
         <header className="text-center">
           <h2 className="text-[2rem] font-semibold leading-none tracking-[-0.055em]">Choose your plan</h2>
-          <p className="mt-2 text-sm text-slate-500">Hourly packs or prepaid access with a fresh monthly listening allowance.</p>
+          <p className="mt-2 text-sm text-slate-500"></p>
         </header>
         <div className="flex flex-wrap items-center justify-between gap-2">
         <div role="tablist" aria-label="Billing plans" className="flex w-fit rounded-2xl border border-slate-200 bg-slate-100 p-1 shadow-[0_18px_60px_-45px_rgba(15,23,42,0.35)]">
@@ -192,15 +195,18 @@ export const BillingSettings: React.FC = () => {
           <div id="billing-plans" role="tabpanel" aria-labelledby={`billing-${category}`} className="mx-auto flex max-w-[640px] min-[900px]:max-w-[680px] flex-wrap justify-center gap-3">
             {CARDS.filter(card => card.category === category).map((card, index) => {
               const price = prices.find(price => price.planId === card.id && price.interval === card.interval && price.currency === currency);
+              const validity = price?.displayPrice.match(/\s*\[([^\]]+validity)\]\s*$/i);
+              const displayPrice = validity ? price!.displayPrice.replace(validity[0], '') : price?.displayPrice;
               const accent = card.category === 'year' ? { border: 'border-slate-500', bullet: 'text-slate-600', button: 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700' } : index === 0 ? { border: 'border-emerald-400', bullet: 'text-emerald-500', button: 'border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800' } : { border: 'border-blue-400', bullet: 'text-orange-500', button: 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700' };
               const active = subscription?.status === 'active' && subscription.plan === card.id;
               return <article key={card.id} className={`relative flex min-h-[400px] min-[900px]:min-h-[430px] w-full max-w-[310px] min-[900px]:max-w-[330px] min-w-0 flex-col rounded-[24px] border-2 bg-white p-3 min-[900px]:p-4 text-slate-950 shadow-[0_22px_70px_-46px_rgba(15,23,42,0.45)] ${accent.border}`}>
                 <h3 className="text-lg min-[900px]:text-xl font-semibold">{card.name}</h3>
                 <div className="mt-3 flex flex-wrap items-baseline gap-1.5">
                   {price && <del aria-label="Original price" className="text-sm min-[900px]:text-base font-medium text-slate-400 decoration-2">{ORIGINAL_PRICES[currency][card.id]}</del>}
-                  <p className={`text-[1.75rem] min-[900px]:text-[1.875rem] font-semibold tracking-tight ${price ? 'billing-sparkle billing-price-sparkle' : ''}`}>{price?.displayPrice ?? 'Unavailable'}</p>
+                  <p className={`text-[1.75rem] min-[900px]:text-[1.875rem] font-semibold tracking-tight ${price ? 'billing-sparkle billing-price-sparkle' : ''}`}>{displayPrice ?? 'Unavailable'}</p>
                   {['hour10','quarterly200','annual200'].includes(card.id) && <span className="rounded-full border border-orange-200 bg-orange-50 px-1.5 py-0.5 text-[9px] min-[900px]:text-[10px] font-semibold text-orange-700">Most Popular</span>}
                 </div>
+                {validity && <p className="mt-1 text-[13px] leading-5 text-slate-500">{validity[1]}</p>}
                 <p className="mt-1 text-[13px] leading-5 text-slate-500">{card.months > 1 ? `${price?.displayMonthlyPrice ?? '—'}/month equivalent · paid upfront for ${card.months} months` : card.months === 1 ? '' : ''}</p>
                 {card.months > 0 && <p className="mt-1 text-xs leading-4 text-slate-500"></p>}
                 <ul className="my-2 space-y-1 min-[900px]:space-y-1.5 text-xs min-[900px]:text-[13px] leading-4 min-[900px]:leading-5 text-slate-700">

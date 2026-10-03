@@ -129,6 +129,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setError(null);
   }, []);
 
+  useEffect(() => {
+    if (!user) return;
+    const refresh = () => { void refreshProfile(); };
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === 'cluegent_billing_updated') refresh();
+    };
+    const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [user, refreshProfile]);
+
   const handleGoogleLogin = useCallback(async () => {
     if (isAuthenticating) {
       return;

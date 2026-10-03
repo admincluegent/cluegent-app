@@ -32,12 +32,15 @@ if (window.electronAPI?.getThemeMode) {
   });
 }
 
+// Auxiliary controls must render while auth restores; the full login layout
+// cannot fit a preloaded options popup. Backend actions still require auth.
+const isAuxiliaryWindow = ['settings', 'model-selector'].includes(
+  new URLSearchParams(window.location.search).get('window') ?? ''
+);
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <AuthProvider>
-      <AuthGate>
-        <App />
-      </AuthGate>
+      {isAuxiliaryWindow ? <App /> : <AuthGate><App /></AuthGate>}
     </AuthProvider>
   </React.StrictMode>
 )

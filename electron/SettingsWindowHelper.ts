@@ -22,7 +22,7 @@ export class SettingsWindowHelper {
     }
 
     public setWindowDimensions(win: BrowserWindow, width: number, height: number): void {
-        if (!win || win.isDestroyed() || !win.isVisible()) return
+        if (!win || win.isDestroyed() || !Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return
 
         const currentBounds = win.getBounds()
         // Only update if dimensions actually change (avoid infinite loops)
@@ -152,7 +152,7 @@ export class SettingsWindowHelper {
 
     private createWindow(x?: number, y?: number, showWhenReady: boolean = true): void {
         const windowSettings: Electron.BrowserWindowConstructorOptions = {
-            width: 216,
+            width: 270,
             height: 236,
             frame: false,
             transparent: false,

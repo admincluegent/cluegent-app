@@ -594,7 +594,8 @@ async function verifyRazorpayLiveOrderPaymentForPlan(
   const expectedPricing = getLiveOrderPricing(
     mappedPlan.planId,
     mappedPlan.interval,
-    readRazorpayCurrency(orderData.currency)
+    readRazorpayCurrency(orderData.currency),
+    orderData.amount
   );
 
   if (!expectedPricing || orderData.amount !== expectedPricing.amount) {
@@ -1126,7 +1127,8 @@ async function persistRazorpayLiveOrderWebhookEvent(
     ? getLiveOrderPricing(
         mappedPlan.planId,
         mappedPlan.interval,
-        readRazorpayCurrency(orderData?.currency)
+        readRazorpayCurrency(orderData?.currency),
+        orderData?.amount
       )
     : null;
   const amount = readNumber(order.amount) ?? readNumber(payment.amount);
@@ -1590,7 +1592,8 @@ async function applyRazorpayOrderEntitlement(input: {
   const pricing = getLiveOrderPricing(
     input.mappedPlan.planId,
     input.mappedPlan.interval,
-    input.currency
+    input.currency,
+    input.amount
   );
   if (!pricing || pricing.amount !== input.amount) {
     throw new HttpsError(
@@ -1606,7 +1609,7 @@ async function applyRazorpayOrderEntitlement(input: {
   const customerRef = db.collection(LIVE_CUSTOMERS_COLLECTION).doc(input.uid);
   const startedAt = new Date();
   const newPlan = isNewPaidPlan(input.mappedPlan.planId) ? NEW_PAID_PLANS[input.mappedPlan.planId] : null;
-  const expiresAt = newPlan ? (newPlan.months ? addBillingMonths(startedAt, newPlan.months) : null) : new Date(startedAt.getTime() + pricing.durationMs);
+  const expiresAt = newPlan ? (newPlan.months ? addBillingMonths(startedAt, newPlan.months) : new Date(startedAt.getTime() + pricing.durationMs)) : new Date(startedAt.getTime() + pricing.durationMs);
   const currentMonthKey = refs.usagePath.split("/").pop();
 
   await db.runTransaction(async (transaction) => {
@@ -1634,7 +1637,8 @@ async function applyRazorpayOrderEntitlement(input: {
       )
     );
     const previous = materializeSubscription(subscriptionSnap.data() as ReturnType<typeof materializeSubscription>);
-    const isHourlyTopup = newPlan?.interval === 'hour' && previous.billingInterval === 'hour' && previous.status === 'active' && isNewPaidPlan(previous.plan);
+    const previousExpired = previous.expiresAt !== null && new Date(previous.expiresAt).getTime() <= startedAt.getTime();
+    const isHourlyTopup = newPlan?.interval === 'hour' && previous.billingInterval === 'hour' && previous.status === 'active' && !previousExpired && isNewPaidPlan(previous.plan);
     const previousUsed = isHourlyTopup ? getPlanPeriodUsage(previous, materializeUsage()).sttSecondsUsed : 0;
     const grantedSeconds = (isHourlyTopup ? previous.sttSecondsLimit : 0) + planConfig.sttSecondsLimit;
     const effectiveStartedAt = isHourlyTopup ? previous.startedAt! : startedAt.toISOString();
@@ -1812,14 +1816,20 @@ function assertPowerYearlyCheckoutEnabled(planId: unknown, interval: unknown) {
 function getLiveOrderPricing(
   planId: PaidPlanId,
   interval: BillingInterval,
-  currency: RazorpayCurrency | null
+  currency: RazorpayCurrency | null,
+  storedOrderAmount?: number
 ) {
   if (!currency || !isSupportedPaidPlan(planId, interval)) {
     return null;
   }
   if (isNewPaidPlan(planId)) {
     const plan = NEW_PAID_PLANS[planId];
-    return { amount: currency === 'USD' ? plan.usdAmount : plan.amount, currency, durationMs: 0, description: `Cluegent ${plan.label} — ${plan.hours} hours${plan.months ? ' per month' : ' total'}` };
+    const validityDays = 'validityDays' in plan ? plan.validityDays : 0;
+    // Only verification of server-stored orders accepts the former annual USD price.
+    // New orders never supply storedOrderAmount and always use the current price.
+    const amount = planId === 'annual200' && currency === 'USD' && storedOrderAmount === 21999
+      ? 21999 : currency === 'USD' ? plan.usdAmount : plan.amount;
+    return { amount, currency, durationMs: validityDays * 86400000, description: `Cluegent ${plan.label} — ${plan.hours} hours${plan.months ? ' per month' : ` total · ${validityDays}-day validity`}` };
   }
 
   const amount = LIVE_ORDER_PRICES_SUBUNITS[currency][planId]?.[interval];
@@ -1854,9 +1864,9 @@ function buildLiveBillingPlanPrices(): LiveBillingPlanPrice[] {
       const amount = currency === 'USD' ? plan.usdAmount : plan.amount;
       return {
         providerMode: 'live', planId: planId as PaidPlanId, interval: plan.interval, currency,
-        amountSubunits: amount, displayPrice: formatCurrencySubunits(amount, currency, currency === 'USD' ? 2 : 0),
+        amountSubunits: amount, displayPrice: formatCurrencySubunits(amount, currency, currency === 'USD' ? 2 : 0) + ('validityDays' in plan ? ` [${plan.validityDays}-day validity]` : ''),
         displayMonthlyPrice: formatCurrencyMajor(amount / 100 / Math.max(1, plan.months), currency, 2, 2),
-        description: `${plan.hours} hours${plan.months ? ' per month' : ' total'}`,
+        description: `${plan.hours} hours${plan.months ? ' per month' : ' total'}${'validityDays' in plan ? ` · ${plan.validityDays}-day validity` : ''}`,
       };
     })
   );

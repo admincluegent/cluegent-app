@@ -102,8 +102,8 @@ const SettingsPopup = () => {
                 try {
                     // @ts-ignore
                     window.electronAPI?.updateContentDimensions({
-                        width: Math.ceil(rect.width),
-                        height: Math.ceil(rect.height)
+                        width: (entry.target as HTMLElement).offsetWidth,
+                        height: (entry.target as HTMLElement).offsetHeight
                     });
                 } catch (e) {
                     console.warn("Failed to update dimensions", e);
@@ -126,12 +126,12 @@ const SettingsPopup = () => {
 
     return (
         <div
-            className="w-[216px] inline-flex flex-col text-white"
+            className="w-[270px] inline-flex flex-col text-white"
             style={{ backgroundColor: '#05070c' }}
         >
             <div
                 ref={contentRef}
-                className={`w-[216px] border rounded-[18px] overflow-hidden p-2 inline-flex flex-col animate-scale-in origin-top-left text-white ${popupPanelClass}`}
+                className={`w-[270px] border rounded-[18px] overflow-hidden p-2 inline-flex flex-col text-white ${popupPanelClass}`}
                 style={{ backgroundColor: '#05070c' }}
             >
                 <div className="flex flex-col">
@@ -154,11 +154,13 @@ const SettingsPopup = () => {
                             localStorage.setItem('natively_undetectable', String(newState));
                             window.electronAPI?.setUndetectable(newState);
                         }}
-                        className={`w-[30px] h-[18px] rounded-full p-[1.5px] transition-all duration-300 ease-spring active:scale-[0.92] ${isUndetectable
+                        aria-label="Undetectable mode"
+                        aria-pressed={isUndetectable}
+                        className={`shrink-0 w-[30px] h-[18px] rounded-full p-[1.5px] transition-all duration-300 ease-spring active:scale-[0.92] ${isUndetectable
                             ? 'bg-white shadow-[0_2px_8px_rgba(255,255,255,0.2)]'
                             : defaultToggleTrackClass}`}
                     >
-                        <div className={`w-[15px] h-[15px] rounded-full transition-transform duration-300 ease-spring ${toggleKnobClass} ${isUndetectable ? 'translate-x-[12px]' : 'translate-x-0'}`} />
+                        <div className={`w-[15px] h-[15px] rounded-full transition-transform duration-300 ease-spring ${isUndetectable ? 'bg-slate-900 translate-x-[12px]' : `${toggleKnobClass} translate-x-0`}`} />
                     </button>
                 </div>
 
@@ -179,7 +181,9 @@ const SettingsPopup = () => {
                             // Dispatch event for same-window listeners
                             window.dispatchEvent(new Event('storage'));
                         }}
-                        className={`w-[30px] h-[18px] rounded-full p-[1.5px] transition-all duration-300 ease-spring active:scale-[0.92] ${showTranscript ? 'bg-emerald-500 shadow-[0_2px_10px_rgba(16,185,129,0.3)]' : defaultToggleTrackClass}`}
+                        aria-label="Live transcript"
+                        aria-pressed={showTranscript}
+                        className={`shrink-0 w-[30px] h-[18px] rounded-full p-[1.5px] transition-all duration-300 ease-spring active:scale-[0.92] ${showTranscript ? 'bg-emerald-500 shadow-[0_2px_10px_rgba(16,185,129,0.3)]' : defaultToggleTrackClass}`}
                     >
                         <div className={`w-[15px] h-[15px] rounded-full transition-transform duration-300 ease-spring ${toggleKnobClass} ${showTranscript ? 'translate-x-[12px]' : 'translate-x-0'}`} />
                     </button>
@@ -203,7 +207,9 @@ const SettingsPopup = () => {
                                 await window.electronAPI?.profileSetMode?.(newState);
                             } catch (e) { console.error(e); }
                         }}
-                        className={`w-[30px] h-[18px] rounded-full p-[1.5px] transition-all duration-300 ease-spring active:scale-[0.92] ${profileMode ? 'bg-emerald-500 shadow-[0_2px_10px_rgba(16,185,129,0.3)]' : defaultToggleTrackClass}`}
+                        aria-label="Resume context"
+                        aria-pressed={profileMode}
+                        className={`shrink-0 w-[30px] h-[18px] rounded-full p-[1.5px] transition-all duration-300 ease-spring active:scale-[0.92] ${profileMode ? 'bg-emerald-500 shadow-[0_2px_10px_rgba(16,185,129,0.3)]' : defaultToggleTrackClass}`}
                         disabled={!hasProfile}
                     >
                         <div className={`w-[15px] h-[15px] rounded-full transition-transform duration-300 ease-spring ${toggleKnobClass} ${profileMode ? 'translate-x-[12px]' : 'translate-x-0'}`} />

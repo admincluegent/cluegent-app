@@ -6,6 +6,7 @@ import { gzipSync } from "node:zlib";
 import { Readable } from "node:stream";
 import { discoveryClusters } from "./seo-discovery-improvements.mjs";
 import { growthPostsBatch6, growthBacklinksBatch6 } from "./seo-growth-posts-batch-6.mjs";
+import { growthPostsBatch7, growthBacklinksBatch7 } from "./seo-growth-posts-batch-7.mjs";
 const cliRoot = process.env.FIREBASE_TOOLS_ROOT;
 if (!cliRoot) throw new Error("Set FIREBASE_TOOLS_ROOT to the installed firebase-tools directory");
 const require = createRequire(`${cliRoot}/package.json`);
@@ -30,8 +31,11 @@ async function files(version) {
 }
 const productionFiles = await files(base);
 const batch6 = process.argv.includes("--batch6");
-const slugs = [...new Set(batch6 ? [...growthPostsBatch6.map(post => post.slug), ...growthBacklinksBatch6.map(([slug]) => slug)] : [...discoveryClusters.flatMap(group => group.slugs), "parakeet-ai", "system-design-interview-questions-beginners", "how-to-prepare-for-coding-interview-in-7-days"])];
-const paths = [...(batch6 ? [] : ["/index.html", "/cluegent-indexnow-key.txt"]), "/blog/index.html", "/sitemap.xml", ...slugs.map(slug => `/blog/${slug}/index.html`)];
+const batch7 = process.argv.includes("--batch7");
+const selectedPosts = batch7 ? growthPostsBatch7 : growthPostsBatch6;
+const selectedBacklinks = batch7 ? growthBacklinksBatch7 : growthBacklinksBatch6;
+const slugs = [...new Set(batch6 || batch7 ? [...selectedPosts.map(post => post.slug), ...selectedBacklinks.map(([slug]) => slug)] : [...discoveryClusters.flatMap(group => group.slugs), "parakeet-ai", "system-design-interview-questions-beginners", "how-to-prepare-for-coding-interview-in-7-days"])];
+const paths = [...(batch6 || batch7 ? [] : ["/index.html", "/cluegent-indexnow-key.txt"]), "/blog/index.html", "/sitemap.xml", ...slugs.map(slug => `/blog/${slug}/index.html`)];
 const replacements = {}; const bodies = new Map();
 for (const path of paths) {
   const bytes = readFileSync(new URL(`../website${path}`, import.meta.url));
@@ -55,5 +59,5 @@ if (Object.keys(actual).length !== Object.keys(manifest).length || Object.entrie
 const current = await hosting.getChannel("-", site, "live");
 if (current.release.version.name !== base) throw new Error("Production changed during preparation; release stopped");
 await hosting.updateVersion(site, version.split("/").pop(), { status: "FINALIZED" });
-const release = await hosting.createRelease(site, "live", version, { message: batch6 ? "20 original interview practice guides, related links and sitemap: September 29" : "SEO discovery links, Parakeet guide and IndexNow verification; preserve other production files" });
+const release = await hosting.createRelease(site, "live", version, { message: batch7 ? "20 technical interview guides, related links and sitemap: October 3" : batch6 ? "20 original interview practice guides, related links and sitemap: September 29" : "SEO discovery links, Parakeet guide and IndexNow verification; preserve other production files" });
 console.log(JSON.stringify({ release: release.name, version, previousVersion: base, filesChanged: paths.length }));
