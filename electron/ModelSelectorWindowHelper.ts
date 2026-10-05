@@ -62,7 +62,7 @@ export class ModelSelectorWindowHelper {
 
         if (process.platform === "darwin") {
             // Align with parent window behavior
-            this.window.setVisibleOnAllWorkspaces(isOverlay, { visibleOnFullScreen: isOverlay });
+            this.window.setVisibleOnAllWorkspaces(isOverlay, { visibleOnFullScreen: isOverlay, skipTransformProcessType: !app.dock.isVisible() });
             // Only set alwaysOnTop if the value is actually changing — calling it unnecessarily
             // triggers NSApp activation on macOS, stealing focus from other apps.
             const currentAlwaysOnTop = this.window.isAlwaysOnTop();

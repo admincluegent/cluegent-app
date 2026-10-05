@@ -179,7 +179,7 @@ export class SettingsWindowHelper {
         this.settingsWindow = new BrowserWindow(windowSettings)
 
         if (process.platform === "darwin") {
-            this.settingsWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+            this.settingsWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true, skipTransformProcessType: !app.dock.isVisible() })
             this.settingsWindow.setHiddenInMissionControl(true)
             this.settingsWindow.setAlwaysOnTop(true, "floating")
         }

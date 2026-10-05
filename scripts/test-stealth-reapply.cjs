@@ -39,3 +39,13 @@ test('both overlay opening paths reapply native state after showing',()=>{
   assert.equal(methods.length,2);
   for(const body of methods)assert.ok(body.lastIndexOf('setUndetectable(true, true)')>body.lastIndexOf('showInactive()'));
 });
+test('macOS workspace setup preserves hidden process type across auxiliary windows',()=>{
+  for(const name of ['WindowHelper','SettingsWindowHelper','ModelSelectorWindowHelper','CropperWindowHelper']) {
+    const code=fs.readFileSync(`electron/${name}.ts`,'utf8');
+    const calls=code.split('\n').filter(line=>line.includes('.setVisibleOnAllWorkspaces('));
+    assert.ok(calls.length>0);
+    for(const call of calls)assert.ok(call.includes('skipTransformProcessType: !app.dock.isVisible()'),name);
+  }
+  const code=fs.readFileSync('electron/WindowHelper.ts','utf8');
+  assert.ok(code.includes("inactive || (process.platform === 'darwin' && this.appState.getUndetectable())"));
+});
