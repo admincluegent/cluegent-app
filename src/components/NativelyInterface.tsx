@@ -3201,9 +3201,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
             }
 
             clearRollingTranscript();
-            setIsListening(true);
-            isListeningRef.current = true;
-            listeningStartedAtRef.current = Date.now();
+            // Listening state is broadcast after native capture confirms startup.
             setListeningSeconds(0);
             setSttInterviewerStatus('reconnecting');
             setSttInterviewerError('');
@@ -3222,15 +3220,15 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                 audio: { inputDeviceId, outputDeviceId },
                 sources: listeningSources
             });
-            if (!result?.success && result?.error) {
+            if (!result?.success) {
                 setIsListening(false);
                 isListeningRef.current = false;
                 listeningStartedAtRef.current = null;
                 setListeningSeconds(0);
                 setSttInterviewerStatus('failed');
-                setSttInterviewerError(result.error);
+                setSttInterviewerError(result?.error || 'Listening failed to start.');
                 setSttUserStatus('failed');
-                setSttUserError(result.error);
+                setSttUserError(result?.error || 'Listening failed to start.');
             }
         } catch (error) {
             setIsListening(false);

@@ -1,3 +1,5 @@
+import { prepareOverlayPermissions } from './services/OverlayPermissions';
+import { startCaptureReady } from './audio/captureReady';
 import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, systemPreferences, screen, desktopCapturer } from "electron"
 import path from "path"
 import fs from "fs"
@@ -1459,7 +1461,16 @@ export class AppState {
     this.broadcastListeningState();
   }
 
-  public async startListening(metadata?: any): Promise<void> {
+  private listeningStartup: Promise<void> | null = null;
+
+  public startListening(metadata?: any): Promise<void> {
+    if (!this.listeningStartup) {
+      this.listeningStartup = this.startListeningReady(metadata).finally(() => { this.listeningStartup = null; });
+    }
+    return this.listeningStartup;
+  }
+
+  private async startListeningReady(metadata?: any): Promise<void> {
     const startupStartedAt = Date.now();
     if (!this.isMeetingActive) {
       await this.startMeeting(metadata);
@@ -1468,8 +1479,12 @@ export class AppState {
     this.listeningSystemEnabled = metadata?.sources?.systemEnabled !== false;
     this.listeningMicEnabled = metadata?.sources?.micEnabled !== false;
 
-    if (this.listeningMicEnabled && !(await ensureMacMicrophoneAccess('listening'))) {
-      throw new Error('Microphone access denied. Enable microphone access in System Settings or turn the mic off.');
+    const permissions = await prepareOverlayPermissions();
+    if ((this.listeningMicEnabled && permissions.microphone !== 'granted') ||
+        (this.listeningSystemEnabled && permissions.screen !== 'granted')) {
+      const message = 'Allow Microphone and Screen Recording for Cluegent in System Settings → Privacy & Security, then retry. If macOS requests a restart, quit and reopen Cluegent.';
+      this.broadcast('system-audio-permission-denied', message);
+      throw new Error(message);
     }
 
     try {
@@ -1478,21 +1493,26 @@ export class AppState {
       }
 
       this.setupSystemAudioPipeline('all');
+      const startup: Promise<void>[] = [];
       console.log(`[ListeningTiming] Capture setup ready after ${Date.now() - startupStartedAt}ms`);
 
       if (!this.isListeningActive && this.listeningSystemEnabled) {
         this.googleSTT?.setUsageReportingEnabled?.(!this.hourlySession);
-        this.systemAudioCapture?.start();
+        if (!this.systemAudioCapture) throw new Error('System audio capture is unavailable.');
         this.googleSTT?.start();
+        startup.push(startCaptureReady(this.systemAudioCapture));
       }
 
       if (!this.isMicListeningActive && this.listeningMicEnabled) {
         // Combined Start Listening runs microphone STT for context, but usage
         // should be counted once for the listening session, not once per stream.
         this.googleSTT_User?.setUsageReportingEnabled?.(!this.hourlySession && !this.listeningSystemEnabled);
-        this.microphoneCapture?.start();
+        if (!this.microphoneCapture) throw new Error('Microphone capture is unavailable.');
         this.googleSTT_User?.start();
+        startup.push(startCaptureReady(this.microphoneCapture));
       }
+
+      await Promise.all(startup);
 
       if (this.ragManager) {
         this.ragManager.startLiveIndexing('live-meeting-current');
@@ -1503,6 +1523,13 @@ export class AppState {
       this.broadcastListeningState();
       console.log('[Main] Combined system + microphone listening started.');
     } catch (err) {
+      this.systemAudioCapture?.stop();
+      this.microphoneCapture?.stop();
+      this.googleSTT?.stop();
+      this.googleSTT_User?.stop();
+      this.isListeningActive = false;
+      this.isMicListeningActive = false;
+      this.broadcastListeningState();
       console.error('[Main] Error starting listening:', err);
       this.broadcast('meeting-audio-error', (err as Error).message || 'Listening failed to start');
       throw err;
