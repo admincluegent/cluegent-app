@@ -1,0 +1,36 @@
+{
+  "campaign": "Cluegent India | 3 Creative Test | 08 Oct 2026",
+  "objective": "Traffic — landing page views",
+  "start": "2026-10-08T09:00:00+05:30",
+  "end": null,
+  "daily_budget_inr_per_ad_set": 400,
+  "destination": "https://www.cluegent.com/",
+  "ads": [
+    {
+      "name": "01 | AI Interview Wingman",
+      "image": "05-3d-wingman.png",
+      "primary": "When interview questions get tough, keep Cluegent close. Get real-time AI answers, coding support and resume-aware context on your desktop. Try it free for 12 minutes. Need more time? The 3-hour pack is ₹499, paid once.",
+      "headline": "Your AI interview wingman",
+      "description": "12-minute free trial · ₹499 for 3 hours",
+      "utm_content": "wingman"
+    },
+    {
+      "name": "02 | Salary Goal",
+      "image": "01-salary-target.png",
+      "primary": "Aiming for a ₹20 LPA role? Bring AI support to your next interview. Cluegent helps with real-time answers, coding questions and resume-aware context. Explore it with a 12-minute free trial. The 3-hour pack is ₹499, paid once.",
+      "headline": "Bring AI support to your next interview",
+      "description": "Try free for 12 minutes · 3-hour pack ₹499",
+      "utm_content": "salary_goal"
+    },
+    {
+      "name": "03 | Real-Time Answer Support",
+      "image": "03-interview-support.png",
+      "primary": "The question lands. Cluegent helps you work through your answer with real-time AI support and coding help on your desktop. Start with a 12-minute free trial. Get 3 hours of interview assistance for ₹499 with a one-time payment.",
+      "headline": "Real-time answers. Coding help.",
+      "description": "12-minute free trial · ₹499 for 3 hours",
+      "utm_content": "answer_support"
+    }
+  ],
+  "cta": "Learn more",
+  "status": "Prepared copy and intended settings; publishing requires completion in Ads Manager."
+}

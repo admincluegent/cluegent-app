@@ -33,6 +33,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 // import { ModelSelector } from './ui/ModelSelector'; // REMOVED
 import TopPill from './ui/TopPill';
 import RollingTranscript from './ui/RollingTranscript';
+import ResponseCopyButton from './ui/ResponseCopyButton';
 import ResizableResponsePanel, { getResponsePanelWidth } from './ui/ResizableResponsePanel';
 import { buildResponsePages } from '../lib/responsePages';
 import { createMessageId } from '../lib/messageIds';
@@ -1091,9 +1092,6 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                         console.warn('[NativelyInterface] Failed to save microphone transcript locally:', error);
                     }
 
-                    setTimeout(() => {
-                        setIsUserSpeaking(false);
-                    }, 3000);
                     return;
                 }
 
@@ -1122,12 +1120,6 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             const nextText = transcript.text.trim();
 
             if (transcript.final) {
-                const nextTranscript = committed
-                    ? `${committed}  Â·  ${nextText}`
-                    : nextText;
-                finalizedRollingTranscriptRef.current = nextTranscript;
-                rollingTranscriptRef.current = nextTranscript;
-                setRollingTranscript(nextTranscript);
                 const normalizedTranscript = committed
                     ? `${committed}  |  ${nextText}`
                     : nextText;
@@ -1143,9 +1135,6 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                     console.warn('[NativelyInterface] Failed to save rolling transcript locally:', error);
                 }
 
-                setTimeout(() => {
-                    setIsInterviewerSpeaking(false);
-                }, 3000);
                 return;
             }
 
@@ -1174,9 +1163,6 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                 });
 
                 // Clear speaking indicator after pause
-                setTimeout(() => {
-                    setIsInterviewerSpeaking(false);
-                }, 3000);
             } else {
                 // For partial transcripts, show current segment appended to accumulated
                 setRollingTranscript(prev => {
@@ -1501,12 +1487,6 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     }, []); // intentionally empty â€” these listeners must survive isExpanded changes
 
     // Quick Actions - Updated to use new Intelligence APIs
-
-    const handleCopy = (text: string) => {
-        navigator.clipboard.writeText(text);
-        analytics.trackCopyAnswer();
-        // Optional: Trigger a small toast or state change for visual feedback
-    };
 
     const handleCopyCodeBlock = (code: string, key: string) => {
         navigator.clipboard.writeText(code);
@@ -3527,14 +3507,11 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                                     />
                                                 )}
                                                 {msg.role === 'system' && !msg.isStreaming && (
-                                                    <button
-                                                        onClick={() => handleCopy(msg.text)}
-                                                        className="absolute top-2 right-2 p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity overlay-icon-surface overlay-icon-surface-hover overlay-text-interactive"
-                                                        title="Copy to clipboard"
+                                                    <ResponseCopyButton
+                                                        text={msg.text}
                                                         style={appearance.iconStyle}
-                                                    >
-                                                        <Copy className="w-3.5 h-3.5" />
-                                                    </button>
+                                                        onCopied={() => analytics.trackCopyAnswer()}
+                                                    />
                                                 )}
                                                 {renderMessageText(msg)}
                                                 {msg.role === 'system' && !msg.isStreaming && (

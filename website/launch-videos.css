@@ -1,0 +1,25 @@
+/* Keep both formats at a shared height without stretching the landscape demo. */
+.launch-videos-section { max-width: 1180px; margin: 0 auto; padding: 72px 24px; scroll-margin-top: 110px; }
+.launch-videos-grid { display: flex; gap: 24px; align-items: flex-start; width: 100%; max-width: 900px; margin: 0 auto; padding: 0 16px 20px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: thin; scrollbar-color: #94a3b8 transparent; }
+.launch-videos-grid::-webkit-scrollbar { height: 6px; }
+.launch-videos-grid::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 6px; }
+.launch-videos-grid:focus-visible { outline: 2px solid var(--blue, #2563eb); outline-offset: 5px; border-radius: 12px; }
+.launch-video { flex: 0 0 auto; min-width: 0; scroll-snap-align: start; }
+.launch-video--wide { width: 640px; }
+.launch-video--short { width: 202.5px; }
+.launch-video-player { position: relative; height: 360px; overflow: hidden; border-radius: 18px; background: #0b1120; }
+.launch-video-player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.launch-video-caption { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; padding: 16px 2px 0; }
+.launch-video-caption h3 { margin: 0; font-size: 18px; letter-spacing: -0.02em; }
+.launch-video-caption a { color: var(--text, #475569); font-size: 14px; text-underline-offset: 4px; transition: color 180ms ease; }
+.launch-video-caption a:hover { color: var(--blue, #2563eb); text-decoration: underline; }
+.launch-video-caption a:focus-visible { outline: 2px solid var(--blue, #2563eb); outline-offset: 5px; border-radius: 2px; }
+.launch-videos-scroll-hint { display: none; color: var(--text, #475569); font-size: 14px; text-align: center; margin: 16px 0 0; }
+@media (max-width: 940px) {
+ .launch-videos-scroll-hint { display: block; }
+}
+@media (max-width: 760px) {
+ .launch-videos-section { padding: 48px 20px; }
+ .launch-videos-grid { padding-inline: 0; gap: 20px; }
+ .launch-video-player { border-radius: 14px; }
+}

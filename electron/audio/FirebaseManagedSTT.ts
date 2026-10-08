@@ -25,7 +25,15 @@ const TURN_MIN_SILENCE_MS = 240;
 const TURN_MAX_SILENCE_MS = 900;
 const TURN_END_CONFIDENCE_THRESHOLD = 0.4;
 
+interface SttRoute {
+  speechModel: string;
+  proSpeechModel: string | null;
+  fallbackSpeechModel: string;
+  proSecondsRemaining: number;
+}
+
 interface TokenResponse {
+  sttRoute?: SttRoute;
   success: true;
   token: {
     accessToken: string;
@@ -33,6 +41,7 @@ interface TokenResponse {
   };
   remaining: {
     sttSecondsRemaining: number;
+    proSttSecondsRemaining?: number;
   };
 }
 
@@ -50,6 +59,7 @@ interface TrackUsageResponse {
   };
   remaining: {
     sttSecondsRemaining: number;
+    proSttSecondsRemaining?: number;
   };
 }
 
@@ -74,6 +84,7 @@ interface AssemblyBeginMessage {
   type: "Begin";
   id?: string;
   expires_at?: number;
+  configuration?: { model?: string };
 }
 
 interface AssemblyTurnMessage {
@@ -118,8 +129,12 @@ export class FirebaseManagedSTT extends EventEmitter {
   private usageReportingEnabled = true;
   private lastTurnOrder: number | null = null;
   private lastTurnTranscript = "";
+  private lastTurnFinal = false;
+  private sttRoute: SttRoute | null = null;
+  private switchingModel = false;
+  private connectionGeneration = 0;
   private readonly tokenEndpoint: string;
-  private prefetchedAccessToken: { token: Promise<string>; validUntil: number } | null = null;
+  private prefetchedAccessToken: { token: Promise<TokenResponse>; validUntil: number } | null = null;
   private readonly trackUsageEndpoint: string;
 
   constructor(
@@ -156,6 +171,8 @@ export class FirebaseManagedSTT extends EventEmitter {
         : (RECOGNITION_LANGUAGES[key]?.iso639 ?? this.languageCode);
     if (this.languageCode === nextLanguage) return;
     this.languageCode = nextLanguage;
+    this.prefetchedAccessToken = null;
+    this.sttRoute = null;
     console.log(`[FirebaseManagedSTT] Language set to ${this.languageCode}`);
     if (this.isActive) this.restartStream();
   }
@@ -180,6 +197,8 @@ export class FirebaseManagedSTT extends EventEmitter {
   }
 
   public stop(): void {
+    this.connectionGeneration += 1;
+    this.switchingModel = false;
     this.prefetchedAccessToken = null;
     this.shouldReconnect = false;
     this.clearTimers();
@@ -221,7 +240,7 @@ export class FirebaseManagedSTT extends EventEmitter {
       this.buffer.push(chunk);
       if (this.buffer.length > 500) this.buffer.shift();
 
-      if (!this.isConnecting && this.shouldReconnect && !this.reconnectTimer) {
+      if (!this.isConnecting && !this.switchingModel && this.shouldReconnect && !this.reconnectTimer) {
         void this.connect();
       }
       return;
@@ -243,8 +262,51 @@ export class FirebaseManagedSTT extends EventEmitter {
     this.start();
   }
 
+  /** The shared, backend-metered allowance updates both capture streams. */
+  public setProSecondsRemaining(seconds: number): void {
+    this.prefetchedAccessToken = null;
+    if (!this.sttRoute || !Number.isFinite(seconds)) return;
+    const previous = this.sttRoute.speechModel;
+    this.sttRoute.proSecondsRemaining = Math.max(0, seconds);
+    this.sttRoute.speechModel = seconds > 0 && this.sttRoute.proSpeechModel
+      ? this.sttRoute.proSpeechModel : this.sttRoute.fallbackSpeechModel;
+    if (previous !== this.sttRoute.speechModel && this.isActive && !this.switchingModel) {
+      // Finish the current usage receipt before requesting the next token.
+      this.switchingModel = true;
+      setTimeout(() => { void this.switchModel(); }, 0);
+    }
+  }
+
+  private async switchModel(): Promise<void> {
+    if (!this.isActive || !this.switchingModel) return;
+    const generation = ++this.connectionGeneration;
+    const oldSocket = this.ws;
+    this.clearTimers();
+    this.flushOutboundAudio(true);
+    this.isOpen = false; // Capture now queues audio while the old turn drains.
+    this.isConnecting = false;
+    this.ws = null;
+    if (oldSocket?.readyState === WebSocket.OPEN) {
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(() => { oldSocket.close(); resolve(); }, 1000);
+        oldSocket.once('close', () => { clearTimeout(timer); resolve(); });
+        try {
+          oldSocket.send(JSON.stringify({ type: 'ForceEndpoint' }));
+          oldSocket.send(JSON.stringify({ type: 'Terminate' }));
+        } catch { clearTimeout(timer); resolve(); }
+      });
+    } else { oldSocket?.close(); }
+    if (generation !== this.connectionGeneration) return;
+    this.switchingModel = false;
+    if (this.isActive && this.shouldReconnect) {
+      console.log('[FirebaseManagedSTT] Refreshing stream for updated Pro allowance');
+      await this.connect();
+    }
+  }
+
   private resolveSpeechModel() {
-    // English gets the lowest-latency model; all other languages use whisper-rt.
+    if (this.sttRoute) return this.sttRoute.speechModel;
+    // Compatible with an older backend until the routing functions are deployed.
     return this.languageCode === "en"
       ? "universal-streaming-english"
       : "whisper-rt";
@@ -256,6 +318,7 @@ export class FirebaseManagedSTT extends EventEmitter {
     url.searchParams.set("sample_rate", String(this.sampleRate));
     // Keep partial turns raw for maximum "live" feel; formatting can wait until final.
     url.searchParams.set("format_turns", "false");
+    url.searchParams.set("include_partial_turns", "true");
     // Lower endpointing silence thresholds to reduce lag before final turn emission.
     url.searchParams.set("min_turn_silence", String(TURN_MIN_SILENCE_MS));
     url.searchParams.set("max_turn_silence", String(TURN_MAX_SILENCE_MS));
@@ -263,21 +326,43 @@ export class FirebaseManagedSTT extends EventEmitter {
       "end_of_turn_confidence_threshold",
       String(TURN_END_CONFIDENCE_THRESHOLD)
     );
-    url.searchParams.set("speech_model", this.resolveSpeechModel());
+    const model = this.resolveSpeechModel();
+    url.searchParams.set("speech_model", model);
+    if (model === "universal-3-6-pro") {
+      url.searchParams.set("mode", "min_latency");
+      url.searchParams.set("min_turn_silence", "128");
+      url.searchParams.set("max_turn_silence", "640");
+      url.searchParams.set("interruption_delay", "0");
+      url.searchParams.set("continuous_partials", "true");
+      if (this.languageCode !== "multi") {
+        url.searchParams.set("language_codes", JSON.stringify([this.languageCode]));
+      }
+    }
     return url.toString();
   }
 
   private async connect(): Promise<void> {
-    if (this.isConnecting || !this.isActive) return;
+    if (this.isConnecting || !this.isActive || this.switchingModel) return;
+    const generation = this.connectionGeneration;
     const connectionStartedAt = Date.now();
     this.isConnecting = true;
 
     try {
-      const accessToken = await this.fetchAssemblyAccessToken();
+      const authorization = await this.fetchAssemblyAccessToken();
+      if (!this.isActive || generation !== this.connectionGeneration) return;
+      this.sttRoute = authorization.sttRoute ?? null;
+      const accessToken = authorization.token.accessToken;
+      this.lastTurnOrder = null;
+      this.lastTurnTranscript = "";
+      this.lastTurnFinal = false;
       console.log(`[ListeningTiming] Token ready after ${Date.now() - connectionStartedAt}ms`);
-      this.ws = new WebSocket(this.buildStreamingUrl(accessToken));
+      const requestedModel = this.resolveSpeechModel();
+      const ws = new WebSocket(this.buildStreamingUrl(accessToken));
+      this.ws = ws;
+      console.log(`[FirebaseManagedSTT] Requested speech model: ${this.resolveSpeechModel()}`);
 
-      this.ws.on("open", () => {
+      ws.on("open", () => {
+        if (this.ws !== ws) return;
         this.isConnecting = false;
         this.isOpen = true;
         console.log("[FirebaseManagedSTT] Connected to AssemblyAI realtime");
@@ -295,16 +380,19 @@ export class FirebaseManagedSTT extends EventEmitter {
         }, 5000);
       });
 
-      this.ws.on("message", (payload: WebSocket.RawData) => {
-        this.handleMessage(payload);
+      ws.on("message", (payload: WebSocket.RawData) => {
+        if (this.ws !== ws && !this.switchingModel) return;
+        this.handleMessage(payload, requestedModel);
       });
 
-      this.ws.on("error", (error: Error) => {
+      ws.on("error", (error: Error) => {
+        if (this.ws !== ws) return;
         console.error("[FirebaseManagedSTT] Assembly realtime socket error", error);
         this.emit("error", this.normalizeError(error));
       });
 
-      this.ws.on("close", (code: number, reasonBuffer: Buffer) => {
+      ws.on("close", (code: number, reasonBuffer: Buffer) => {
+        if (this.ws !== ws) return;
         const reason = reasonBuffer?.toString() || "(empty)";
         console.log(
           `[FirebaseManagedSTT] Realtime connection closed (code=${code}, reason=${reason})`
@@ -315,16 +403,17 @@ export class FirebaseManagedSTT extends EventEmitter {
         this.isConnecting = false;
         this.clearTimers();
 
-        if (this.shouldReconnect && code !== 1000) {
+        if (this.shouldReconnect) {
           this.scheduleReconnect();
         }
       });
     } catch (error) {
+      if (generation !== this.connectionGeneration) return;
       console.error("[FirebaseManagedSTT] Failed to connect realtime stream", error);
       this.isConnecting = false;
       if (this.shouldReconnect) {
         const message = error instanceof Error ? error.message : String(error);
-        if (/stt limit exceeded/i.test(message)) {
+        if (/stt limit exceeded|listening limit reached|free trial.*(?:limit reached|exhausted|ended)/i.test(message)) {
           this.shouldReconnect = false;
           this.emit("error", this.normalizeError(error));
           this.stop();
@@ -336,7 +425,7 @@ export class FirebaseManagedSTT extends EventEmitter {
     }
   }
 
-  private handleMessage(payload: WebSocket.RawData): void {
+  private handleMessage(payload: WebSocket.RawData, requestedModel = this.resolveSpeechModel()): void {
     try {
       const textPayload =
         typeof payload === "string" ? payload : payload.toString("utf8");
@@ -344,6 +433,14 @@ export class FirebaseManagedSTT extends EventEmitter {
       const type = (message as { type?: string }).type;
 
       if (type === "Begin") {
+        const actualModel = (message as AssemblyBeginMessage).configuration?.model;
+        console.log(actualModel
+          ? `[FirebaseManagedSTT] Confirmed speech model: ${actualModel}`
+          : `[FirebaseManagedSTT] Begin received without model confirmation; requested: ${requestedModel}`);
+        if (actualModel && actualModel !== requestedModel) {
+          this.emit("error", new Error(`AssemblyAI returned ${actualModel}; requested ${requestedModel}`));
+          this.stop();
+        }
         return;
       }
 
@@ -358,13 +455,15 @@ export class FirebaseManagedSTT extends EventEmitter {
 
         if (
           this.lastTurnOrder === turnOrder &&
-          this.lastTurnTranscript === transcript
+          this.lastTurnTranscript === transcript &&
+          this.lastTurnFinal === Boolean(turn.end_of_turn)
         ) {
           return;
         }
 
         this.lastTurnOrder = turnOrder;
         this.lastTurnTranscript = transcript;
+        this.lastTurnFinal = Boolean(turn.end_of_turn);
 
         this.emit("transcript", {
           text: transcript,
@@ -577,6 +676,7 @@ export class FirebaseManagedSTT extends EventEmitter {
       },
       body: JSON.stringify({
         ttlSeconds: TOKEN_TTL_SECONDS,
+        language: this.languageCode,
       }),
     });
 
@@ -590,11 +690,11 @@ export class FirebaseManagedSTT extends EventEmitter {
       );
     }
 
-    return json.token.accessToken;
+    return json;
   }
 
   private async flushUsage(force: boolean): Promise<void> {
-    if (!this.usageReportingEnabled) {
+    if (!this.usageReportingEnabled && !force) {
       return;
     }
 
@@ -610,6 +710,10 @@ export class FirebaseManagedSTT extends EventEmitter {
 
     if (this.usageReportInFlight) {
       await this.usageReportInFlight;
+      // Stop/disable may arrive while an earlier receipt is being submitted.
+      // Drain the captured tail after that receipt settles, even if metering
+      // has since been disabled. New capture is no longer counted in that case.
+      if (force) await this.flushUsage(true);
       return;
     }
 
@@ -631,7 +735,7 @@ export class FirebaseManagedSTT extends EventEmitter {
     const idToken = FirebaseSessionManager.getInstance().getIdToken();
 
     if (!idToken) {
-      return;
+      throw new Error("Sign in before reporting listening usage.");
     }
 
     const response = await fetch(this.trackUsageEndpoint, {
@@ -673,6 +777,11 @@ export class FirebaseManagedSTT extends EventEmitter {
       }
 
       throw new Error(errorMessage);
+    }
+    if (result?.success === true && result.remaining.sttSecondsRemaining > 0 &&
+        typeof result.remaining.proSttSecondsRemaining === "number") {
+      this.setProSecondsRemaining(result.remaining.proSttSecondsRemaining);
+      this.emit("stt-allowance", result.remaining.proSttSecondsRemaining);
     }
     if (result?.success === true && result.remaining.sttSecondsRemaining <= 0) {
       this.shouldReconnect = false;

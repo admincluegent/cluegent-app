@@ -282,6 +282,7 @@ export class AppState {
       }
       if (json.result?.code === 'STT_LIMIT_EXCEEDED') return;
       if (!response.ok || !json.result?.success) throw new Error(json.error?.message || json.result?.message || 'Hourly usage sync failed');
+      this.syncSttProAllowance(json.result.remaining.proSttSecondsRemaining);
       this.broadcast('hourly-balance-updated', json.result.remaining.sttSecondsRemaining);
     });
   }
@@ -779,6 +780,12 @@ export class AppState {
   private googleSTT: STTProvider | null = null; // Interviewer
   private googleSTT_User: STTProvider | null = null; // User
 
+  private syncSttProAllowance(seconds: unknown): void {
+    if (typeof seconds !== 'number' || !Number.isFinite(seconds)) return;
+    this.googleSTT?.setProSecondsRemaining(seconds);
+    this.googleSTT_User?.setProSecondsRemaining(seconds);
+  }
+
   private createSTTProvider(speaker: 'interviewer' | 'user'): STTProvider | null {
     const { CredentialsManager } = require('./services/CredentialsManager');
     // Cluegent production STT is backend-owned. Keep the runtime locked to
@@ -792,6 +799,7 @@ export class AppState {
     const stt: STTProvider = new FirebaseManagedSTT();
 
     stt.setRecognitionLanguage(sttLanguage);
+    stt.on('stt-allowance', (seconds: number) => this.syncSttProAllowance(seconds));
 
     // Wire Transcript Events
     stt.on('transcript', (segment: { text: string, isFinal: boolean, confidence: number }) => {

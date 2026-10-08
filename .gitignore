@@ -250,3 +250,11 @@ templog*.txt
 dodollm.txt
 temp_code_expansion/
 cluelyprompts/
+
+# Keep video files local
+*.mov
+*.mp4
+*.webm
+*.m4v
+*.avi
+*.mkv

@@ -592,3 +592,6 @@ if (resourceTool instanceof HTMLElement) {
     trackCluegentEvent("resource_reset", { resource_type: resourceType });
   });
 }
+
+// Mobile signup is shared by every landing page that uses this script.
+import('/mobile-signup.js').catch(error => console.error('Mobile signup failed to load', error));

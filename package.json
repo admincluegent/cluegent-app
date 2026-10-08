@@ -22,7 +22,8 @@
     "start": "npm run app:dev",
     "dist": "npm run app:build",
     "build:native": "node scripts/build-native.js",
-    "seo:generate": "node scripts/generate-seo-site.mjs"
+    "seo:generate": "node scripts/generate-seo-site.mjs",
+    "website:build-auth": "node scripts/build-website-auth.mjs"
   },
   "build": {
     "generateUpdatesFilesForAllChannels": true,
