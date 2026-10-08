@@ -15,8 +15,8 @@ function fixture(plan = 'hour3', failPermission = false, remaining = 100) {
   const calls = [];
   const api = Object.fromEntries(['setUndetectable','setRecognitionLanguage','profileSetMode','startMeeting','startListening','endMeeting'].map(name => [name, async () => { calls.push(name); return {success:true}; }]));
   api.setWindowMode = async mode => calls.push(mode);
-  api.prepareOverlayPermissions = async () => {calls.push('permissions'); if (failPermission) throw new Error('Permission denied');};
-  const context = {window: {electronAPI:api}, console:{log() {},error() {}}, localStorage:{setItem() {}, getItem:() => null, removeItem() {}},
+  api.prepareOverlayPermissions = async () => {calls.push('permissions'); return {microphone: failPermission ? 'denied' : 'granted', screen: 'granted'};};
+  const context = {window: {electronAPI:api}, console:{log() {},error() {},warn() {}}, localStorage:{setItem() {}, getItem:() => null, removeItem() {}},
     getPlanStatus:async () => ({planStatus:{plan, remaining:{sttSeconds:remaining}}}),
     buildSessionContext:() => '', SESSION_CONTEXT_KEY:'context', sessionSource:{}, beginLocalMeeting() {}, finishCurrentLocalMeeting() {},
     analytics:{trackMeetingStarted() {}}, setIsSessionSetupOpen() {}, Date};
@@ -36,11 +36,11 @@ test('monthly/yearly and free sessions do not auto-start listening', async () =>
     const f = fixture(plan); await f.start(); assert.equal(f.calls.includes('startListening'), false);
   }
 });
-test('permission failure closes the incomplete session without starting capture', async () => {
-  const f = fixture('hour3', true); await assert.rejects(f.start(), /Permission denied/);
+test('permission denial keeps the overlay open without starting capture', async () => {
+  const f = fixture('hour3', true); await f.start();
   assert.equal(f.calls.includes('startListening'), false);
-  assert.equal(f.calls.filter(call => call === 'endMeeting').length, 1);
-  assert.equal(f.calls.at(-1), 'launcher');
+  assert.equal(f.calls.includes('endMeeting'), false);
+  assert.equal(f.calls.includes('launcher'), false);
 });
 test('empty hourly balance prevents opening a session', async () => {
   const f = fixture('hour10', false, 0); await assert.rejects(f.start(), /balance is empty/);

@@ -248,17 +248,17 @@ const App: React.FC = () => {
         analytics.trackMeetingStarted();
         await window.electronAPI.setWindowMode('overlay');
         setIsSessionSetupOpen(false);
-        // Prompt only after the overlay is visible; denial must not close the session.
-        if (hourly) {
-          // Hourly session time starts when the overlay opens, independently
-          // of capture. Audio still starts automatically after permissions.
-          await window.electronAPI.prepareOverlayPermissions();
-          const listening = await window.electronAPI.startListening();
-          if (!listening.success) {
-            throw new Error(listening.error || 'Could not start listening. Check audio permissions and retry.');
+        // Keep the session open while macOS permission prompts are handled.
+        try {
+          const permissions = await window.electronAPI.prepareOverlayPermissions();
+          if (hourly && permissions.microphone === 'granted' && permissions.screen === 'granted') {
+            const listening = await window.electronAPI.startListening({
+              audio: { inputDeviceId, outputDeviceId: window.electronAPI.platform === 'darwin' ? 'sck' : outputDeviceId }
+            });
+            if (!listening.success) console.warn('[App] Listening startup failed:', listening.error);
           }
-        } else {
-          void window.electronAPI.prepareOverlayPermissions().catch(error => console.warn('[App] Permission preparation failed:', error));
+        } catch (error) {
+          console.warn('[App] Permission or listening startup failed:', error);
         }
       } else {
         console.error("Failed to start meeting:", result.error);

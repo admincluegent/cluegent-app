@@ -1,3 +1,4 @@
+import { getProSttSecondsRemaining, getSttRoute } from '../config/sttPolicy.js';
 import { prepareResumeUsage, refundResumeUsage } from '../utils/resumeUsage.js';
 import { FieldValue } from "firebase-admin/firestore";
 import { type CallableRequest, HttpsError } from "firebase-functions/v2/https";
@@ -70,6 +71,7 @@ interface TrackSttUsageData {
 }
 
 interface CreateDeepgramTokenData {
+  language?: string;
   ttlSeconds?: number;
 }
 
@@ -96,6 +98,7 @@ interface TrackUsageSuccessResponse {
   };
   remaining: {
     sttSecondsRemaining: number;
+    proSttSecondsRemaining?: number;
   };
 }
 
@@ -112,12 +115,14 @@ interface CreateTokenFailureResponse {
 
 interface CreateTokenSuccessResponse {
   success: true;
+  sttRoute: ReturnType<typeof getSttRoute>;
   token: {
     accessToken: string;
     expiresInSeconds: number;
   };
   remaining: {
     sttSecondsRemaining: number;
+    proSttSecondsRemaining?: number;
   };
 }
 
@@ -1269,7 +1274,7 @@ export async function trackSttUsageForAuthenticatedUser(
       ]);
       if (receiptSnap?.exists) {
         if (receiptSnap.data()?.durationSeconds !== durationSeconds) throw new HttpsError('invalid-argument', 'Usage report identifier was reused with a different duration.');
-        return receiptSnap.data()!.remaining as { sttSecondsRemaining: number };
+        return receiptSnap.data()!.remaining as { sttSecondsRemaining: number; proSttSecondsRemaining?: number };
       }
       const latestSubscription = materializeSubscription(
         subscriptionSnap.data() as ReturnType<typeof materializeSubscription>
@@ -1330,6 +1335,7 @@ export async function trackSttUsageForAuthenticatedUser(
       }
 
       const remaining = {
+        proSttSecondsRemaining: Math.max(0, getProSttSecondsRemaining(latestPlanStatus) - chargedSeconds),
         sttSecondsRemaining: Math.max(
           latestPlanStatus.remaining.sttSeconds - chargedSeconds,
           0
@@ -1418,9 +1424,11 @@ export async function createDeepgramTokenForAuthenticatedUser(
 
     return {
       success: true,
+      sttRoute: getSttRoute(typeof data?.language === "string" ? data.language : "en", getProSttSecondsRemaining(planStatus)),
       token,
       remaining: {
         sttSecondsRemaining: planStatus.remaining.sttSeconds,
+        proSttSecondsRemaining: getProSttSecondsRemaining(planStatus),
       },
     };
   } catch (error) {
@@ -1480,6 +1488,7 @@ export function isCreateDeepgramTokenData(
   return (
     typeof value === "object" &&
     value !== null &&
+    (!("language" in value) || typeof (value as { language?: unknown }).language === "string") &&
     (!("ttlSeconds" in value) ||
       typeof (value as { ttlSeconds?: unknown }).ttlSeconds === "number")
   );

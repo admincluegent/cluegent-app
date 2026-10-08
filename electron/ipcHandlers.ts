@@ -1,3 +1,4 @@
+import { prepareOverlayPermissions } from './services/OverlayPermissions';
 // ipcHandlers.ts
 
 import { app, ipcMain, shell, dialog, desktopCapturer, systemPreferences, BrowserWindow, screen } from "electron"
@@ -2072,25 +2073,12 @@ export function initializeIpcHandlers(appState: AppState): void {
   })
 
   safeHandle("permissions:prepare-overlay", async () => {
-    if (process.platform !== 'darwin') {
-      appState.prepareListeningTokens();
-      return { microphone: 'granted', screen: 'granted' };
-    }
-    if (systemPreferences.getMediaAccessStatus('microphone') === 'not-determined') {
-      await systemPreferences.askForMediaAccess('microphone');
-    }
-    if (systemPreferences.getMediaAccessStatus('screen') === 'not-determined') {
-      // Request Screen Recording without saving a screenshot or starting audio capture.
-      try { await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 1, height: 1 } }); }
-      catch (error) { console.warn('[Permissions] Screen permission request pending or denied:', error); }
-    }
-    const microphone = systemPreferences.getMediaAccessStatus('microphone');
-    const screenPermission = systemPreferences.getMediaAccessStatus('screen');
-    if (screenPermission === 'denied' || microphone === 'denied') {
-      appState.getWindowHelper().getOverlayWindow()?.webContents.send('system-audio-permission-denied', 'Microphone or Screen Recording permission is disabled. Enable Cluegent in System Settings → Privacy & Security before using audio or screenshots.');
+    const permissions = await prepareOverlayPermissions();
+    if (permissions.microphone !== 'granted' || permissions.screen !== 'granted') {
+      appState.getWindowHelper().getOverlayWindow()?.webContents.send('system-audio-permission-denied', 'Allow Microphone and Screen Recording for Cluegent in System Settings → Privacy & Security. If macOS requests a restart, quit and reopen Cluegent.');
     }
     appState.prepareListeningTokens();
-    return { microphone, screen: screenPermission };
+    return permissions;
   });
 
   // ==========================================

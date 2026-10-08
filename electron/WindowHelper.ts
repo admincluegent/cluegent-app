@@ -266,7 +266,7 @@ export class WindowHelper {
     this.overlayWindow.setContentProtection(this.contentProtection)
 
     if (process.platform === "darwin") {
-      this.overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+      this.overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true, skipTransformProcessType: !app.dock.isVisible() })
       this.overlayWindow.setHiddenInMissionControl(true)
       this.overlayWindow.setAlwaysOnTop(true, "floating")
     }
@@ -631,7 +631,7 @@ export class WindowHelper {
         if (process.platform === 'win32') {
           this.overlayWindow.setAlwaysOnTop(true, 'floating');
         }
-        if (inactive) this.overlayWindow.showInactive(); else this.overlayWindow.show();
+        if (inactive || (process.platform === 'darwin' && this.appState.getUndetectable())) this.overlayWindow.showInactive(); else this.overlayWindow.show();
         // Only grab focus for explicit user-initiated shows (not shortcut/ghost shows)
         if (!inactive) this.overlayWindow.focus();
       }

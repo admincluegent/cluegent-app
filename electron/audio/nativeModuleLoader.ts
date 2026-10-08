@@ -101,7 +101,7 @@ function validateNativeModule(mod: any): asserts mod is NativeModule {
  * These filenames are produced by \`npx napi build\` in native-module/.
  * Naming convention: index.<platform>-<arch>-<abi>.node
  */
-function getNativeBinaryName(): string {
+export function getNativeBinaryName(): string {
     const { platform, arch } = process;
     const map: Record<string, Record<string, string>> = {
         win32:  {

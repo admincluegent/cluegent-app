@@ -1,0 +1,34 @@
+import assert from "node:assert/strict";
+import { readFileSync, existsSync } from "node:fs";
+import { usRecruiterPost as post } from "./seo-us-recruiter.mjs";
+const origin = "https://www.cluegent.com";
+const path = `/blog/${post.slug}/`;
+const html = readFileSync(`website${path}index.html`, "utf8");
+assert.equal((html.match(/<h1[ >]/g) || []).length, 1);
+assert(html.includes(`<title>${post.title}</title>`));
+assert(html.includes(`rel="canonical" href="${origin}${path}"`));
+assert(!/<meta[^>]+content="[^"]*noindex/i.test(html));
+assert(html.includes("<div data-nosnippet>"));
+const schemas = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].flatMap(m => JSON.parse(m[1]));
+const article = schemas.find(s => s["@type"] === "Article");
+assert.equal(article.datePublished, "2026-10-08");
+assert.equal(article.dateModified, "2026-10-08");
+assert.equal(schemas.find(s => s["@type"] === "FAQPage").mainEntity.length, post.faqs.length);
+for (const m of html.matchAll(/href="(\/[^"#?]*|#[^"]+)"/g)) {
+  const href = m[1];
+  if (href.startsWith("#")) assert(html.includes(`id="${href.slice(1)}"`), `Missing anchor ${href}`);
+  else assert(existsSync(`website${href.endsWith("/") ? href + "index.html" : href}`), `Missing link ${href}`);
+}
+assert(readFileSync("website/blog/index.html", "utf8").includes(path));
+const sitemap = readFileSync("website/sitemap.xml", "utf8");
+assert(sitemap.includes(`<loc>${origin}${path}</loc><lastmod>2026-10-08</lastmod>`));
+const urls = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map(m => m[1]);
+assert.equal(urls.length, new Set(urls).size);
+assert.equal(2 + 4 + 3 + 3, 12);
+assert(html.includes(post.bodyHtml), "Article body did not render");
+assert(html.includes('id="worksheet"'), "Rendered worksheet missing");
+assert(html.includes('id="rehearsal"'), "Rendered rehearsal missing");
+const words = post.bodyHtml.replace(/<[^>]+>/g, " ").trim().split(/\s+/).length;
+assert(words >= 800, `Incomplete worksheet: ${words} words`);
+assert(!/In today's|game-changer|guaranteed.*hire|first.page guaranteed/i.test(post.bodyHtml));
+console.log(JSON.stringify({ passed: true, bodyWords: words, sitemapUrls: urls.length, checks: ["metadata", "canonical", "single H1", "schema dates", "FAQ consistency", "internal links", "anchors", "blog discovery", "sitemap", "rehearsal arithmetic"] }));

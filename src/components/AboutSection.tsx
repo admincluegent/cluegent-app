@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Github, Globe, Info, LockKeyhole, Mail, MessageSquare, Scale, ShieldCheck, Sparkles } from 'lucide-react';
+import { ExternalLink, Globe, Info, LockKeyhole, Mail, MessageSquare, Scale, ShieldCheck, Sparkles } from 'lucide-react';
 import CluegentIcon from './icon.png';
 
 type InfoRowProps = {
@@ -127,24 +127,6 @@ export const AboutSection: React.FC = () => {
                                     href="https://www.cluegent.com/terms.html"
                                     icon={<Scale size={15} />}
                                     label="Terms"
-                                    onOpen={handleOpenLink}
-                                />
-                                <LinkPill
-                                    href="https://github.com/admincluegent/cluegent-app/blob/development/LICENSE"
-                                    icon={<Info size={15} />}
-                                    label="License"
-                                    onOpen={handleOpenLink}
-                                />
-                                <LinkPill
-                                    href="https://github.com/admincluegent/cluegent-app"
-                                    icon={<Github size={15} />}
-                                    label="Source"
-                                    onOpen={handleOpenLink}
-                                />
-                                <LinkPill
-                                    href="https://github.com/admincluegent/cluegent-app/blob/development/ATTRIBUTION.md"
-                                    icon={<Scale size={15} />}
-                                    label="Attribution"
                                     onOpen={handleOpenLink}
                                 />
                             </div>

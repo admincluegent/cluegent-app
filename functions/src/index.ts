@@ -1,5 +1,6 @@
+import { sendDesktopDownloadEmailController } from './controllers/downloadEmailController.js';
 import { onCall, onRequest, type HttpsError } from "firebase-functions/v2/https";
-import { defineSecret } from "firebase-functions/params";
+import { defineSecret, defineString } from "firebase-functions/params";
 import {
   deleteAccountController,
   getOrCreateUserProfileController,
@@ -422,4 +423,11 @@ function isHttpsError(error: unknown): error is HttpsError {
 export const generateResumeAsia = onCall(
   { region: 'asia-south1', cors: true, timeoutSeconds: 120, memory: '512MiB', maxInstances: 10, secrets: [openAiApiKey] },
   request => generateResumeController(request, openAiApiKey.value())
+);
+
+const downloadEmailApiKey = defineSecret("RESEND_API_KEY");
+const downloadEmailFrom = defineString("DOWNLOAD_EMAIL_FROM", { default: "Cluegent <downloads@cluegent.com>" });
+export const sendDesktopDownloadEmail = onCall(
+  { ...callableOptions, secrets: [downloadEmailApiKey], timeoutSeconds: 60 },
+  request => sendDesktopDownloadEmailController(request, downloadEmailApiKey.value(), downloadEmailFrom.value())
 );

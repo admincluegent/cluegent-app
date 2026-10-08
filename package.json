@@ -1,6 +1,6 @@
 {
   "name": "cluegent",
-  "version": "1.0.10",
+  "version": "1.0.13",
   "main": "dist-electron/electron/main.js",
   "description": "Cluegent is an AI copilot that helps with live conversation, screen context, and meeting assistance.",
   "scripts": {
@@ -22,7 +22,8 @@
     "start": "npm run app:dev",
     "dist": "npm run app:build",
     "build:native": "node scripts/build-native.js",
-    "seo:generate": "node scripts/generate-seo-site.mjs"
+    "seo:generate": "node scripts/generate-seo-site.mjs",
+    "website:build-auth": "node scripts/build-website-auth.mjs"
   },
   "build": {
     "generateUpdatesFilesForAllChannels": true,

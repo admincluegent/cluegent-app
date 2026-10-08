@@ -475,7 +475,7 @@ export class CropperWindowHelper {
         console.log(`[CropperWindowHelper] Expected bounds: {x:${combinedBounds.x}, y:${combinedBounds.y}, width:${combinedBounds.width}, height:${combinedBounds.height}}`);
 
         if (process.platform === "darwin") {
-            this.cropperWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+            this.cropperWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true, skipTransformProcessType: !app.dock.isVisible() })
             this.cropperWindow.setAlwaysOnTop(true, "screen-saver")
         }
 

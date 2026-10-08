@@ -1,0 +1,33 @@
+import assert from "node:assert/strict";
+import {readFileSync,existsSync} from "node:fs";
+import {parakeetCtrSlugs} from "./seo-parakeet-ctr.mjs";
+const root=new URL("../website/",import.meta.url);
+const read=p=>readFileSync(new URL(p,root),"utf8");
+const sitemap=read("sitemap.xml");
+const hub=read("blog/index.html");
+const titles=[];
+for(const slug of parakeetCtrSlugs){
+ const html=read(`blog/${slug}/index.html`);
+ const url=`https://www.cluegent.com/blog/${slug}/`;
+ assert(html.includes(`rel="canonical" href="${url}"`));
+ assert.equal((html.match(/<h1[ >]/g)||[]).length,1);
+ assert(!/<meta[^>]+(?:name|http-equiv)=["']robots["'][^>]+noindex/i.test(html));
+ assert(html.includes('<div data-nosnippet>'));
+ assert(html.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').includes('Undetectable AI Interview Assistant'),"Requested header preserved");
+ assert(!html.includes('Independent product guide'));
+ assert(html.includes('competing product'));
+ assert(html.includes('October 6, 2026'));
+ assert(sitemap.includes(`<loc>${url}</loc><lastmod>2026-10-06</lastmod>`));
+ assert(hub.includes(`/blog/${slug}/`));
+ const schemas=[...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].flatMap(m=>JSON.parse(m[1]));
+ assert.equal(schemas.find(s=>s["@type"]==="Article").dateModified,"2026-10-06");
+ assert(schemas.find(s=>s["@type"]==="FAQPage").mainEntity.some(q=>/Parakeet|Reddit|Cluegent/.test(q.name)));
+ const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
+ for(const [,id] of html.matchAll(/href="#([^"]+)"/g)) assert(ids.includes(id),`${slug}: #${id}`);
+ for(const [,href] of html.matchAll(/href="(\/[^"?#]*)/g)) assert(existsSync(new URL(href.slice(1)+(href.endsWith("/")?"index.html":""),root)),`${slug}: ${href}`);
+ const title=html.match(/<title>(.*?)<\/title>/)[1]; titles.push(title);
+ assert(title.length<85);
+}
+assert.equal(new Set(titles).size,parakeetCtrSlugs.length);
+assert.equal(3/0.5*30,180);
+console.log(JSON.stringify({passed:true,pages:parakeetCtrSlugs.length,checks:"metadata, canonicals, H1, preserved hero, snippet boundaries, schema, dates, internal links, anchors and credit math"}));

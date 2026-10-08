@@ -10,6 +10,10 @@ import { growthPostsBatch5, growthBacklinksBatch5 } from "./seo-growth-posts-bat
 import { improveDiscovery } from "./seo-discovery-improvements.mjs";
 import { growthPostsBatch6, growthBacklinksBatch6 } from "./seo-growth-posts-batch-6.mjs";
 import { growthPostsBatch7, growthBacklinksBatch7 } from "./seo-growth-posts-batch-7.mjs";
+import { growthPostsBatch8, growthBacklinksBatch8 } from "./seo-growth-posts-batch-8.mjs";
+import { competitorPostsBatch9, competitorBacklinksBatch9 } from "./seo-competitor-posts-batch-9.mjs";
+import { improveParakeetCtr } from "./seo-parakeet-ctr.mjs";
+import { usRecruiterPost, usRecruiterSlug } from "./seo-us-recruiter.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, "..");
@@ -17,8 +21,8 @@ const websiteDir = join(rootDir, "website");
 const siteUrl = "https://www.cluegent.com";
 const ga4MeasurementId = "G-CCH0Y2SN4G";
 const downloadUrl = "https://apps.microsoft.com/detail/9NXWZPN07THN";
-const macArmDownloadUrl = "https://github.com/admincluegent/cluegent-app/releases/download/v1.0.10/Cluegent-1.0.10-arm64-mac.zip";
-const macIntelDownloadUrl = "https://github.com/admincluegent/cluegent-app/releases/download/v1.0.10/Cluegent-1.0.10-mac.zip";
+const macArmDownloadUrl = "https://github.com/admincluegent/cluegent-app/releases/download/v1.0.13/Cluegent-1.0.13-arm64.dmg";
+const macIntelDownloadUrl = "https://github.com/admincluegent/cluegent-app/releases/download/v1.0.13/Cluegent-1.0.13.dmg";
 const generatedDate = "2026-08-13";
 const resourcePublishedDate = "2026-08-29";
 const defaultImage = "/assets/how-to-use-01.png";
@@ -6604,8 +6608,10 @@ blogPosts.push(
 );
 
 // New guides lead the index; established guides link back into the new cluster.
-blogPosts.unshift(...growthPostsBatch7, ...growthPostsBatch6, ...growthPostsBatch5, ...growthPostsBatch4, ...competitorPostsBatch3, ...growthPostsBatch2, ...growthPosts);
+blogPosts.unshift(...competitorPostsBatch9, ...growthPostsBatch8, ...growthPostsBatch7, ...growthPostsBatch6, ...growthPostsBatch5, ...growthPostsBatch4, ...competitorPostsBatch3, ...growthPostsBatch2, ...growthPosts);
 const growthBacklinks = [
+  ...competitorBacklinksBatch9,
+  ...growthBacklinksBatch8,
   ...growthBacklinksBatch7,
   ...growthBacklinksBatch6,
   ...growthBacklinksBatch5,
@@ -6640,10 +6646,18 @@ for (const [sourceSlug, targetSlug, label] of growthBacklinks) {
 const discoveryGroups = improveDiscovery(blogPosts);
 const batch6Parents = new Set(growthBacklinksBatch6.map(([slug]) => slug));
 const batch7Parents = new Set(growthBacklinksBatch7.map(([slug]) => slug));
+const batch8Parents = new Set(growthBacklinksBatch8.map(([slug]) => slug));
+const batch9Parents = new Set(competitorBacklinksBatch9.map(([slug]) => slug));
 for (const post of blogPosts) {
   if (batch6Parents.has(post.slug)) post.modifiedDate = "2026-09-29";
   if (batch7Parents.has(post.slug)) post.modifiedDate = "2026-10-03";
+  if (batch8Parents.has(post.slug)) post.modifiedDate = "2026-10-05";
+  if (batch9Parents.has(post.slug)) post.modifiedDate = "2026-10-05";
 }
+
+// Apply intent-specific edits last so discovery enrichment cannot overwrite them.
+improveParakeetCtr(blogPosts);
+blogPosts.unshift(usRecruiterPost);
 
 function blogIndexTemplate() {
   const title = "Cluegent Blog | AI Interview Assistant Guides";
@@ -6780,7 +6794,7 @@ function articleTemplate(post) {
   ];
   const body = `
     <main>
-      ${cluegentHomepageHeroSection()}
+      ${post.excludePromoSnippet ? `<div data-nosnippet>${cluegentHomepageHeroSection()}</div>` : cluegentHomepageHeroSection()}
       <article class="seo-article seo-article--after-hero">
         <header class="seo-article-header reveal">
           <p class="section-kicker">${escapeHtml(post.authorityKicker || "AI interview guide")}</p>
@@ -6943,6 +6957,7 @@ function editorialPolicyTemplate() {
 }
 
 function writePage(relativePath, html) {
+  if (process.argv.includes("--us-recruiter") && !["blog/index.html", "sitemap.xml", `blog/${usRecruiterSlug}/index.html`].includes(relativePath)) return;
   const fullPath = join(websiteDir, relativePath);
   mkdirSync(dirname(fullPath), { recursive: true });
   writeFileSync(fullPath, html.replace(/[ \t]+$/gm, ""));
