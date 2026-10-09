@@ -1,0 +1,1415 @@
+{
+  "createdAt": "2026-10-09T15:07:06.514Z",
+  "method": "Three synthetic English clips, two repetitions per model; identical audio and settings, paired simultaneous real-time streams. WER ignores punctuation/case and joins internally hyphenated or apostrophized words. Speech timestamps use actual packet-send times. Latency excludes token/startup unless labeled connectionReadyMs.",
+  "limitations": "Small clean synthetic sample, one local network path. Does not establish real meeting/accent/noise accuracy or microphone-to-screen latency.",
+  "settings": {
+    "endpoint": "streaming.assemblyai.com",
+    "mode": "min_latency",
+    "sampleRate": 16000,
+    "chunkMs": 60,
+    "minTurnSilence": 128,
+    "maxTurnSilence": 640,
+    "continuousPartials": true
+  },
+  "summary": [
+    {
+      "model": "universal-3-5-pro",
+      "runs": 6,
+      "firstPartialMs": 459.6296039999979,
+      "medianPartialGapMs": 1219.0349267499969,
+      "finalAfterSpeechMs": 517.2927915,
+      "connectionReadyMs": 1197.6469584999977,
+      "wordErrors": 0,
+      "referenceWords": 196,
+      "werPercent": 0
+    },
+    {
+      "model": "universal-3-6-pro",
+      "runs": 6,
+      "firstPartialMs": 461.1031875000008,
+      "medianPartialGapMs": 1217.611770999999,
+      "finalAfterSpeechMs": 521.0896040000007,
+      "connectionReadyMs": 1192.4225414999983,
+      "wordErrors": 0,
+      "referenceWords": 196,
+      "werPercent": 0
+    }
+  ],
+  "results": [
+    {
+      "case": "meeting",
+      "repeat": 1,
+      "requestedModel": "universal-3-5-pro",
+      "confirmedModel": "universal-3-5-pro",
+      "reference": "The release is planned for Friday. Please confirm that the microphone permissions are ready. We should test screen sharing before the meeting and send the action items to the engineering team.",
+      "transcript": "The release is planned for Friday. Please confirm that the microphone permissions are ready. We should test screen sharing before the meeting and send the action items to the engineering team.",
+      "speechDurationMs": 11720,
+      "metrics": {
+        "referenceWords": 31,
+        "wordErrors": 0,
+        "werPercent": 0,
+        "firstPartialMs": 341.1059580000001,
+        "medianPartialGapMs": 1221.7790835000005,
+        "finalAfterSpeechMs": 626.6520410000012,
+        "connectionReadyMs": 1283.971208,
+        "partialCount": 11
+      },
+      "events": [
+        {
+          "receivedAtMs": 341.1059580000001,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The"
+        },
+        {
+          "receivedAtMs": 1562.7360829999998,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned"
+        },
+        {
+          "receivedAtMs": 2596.1615,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday."
+        },
+        {
+          "receivedAtMs": 2779.661082999999,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday."
+        },
+        {
+          "receivedAtMs": 4001.5891250000004,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday. Please confirm that the"
+        },
+        {
+          "receivedAtMs": 5218.953750000001,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday. Please confirm that the microphone permissions"
+        },
+        {
+          "receivedAtMs": 6266.274583,
+          "final": true,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday. Please confirm that the microphone permissions are ready."
+        },
+        {
+          "receivedAtMs": 6747.710833000001,
+          "final": false,
+          "turnOrder": 1,
+          "text": "Be sure"
+        },
+        {
+          "receivedAtMs": 7963.560750000001,
+          "final": false,
+          "turnOrder": 1,
+          "text": "We should test screen sharing."
+        },
+        {
+          "receivedAtMs": 9185.70475,
+          "final": false,
+          "turnOrder": 1,
+          "text": "We should test screen sharing before the meeting."
+        },
+        {
+          "receivedAtMs": 10523.018666,
+          "final": false,
+          "turnOrder": 1,
+          "text": "We should test screen sharing before the meeting and send the action items."
+        },
+        {
+          "receivedAtMs": 11809.216457999999,
+          "final": false,
+          "turnOrder": 1,
+          "text": "We should test screen sharing before the meeting and send the action items to the engineering"
+        },
+        {
+          "receivedAtMs": 12542.149166,
+          "final": true,
+          "turnOrder": 1,
+          "text": "We should test screen sharing before the meeting and send the action items to the engineering team."
+        }
+      ]
+    },
+    {
+      "case": "meeting",
+      "repeat": 1,
+      "requestedModel": "universal-3-6-pro",
+      "confirmedModel": "universal-3-6-pro",
+      "reference": "The release is planned for Friday. Please confirm that the microphone permissions are ready. We should test screen sharing before the meeting and send the action items to the engineering team.",
+      "transcript": "The release is planned for Friday. Please confirm that the microphone permissions are ready. We should test screen sharing before the meeting and send the action items to the engineering team.",
+      "speechDurationMs": 11720,
+      "metrics": {
+        "referenceWords": 31,
+        "wordErrors": 0,
+        "werPercent": 0,
+        "firstPartialMs": 645.8140829999993,
+        "medianPartialGapMs": 1216.4553754999997,
+        "finalAfterSpeechMs": 623.2397500000006,
+        "connectionReadyMs": 1197.2042079999992,
+        "partialCount": 11
+      },
+      "events": [
+        {
+          "receivedAtMs": 645.8140829999993,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The reason"
+        },
+        {
+          "receivedAtMs": 1861.303167,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned for February"
+        },
+        {
+          "receivedAtMs": 2469.8465419999993,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday."
+        },
+        {
+          "receivedAtMs": 3079.121374999999,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday. Please"
+        },
+        {
+          "receivedAtMs": 4297.864916999999,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday. Please confirm that the mic"
+        },
+        {
+          "receivedAtMs": 5520.017958,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday. Please confirm that the microphone permissions are"
+        },
+        {
+          "receivedAtMs": 6130.934332999999,
+          "final": true,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday. Please confirm that the microphone permissions are ready."
+        },
+        {
+          "receivedAtMs": 6554.643667,
+          "final": false,
+          "turnOrder": 1,
+          "text": "We should"
+        },
+        {
+          "receivedAtMs": 7831.474875,
+          "final": false,
+          "turnOrder": 1,
+          "text": "We should test screen share."
+        },
+        {
+          "receivedAtMs": 9048.896541999999,
+          "final": false,
+          "turnOrder": 1,
+          "text": "We should test screen sharing before the meeting"
+        },
+        {
+          "receivedAtMs": 10284.566875,
+          "final": false,
+          "turnOrder": 1,
+          "text": "We should test screen sharing before the meeting and send the action"
+        },
+        {
+          "receivedAtMs": 11485.025042000001,
+          "final": false,
+          "turnOrder": 1,
+          "text": "We should test screen sharing before the meeting and send the action items to the engineers"
+        },
+        {
+          "receivedAtMs": 12519.539,
+          "final": true,
+          "turnOrder": 1,
+          "text": "We should test screen sharing before the meeting and send the action items to the engineering team."
+        }
+      ]
+    },
+    {
+      "case": "interview",
+      "repeat": 1,
+      "requestedModel": "universal-3-5-pro",
+      "confirmedModel": "universal-3-5-pro",
+      "reference": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?",
+      "transcript": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?",
+      "speechDurationMs": 14680,
+      "metrics": {
+        "referenceWords": 35,
+        "wordErrors": 0,
+        "werPercent": 0,
+        "firstPartialMs": 464.67404199999874,
+        "medianPartialGapMs": 1220.3655419999996,
+        "finalAfterSpeechMs": 494.3262909999976,
+        "connectionReadyMs": 1198.0896670000002,
+        "partialCount": 12
+      },
+      "events": [
+        {
+          "receivedAtMs": 464.67404199999874,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you"
+        },
+        {
+          "receivedAtMs": 1684.2591670000002,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you"
+        },
+        {
+          "receivedAtMs": 2903.144708,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate"
+        },
+        {
+          "receivedAtMs": 4181.017500000002,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed"
+        },
+        {
+          "receivedAtMs": 5350.100667000002,
+          "final": true,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system?"
+        },
+        {
+          "receivedAtMs": 5828.892250000001,
+          "final": false,
+          "turnOrder": 1,
+          "text": "This"
+        },
+        {
+          "receivedAtMs": 7049.257792,
+          "final": false,
+          "turnOrder": 1,
+          "text": "Describe how transactions"
+        },
+        {
+          "receivedAtMs": 8258.894582999998,
+          "final": false,
+          "turnOrder": 1,
+          "text": "Describe how transactions and retries"
+        },
+        {
+          "receivedAtMs": 9173.653000000002,
+          "final": true,
+          "turnOrder": 1,
+          "text": "Describe how transactions and retries work together."
+        },
+        {
+          "receivedAtMs": 9601.116833000004,
+          "final": false,
+          "turnOrder": 2,
+          "text": "1."
+        },
+        {
+          "receivedAtMs": 10880.627917000002,
+          "final": false,
+          "turnOrder": 2,
+          "text": "What would happen if the server"
+        },
+        {
+          "receivedAtMs": 12039.276042000001,
+          "final": false,
+          "turnOrder": 2,
+          "text": "What would happen if the server stopped after"
+        },
+        {
+          "receivedAtMs": 13318.595666999998,
+          "final": false,
+          "turnOrder": 2,
+          "text": "What would happen if the server stopped after charging the customer?"
+        },
+        {
+          "receivedAtMs": 14538.142833000002,
+          "final": false,
+          "turnOrder": 2,
+          "text": "What would happen if the server stopped after charging the customer but before saving the"
+        },
+        {
+          "receivedAtMs": 15397.948207999998,
+          "final": true,
+          "turnOrder": 2,
+          "text": "What would happen if the server stopped after charging the customer but before saving the response?"
+        }
+      ]
+    },
+    {
+      "case": "interview",
+      "repeat": 1,
+      "requestedModel": "universal-3-6-pro",
+      "confirmedModel": "universal-3-6-pro",
+      "reference": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?",
+      "transcript": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?",
+      "speechDurationMs": 14680,
+      "metrics": {
+        "referenceWords": 35,
+        "wordErrors": 0,
+        "werPercent": 0,
+        "firstPartialMs": 459.8344160000015,
+        "medianPartialGapMs": 1273.9100839999992,
+        "finalAfterSpeechMs": 486.2035839999953,
+        "connectionReadyMs": 1178.351208,
+        "partialCount": 12
+      },
+      "events": [
+        {
+          "receivedAtMs": 459.8344160000015,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you"
+        },
+        {
+          "receivedAtMs": 1733.7445000000007,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you"
+        },
+        {
+          "receivedAtMs": 2890.2504580000023,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate"
+        },
+        {
+          "receivedAtMs": 4171.955666000002,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed"
+        },
+        {
+          "receivedAtMs": 5331.6082910000005,
+          "final": true,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system?"
+        },
+        {
+          "receivedAtMs": 5828.421582999999,
+          "final": false,
+          "turnOrder": 1,
+          "text": "This"
+        },
+        {
+          "receivedAtMs": 7038.052583000001,
+          "final": false,
+          "turnOrder": 1,
+          "text": "Describe how transactions"
+        },
+        {
+          "receivedAtMs": 8259.969249999998,
+          "final": false,
+          "turnOrder": 1,
+          "text": "Describe how transactions and retries"
+        },
+        {
+          "receivedAtMs": 9174.376041,
+          "final": true,
+          "turnOrder": 1,
+          "text": "Describe how transactions and retries work together."
+        },
+        {
+          "receivedAtMs": 9603.904707999998,
+          "final": false,
+          "turnOrder": 2,
+          "text": "1."
+        },
+        {
+          "receivedAtMs": 10882.327541000002,
+          "final": false,
+          "turnOrder": 2,
+          "text": "What would happen if the server"
+        },
+        {
+          "receivedAtMs": 12041.2375,
+          "final": false,
+          "turnOrder": 2,
+          "text": "What would happen if the server stopped after"
+        },
+        {
+          "receivedAtMs": 13258.952207999999,
+          "final": false,
+          "turnOrder": 2,
+          "text": "What would happen if the server stopped after charging the customer"
+        },
+        {
+          "receivedAtMs": 14540.680958,
+          "final": false,
+          "turnOrder": 2,
+          "text": "What would happen if the server stopped after charging the customer but before saving the"
+        },
+        {
+          "receivedAtMs": 15400.903999999999,
+          "final": true,
+          "turnOrder": 2,
+          "text": "What would happen if the server stopped after charging the customer but before saving the response?"
+        }
+      ]
+    },
+    {
+      "case": "followup",
+      "repeat": 1,
+      "requestedModel": "universal-3-5-pro",
+      "confirmedModel": "universal-3-5-pro",
+      "reference": "Yes, that makes sense. No, I meant the monthly subscription, not the annual plan. Could you give a concrete example? Please explain the tradeoffs between latency and accuracy for live meeting captions.",
+      "transcript": "Yes, that makes sense. No. I meant the monthly subscription. Not the annual plan. Could you give a concrete example? Please explain the trade-offs between latency and accuracy for live meeting captions.",
+      "speechDurationMs": 13980,
+      "metrics": {
+        "referenceWords": 32,
+        "wordErrors": 0,
+        "werPercent": 0,
+        "firstPartialMs": 459.95300000000134,
+        "medianPartialGapMs": 1219.4386875000018,
+        "finalAfterSpeechMs": 458.33616600000096,
+        "connectionReadyMs": 1166.6187919999938,
+        "partialCount": 13
+      },
+      "events": [
+        {
+          "receivedAtMs": 459.95300000000134,
+          "final": false,
+          "turnOrder": 0,
+          "text": "You're"
+        },
+        {
+          "receivedAtMs": 1745.9331250000032,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Yes, that makes sense."
+        },
+        {
+          "receivedAtMs": 2163.305708,
+          "final": true,
+          "turnOrder": 0,
+          "text": "Yes, that makes sense."
+        },
+        {
+          "receivedAtMs": 2593.506999999998,
+          "final": false,
+          "turnOrder": 1,
+          "text": "No."
+        },
+        {
+          "receivedAtMs": 2895.240666999998,
+          "final": true,
+          "turnOrder": 1,
+          "text": "No."
+        },
+        {
+          "receivedAtMs": 3383.8226250000007,
+          "final": false,
+          "turnOrder": 2,
+          "text": "I mean,"
+        },
+        {
+          "receivedAtMs": 4599.914917000002,
+          "final": false,
+          "turnOrder": 2,
+          "text": "I meant the monthly subscription."
+        },
+        {
+          "receivedAtMs": 5209.962625,
+          "final": true,
+          "turnOrder": 2,
+          "text": "I meant the monthly subscription."
+        },
+        {
+          "receivedAtMs": 5637.572,
+          "final": false,
+          "turnOrder": 3,
+          "text": "Not the"
+        },
+        {
+          "receivedAtMs": 7036.8894999999975,
+          "final": true,
+          "turnOrder": 3,
+          "text": "Not the annual plan."
+        },
+        {
+          "receivedAtMs": 7462.853583000004,
+          "final": false,
+          "turnOrder": 4,
+          "text": "Would you"
+        },
+        {
+          "receivedAtMs": 8742.927582999997,
+          "final": false,
+          "turnOrder": 4,
+          "text": "Could you give a concrete example?"
+        },
+        {
+          "receivedAtMs": 9171.986083000003,
+          "final": true,
+          "turnOrder": 4,
+          "text": "Could you give a concrete example?"
+        },
+        {
+          "receivedAtMs": 9596.787375,
+          "final": false,
+          "turnOrder": 5,
+          "text": "Please"
+        },
+        {
+          "receivedAtMs": 10878.887792000001,
+          "final": false,
+          "turnOrder": 5,
+          "text": "Please explain the trade-off"
+        },
+        {
+          "receivedAtMs": 12098.798667000003,
+          "final": false,
+          "turnOrder": 5,
+          "text": "Please explain the trade-offs between latency and"
+        },
+        {
+          "receivedAtMs": 13319.219417,
+          "final": false,
+          "turnOrder": 5,
+          "text": "Please explain the trade-offs between latency and accuracy for live"
+        },
+        {
+          "receivedAtMs": 14538.185917000003,
+          "final": false,
+          "turnOrder": 5,
+          "text": "Please explain the trade-offs between latency and accuracy for live meeting captions."
+        },
+        {
+          "receivedAtMs": 14658.630833000003,
+          "final": true,
+          "turnOrder": 5,
+          "text": "Please explain the trade-offs between latency and accuracy for live meeting captions."
+        }
+      ]
+    },
+    {
+      "case": "followup",
+      "repeat": 1,
+      "requestedModel": "universal-3-6-pro",
+      "confirmedModel": "universal-3-6-pro",
+      "reference": "Yes, that makes sense. No, I meant the monthly subscription, not the annual plan. Could you give a concrete example? Please explain the tradeoffs between latency and accuracy for live meeting captions.",
+      "transcript": "Yes, that makes sense. No, I meant the monthly subscription. Not the annual plan. Could you give a concrete example? Please explain the trade-offs between latency and accuracy for live meeting captions.",
+      "speechDurationMs": 13980,
+      "metrics": {
+        "referenceWords": 32,
+        "wordErrors": 0,
+        "werPercent": 0,
+        "firstPartialMs": 461.3572090000016,
+        "medianPartialGapMs": 1184.3542914999998,
+        "finalAfterSpeechMs": 460.66304200000013,
+        "connectionReadyMs": 1187.6408749999973,
+        "partialCount": 13
+      },
+      "events": [
+        {
+          "receivedAtMs": 461.3572090000016,
+          "final": false,
+          "turnOrder": 0,
+          "text": "You're"
+        },
+        {
+          "receivedAtMs": 1675.088499999998,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Yes, that makes sense."
+        },
+        {
+          "receivedAtMs": 2164.9606669999994,
+          "final": true,
+          "turnOrder": 0,
+          "text": "Yes, that makes sense."
+        },
+        {
+          "receivedAtMs": 2588.7230839999975,
+          "final": false,
+          "turnOrder": 1,
+          "text": "No,"
+        },
+        {
+          "receivedAtMs": 2893.2988750000004,
+          "final": false,
+          "turnOrder": 1,
+          "text": "No,"
+        },
+        {
+          "receivedAtMs": 3861.835791999998,
+          "final": false,
+          "turnOrder": 1,
+          "text": "No, I meant the month"
+        },
+        {
+          "receivedAtMs": 5016.813084000001,
+          "final": false,
+          "turnOrder": 1,
+          "text": "No, I meant the monthly subscription."
+        },
+        {
+          "receivedAtMs": 5200.437916999996,
+          "final": true,
+          "turnOrder": 1,
+          "text": "No, I meant the monthly subscription."
+        },
+        {
+          "receivedAtMs": 5629.013166999997,
+          "final": false,
+          "turnOrder": 2,
+          "text": "Not the"
+        },
+        {
+          "receivedAtMs": 7028.054334,
+          "final": true,
+          "turnOrder": 2,
+          "text": "Not the annual plan."
+        },
+        {
+          "receivedAtMs": 7455.140625,
+          "final": false,
+          "turnOrder": 3,
+          "text": "Would you"
+        },
+        {
+          "receivedAtMs": 8734.194041999996,
+          "final": false,
+          "turnOrder": 3,
+          "text": "Could you give a concrete example?"
+        },
+        {
+          "receivedAtMs": 9162.670666999999,
+          "final": true,
+          "turnOrder": 3,
+          "text": "Could you give a concrete example?"
+        },
+        {
+          "receivedAtMs": 9650.572542000002,
+          "final": false,
+          "turnOrder": 4,
+          "text": "Please"
+        },
+        {
+          "receivedAtMs": 10994.1895,
+          "final": false,
+          "turnOrder": 4,
+          "text": "Please explain the trade-off"
+        },
+        {
+          "receivedAtMs": 12334.245792000002,
+          "final": false,
+          "turnOrder": 4,
+          "text": "Please explain the trade-offs between latency and"
+        },
+        {
+          "receivedAtMs": 13737.425959,
+          "final": false,
+          "turnOrder": 4,
+          "text": "Please explain the trade-offs between latency and accuracy for live meeting"
+        },
+        {
+          "receivedAtMs": 14649.673334,
+          "final": true,
+          "turnOrder": 4,
+          "text": "Please explain the trade-offs between latency and accuracy for live meeting captions."
+        }
+      ]
+    },
+    {
+      "case": "meeting",
+      "repeat": 2,
+      "requestedModel": "universal-3-5-pro",
+      "confirmedModel": "universal-3-5-pro",
+      "reference": "The release is planned for Friday. Please confirm that the microphone permissions are ready. We should test screen sharing before the meeting and send the action items to the engineering team.",
+      "transcript": "The release is planned for Friday. Please confirm that the microphone permissions are ready. We should test screen sharing before the meeting and send the action items to the engineering team.",
+      "speechDurationMs": 11720,
+      "metrics": {
+        "referenceWords": 31,
+        "wordErrors": 0,
+        "werPercent": 0,
+        "firstPartialMs": 338.3821250000037,
+        "medianPartialGapMs": 1218.0780835000041,
+        "finalAfterSpeechMs": 626.4280419999996,
+        "connectionReadyMs": 1197.2042499999952,
+        "partialCount": 11
+      },
+      "events": [
+        {
+          "receivedAtMs": 338.3821250000037,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The"
+        },
+        {
+          "receivedAtMs": 1551.5725419999944,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned"
+        },
+        {
+          "receivedAtMs": 2465.5357090000034,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday."
+        },
+        {
+          "receivedAtMs": 2772.266625000004,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday."
+        },
+        {
+          "receivedAtMs": 3989.652709000002,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday. Please confirm that the"
+        },
+        {
+          "receivedAtMs": 5212.900624999995,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday. Please confirm that the microphone permissions"
+        },
+        {
+          "receivedAtMs": 6255.949166999999,
+          "final": true,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday. Please confirm that the microphone permissions are ready."
+        },
+        {
+          "receivedAtMs": 6740.802083999995,
+          "final": false,
+          "turnOrder": 1,
+          "text": "Be sure"
+        },
+        {
+          "receivedAtMs": 7959.385041999994,
+          "final": false,
+          "turnOrder": 1,
+          "text": "We should test screen sharing."
+        },
+        {
+          "receivedAtMs": 9178.633709000002,
+          "final": false,
+          "turnOrder": 1,
+          "text": "We should test screen sharing before the meeting."
+        },
+        {
+          "receivedAtMs": 10398.389874999993,
+          "final": false,
+          "turnOrder": 1,
+          "text": "We should test screen sharing before the meeting and send the action items."
+        },
+        {
+          "receivedAtMs": 11615.963084000003,
+          "final": false,
+          "turnOrder": 1,
+          "text": "We should test screen sharing before the meeting and send the action items to the engineer"
+        },
+        {
+          "receivedAtMs": 12533.833583999993,
+          "final": true,
+          "turnOrder": 1,
+          "text": "We should test screen sharing before the meeting and send the action items to the engineering team."
+        }
+      ]
+    },
+    {
+      "case": "meeting",
+      "repeat": 2,
+      "requestedModel": "universal-3-6-pro",
+      "confirmedModel": "universal-3-6-pro",
+      "reference": "The release is planned for Friday. Please confirm that the microphone permissions are ready. We should test screen sharing before the meeting and send the action items to the engineering team.",
+      "transcript": "The release is planned for Friday. Please confirm that the microphone permissions are ready. We should test screen sharing before the meeting and send the action items to the engineering team.",
+      "speechDurationMs": 11720,
+      "metrics": {
+        "referenceWords": 31,
+        "wordErrors": 0,
+        "werPercent": 0,
+        "firstPartialMs": 644.036791999999,
+        "medianPartialGapMs": 1218.7681664999982,
+        "finalAfterSpeechMs": 625.232124999995,
+        "connectionReadyMs": 1290.6870419999905,
+        "partialCount": 11
+      },
+      "events": [
+        {
+          "receivedAtMs": 644.036791999999,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The reason"
+        },
+        {
+          "receivedAtMs": 1859.6847500000003,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned for February"
+        },
+        {
+          "receivedAtMs": 2468.847542000003,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday."
+        },
+        {
+          "receivedAtMs": 3077.1347499999974,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday. Please"
+        },
+        {
+          "receivedAtMs": 4299.183499999999,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday. Please confirm that the mic"
+        },
+        {
+          "receivedAtMs": 5518.447707999992,
+          "final": false,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday. Please confirm that the microphone permissions are"
+        },
+        {
+          "receivedAtMs": 6251.574458000003,
+          "final": true,
+          "turnOrder": 0,
+          "text": "The release is planned for Friday. Please confirm that the microphone permissions are ready."
+        },
+        {
+          "receivedAtMs": 6739.3767919999955,
+          "final": false,
+          "turnOrder": 1,
+          "text": "You should"
+        },
+        {
+          "receivedAtMs": 7957.648916999999,
+          "final": false,
+          "turnOrder": 1,
+          "text": "We should test screen sharing."
+        },
+        {
+          "receivedAtMs": 9174.427125000002,
+          "final": false,
+          "turnOrder": 1,
+          "text": "We should test screen sharing before the meeting"
+        },
+        {
+          "receivedAtMs": 10394.935750000004,
+          "final": false,
+          "turnOrder": 1,
+          "text": "We should test screen sharing before the meeting and send the action items."
+        },
+        {
+          "receivedAtMs": 11622.2975,
+          "final": false,
+          "turnOrder": 1,
+          "text": "We should test screen sharing before the meeting and send the action items to the engineers"
+        },
+        {
+          "receivedAtMs": 12531.41175,
+          "final": true,
+          "turnOrder": 1,
+          "text": "We should test screen sharing before the meeting and send the action items to the engineering team."
+        }
+      ]
+    },
+    {
+      "case": "interview",
+      "repeat": 2,
+      "requestedModel": "universal-3-5-pro",
+      "confirmedModel": "universal-3-5-pro",
+      "reference": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?",
+      "transcript": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?",
+      "speechDurationMs": 14680,
+      "metrics": {
+        "referenceWords": 35,
+        "wordErrors": 0,
+        "werPercent": 0,
+        "firstPartialMs": 459.3062079999945,
+        "medianPartialGapMs": 1218.631165999992,
+        "finalAfterSpeechMs": 540.2592920000025,
+        "connectionReadyMs": 1209.1645419999986,
+        "partialCount": 12
+      },
+      "events": [
+        {
+          "receivedAtMs": 459.3062079999945,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you"
+        },
+        {
+          "receivedAtMs": 1739.2209169999987,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you"
+        },
+        {
+          "receivedAtMs": 2960.469207999995,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate"
+        },
+        {
+          "receivedAtMs": 4176.477958000003,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed"
+        },
+        {
+          "receivedAtMs": 5332.9389999999985,
+          "final": true,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system?"
+        },
+        {
+          "receivedAtMs": 5820.224791999994,
+          "final": false,
+          "turnOrder": 1,
+          "text": "This"
+        },
+        {
+          "receivedAtMs": 7037.188832999993,
+          "final": false,
+          "turnOrder": 1,
+          "text": "Describe how transactions"
+        },
+        {
+          "receivedAtMs": 8254.474833,
+          "final": false,
+          "turnOrder": 1,
+          "text": "Describe how transactions and retries"
+        },
+        {
+          "receivedAtMs": 9293.612917000006,
+          "final": true,
+          "turnOrder": 1,
+          "text": "Describe how transactions and retries work together."
+        },
+        {
+          "receivedAtMs": 9781.466291999997,
+          "final": false,
+          "turnOrder": 2,
+          "text": "What"
+        },
+        {
+          "receivedAtMs": 10997.415542000002,
+          "final": false,
+          "turnOrder": 2,
+          "text": "What would happen if the server"
+        },
+        {
+          "receivedAtMs": 12216.046707999994,
+          "final": false,
+          "turnOrder": 2,
+          "text": "What would happen if the server stopped after charging"
+        },
+        {
+          "receivedAtMs": 13436.550749999995,
+          "final": false,
+          "turnOrder": 2,
+          "text": "What would happen if the server stopped after charging the customer?"
+        },
+        {
+          "receivedAtMs": 14654.918583000006,
+          "final": false,
+          "turnOrder": 2,
+          "text": "What would happen if the server stopped after charging the customer but before saving the"
+        },
+        {
+          "receivedAtMs": 15444.995167000001,
+          "final": true,
+          "turnOrder": 2,
+          "text": "What would happen if the server stopped after charging the customer but before saving the response?"
+        }
+      ]
+    },
+    {
+      "case": "interview",
+      "repeat": 2,
+      "requestedModel": "universal-3-6-pro",
+      "confirmedModel": "universal-3-6-pro",
+      "reference": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?",
+      "transcript": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?",
+      "speechDurationMs": 14680,
+      "metrics": {
+        "referenceWords": 35,
+        "wordErrors": 0,
+        "werPercent": 0,
+        "firstPartialMs": 460.84916599999997,
+        "medianPartialGapMs": 1228.3865409999999,
+        "finalAfterSpeechMs": 542.7018329999992,
+        "connectionReadyMs": 1217.8217500000028,
+        "partialCount": 12
+      },
+      "events": [
+        {
+          "receivedAtMs": 460.84916599999997,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you"
+        },
+        {
+          "receivedAtMs": 1681.2479999999923,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you"
+        },
+        {
+          "receivedAtMs": 2901.7839999999997,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate"
+        },
+        {
+          "receivedAtMs": 4184.984333,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed"
+        },
+        {
+          "receivedAtMs": 5336.014750000002,
+          "final": true,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system?"
+        },
+        {
+          "receivedAtMs": 5820.992165999996,
+          "final": false,
+          "turnOrder": 1,
+          "text": "This"
+        },
+        {
+          "receivedAtMs": 7038.938500000004,
+          "final": false,
+          "turnOrder": 1,
+          "text": "Describe how transactions"
+        },
+        {
+          "receivedAtMs": 8257.643708000003,
+          "final": false,
+          "turnOrder": 1,
+          "text": "Describe how transactions and retries"
+        },
+        {
+          "receivedAtMs": 9179.604416000002,
+          "final": true,
+          "turnOrder": 1,
+          "text": "Describe how transactions and retries work together."
+        },
+        {
+          "receivedAtMs": 9601.751499999998,
+          "final": false,
+          "turnOrder": 2,
+          "text": "1."
+        },
+        {
+          "receivedAtMs": 10877.788165999998,
+          "final": false,
+          "turnOrder": 2,
+          "text": "What would happen if the server"
+        },
+        {
+          "receivedAtMs": 12035.239000000001,
+          "final": false,
+          "turnOrder": 2,
+          "text": "What would happen if the server stopped after"
+        },
+        {
+          "receivedAtMs": 13263.625541000001,
+          "final": false,
+          "turnOrder": 2,
+          "text": "What would happen if the server stopped after charging the customer"
+        },
+        {
+          "receivedAtMs": 14535.243583000003,
+          "final": false,
+          "turnOrder": 2,
+          "text": "What would happen if the server stopped after charging the customer but before saving the"
+        },
+        {
+          "receivedAtMs": 15447.328540999995,
+          "final": true,
+          "turnOrder": 2,
+          "text": "What would happen if the server stopped after charging the customer but before saving the response?"
+        }
+      ]
+    },
+    {
+      "case": "followup",
+      "repeat": 2,
+      "requestedModel": "universal-3-5-pro",
+      "confirmedModel": "universal-3-5-pro",
+      "reference": "Yes, that makes sense. No, I meant the monthly subscription, not the annual plan. Could you give a concrete example? Please explain the tradeoffs between latency and accuracy for live meeting captions.",
+      "transcript": "Yes, that makes sense. No. I meant the monthly subscription. Not the annual plan. Could you give a concrete example? Please explain the trade-offs between latency and accuracy for live meeting captions.",
+      "speechDurationMs": 13980,
+      "metrics": {
+        "referenceWords": 32,
+        "wordErrors": 0,
+        "werPercent": 0,
+        "firstPartialMs": 463.4839159999974,
+        "medianPartialGapMs": 1214.573271500005,
+        "finalAfterSpeechMs": 490.57137499999953,
+        "connectionReadyMs": 1194.543915999995,
+        "partialCount": 13
+      },
+      "events": [
+        {
+          "receivedAtMs": 463.4839159999974,
+          "final": false,
+          "turnOrder": 0,
+          "text": "You're"
+        },
+        {
+          "receivedAtMs": 1677.4046249999956,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Yes, that makes sense."
+        },
+        {
+          "receivedAtMs": 2176.611208000002,
+          "final": true,
+          "turnOrder": 0,
+          "text": "Yes, that makes sense."
+        },
+        {
+          "receivedAtMs": 2593.856666000007,
+          "final": false,
+          "turnOrder": 1,
+          "text": "No."
+        },
+        {
+          "receivedAtMs": 2897.147165999995,
+          "final": true,
+          "turnOrder": 1,
+          "text": "No."
+        },
+        {
+          "receivedAtMs": 3386.640750000006,
+          "final": false,
+          "turnOrder": 2,
+          "text": "I mean,"
+        },
+        {
+          "receivedAtMs": 4602.770250000001,
+          "final": false,
+          "turnOrder": 2,
+          "text": "I meant the monthly subscription."
+        },
+        {
+          "receivedAtMs": 5211.439790999997,
+          "final": true,
+          "turnOrder": 2,
+          "text": "I meant the monthly subscription."
+        },
+        {
+          "receivedAtMs": 5639.385500000004,
+          "final": false,
+          "turnOrder": 3,
+          "text": "Not the"
+        },
+        {
+          "receivedAtMs": 7043.431333,
+          "final": true,
+          "turnOrder": 3,
+          "text": "Not the annual plan."
+        },
+        {
+          "receivedAtMs": 7469.860916000005,
+          "final": false,
+          "turnOrder": 4,
+          "text": "Would you"
+        },
+        {
+          "receivedAtMs": 8870.228291000007,
+          "final": false,
+          "turnOrder": 4,
+          "text": "Could you give a concrete example?"
+        },
+        {
+          "receivedAtMs": 9176.009665999998,
+          "final": true,
+          "turnOrder": 4,
+          "text": "Could you give a concrete example?"
+        },
+        {
+          "receivedAtMs": 9603.121958000003,
+          "final": false,
+          "turnOrder": 5,
+          "text": "Please"
+        },
+        {
+          "receivedAtMs": 10884.770290999993,
+          "final": false,
+          "turnOrder": 5,
+          "text": "Please explain the trade-off"
+        },
+        {
+          "receivedAtMs": 12099.996125000005,
+          "final": false,
+          "turnOrder": 5,
+          "text": "Please explain the trade-offs between latency and"
+        },
+        {
+          "receivedAtMs": 13337.906415999998,
+          "final": false,
+          "turnOrder": 5,
+          "text": "Please explain the trade-offs between latency and accuracy for live"
+        },
+        {
+          "receivedAtMs": 14544.163499999995,
+          "final": false,
+          "turnOrder": 5,
+          "text": "Please explain the trade-offs between latency and accuracy for live meeting captions."
+        },
+        {
+          "receivedAtMs": 14688.663125000006,
+          "final": true,
+          "turnOrder": 5,
+          "text": "Please explain the trade-offs between latency and accuracy for live meeting captions."
+        }
+      ]
+    },
+    {
+      "case": "followup",
+      "repeat": 2,
+      "requestedModel": "universal-3-6-pro",
+      "confirmedModel": "universal-3-6-pro",
+      "reference": "Yes, that makes sense. No, I meant the monthly subscription, not the annual plan. Could you give a concrete example? Please explain the tradeoffs between latency and accuracy for live meeting captions.",
+      "transcript": "Yes, that makes sense. No, I meant the monthly subscription. Not the annual plan. Could you give a concrete example? Please explain the trade-offs between latency and accuracy for live meeting captions.",
+      "speechDurationMs": 13980,
+      "metrics": {
+        "referenceWords": 32,
+        "wordErrors": 0,
+        "werPercent": 0,
+        "firstPartialMs": 457.81849999999395,
+        "medianPartialGapMs": 1169.1097080000036,
+        "finalAfterSpeechMs": 499.4773750000022,
+        "connectionReadyMs": 1175.1388330000045,
+        "partialCount": 14
+      },
+      "events": [
+        {
+          "receivedAtMs": 457.81849999999395,
+          "final": false,
+          "turnOrder": 0,
+          "text": "You're"
+        },
+        {
+          "receivedAtMs": 1676.1042920000036,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Yes, that makes sense."
+        },
+        {
+          "receivedAtMs": 2164.0565840000054,
+          "final": true,
+          "turnOrder": 0,
+          "text": "Yes, that makes sense."
+        },
+        {
+          "receivedAtMs": 2590.9723340000055,
+          "final": false,
+          "turnOrder": 1,
+          "text": "No,"
+        },
+        {
+          "receivedAtMs": 2896.9364170000044,
+          "final": false,
+          "turnOrder": 1,
+          "text": "No,"
+        },
+        {
+          "receivedAtMs": 3871.2585839999956,
+          "final": false,
+          "turnOrder": 1,
+          "text": "No, I meant the month"
+        },
+        {
+          "receivedAtMs": 5040.368291999999,
+          "final": false,
+          "turnOrder": 1,
+          "text": "No, I meant the monthly subscription."
+        },
+        {
+          "receivedAtMs": 5211.640249999997,
+          "final": true,
+          "turnOrder": 1,
+          "text": "No, I meant the monthly subscription."
+        },
+        {
+          "receivedAtMs": 5643.412167000002,
+          "final": false,
+          "turnOrder": 2,
+          "text": "Not the"
+        },
+        {
+          "receivedAtMs": 7042.747959,
+          "final": true,
+          "turnOrder": 2,
+          "text": "Not the annual plan."
+        },
+        {
+          "receivedAtMs": 7473.992209000004,
+          "final": false,
+          "turnOrder": 3,
+          "text": "Would you"
+        },
+        {
+          "receivedAtMs": 8751.464416999996,
+          "final": false,
+          "turnOrder": 3,
+          "text": "Could you give a concrete example?"
+        },
+        {
+          "receivedAtMs": 9177.823541999998,
+          "final": true,
+          "turnOrder": 3,
+          "text": "Could you give a concrete example?"
+        },
+        {
+          "receivedAtMs": 9604.968624999994,
+          "final": false,
+          "turnOrder": 4,
+          "text": "Please"
+        },
+        {
+          "receivedAtMs": 10885.352459000002,
+          "final": false,
+          "turnOrder": 4,
+          "text": "Please explain the trade-off"
+        },
+        {
+          "receivedAtMs": 12105.334709000002,
+          "final": false,
+          "turnOrder": 4,
+          "text": "Please explain the trade-offs between latency and"
+        },
+        {
+          "receivedAtMs": 13262.302249999993,
+          "final": false,
+          "turnOrder": 4,
+          "text": "Please explain the trade-offs between latency and accuracy for live"
+        },
+        {
+          "receivedAtMs": 14554.949041999993,
+          "final": false,
+          "turnOrder": 4,
+          "text": "Please explain the trade-offs between latency and accuracy for live meeting captions."
+        },
+        {
+          "receivedAtMs": 14707.021708999993,
+          "final": true,
+          "turnOrder": 4,
+          "text": "Please explain the trade-offs between latency and accuracy for live meeting captions."
+        }
+      ]
+    }
+  ],
+  "normalizationNote": "The sole apparent clean-speech mismatch was trade-offs versus tradeoffs, a spelling/formatting difference. Both are normalized to tradeoffs; neither model made a lexical error on these samples."
+}

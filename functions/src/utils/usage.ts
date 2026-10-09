@@ -595,10 +595,17 @@ export function isFreeTrialExhausted(status: ReturnType<typeof buildPlanStatus>)
   );
 }
 
+export function isHourlyPlanExhausted(status: ReturnType<typeof buildPlanStatus>) {
+  return (status.plan === "hour3" || status.plan === "hour10") && status.remaining.sttSeconds <= 0;
+}
+
 export function assertUsageAvailable(
   actionType: UsageActionType,
   status: ReturnType<typeof buildPlanStatus>
 ) {
+  if (isHourlyPlanExhausted(status)) {
+    throw new HttpsError("resource-exhausted", "Hourly plan limit reached. Add hours or upgrade to continue using listening, chat, and screenshot analysis.");
+  }
   if (isFreeTrialExhausted(status)) {
     throw new HttpsError(
       "resource-exhausted",

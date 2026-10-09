@@ -140,9 +140,11 @@ export class IntelligenceManager extends EventEmitter {
         return this.engine.runAssistMode();
     }
 
-    async runWhatShouldISay(question?: string, confidence?: number, imagePaths?: string[], behaviorInstructions?: string): Promise<string | null> {
-        return this.engine.runWhatShouldISay(question, confidence, imagePaths, behaviorInstructions);
+    async runWhatShouldISay(question?: string, confidence?: number, imagePaths?: string[], behaviorInstructions?: string, manualTrigger = false): Promise<string | null> {
+        return this.engine.runWhatShouldISay(question, confidence, imagePaths, behaviorInstructions, manualTrigger);
     }
+
+    didLastAnswerSucceed(): boolean { return this.engine.lastAnswerSucceeded; }
 
     async runFollowUp(intent: string, userRequest?: string): Promise<string | null> {
         return this.engine.runFollowUp(intent, userRequest);

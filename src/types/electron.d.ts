@@ -1,4 +1,5 @@
 export interface ElectronAPI {
+  reportSttUiTiming: (metrics: Record<string, unknown>) => void
   resumeBuilderImport: () => Promise<{ success: boolean; cancelled?: boolean; error?: string; document?: { name: string; content: string } }>;
   resumeBuilderExport: (input: { resume: import('../../shared/resume').ResumeData; template: import('../../shared/resume').ResumeTemplate; color: string }) => Promise<{ success: boolean; cancelled?: boolean; error?: string; path?: string }>;
 
@@ -102,7 +103,7 @@ export interface ElectronAPI {
   onCredentialsChanged: (callback: () => void) => () => void
 
   // Native Audio Service Events
-  onNativeAudioTranscript: (callback: (transcript: { speaker: string; text: string; final: boolean }) => void) => () => void
+  onNativeAudioTranscript: (callback: (transcript: { speaker: string; text: string; final: boolean; timing?: { streamId: string; eventId: number; receivedAtMs: number; ipcSentAtMs: number; speaker?: string } }) => void) => () => void
   onNativeAudioSuggestion: (callback: (suggestion: { context: string; lastQuestion: string; confidence: number }) => void) => () => void
   onNativeAudioConnected: (callback: () => void) => () => void
   onNativeAudioDisconnected: (callback: () => void) => () => void

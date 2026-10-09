@@ -73,7 +73,6 @@ export const BillingSettings: React.FC = () => {
   const [pending, setPending] = useState<{ id: NewPaidPlan; orderId: string; since: number } | null>(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const hourlyExhausted = (planStatus?.plan === 'hour3' || planStatus?.plan === 'hour10') && planStatus.remaining.sttSeconds <= 0;
   const fetchPrices = async () => {
     setLoading(true); setError('');
     try { const result = await getLiveBillingPlans(); setPrices(result.prices); }
@@ -183,14 +182,7 @@ export const BillingSettings: React.FC = () => {
           </div>
         </div>
         </div>
-        {hourlyExhausted && <div role="status" className="rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-slate-800">
-          <h3 className="font-semibold">Hours exhausted</h3>
-          <p className="mt-1">Buy another hourly pack or switch to a monthly plan to continue listening. Your balance updates after payment is verified.</p>
-          <div className="mt-3 flex flex-wrap gap-3">
-            <button onClick={() => setCategory('hour')} className="rounded-xl border border-emerald-400 bg-white px-4 py-2 font-semibold hover:bg-emerald-50">Buy hourly pack</button>
-            <button onClick={() => setCategory('month')} className="rounded-xl border border-blue-400 bg-white px-4 py-2 font-semibold hover:bg-blue-100">Switch to monthly</button>
-          </div>
-        </div>}
+
         {loading ? <p role="status" className="text-center text-slate-500">Loading current prices…</p> :
           <div id="billing-plans" role="tabpanel" aria-labelledby={`billing-${category}`} className="mx-auto flex max-w-[640px] min-[900px]:max-w-[680px] flex-wrap justify-center gap-3">
             {CARDS.filter(card => card.category === category).map((card, index) => {

@@ -36,6 +36,8 @@ import RollingTranscript from './ui/RollingTranscript';
 import ResponseCopyButton from './ui/ResponseCopyButton';
 import ResizableResponsePanel, { getResponsePanelWidth } from './ui/ResizableResponsePanel';
 import { buildResponsePages } from '../lib/responsePages';
+import { AnswerTranscriptBuffer } from '../lib/answerTranscriptBuffer';
+import { refersToScreenshot, type ScreenshotContext } from '../lib/screenshotFollowUp';
 import { createMessageId } from '../lib/messageIds';
 import { updateLiveTranscript, formatLiveTranscript, type LiveTranscriptTurn } from '../lib/liveTranscript';
 import { useOverlayHitTest } from '../hooks/useOverlayHitTest';
@@ -147,7 +149,7 @@ const isPlanLimitMessage = (error: string) => {
 };
 
 const formatAssistantError = (error: string) => (
-    isPlanLimitMessage(error) ? FREE_PLAN_LIMIT_REACHED_MESSAGE : error
+    error.toLowerCase().includes('hourly plan limit') ? error : isPlanLimitMessage(error) ? FREE_PLAN_LIMIT_REACHED_MESSAGE : error
 );
 
 const compactOrderedListClass = 'my-0.5 list-decimal list-inside space-y-0.5 pl-0 marker:font-semibold marker:text-white/90';
@@ -236,6 +238,15 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     useEffect(() => {
         if (isPaidListeningExhausted) setIsExpanded(true);
     }, [isPaidListeningExhausted]);
+    const blockHourlyAssistantAction = () => {
+        if (!isHourlyPlan) return false;
+        const balance = hourlyBalanceRef.current;
+        const elapsed = isCluegentSessionActive ? (Date.now() - balance.at) / 1000 : 0;
+        if (remainingListeningSeconds(balance.seconds, elapsed) > 0) return false;
+        setIsExpanded(true);
+        void window.electronAPI?.openSettingsTab?.('billing');
+        return true;
+    };
     const formatDuration = formatListeningDuration;
     const freeTrialUsageStorageKey = user?.uid
         ? `cluegent_free_trial_local_used_seconds_${user.uid}`
@@ -350,6 +361,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
     const [rollingTranscript, setRollingTranscript] = useState('');  // For interviewer rolling text bar
     const [liveTranscriptTurns, setLiveTranscriptTurns] = useState<LiveTranscriptTurn[]>([]);
+    const answerTranscriptBufferRef = useRef(new AnswerTranscriptBuffer());
     const [listeningSources, setListeningSources] = useState({ systemEnabled: true, micEnabled: true });
     const listeningSourcesRef = useRef(listeningSources);
     listeningSourcesRef.current = listeningSources;
@@ -370,7 +382,6 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     const contentRef = useRef<HTMLDivElement>(null);
     const [responsePanelWidth, setResponsePanelWidth] = useState(getResponsePanelWidth);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    useEffect(() => { setSelectedResponsePage(null); }, [responsePages.length]);
     useEffect(() => { if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0; }, [responsePageIndex]);
     const [responsePanelHeight, setResponsePanelHeight] = useState(() => {
         const stored = Number(localStorage.getItem('cluegent_response_panel_height'));
@@ -382,6 +393,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     // handleWhatToSay() can access it even in React 18 concurrent mode (where
     // a plain setTimeout(0) may fire before setAttachedContext flushes).
     const pendingCaptureRef = useRef<ScreenshotAttachment | null>(null);
+    const lastScreenshotContextRef = useRef<ScreenshotContext<ScreenshotAttachment> | null>(null);
 
     // Latent Context State (Screenshots attached but not sent)
     const [attachedContext, setAttachedContextState] = useState<ScreenshotAttachment[]>([]);
@@ -769,14 +781,8 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     }, []);
 
     // Build conversation context from messages
-    useEffect(() => {
-        rollingTranscriptRef.current = rollingTranscript;
-    }, [rollingTranscript]);
 
-    useEffect(() => {
-        userRollingTranscriptRef.current = userRollingTranscript;
-    }, [userRollingTranscript]);
-
+    const pendingSttTimings = useRef<Array<{ streamId: string; eventId: number; receivedAtMs: number; ipcSentAtMs: number; speaker?: string; uiReceivedAtMs: number; uiReceivedMono: number }>>([]);
     const combinedRollingTranscript = useMemo(() => formatLiveTranscript(liveTranscriptTurns), [liveTranscriptTurns]);
 
     useEffect(() => {
@@ -950,6 +956,8 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         if (!window.electronAPI?.onSessionReset) return;
         const unsubscribe = window.electronAPI.onSessionReset(() => {
             setLiveTranscriptTurns([]);
+            answerTranscriptBufferRef.current.clear();
+        lastScreenshotContextRef.current = null;
             chatSubmissionInProgress.current = false;
             console.log('[NativelyInterface] Resetting session state...');
             setMessages([]);
@@ -1044,7 +1052,15 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         cleanups.push(window.electronAPI.onNativeAudioTranscript((transcript) => {
             if (!isRecordingRef.current && ((transcript.speaker === 'user' && !listeningSourcesRef.current.micEnabled) || (transcript.speaker === 'interviewer' && !listeningSourcesRef.current.systemEnabled))) return;
             if (isListeningRef.current && !isRecordingRef.current && (transcript.speaker === 'user' || transcript.speaker === 'interviewer')) {
+                if (transcript.timing) {
+                    pendingSttTimings.current.push({ ...transcript.timing, uiReceivedAtMs: Date.now(), uiReceivedMono: performance.now() });
+                    if (pendingSttTimings.current.length > 64) pendingSttTimings.current.shift();
+                }
                 const speaker = transcript.speaker;
+                const currentText = transcript.text.trim();
+                if (currentText) {
+                    answerTranscriptBufferRef.current.receive(speaker, currentText, transcript.final);
+                }
                 setLiveTranscriptTurns(turns => updateLiveTranscript(turns, speaker, transcript.text, transcript.final));
             }
             // When the manual Mic flow is active, capture USER transcripts for voice input.
@@ -1564,8 +1580,24 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         );
     };
 
-    const handleWhatToSay = async () => {
+    const handleWhatToSay = async (typedFollowUp?: string) => {
+        if (blockHourlyAssistantAction()) return;
         if (isProcessing || chatSubmissionInProgress.current) return;
+        const transcriptSnapshot = answerTranscriptBufferRef.current.snapshot();
+        if (!typedFollowUp?.trim() && !transcriptSnapshot.request && !attachedContextRef.current.length && !pendingCaptureRef.current) return;
+        chatSubmissionInProgress.current = true;
+        const liveTranscriptForScreenshot = [typedFollowUp?.trim(), transcriptSnapshot.request].filter(Boolean).join('\n') || undefined;
+        if (typedFollowUp) setInputValue('');
+        const answerMessageId = createMessageId();
+        setSelectedResponsePage(null);
+        streamingResponseTextRef.current = '';
+        setMessages(prev => [...prev, {
+            id: answerMessageId,
+            role: 'system',
+            text: '',
+            intent: 'what_to_answer',
+            isStreaming: true,
+        }]);
         setIsExpanded(true);
         setIsProcessing(true);
         analytics.trackCommandExecuted('what_to_say');
@@ -1575,9 +1607,14 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         // arrived via pendingCaptureRef before the React state flush (React 18 fix).
         const pending = pendingCaptureRef.current;
         let currentAttachments = attachedContextRef.current;
-        if (pending && !currentAttachments.some(s => s.path === pending.path)) {
-            currentAttachments = [...currentAttachments, pending].slice(-5);
+        if (pending) {
+            // The backend reads the first image: the fresh capture must be first.
+            currentAttachments = [pending, ...currentAttachments.filter(s => s.path !== pending.path)].slice(0, 5);
         }
+
+        const previousScreenshot = lastScreenshotContextRef.current;
+        const reusingScreenshot = !currentAttachments.length && Boolean(previousScreenshot && liveTranscriptForScreenshot && refersToScreenshot(liveTranscriptForScreenshot, previousScreenshot.recent));
+        if (reusingScreenshot && previousScreenshot) currentAttachments = [previousScreenshot.image];
 
         if (currentAttachments.length > 0) {
             setAttachedContext([]);
@@ -1597,7 +1634,6 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
                     'If rolling transcript text is provided, answering it is required. If it relates to the screenshot, combine them; if it is unrelated, answer both separately.',
                 ].join('\n')
                 : '';
-            const liveTranscriptForScreenshot = getLatestRollingTranscript() || undefined;
             const flow = getAiSubmitFlow(
                 currentAttachments.length > 0,
                 false,
@@ -1605,7 +1641,12 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             );
             const whatToSayInstructions = combineInstructions(
                 buildAiBehaviorInstruction(currentAttachments.length > 0 ? 'screenshot' : 'rolling'),
-                screenshotInstruction,
+                reusingScreenshot
+                    ? 'The attached image is the earlier screenshot referenced by the CURRENT question. Answer the new follow-up using the image; do not repeat the original screenshot solution.'
+                    : screenshotInstruction,
+                reusingScreenshot && previousScreenshot ? `PREVIOUS SCREENSHOT ANSWER (background for this follow-up):\n${previousScreenshot.answer.slice(-12000)}` : '',
+                'Answer every question in the CURRENT UNANSWERED TRANSCRIPT, in order. Do not answer only the last question. Older context is background only; do not repeat previously answered questions.',
+                transcriptSnapshot.context && currentAttachments.length === 0 ? `OLDER ANSWERED TRANSCRIPT (background only):\n${transcriptSnapshot.context}` : '',
                 buildQuickActionInstruction('whatToAnswer')
             );
             debugAiSubmitFlow(flow, {
@@ -1619,23 +1660,35 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
             });
 
             // Pass imagePath if attached
-            await window.electronAPI.generateWhatToSay(
-                currentAttachments.length > 0 ? liveTranscriptForScreenshot : undefined,
+            const result = await window.electronAPI.generateWhatToSay(
+                liveTranscriptForScreenshot,
                 currentAttachments.length > 0 ? currentAttachments.map(s => s.path) : undefined,
                 whatToSayInstructions
             );
+            if (result?.answer && !result.error) {
+                answerTranscriptBufferRef.current.commit(transcriptSnapshot);
+                if (currentAttachments[0]) {
+                    lastScreenshotContextRef.current = { image: currentAttachments[0], answer: result.answer, recent: true };
+                } else if (lastScreenshotContextRef.current) {
+                    lastScreenshotContextRef.current.recent = false;
+                }
+            }
+            // Some backend early returns have no final stream event.
+            setMessages(prev => prev.map(message => message.id === answerMessageId && message.isStreaming
+                ? { ...message, text: result?.answer || message.text || result?.error || 'No answer was generated. Please try again.', isStreaming: false }
+                : message));
         } catch (err) {
-            setMessages(prev => [...prev, {
-                id: createMessageId(),
-                role: 'system',
-                text: `Error: ${err}`
-            }]);
+            setMessages(prev => prev.map(message => message.id === answerMessageId
+                ? { ...message, text: `Error: ${err}`, isStreaming: false }
+                : message));
         } finally {
+            chatSubmissionInProgress.current = false;
             setIsProcessing(false);
         }
     };
 
     const handleQuickActionPrompt = async (action: QuickActionConfig) => {
+        if (blockHourlyAssistantAction()) return;
         if (isProcessing || chatSubmissionInProgress.current) return;
         const timingTrace = createAiTimingTrace();
         activeAiTimingRef.current = timingTrace;
@@ -1733,6 +1786,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     };
 
     const handleFollowUp = async (intent: string = 'rephrase') => {
+        if (blockHourlyAssistantAction()) return;
         if (isProcessing || chatSubmissionInProgress.current) return;
         setIsExpanded(true);
         setIsProcessing(true);
@@ -1752,6 +1806,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     };
 
     const handleRecap = async () => {
+        if (blockHourlyAssistantAction()) return;
         if (isProcessing || chatSubmissionInProgress.current) return;
         setIsExpanded(true);
         setIsProcessing(true);
@@ -1771,6 +1826,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     };
 
     const handleFollowUpQuestions = async () => {
+        if (blockHourlyAssistantAction()) return;
         if (isProcessing || chatSubmissionInProgress.current) return;
         setIsExpanded(true);
         setIsProcessing(true);
@@ -1790,6 +1846,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     };
 
     const handleClarify = async () => {
+        if (blockHourlyAssistantAction()) return;
         if (isProcessing || chatSubmissionInProgress.current) return;
         setIsExpanded(true);
         setIsProcessing(true);
@@ -1809,6 +1866,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     };
 
     const handleCodeHint = async () => {
+        if (blockHourlyAssistantAction()) return;
         if (isProcessing || chatSubmissionInProgress.current) return;
         setIsExpanded(true);
         setIsProcessing(true);
@@ -1845,6 +1903,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     };
 
     const handleBrainstorm = async () => {
+        if (blockHourlyAssistantAction()) return;
         if (isProcessing || chatSubmissionInProgress.current) return;
         setIsExpanded(true);
         setIsProcessing(true);
@@ -2344,7 +2403,14 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
     };
 
     const handleManualSubmit = async () => {
+        if (blockHourlyAssistantAction()) return;
         if (chatSubmissionInProgress.current || isProcessing) return;
+        const previousScreenshot = lastScreenshotContextRef.current;
+        if (inputValue.trim() && !attachedContextRef.current.length && !pendingCaptureRef.current && previousScreenshot && refersToScreenshot(inputValue, previousScreenshot.recent)) {
+            await handleWhatToSay(inputValue);
+            return;
+        }
+        if (previousScreenshot) previousScreenshot.recent = false;
         const rollingPrompt = getLatestRollingTranscript();
         const pending = pendingCaptureRef.current;
         let currentAttachments = attachedContextRef.current;
@@ -2419,6 +2485,8 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
             }, 50);
         }
 
+        // Select the new response in the same render as its loading placeholder.
+        setSelectedResponsePage(null);
         // Add placeholder for streaming response
         streamingResponseTextRef.current = '';
         setMessages(prev => [...prev, {
@@ -2524,6 +2592,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
     };
 
     const clearChat = () => {
+        lastScreenshotContextRef.current = null;
         setMessages([]);
         setConversationContext('');
     };
@@ -3224,6 +3293,8 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
 
     const clearRollingTranscript = () => {
         setLiveTranscriptTurns([]);
+        answerTranscriptBufferRef.current.clear();
+        lastScreenshotContextRef.current = null;
         setRollingTranscript('');
         setIsInterviewerSpeaking(false);
         rollingTranscriptRef.current = '';
@@ -3285,6 +3356,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
     };
 
     const handleToolbarScreenshot = async () => {
+        if (blockHourlyAssistantAction()) return;
         if (isProcessing || directScreenshotInProgress.current) return;
         directScreenshotInProgress.current = true;
         try {
@@ -3423,6 +3495,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                             {isListening ? (
                                 <RollingTranscript
                                     text={showTranscript ? combinedRollingTranscript : ''}
+                                    timingEvents={showTranscript ? pendingSttTimings : undefined}
                                     isActive={listeningSources.systemEnabled || listeningSources.micEnabled}
                                     sourceError={sourceError}
                                     surfaceStyle={showTranscript ? appearance.transcriptStyle : undefined}
@@ -3599,7 +3672,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                             </p>
                                             <p className="mt-1 text-[12px] leading-5 text-white/85">
                                                 {isHourlyPlan
-                                                    ? 'Your listening hours are used up. Buy another hourly pack or switch to a monthly plan to continue listening.'
+                                                    ? 'Your hourly allowance is used up. Listening, chat, live answers, and screenshot analysis are paused. Buy more hours or upgrade to continue.'
                                                     : 'Your monthly listening allowance is used up. Open Billing to view your plan or upgrade.'}
                                             </p>
                                         </div>

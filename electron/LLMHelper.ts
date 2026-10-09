@@ -327,6 +327,7 @@ export class LLMHelper {
           "[LLMHelper] Failed to read screenshot for Firebase assistant stream:",
           imageError?.message || imageError
         );
+        throw new Error("Could not read the attached screenshot. Please capture it again.");
       }
     }
 

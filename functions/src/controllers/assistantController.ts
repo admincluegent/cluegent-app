@@ -15,6 +15,7 @@ import {
   getPlanPeriodUsage,
   getListeningWindowStart,
   isFreeTrialExhausted,
+  isHourlyPlanExhausted,
   materializeFreeTrialUsage,
   materializeSubscription,
   materializeUsage,
@@ -461,6 +462,7 @@ async function reserveAssistantUsage(input: {
     );
 
     assertSubscriptionActive(latestSubscription);
+    if (isHourlyPlanExhausted(latestPlanStatus)) throw new Error("HOURLY_PLAN_LIMIT_EXCEEDED");
 
     if (isFreeTrialExhausted(latestPlanStatus)) {
       throw new Error("FREE_TRIAL_LIMIT_EXCEEDED");
@@ -795,6 +797,10 @@ export async function processAssistantReplyController(
       );
     }
 
+    if (error instanceof Error && error.message === "HOURLY_PLAN_LIMIT_EXCEEDED") {
+      return assistantFailure("PROMPT_LIMIT_EXCEEDED", "Hourly plan limit reached. Add hours or upgrade to continue using listening, chat, and screenshot analysis.");
+    }
+
     if (error instanceof Error && error.message === "PROMPT_LIMIT_EXCEEDED") {
       return assistantFailure(
         "PROMPT_LIMIT_EXCEEDED",
@@ -1102,6 +1108,11 @@ export async function processAssistantReplyStreamController(
         "UNAUTHENTICATED",
         "Sign in with Google before sending assistant requests."
       );
+      return;
+    }
+
+    if (error instanceof Error && error.message === "HOURLY_PLAN_LIMIT_EXCEEDED") {
+      sendAssistantHttpFailure(response, 429, "PROMPT_LIMIT_EXCEEDED", "Hourly plan limit reached. Add hours or upgrade to continue using listening, chat, and screenshot analysis.");
       return;
     }
 
