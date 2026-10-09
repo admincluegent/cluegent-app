@@ -750,7 +750,9 @@ export class AppState {
         this.publishUpdate('update-checking')
         const result = await this.runStoreUpdate(false)
         if (result === 'ready') this.publishUpdate('update-downloaded', { source: 'microsoft-store' })
-        else if (result === 'current') this.publishUpdate('update-not-available', { version: app.getVersion() })
+        // An empty API result can lag behind the Store UI. Keep the Store
+        // reachable instead of claiming its installed package is the latest.
+        else if (result === 'current') this.publishUpdate('update-not-available', { version: app.getVersion(), source: 'microsoft-store' })
         else this.notifyMicrosoftStoreManagedUpdates()
         return
       }

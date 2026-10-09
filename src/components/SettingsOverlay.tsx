@@ -1061,7 +1061,11 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
             window.electronAPI.onUpdateDownloaded(() => {
                 setUpdateStatus('available');
             }),
-            window.electronAPI.onUpdateNotAvailable(() => {
+            window.electronAPI.onUpdateNotAvailable((info) => {
+                if (info?.source === 'microsoft-store') {
+                    setUpdateStatus('store');
+                    return;
+                }
                 setUpdateStatus('uptodate');
                 setTimeout(() => setUpdateStatus('idle'), 3000);
             }),
@@ -1892,7 +1896,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                                         ) : updateStatus === 'store' ? (
                                                             <>
                                                                 <RefreshCw size={14} />
-                                                                Microsoft Store
+                                                                Open Microsoft Store
                                                             </>
                                                         ) : updateStatus === 'error' ? (
                                                             <>

@@ -312,8 +312,8 @@ const Launcher: React.FC<LauncherProps> = ({ onStartMeeting, onOpenSettings, onP
             window.electronAPI?.onUpdateDownloaded?.(() => {
                 setUpdateStatus('available');
             }),
-            window.electronAPI?.onUpdateNotAvailable?.(() => {
-                setUpdateStatus('uptodate');
+            window.electronAPI?.onUpdateNotAvailable?.((info) => {
+                setUpdateStatus(info?.source === 'microsoft-store' ? 'store' : 'uptodate');
             }),
             window.electronAPI?.onUpdateManagedByStore?.(() => {
                 setUpdateStatus('store');

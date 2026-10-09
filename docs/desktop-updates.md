@@ -23,4 +23,6 @@ Silent updates require Windows 10 version 1803 or newer, Store auto-updates enab
 
 Platform requirements: [electron-builder auto-update](https://www.electron.build/auto-update.html) and [Microsoft Store package updates](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/package-updates-from-store).
 
+An empty Store API result does not guarantee that the Store UI has no update. The launcher and Settings show **Open Microsoft Store** for this result so users can check the Store directly. This does not display an update-ready notice or claim a newer package was found.
+
 `node --test scripts/test-updates.cjs` checks launch/download/restart behavior, active-session protection, development suppression, and Store fallback. Run `npm run typecheck:electron` and `npx tsc --noEmit` for IPC/renderer types. Windows native compilation and real Store delivery must also be validated on Windows before release.

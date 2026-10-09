@@ -64,6 +64,8 @@ test('Store policy and stale binaries use Store fallback, not GitHub', async () 
  }
  const f = fixture({store: true, result: 'current'}); await f.state.checkForUpdates();
  assert.equal(f.state.getUpdateState().status, 'current');
+ assert.equal(f.state.getUpdateState().info.source, 'microsoft-store');
+ assert.equal(f.counts().checks, 1);
 });
 test('development builds do not check or download on launch', async () => {
  const f = fixture({packaged: false}); f.timers[0](); await f.state.checkForUpdates();
