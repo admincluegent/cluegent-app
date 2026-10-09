@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { categorizeSttError, type SttErrorCategory } from '../../lib/sttErrorMapper';
 
@@ -12,6 +12,7 @@ interface ChannelStatus {
 }
 
 interface RollingTranscriptProps {
+    timingEvents?: React.MutableRefObject<Array<{ streamId: string; eventId: number; receivedAtMs: number; ipcSentAtMs: number; speaker?: string; uiReceivedAtMs: number; uiReceivedMono: number }>>;
     text: string;
     isActive?: boolean;
     surfaceStyle?: React.CSSProperties;
@@ -25,7 +26,7 @@ interface RollingTranscriptProps {
 }
 
 const RollingTranscript: React.FC<RollingTranscriptProps> = ({
-    text, isActive = true, surfaceStyle,
+    text, timingEvents, isActive = true, surfaceStyle,
     interviewerChannel, microphoneChannel,
     onCopyDiagnostics,
     onClearTranscript, sourceError
@@ -63,6 +64,28 @@ const RollingTranscript: React.FC<RollingTranscriptProps> = ({
             containerRef.current.scrollLeft = containerRef.current.scrollWidth;
         }
     }, [text, isNormal]);
+
+    useLayoutEffect(() => {
+        if (!text || !timingEvents?.current.length || document.visibilityState !== 'visible') return;
+        const events = timingEvents.current.splice(0);
+        const commitAt = performance.now();
+        // Two rAFs give a paint opportunity; this is not a GPU/display timestamp.
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                const paintAt = performance.now();
+                for (const event of events) window.electronAPI.reportSttUiTiming({
+                    streamId: event.streamId, eventId: event.eventId, speaker: event.speaker,
+                    ipcMs: event.uiReceivedAtMs - event.ipcSentAtMs,
+                    mainDispatchMs: event.ipcSentAtMs - event.receivedAtMs,
+                    commitMs: commitAt - event.uiReceivedMono,
+                    paintOpportunityMs: paintAt - commitAt,
+                    providerToPaintMs: event.uiReceivedAtMs - event.receivedAtMs + paintAt - event.uiReceivedMono,
+                    coalescedEvents: events.length,
+                });
+            });
+        });
+
+    }); // Measure every commit, including final events whose displayed text is unchanged.
 
     const handleCopy = () => {
         if (onCopyDiagnostics) {

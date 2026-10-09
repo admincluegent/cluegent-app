@@ -75,6 +75,8 @@ export class IntelligenceEngine extends EventEmitter {
     // Concurrency tracking
     private assistCancellationToken: AbortController | null = null;
     private currentGenerationId: number = 0;
+    private manualAnswerInProgress = false;
+    public lastAnswerSucceeded = false;
 
     // Keep reference to LLMHelper for client access
     private llmHelper: LLMHelper;
@@ -220,13 +222,13 @@ export class IntelligenceEngine extends EventEmitter {
      * Manual trigger - uses clean transcript pipeline for question inference
      * NEVER returns null - always provides a usable response
      */
-    async runWhatShouldISay(question?: string, confidence: number = 0.8, imagePaths?: string[], behaviorInstructions?: string): Promise<string | null> {
+    async runWhatShouldISay(question?: string, confidence: number = 0.8, imagePaths?: string[], behaviorInstructions?: string, manualTrigger = false): Promise<string | null> {
         const now = Date.now();
 
-        // Bypass cooldown when the user explicitly attached images (capture-and-process intent).
-        // The cooldown exists to debounce auto-triggers, not explicit shortcuts with context.
+        // Automatic transcript triggers must not debounce or interrupt a manual Answer request.
+        if (this.manualAnswerInProgress) return null;
         const hasImages = imagePaths && imagePaths.length > 0;
-        if (!hasImages && now - this.lastTriggerTime < this.triggerCooldown) {
+        if (!manualTrigger && !hasImages && now - this.lastTriggerTime < this.triggerCooldown) {
             return null;
         }
 
@@ -235,8 +237,11 @@ export class IntelligenceEngine extends EventEmitter {
             this.assistCancellationToken = null;
         }
 
+        this.lastAnswerSucceeded = false;
         this.setMode('what_to_say');
+        const generationId = ++this.currentGenerationId;
         this.lastTriggerTime = now;
+        if (manualTrigger) this.manualAnswerInProgress = true;
 
         try {
             if (!this.whatToAnswerLLM) {
@@ -247,6 +252,7 @@ export class IntelligenceEngine extends EventEmitter {
                 const context = this.session.getFormattedContext(180);
                 const answer = await this.answerLLM.generate(question || '', context);
                 if (answer) {
+                    this.lastAnswerSucceeded = true;
                     this.session.addAssistantMessage(answer);
                     this.emit('suggested_answer', answer, question || 'inferred', confidence);
                 }
@@ -280,7 +286,11 @@ export class IntelligenceEngine extends EventEmitter {
                 timestamp: item.timestamp
             }));
 
-            const preparedTranscript = prepareTranscriptForWhatToAnswer(transcriptTurns, 12);
+            const preparedTranscript = manualTrigger && question?.trim()
+                ? question.trim()
+                : hasImages
+                    ? 'Analyze the attached screenshot. Answer or solve its visible questions, instructions, code problems, or errors. If there is no question or task, briefly explain what the screenshot shows. Do not infer a question from earlier audio or repeat an earlier answer.'
+                    : prepareTranscriptForWhatToAnswer(transcriptTurns, 12);
 
             const temporalContext = buildTemporalContext(
                 contextItems,
@@ -288,16 +298,19 @@ export class IntelligenceEngine extends EventEmitter {
                 180
             );
 
-            const lastInterviewerTurn = this.session.getLastInterviewerTurn();
-            const intentResult = await classifyIntent(
-                lastInterviewerTurn,
-                preparedTranscript,
-                this.session.getAssistantResponseHistory().length
-            );
+            const lastInterviewerTurn = manualTrigger && question?.trim()
+                ? question.trim()
+                : this.session.getLastInterviewerTurn();
+            const intentResult = hasImages
+                ? { intent: 'general' as const, confidence: 1, answerShape: 'Read and answer the attached screenshot first. Also answer every explicitly supplied unanswered spoken question. Do not continue an earlier answer.' }
+                : await classifyIntent(
+                    lastInterviewerTurn,
+                    preparedTranscript,
+                    this.session.getAssistantResponseHistory().length
+                );
 
             console.log(`[IntelligenceEngine] Temporal RAG: ${temporalContext.previousResponses.length} responses, tone: ${temporalContext.toneSignals[0]?.type || 'neutral'}, intent: ${intentResult.intent}${imagePaths?.length ? `, with ${imagePaths.length} image(s)` : ''}`);
 
-            const generationId = ++this.currentGenerationId;
             let fullAnswer = "";
             // RC-03 fix: hold a reference to the generator so we can call .return()
             // to properly terminate the network request when a new generation starts.
@@ -323,6 +336,7 @@ export class IntelligenceEngine extends EventEmitter {
                 return null;
             }
 
+            this.lastAnswerSucceeded = Boolean(fullAnswer && fullAnswer.trim().length >= 5 && fullAnswer !== FREE_PLAN_LIMIT_REACHED_MESSAGE);
             if (!fullAnswer || fullAnswer.trim().length < 5) {
                 fullAnswer = hasImages
                     ? "I couldn't read the screenshot on this attempt. Please capture it again and make sure the question or code is visible."
@@ -348,6 +362,10 @@ export class IntelligenceEngine extends EventEmitter {
         } catch (error) {
             this.emit('error', error as Error, 'what_to_say');
             this.setMode('idle');
+            if (error instanceof Error && error.message.toLowerCase().includes('hourly plan limit')) {
+                this.emit('suggested_answer', error.message, question || 'What to Answer', confidence);
+                return error.message;
+            }
             if (isPlanLimitError(error)) {
                 this.emit('suggested_answer', FREE_PLAN_LIMIT_REACHED_MESSAGE, question || 'What to Answer', confidence);
                 return FREE_PLAN_LIMIT_REACHED_MESSAGE;
@@ -355,6 +373,8 @@ export class IntelligenceEngine extends EventEmitter {
             return hasImages
                 ? "I couldn't read the screenshot on this attempt. Please capture it again and make sure the question or code is visible."
                 : "I couldn't generate a response from the current context. Please try again with a little more transcript or a typed question.";
+        } finally {
+            if (manualTrigger) this.manualAnswerInProgress = false;
         }
     }
 

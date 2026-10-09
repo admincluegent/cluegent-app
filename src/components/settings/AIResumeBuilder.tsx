@@ -127,6 +127,21 @@ export function AIResumeBuilder({ active = true, onSubscribe }: { active?: boole
     setResume(current => ({ ...current, sections: current.sections.map((section, i) => i === index ? { ...section, ...patch } : section) }));
   }
 
+  const templatePicker = (<aside aria-label="Template and color settings" className="flex h-[750px] min-w-0 flex-col gap-4 rounded-xl border border-border-subtle bg-bg-card p-4">
+      <h3 className="font-medium text-text-primary">Template & color</h3>
+      <p className="text-xs text-text-secondary">{RESUME_TEMPLATES.length} layouts · Switch styles without generating again.</p>
+      <div className="grid min-h-0 flex-1 grid-cols-2 content-start gap-3 overflow-y-auto overscroll-contain p-1" role="group" aria-label="Resume template">{RESUME_TEMPLATES.map(t => <div key={t} className={`relative rounded-xl border border-border-subtle ${template === t ? 'ring-2 ring-blue-500 bg-bg-item-active' : ''}`}>
+        <button aria-label={t} aria-pressed={template === t} onClick={() => setTemplate(t)} className="flex w-full flex-col items-center gap-3 rounded-xl px-3 pb-4 pt-9 text-text-primary hover:bg-bg-item-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+          <span aria-hidden="true" className="relative block h-[150px] w-[106px] overflow-hidden rounded-sm bg-white shadow-sm pointer-events-none">
+            <iframe title={`${t} template thumbnail`} tabIndex={-1} sandbox="" srcDoc={renderResumeHtml(TEMPLATE_SAMPLE, t, color)} style={{ width: 794, height: 1123, border: 0, transform: 'scale(0.1335)', transformOrigin: 'top left', pointerEvents: 'none' }} />
+          </span>
+          <span className="text-sm font-medium capitalize">{t}</span><span className="text-center text-[11px] leading-4 text-text-secondary">{RESUME_TEMPLATE_DESCRIPTIONS[t]}</span>
+        </button>
+        <button aria-label={`Preview ${t} template`} title="Preview template" onClick={() => setPreviewTemplate(t)} className="absolute right-2 top-2 rounded-md border border-border-subtle bg-bg-card p-1.5 text-text-secondary hover:text-text-primary hover:bg-bg-item-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"><Eye size={15} /></button>
+      </div>)}</div>
+      <div className="flex flex-wrap items-center gap-3"><span className="text-sm text-text-primary">Accent color</span>{COLORS.map(c => <button key={c} aria-label={`Use ${c} accent`} aria-pressed={color === c} onClick={() => setColor(c)} className={`h-7 w-7 rounded-full border-2 ${color === c ? 'ring-2 ring-offset-2 ring-blue-500' : 'border-transparent'}`} style={{ background: c }} />)}<label className="flex items-center gap-2 text-sm text-text-secondary">Custom<input aria-label="Custom accent color" type="color" value={color} onChange={e => setColor(e.target.value)} className="h-8 w-9 cursor-pointer" /></label></div>
+    </aside>);
+
   return <div className="space-y-6">
     {previewTemplate && <TemplatePreviewDialog template={previewTemplate} resume={valid ? resume : TEMPLATE_SAMPLE} sample={!valid} color={color} busy={!!busy} error={error} notice={notice} onDownload={() => download(previewTemplate)} onClose={() => setPreviewTemplate(null)} onSelect={() => { setTemplate(previewTemplate); setPreviewTemplate(null); }} />}
     <div><h2 className="text-xl font-semibold text-text-primary">AI Resume Builder</h2><p className="mt-1 text-sm text-text-secondary">Turn your experience into a resume. Choose a style, refine the details, and download your PDF.</p></div>
@@ -143,28 +158,16 @@ export function AIResumeBuilder({ active = true, onSubscribe }: { active?: boole
     </div>
     {error && <p role="alert" className="rounded-lg border border-red-500/30 p-3 text-sm text-red-500">{error}</p>}
     {notice && <p role="status" className="text-sm text-text-secondary">{notice}</p>}
-    <div className="rounded-xl border border-border-subtle bg-bg-card p-5 space-y-4">
-      <h3 className="font-medium text-text-primary">Template & color</h3>
-      <p className="text-xs text-text-secondary">{RESUME_TEMPLATES.length} layouts · Switch styles without generating again.</p>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4" role="group" aria-label="Resume template">{RESUME_TEMPLATES.map(t => <div key={t} className={`relative rounded-xl border border-border-subtle ${template === t ? 'ring-2 ring-blue-500 bg-bg-item-active' : ''}`}>
-        <button aria-label={t} aria-pressed={template === t} onClick={() => setTemplate(t)} className="flex w-full flex-col items-center gap-3 rounded-xl px-3 pb-4 pt-9 text-text-primary hover:bg-bg-item-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
-          <span aria-hidden="true" className="relative block h-[150px] w-[106px] overflow-hidden rounded-sm bg-white shadow-sm pointer-events-none">
-            <iframe title={`${t} template thumbnail`} tabIndex={-1} sandbox="" srcDoc={renderResumeHtml(TEMPLATE_SAMPLE, t, color)} style={{ width: 794, height: 1123, border: 0, transform: 'scale(0.1335)', transformOrigin: 'top left', pointerEvents: 'none' }} />
-          </span>
-          <span className="text-sm font-medium capitalize">{t}</span><span className="text-center text-[11px] leading-4 text-text-secondary">{RESUME_TEMPLATE_DESCRIPTIONS[t]}</span>
-        </button>
-        <button aria-label={`Preview ${t} template`} title="Preview template" onClick={() => setPreviewTemplate(t)} className="absolute right-2 top-2 rounded-md border border-border-subtle bg-bg-card p-1.5 text-text-secondary hover:text-text-primary hover:bg-bg-item-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"><Eye size={15} /></button>
-      </div>)}</div>
-      <div className="flex flex-wrap items-center gap-3"><span className="text-sm text-text-primary">Accent color</span>{COLORS.map(c => <button key={c} aria-label={`Use ${c} accent`} aria-pressed={color === c} onClick={() => setColor(c)} className={`h-7 w-7 rounded-full border-2 ${color === c ? 'ring-2 ring-offset-2 ring-blue-500' : 'border-transparent'}`} style={{ background: c }} />)}<label className="flex items-center gap-2 text-sm text-text-secondary">Custom<input aria-label="Custom accent color" type="color" value={color} onChange={e => setColor(e.target.value)} className="h-8 w-9 cursor-pointer" /></label></div>
-    </div>
+    {!generated && templatePicker}
     {generated && <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-medium text-text-primary">Review & download</h3><button onClick={() => download()} disabled={!!busy || !valid} className={`${buttonClass} bg-blue-600 !text-white hover:!bg-blue-700`}>{busy === 'export' ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}{busy === 'export' ? 'Saving…' : 'Download PDF'}</button></div>
-      <p className="text-sm text-text-secondary">You can edit or add details below and see your changes instantly in the preview.</p>
-      <div className="grid gap-5 xl:grid-cols-2"><fieldset disabled={!!busy} className="min-w-0 space-y-3">
+      <p className="text-sm text-text-secondary">Choose a template and color beside the live preview. Edit your details below to update the resume instantly.</p>
+      <div className="grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_320px]"><div className="min-w-0"><p className="mb-2 text-xs text-text-secondary">Live preview · A4 PDF automatically continues onto additional pages</p>{html ? <iframe title="Resume preview" sandbox="" srcDoc={html} className="h-[750px] w-full rounded-lg border border-border-subtle bg-white" /> : <p role="alert" className="text-sm text-red-500">The resume is empty or too long to export. Shorten the content.</p>}</div>{templatePicker}</div>
+      <fieldset disabled={!!busy} className="min-w-0 space-y-3">
         {(['name', 'headline', 'contact', 'summary'] as const).map(key => <div key={key}><label htmlFor={`resume-${key}`} className="block text-sm capitalize text-text-secondary">{key}</label><textarea id={`resume-${key}`} className={`${inputClass} mt-1`} rows={key === 'summary' ? 4 : key === 'contact' ? 2 : 1} maxLength={{ name: 150, headline: 250, contact: 600, summary: 2500 }[key]} value={resume[key]} onChange={e => setResume({ ...resume, [key]: e.target.value })} /></div>)}
         {resume.sections.map((section, i) => <div key={i} className="rounded-lg border border-border-subtle p-3 space-y-2"><div className="flex gap-2"><input aria-label={`Section ${i + 1} title`} className={inputClass} value={section.title} maxLength={100} onChange={e => changeSection(i, { title: e.target.value })} /><button className={buttonClass} aria-label={`Remove ${section.title} section`} onClick={() => setResume({ ...resume, sections: resume.sections.filter((_, index) => index !== i) })}><Trash2 size={14} /></button></div>{section.items.map((item, j) => <div key={j} className="flex items-start gap-2"><textarea aria-label={`${section.title} entry ${j + 1}`} className={inputClass} rows={4} maxLength={3000} value={item} onChange={e => changeSection(i, { items: section.items.map((text, index) => index === j ? e.target.value : text) })} /><button className={buttonClass} aria-label={`Remove entry ${j + 1}`} onClick={() => changeSection(i, { items: section.items.filter((_, index) => index !== j) })}><Trash2 size={14} /></button></div>)}<button className={buttonClass} disabled={section.items.length >= 40} onClick={() => changeSection(i, { items: [...section.items, ''] })}><Plus size={14} />Add entry</button></div>)}
         <button className={buttonClass} disabled={resume.sections.length >= 12} onClick={() => setResume({ ...resume, sections: [...resume.sections, { title: 'New section', items: [''] }] })}><Plus size={14} />Add section</button>
-      </fieldset><div className="min-w-0"><p className="mb-2 text-xs text-text-secondary">Live preview · A4 PDF automatically continues onto additional pages</p>{html ? <iframe title="Resume preview" sandbox="" srcDoc={html} className="h-[750px] w-full rounded-lg border border-border-subtle bg-white" /> : <p role="alert" className="text-sm text-red-500">The resume is empty or too long to export. Shorten the content.</p>}</div></div>
+      </fieldset>
     </div>}
   </div>;
 }

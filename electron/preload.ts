@@ -66,7 +66,8 @@ interface ElectronAPI {
   onCredentialsChanged: (callback: () => void) => () => void
 
   // Native Audio Service Events
-  onNativeAudioTranscript: (callback: (transcript: { speaker: string; text: string; final: boolean }) => void) => () => void
+  onNativeAudioTranscript: (callback: (transcript: { speaker: string; text: string; final: boolean; timing?: { streamId: string; eventId: number; receivedAtMs: number; ipcSentAtMs: number; speaker?: string } }) => void) => () => void
+  reportSttUiTiming: (metrics: Record<string, unknown>) => void
   onNativeAudioSuggestion: (callback: (suggestion: { context: string; lastQuestion: string; confidence: number }) => void) => () => void
   onNativeAudioConnected: (callback: () => void) => () => void
   onNativeAudioDisconnected: (callback: () => void) => () => void
@@ -546,8 +547,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
     return () => { ipcRenderer.removeListener('credentials-changed', subscription); };
   },
 
+  reportSttUiTiming: (metrics: Record<string, unknown>) => ipcRenderer.send('stt-ui-timing', metrics),
   // Native Audio Service Events
-  onNativeAudioTranscript: (callback: (transcript: { speaker: string; text: string; final: boolean }) => void) => {
+  onNativeAudioTranscript: (callback: (transcript: { speaker: string; text: string; final: boolean; timing?: { streamId: string; eventId: number; receivedAtMs: number; ipcSentAtMs: number; speaker?: string } }) => void) => {
     const subscription = (_: any, data: any) => callback(data)
     ipcRenderer.on("native-audio-transcript", subscription)
     return () => {

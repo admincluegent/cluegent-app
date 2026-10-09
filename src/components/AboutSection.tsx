@@ -113,9 +113,6 @@ export const AboutSection: React.FC = () => {
                         </span>
                         <div className="min-w-0 flex-1">
                             <h5 className="text-[13px] font-bold text-text-primary">Legal links</h5>
-                            <p className="mt-1 text-xs leading-5 text-text-secondary">
-                                Cluegent is distributed under AGPL-3.0 and includes open-source attribution.
-                            </p>
                             <div className="mt-3 flex flex-wrap items-center gap-2">
                                 <LinkPill
                                     href="https://www.cluegent.com/privacy.html"

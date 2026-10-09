@@ -1,0 +1,2765 @@
+{
+  "createdAt": "2026-10-09T16:52:46.874Z",
+  "method": "Controlled local Electron lab using actual RollingTranscript; monotonic epoch timestamps. Injected PCM and native speaker playback are distinct. Native timestamps estimate first sample as callback time minus frame duration, uncertainty includes unmeasured hardware buffering. Double rAF marks paint opportunity, not physical display.",
+  "results": [
+    {
+      "id": "lab-1",
+      "model": "universal-3-6-pro",
+      "chunkMs": 60,
+      "channel": "injected",
+      "style": "capture-92-production",
+      "repeat": 1,
+      "rate": 16000,
+      "events": [],
+      "frames": [
+        {
+          "atMs": 1791564733543.683,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 61.2041015625
+        },
+        {
+          "atMs": 1791564733604.9387,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 62.459716796875
+        },
+        {
+          "atMs": 1791564733666.0156,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 63.53662109375
+        },
+        {
+          "atMs": 1791564733727.9688,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 65.48974609375
+        },
+        {
+          "atMs": 1791564733788.705,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 66.22607421875
+        },
+        {
+          "atMs": 1791564733849.6833,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 67.204345703125
+        },
+        {
+          "atMs": 1791564733910.5808,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 68.101806640625
+        },
+        {
+          "atMs": 1791564733971.1516,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 68.672607421875
+        },
+        {
+          "atMs": 1791564734032.9963,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 17812,
+          "queueWaitMs": 70.517333984375
+        },
+        {
+          "atMs": 1791564734094.9705,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 16142,
+          "queueWaitMs": 72.491455078125
+        },
+        {
+          "atMs": 1791564734155.6174,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 19947,
+          "queueWaitMs": 73.138427734375
+        },
+        {
+          "atMs": 1791564734216.3345,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 15860,
+          "queueWaitMs": 73.85546875
+        },
+        {
+          "atMs": 1791564734277.1687,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 18524,
+          "queueWaitMs": 74.689697265625
+        },
+        {
+          "atMs": 1791564734337.4321,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 19030,
+          "queueWaitMs": 74.953125
+        },
+        {
+          "atMs": 1791564734398.312,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 14359,
+          "queueWaitMs": 75.8330078125
+        },
+        {
+          "atMs": 1791564734459.3647,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 16497,
+          "queueWaitMs": 76.8857421875
+        },
+        {
+          "atMs": 1791564734520.9414,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 14631,
+          "queueWaitMs": 78.46240234375
+        },
+        {
+          "atMs": 1791564734582.5676,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 13988,
+          "queueWaitMs": 80.088623046875
+        },
+        {
+          "atMs": 1791564734642.8386,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 10790,
+          "queueWaitMs": 80.359619140625
+        },
+        {
+          "atMs": 1791564734703.879,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 34,
+          "queueWaitMs": 81.39990234375
+        },
+        {
+          "atMs": 1791564734763.9958,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 81.516845703125
+        },
+        {
+          "atMs": 1791564734825.5342,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 83.05517578125
+        },
+        {
+          "atMs": 1791564734886.179,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 83.699951171875
+        },
+        {
+          "atMs": 1791564734947.863,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 85.384033203125
+        },
+        {
+          "atMs": 1791564735008.5198,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 86.040771484375
+        },
+        {
+          "atMs": 1791564735069.1401,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 86.6611328125
+        },
+        {
+          "atMs": 1791564735130.7117,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 88.232666015625
+        },
+        {
+          "atMs": 1791564735190.9739,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 88.494873046875
+        },
+        {
+          "atMs": 1791564735252.5278,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 90.048828125
+        },
+        {
+          "atMs": 1791564735313.978,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 91.4990234375
+        },
+        {
+          "atMs": 1791564735375.0527,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 92.57373046875
+        },
+        {
+          "atMs": 1791564735436.336,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 93.85693359375
+        },
+        {
+          "atMs": 1791564735497.774,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 95.294921875
+        },
+        {
+          "atMs": 1791564735558.3657,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 95.88671875
+        },
+        {
+          "atMs": 1791564735619.9202,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 97.441162109375
+        },
+        {
+          "atMs": 1791564735681.5195,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 99.04052734375
+        },
+        {
+          "atMs": 1791564735743.0334,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 100.554443359375
+        },
+        {
+          "atMs": 1791564735804.615,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 102.135986328125
+        },
+        {
+          "atMs": 1791564735866.0522,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 103.5732421875
+        },
+        {
+          "atMs": 1791564735927.251,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 104.77197265625
+        },
+        {
+          "atMs": 1791564735988.7437,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 106.2646484375
+        },
+        {
+          "atMs": 1791564736049.3164,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 106.83740234375
+        },
+        {
+          "atMs": 1791564736110.73,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 108.2509765625
+        },
+        {
+          "atMs": 1791564736171.2356,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 108.756591796875
+        },
+        {
+          "atMs": 1791564736232.7812,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 110.30224609375
+        },
+        {
+          "atMs": 1791564736293.416,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 110.93701171875
+        },
+        {
+          "atMs": 1791564736354.2979,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 111.81884765625
+        },
+        {
+          "atMs": 1791564736415.555,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 113.075927734375
+        },
+        {
+          "atMs": 1791564736476.1804,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 113.701416015625
+        },
+        {
+          "atMs": 1791564736537.76,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 115.281005859375
+        },
+        {
+          "atMs": 1791564736598.2942,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 115.815185546875
+        },
+        {
+          "atMs": 1791564736659.332,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 116.85302734375
+        },
+        {
+          "atMs": 1791564736720.7922,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 118.313232421875
+        },
+        {
+          "atMs": 1791564736781.3118,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 118.832763671875
+        },
+        {
+          "atMs": 1791564736842.817,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 120.337890625
+        },
+        {
+          "atMs": 1791564736903.536,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 121.056884765625
+        },
+        {
+          "atMs": 1791564736964.1704,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 121.69140625
+        },
+        {
+          "atMs": 1791564737024.8418,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 122.36279296875
+        },
+        {
+          "atMs": 1791564737085.37,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 122.89111328125
+        },
+        {
+          "atMs": 1791564737146.9773,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 124.498291015625
+        },
+        {
+          "atMs": 1791564737208.5525,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 126.073486328125
+        }
+      ],
+      "errors": [],
+      "reference": "Can you explain how database transactions prevent duplicate payments?",
+      "caseId": "capture-92-production",
+      "accent": "Recorded local synthetic reference",
+      "source": "Isolated native EarPods production",
+      "sourceClockAtMs": 1791564733482.479,
+      "confirmed": true,
+      "speechOnsetAtMs": 1791564733982.729,
+      "firstPartialMs": null,
+      "partialGapMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "max": null
+      },
+      "firstSpeechToPaintMs": null,
+      "accuracy": {
+        "referenceWords": 9,
+        "wordErrors": 9,
+        "werPercent": 100
+      }
+    },
+    {
+      "id": "lab-2",
+      "model": "universal-3-6-pro",
+      "chunkMs": 60,
+      "channel": "injected",
+      "style": "capture-92-reported-bypass",
+      "repeat": 1,
+      "rate": 16000,
+      "events": [
+        {
+          "eventId": 1,
+          "receivedAtMs": 1791564743699.4407,
+          "text": "Can you please help me with a financial situation?",
+          "final": false,
+          "turnOrder": 0,
+          "words": [
+            {
+              "start": 0,
+              "end": 94,
+              "text": "Can",
+              "confidence": 0.388916,
+              "word_is_final": false
+            },
+            {
+              "start": 100,
+              "end": 194,
+              "text": "you",
+              "confidence": 0.985316,
+              "word_is_final": false
+            },
+            {
+              "start": 200,
+              "end": 389,
+              "text": "please",
+              "confidence": 0.997132,
+              "word_is_final": false
+            },
+            {
+              "start": 395,
+              "end": 521,
+              "text": "help",
+              "confidence": 0.453954,
+              "word_is_final": false
+            },
+            {
+              "start": 527,
+              "end": 590,
+              "text": "me",
+              "confidence": 0.881261,
+              "word_is_final": false
+            },
+            {
+              "start": 596,
+              "end": 722,
+              "text": "with",
+              "confidence": 0.264415,
+              "word_is_final": false
+            },
+            {
+              "start": 728,
+              "end": 759,
+              "text": "a",
+              "confidence": 0.302011,
+              "word_is_final": false
+            },
+            {
+              "start": 765,
+              "end": 1049,
+              "text": "financial",
+              "confidence": 0.404281,
+              "word_is_final": false
+            },
+            {
+              "start": 1055,
+              "end": 1370,
+              "text": "situation?",
+              "confidence": 0.898211,
+              "word_is_final": false
+            }
+          ],
+          "paint": {
+            "streamId": "lab-2",
+            "eventId": 1,
+            "ipcMs": 0.497802734375,
+            "mainDispatchMs": 0.0615234375,
+            "commitMs": 9.599999999627471,
+            "paintOpportunityMs": 15.299999999813735,
+            "providerToPaintMs": 25.459326171316206,
+            "coalescedEvents": 1,
+            "measuredAtMs": 1791564743725.6829
+          },
+          "firstSpeechToPaintMs": 1799.1513671875
+        },
+        {
+          "eventId": 2,
+          "receivedAtMs": 1791564744064.5269,
+          "text": "Can you please have a look at the financial statements you just gave me?",
+          "final": true,
+          "turnOrder": 0,
+          "words": [
+            {
+              "start": 0,
+              "end": 101,
+              "text": "Can",
+              "confidence": 0.992108,
+              "word_is_final": true
+            },
+            {
+              "start": 107,
+              "end": 208,
+              "text": "you",
+              "confidence": 0.975975,
+              "word_is_final": true
+            },
+            {
+              "start": 214,
+              "end": 416,
+              "text": "please",
+              "confidence": 0.997727,
+              "word_is_final": true
+            },
+            {
+              "start": 422,
+              "end": 557,
+              "text": "have",
+              "confidence": 0.542472,
+              "word_is_final": true
+            },
+            {
+              "start": 563,
+              "end": 596,
+              "text": "a",
+              "confidence": 0.672685,
+              "word_is_final": true
+            },
+            {
+              "start": 602,
+              "end": 737,
+              "text": "look",
+              "confidence": 0.739948,
+              "word_is_final": true
+            },
+            {
+              "start": 743,
+              "end": 810,
+              "text": "at",
+              "confidence": 0.950818,
+              "word_is_final": true
+            },
+            {
+              "start": 816,
+              "end": 917,
+              "text": "the",
+              "confidence": 0.622394,
+              "word_is_final": true
+            },
+            {
+              "start": 923,
+              "end": 1226,
+              "text": "financial",
+              "confidence": 0.506551,
+              "word_is_final": true
+            },
+            {
+              "start": 1232,
+              "end": 1569,
+              "text": "statements",
+              "confidence": 0.723346,
+              "word_is_final": true
+            },
+            {
+              "start": 1575,
+              "end": 1676,
+              "text": "you",
+              "confidence": 0.438308,
+              "word_is_final": true
+            },
+            {
+              "start": 1682,
+              "end": 1817,
+              "text": "just",
+              "confidence": 0.282188,
+              "word_is_final": true
+            },
+            {
+              "start": 1823,
+              "end": 1958,
+              "text": "gave",
+              "confidence": 0.197351,
+              "word_is_final": true
+            },
+            {
+              "start": 1964,
+              "end": 2065,
+              "text": "me?",
+              "confidence": 0.787926,
+              "word_is_final": true
+            }
+          ],
+          "paint": {
+            "streamId": "lab-2",
+            "eventId": 2,
+            "ipcMs": -0.55029296875,
+            "mainDispatchMs": 0.0234375,
+            "commitMs": 1.3999999994412065,
+            "paintOpportunityMs": 26.600000000558794,
+            "providerToPaintMs": 27.47314453125,
+            "coalescedEvents": 1,
+            "measuredAtMs": 1791564744093.088
+          },
+          "firstSpeechToPaintMs": 2166.556396484375
+        }
+      ],
+      "frames": [
+        {
+          "atMs": 1791564741487.4407,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 61.4091796875
+        },
+        {
+          "atMs": 1791564741548.3203,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 62.288818359375
+        },
+        {
+          "atMs": 1791564741610.1282,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 64.0966796875
+        },
+        {
+          "atMs": 1791564741671.999,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 65.967529296875
+        },
+        {
+          "atMs": 1791564741733.7327,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 67.701171875
+        },
+        {
+          "atMs": 1791564741794.3062,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 68.274658203125
+        },
+        {
+          "atMs": 1791564741855.2258,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 69.1943359375
+        },
+        {
+          "atMs": 1791564741916.7861,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 70.754638671875
+        },
+        {
+          "atMs": 1791564741977.3909,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 18840,
+          "queueWaitMs": 71.359375
+        },
+        {
+          "atMs": 1791564742038.2693,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 16096,
+          "queueWaitMs": 72.23779296875
+        },
+        {
+          "atMs": 1791564742099.9355,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 10777,
+          "queueWaitMs": 73.904052734375
+        },
+        {
+          "atMs": 1791564742160.719,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 16214,
+          "queueWaitMs": 74.6875
+        },
+        {
+          "atMs": 1791564742221.3875,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 13220,
+          "queueWaitMs": 75.35595703125
+        },
+        {
+          "atMs": 1791564742282.8135,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 20156,
+          "queueWaitMs": 76.781982421875
+        },
+        {
+          "atMs": 1791564742343.3892,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 16295,
+          "queueWaitMs": 77.357666015625
+        },
+        {
+          "atMs": 1791564742405.0242,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 16022,
+          "queueWaitMs": 78.99267578125
+        },
+        {
+          "atMs": 1791564742466.7205,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 11715,
+          "queueWaitMs": 80.68896484375
+        },
+        {
+          "atMs": 1791564742527.198,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 19297,
+          "queueWaitMs": 81.16650390625
+        },
+        {
+          "atMs": 1791564742588.4307,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 21528,
+          "queueWaitMs": 82.399169921875
+        },
+        {
+          "atMs": 1791564742649.966,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 9322,
+          "queueWaitMs": 83.9345703125
+        },
+        {
+          "atMs": 1791564742711.4854,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 7560,
+          "queueWaitMs": 85.453857421875
+        },
+        {
+          "atMs": 1791564742772.133,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 14071,
+          "queueWaitMs": 86.1015625
+        },
+        {
+          "atMs": 1791564742833.8833,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 18502,
+          "queueWaitMs": 87.851806640625
+        },
+        {
+          "atMs": 1791564742894.4822,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 7168,
+          "queueWaitMs": 88.45068359375
+        },
+        {
+          "atMs": 1791564742955.1057,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 12548,
+          "queueWaitMs": 89.07421875
+        },
+        {
+          "atMs": 1791564743015.7837,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 14340,
+          "queueWaitMs": 89.752197265625
+        },
+        {
+          "atMs": 1791564743076.5623,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 17881,
+          "queueWaitMs": 90.53076171875
+        },
+        {
+          "atMs": 1791564743137.3213,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 14627,
+          "queueWaitMs": 91.289794921875
+        },
+        {
+          "atMs": 1791564743198.8994,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 11621,
+          "queueWaitMs": 92.867919921875
+        },
+        {
+          "atMs": 1791564743259.6873,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 3036,
+          "queueWaitMs": 93.65576171875
+        },
+        {
+          "atMs": 1791564743320.399,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 94.367431640625
+        },
+        {
+          "atMs": 1791564743381.877,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 95.845458984375
+        },
+        {
+          "atMs": 1791564743442.4536,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 96.422119140625
+        },
+        {
+          "atMs": 1791564743504.0305,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 97.9990234375
+        },
+        {
+          "atMs": 1791564743565.6555,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 99.6240234375
+        },
+        {
+          "atMs": 1791564743626.0476,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 100.01611328125
+        },
+        {
+          "atMs": 1791564743687.776,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 101.744384765625
+        },
+        {
+          "atMs": 1791564743748.8809,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 102.849365234375
+        },
+        {
+          "atMs": 1791564743808.3274,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 102.2958984375
+        },
+        {
+          "atMs": 1791564743869.6128,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 103.581298828125
+        },
+        {
+          "atMs": 1791564743930.9275,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 104.89599609375
+        },
+        {
+          "atMs": 1791564743992.2239,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 106.1923828125
+        },
+        {
+          "atMs": 1791564744053.5698,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 107.538330078125
+        },
+        {
+          "atMs": 1791564744114.9604,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 108.928955078125
+        },
+        {
+          "atMs": 1791564744176.7114,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 110.679931640625
+        },
+        {
+          "atMs": 1791564744237.6038,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 111.572265625
+        },
+        {
+          "atMs": 1791564744298.5767,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 112.545166015625
+        },
+        {
+          "atMs": 1791564744359.349,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 113.317626953125
+        },
+        {
+          "atMs": 1791564744420.9773,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 114.94580078125
+        },
+        {
+          "atMs": 1791564744482.6353,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 116.603759765625
+        },
+        {
+          "atMs": 1791564744542.754,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 116.722412109375
+        },
+        {
+          "atMs": 1791564744603.4517,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 117.420166015625
+        },
+        {
+          "atMs": 1791564744665.1394,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 119.10791015625
+        },
+        {
+          "atMs": 1791564744726.105,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 120.073486328125
+        },
+        {
+          "atMs": 1791564744787.883,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 121.8515625
+        },
+        {
+          "atMs": 1791564744848.6973,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 122.665771484375
+        },
+        {
+          "atMs": 1791564744908.4536,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 122.422119140625
+        },
+        {
+          "atMs": 1791564744969.1196,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 123.088134765625
+        },
+        {
+          "atMs": 1791564745030.8242,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 124.792724609375
+        },
+        {
+          "atMs": 1791564745090.757,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 124.7255859375
+        },
+        {
+          "atMs": 1791564745150.4758,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 124.4443359375
+        },
+        {
+          "atMs": 1791564745211.1611,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 125.129638671875
+        },
+        {
+          "atMs": 1791564745272.8457,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 126.814208984375
+        },
+        {
+          "atMs": 1791564745333.638,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 127.6064453125
+        },
+        {
+          "atMs": 1791564745393.415,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 127.383544921875
+        },
+        {
+          "atMs": 1791564745454.0647,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 128.033203125
+        },
+        {
+          "atMs": 1791564745515.622,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 129.590576171875
+        },
+        {
+          "atMs": 1791564745576.1406,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 130.109130859375
+        },
+        {
+          "atMs": 1791564745638.0046,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 131.97314453125
+        },
+        {
+          "atMs": 1791564745698.9634,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 132.931884765625
+        },
+        {
+          "atMs": 1791564745760.5808,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 134.54931640625
+        },
+        {
+          "atMs": 1791564745821.2578,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 135.226318359375
+        },
+        {
+          "atMs": 1791564745882.779,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 136.74755859375
+        },
+        {
+          "atMs": 1791564745943.4329,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 137.4013671875
+        },
+        {
+          "atMs": 1791564746004.0996,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 138.068115234375
+        },
+        {
+          "atMs": 1791564746065.657,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 139.62548828125
+        },
+        {
+          "atMs": 1791564746126.152,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 140.12060546875
+        },
+        {
+          "atMs": 1791564746187.8186,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 141.787109375
+        },
+        {
+          "atMs": 1791564746248.533,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 142.50146484375
+        },
+        {
+          "atMs": 1791564746309.0974,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 143.06591796875
+        },
+        {
+          "atMs": 1791564746371.0503,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 145.018798828125
+        },
+        {
+          "atMs": 1791564746432.8333,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 146.8017578125
+        },
+        {
+          "atMs": 1791564746492.792,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 146.760498046875
+        },
+        {
+          "atMs": 1791564746553.54,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 147.508544921875
+        },
+        {
+          "atMs": 1791564746614.2466,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 148.215087890625
+        },
+        {
+          "atMs": 1791564746675.8616,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 149.830078125
+        },
+        {
+          "atMs": 1791564746736.5776,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 150.546142578125
+        },
+        {
+          "atMs": 1791564746797.1562,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 151.124755859375
+        },
+        {
+          "atMs": 1791564746858.7957,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 152.76416015625
+        },
+        {
+          "atMs": 1791564746919.397,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 153.365478515625
+        },
+        {
+          "atMs": 1791564746980.1414,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 154.10986328125
+        }
+      ],
+      "errors": [],
+      "reference": "Can you explain how database transactions prevent duplicate payments?",
+      "caseId": "capture-92-reported-bypass",
+      "accent": "Recorded local synthetic reference",
+      "source": "Isolated native EarPods reported-bypass",
+      "sourceClockAtMs": 1791564741426.0315,
+      "confirmed": true,
+      "speechOnsetAtMs": 1791564741926.5315,
+      "firstPartialMs": 1772.9091796875,
+      "partialGapMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "max": null
+      },
+      "firstSpeechToPaintMs": 1799.1513671875,
+      "accuracy": {
+        "referenceWords": 9,
+        "wordErrors": 12,
+        "werPercent": 133.33333333333334
+      }
+    },
+    {
+      "id": "lab-3",
+      "model": "universal-3-6-pro",
+      "chunkMs": 60,
+      "channel": "injected",
+      "style": "capture-74-production",
+      "repeat": 1,
+      "rate": 16000,
+      "events": [],
+      "frames": [
+        {
+          "atMs": 1791564751278.9724,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 61.39453125
+        },
+        {
+          "atMs": 1791564751340.636,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 63.05810546875
+        },
+        {
+          "atMs": 1791564751401.2754,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 63.697509765625
+        },
+        {
+          "atMs": 1791564751461.9019,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 64.323974609375
+        },
+        {
+          "atMs": 1791564751523.2812,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 65.703369140625
+        },
+        {
+          "atMs": 1791564751584.68,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 67.10205078125
+        },
+        {
+          "atMs": 1791564751644.4626,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 66.884765625
+        },
+        {
+          "atMs": 1791564751705.5442,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 67.96630859375
+        },
+        {
+          "atMs": 1791564751766.458,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 19568,
+          "queueWaitMs": 68.880126953125
+        },
+        {
+          "atMs": 1791564751827.0903,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 15617,
+          "queueWaitMs": 69.512451171875
+        },
+        {
+          "atMs": 1791564751888.534,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 19885,
+          "queueWaitMs": 70.9560546875
+        },
+        {
+          "atMs": 1791564751949.2485,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 18237,
+          "queueWaitMs": 71.670654296875
+        },
+        {
+          "atMs": 1791564752010.9429,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 14517,
+          "queueWaitMs": 73.364990234375
+        },
+        {
+          "atMs": 1791564752072.4338,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 19497,
+          "queueWaitMs": 74.85595703125
+        },
+        {
+          "atMs": 1791564752133.9443,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 19588,
+          "queueWaitMs": 76.366455078125
+        },
+        {
+          "atMs": 1791564752195.4238,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 19921,
+          "queueWaitMs": 77.845947265625
+        },
+        {
+          "atMs": 1791564752256.3801,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 13012,
+          "queueWaitMs": 78.80224609375
+        },
+        {
+          "atMs": 1791564752317.946,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 13977,
+          "queueWaitMs": 80.3681640625
+        },
+        {
+          "atMs": 1791564752379.2146,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 18420,
+          "queueWaitMs": 81.63671875
+        },
+        {
+          "atMs": 1791564752439.7969,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 10882,
+          "queueWaitMs": 82.218994140625
+        },
+        {
+          "atMs": 1791564752500.0305,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 82.45263671875
+        },
+        {
+          "atMs": 1791564752561.1702,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 83.59228515625
+        },
+        {
+          "atMs": 1791564752622.7942,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 85.21630859375
+        },
+        {
+          "atMs": 1791564752683.3125,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 85.734619140625
+        },
+        {
+          "atMs": 1791564752745.0342,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 87.456298828125
+        },
+        {
+          "atMs": 1791564752806.5679,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 88.989990234375
+        },
+        {
+          "atMs": 1791564752867.0898,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 89.511962890625
+        },
+        {
+          "atMs": 1791564752928.6013,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 91.0234375
+        },
+        {
+          "atMs": 1791564752990.182,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 92.60400390625
+        },
+        {
+          "atMs": 1791564753050.7576,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 93.1796875
+        },
+        {
+          "atMs": 1791564753111.4104,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 93.83251953125
+        },
+        {
+          "atMs": 1791564753172.356,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 94.778076171875
+        },
+        {
+          "atMs": 1791564753233.7856,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 96.207763671875
+        },
+        {
+          "atMs": 1791564753294.1912,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 96.61328125
+        },
+        {
+          "atMs": 1791564753355.314,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 97.736083984375
+        },
+        {
+          "atMs": 1791564753416.7195,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 99.1416015625
+        },
+        {
+          "atMs": 1791564753477.1353,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 99.557373046875
+        },
+        {
+          "atMs": 1791564753538.5842,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 101.00634765625
+        },
+        {
+          "atMs": 1791564753600.0627,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 102.48486328125
+        },
+        {
+          "atMs": 1791564753660.9702,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 103.392333984375
+        },
+        {
+          "atMs": 1791564753722.456,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 104.878173828125
+        },
+        {
+          "atMs": 1791564753784.0203,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 106.4423828125
+        },
+        {
+          "atMs": 1791564753845.5708,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 107.992919921875
+        },
+        {
+          "atMs": 1791564753906.2454,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 108.66748046875
+        },
+        {
+          "atMs": 1791564753967.6467,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 110.06884765625
+        },
+        {
+          "atMs": 1791564754029.0002,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 111.42236328125
+        },
+        {
+          "atMs": 1791564754089.6816,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 112.103759765625
+        },
+        {
+          "atMs": 1791564754150.0278,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 112.449951171875
+        },
+        {
+          "atMs": 1791564754211.4475,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 113.86962890625
+        },
+        {
+          "atMs": 1791564754272.1335,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 114.5556640625
+        },
+        {
+          "atMs": 1791564754333.375,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 115.797119140625
+        },
+        {
+          "atMs": 1791564754394.813,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 117.235107421875
+        },
+        {
+          "atMs": 1791564754454.3396,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 116.76171875
+        },
+        {
+          "atMs": 1791564754515.7192,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 118.141357421875
+        },
+        {
+          "atMs": 1791564754576.2363,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 118.658447265625
+        },
+        {
+          "atMs": 1791564754637.7998,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 120.221923828125
+        },
+        {
+          "atMs": 1791564754698.369,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 120.791015625
+        },
+        {
+          "atMs": 1791564754759.738,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 122.16015625
+        },
+        {
+          "atMs": 1791564754820.287,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 122.709228515625
+        },
+        {
+          "atMs": 1791564754880.967,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 123.38916015625
+        },
+        {
+          "atMs": 1791564754941.6924,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 124.114501953125
+        },
+        {
+          "atMs": 1791564755002.0986,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 124.520751953125
+        }
+      ],
+      "errors": [],
+      "reference": "Can you explain how database transactions prevent duplicate payments?",
+      "caseId": "capture-74-production",
+      "accent": "Recorded local synthetic reference",
+      "source": "Isolated native MacBook Air Speakers production",
+      "sourceClockAtMs": 1791564751217.578,
+      "confirmed": true,
+      "speechOnsetAtMs": 1791564751717.828,
+      "firstPartialMs": null,
+      "partialGapMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "max": null
+      },
+      "firstSpeechToPaintMs": null,
+      "accuracy": {
+        "referenceWords": 9,
+        "wordErrors": 9,
+        "werPercent": 100
+      }
+    },
+    {
+      "id": "lab-4",
+      "model": "universal-3-6-pro",
+      "chunkMs": 60,
+      "channel": "injected",
+      "style": "capture-74-reported-bypass",
+      "repeat": 1,
+      "rate": 16000,
+      "events": [
+        {
+          "eventId": 1,
+          "receivedAtMs": 1791564760120.73,
+          "text": "Thank",
+          "final": false,
+          "turnOrder": 0,
+          "words": [
+            {
+              "start": 0,
+              "end": 576,
+              "text": "Thank",
+              "confidence": 0.344331,
+              "word_is_final": false
+            }
+          ],
+          "paint": {
+            "streamId": "lab-4",
+            "eventId": 1,
+            "ipcMs": 0.236572265625,
+            "mainDispatchMs": 0.033447265625,
+            "commitMs": 0.7999999998137355,
+            "paintOpportunityMs": 21,
+            "providerToPaintMs": 22.070019531063735,
+            "coalescedEvents": 1,
+            "measuredAtMs": 1791564760143.1104
+          },
+          "firstSpeechToPaintMs": 428.261474609375
+        },
+        {
+          "eventId": 2,
+          "receivedAtMs": 1791564761459.8853,
+          "text": "Can your kids have a different kind of food today?",
+          "final": false,
+          "turnOrder": 0,
+          "words": [
+            {
+              "start": 0,
+              "end": 118,
+              "text": "Can",
+              "confidence": 0.246874,
+              "word_is_final": false
+            },
+            {
+              "start": 125,
+              "end": 283,
+              "text": "your",
+              "confidence": 0.555735,
+              "word_is_final": false
+            },
+            {
+              "start": 290,
+              "end": 448,
+              "text": "kids",
+              "confidence": 0.197479,
+              "word_is_final": false
+            },
+            {
+              "start": 455,
+              "end": 613,
+              "text": "have",
+              "confidence": 0.61254,
+              "word_is_final": false
+            },
+            {
+              "start": 620,
+              "end": 659,
+              "text": "a",
+              "confidence": 0.313546,
+              "word_is_final": false
+            },
+            {
+              "start": 666,
+              "end": 1022,
+              "text": "different",
+              "confidence": 0.21835,
+              "word_is_final": false
+            },
+            {
+              "start": 1029,
+              "end": 1187,
+              "text": "kind",
+              "confidence": 0.309818,
+              "word_is_final": false
+            },
+            {
+              "start": 1194,
+              "end": 1273,
+              "text": "of",
+              "confidence": 0.96294,
+              "word_is_final": false
+            },
+            {
+              "start": 1280,
+              "end": 1438,
+              "text": "food",
+              "confidence": 0.088205,
+              "word_is_final": false
+            },
+            {
+              "start": 1445,
+              "end": 1682,
+              "text": "today?",
+              "confidence": 0.57748,
+              "word_is_final": false
+            }
+          ],
+          "paint": {
+            "streamId": "lab-4",
+            "eventId": 2,
+            "ipcMs": 0.060791015625,
+            "mainDispatchMs": 0.053955078125,
+            "commitMs": 1.2000000001862645,
+            "paintOpportunityMs": 31.399999999441206,
+            "providerToPaintMs": 32.71474609337747,
+            "coalescedEvents": 1,
+            "measuredAtMs": 1791564761493.1875
+          },
+          "firstSpeechToPaintMs": 1778.338623046875
+        },
+        {
+          "eventId": 3,
+          "receivedAtMs": 1791564762378.6155,
+          "text": "Can your team have a brief on what changes you guys need to make to clean up?",
+          "final": true,
+          "turnOrder": 0,
+          "words": [
+            {
+              "start": 0,
+              "end": 116,
+              "text": "Can",
+              "confidence": 0.976172,
+              "word_is_final": true
+            },
+            {
+              "start": 123,
+              "end": 278,
+              "text": "your",
+              "confidence": 0.538889,
+              "word_is_final": true
+            },
+            {
+              "start": 285,
+              "end": 440,
+              "text": "team",
+              "confidence": 0.256805,
+              "word_is_final": true
+            },
+            {
+              "start": 447,
+              "end": 602,
+              "text": "have",
+              "confidence": 0.50477,
+              "word_is_final": true
+            },
+            {
+              "start": 609,
+              "end": 647,
+              "text": "a",
+              "confidence": 0.703785,
+              "word_is_final": true
+            },
+            {
+              "start": 654,
+              "end": 848,
+              "text": "brief",
+              "confidence": 0.309603,
+              "word_is_final": true
+            },
+            {
+              "start": 855,
+              "end": 932,
+              "text": "on",
+              "confidence": 0.573698,
+              "word_is_final": true
+            },
+            {
+              "start": 939,
+              "end": 1094,
+              "text": "what",
+              "confidence": 0.868097,
+              "word_is_final": true
+            },
+            {
+              "start": 1101,
+              "end": 1373,
+              "text": "changes",
+              "confidence": 0.253882,
+              "word_is_final": true
+            },
+            {
+              "start": 1380,
+              "end": 1496,
+              "text": "you",
+              "confidence": 0.512827,
+              "word_is_final": true
+            },
+            {
+              "start": 1503,
+              "end": 1658,
+              "text": "guys",
+              "confidence": 0.661172,
+              "word_is_final": true
+            },
+            {
+              "start": 1665,
+              "end": 1820,
+              "text": "need",
+              "confidence": 0.928336,
+              "word_is_final": true
+            },
+            {
+              "start": 1827,
+              "end": 1904,
+              "text": "to",
+              "confidence": 0.999007,
+              "word_is_final": true
+            },
+            {
+              "start": 1911,
+              "end": 2066,
+              "text": "make",
+              "confidence": 0.314213,
+              "word_is_final": true
+            },
+            {
+              "start": 2073,
+              "end": 2150,
+              "text": "to",
+              "confidence": 0.49898,
+              "word_is_final": true
+            },
+            {
+              "start": 2157,
+              "end": 2351,
+              "text": "clean",
+              "confidence": 0.285919,
+              "word_is_final": true
+            },
+            {
+              "start": 2358,
+              "end": 2474,
+              "text": "up?",
+              "confidence": 0.990357,
+              "word_is_final": true
+            }
+          ],
+          "paint": {
+            "streamId": "lab-4",
+            "eventId": 3,
+            "ipcMs": 0.362060546875,
+            "mainDispatchMs": 0.0224609375,
+            "commitMs": 0.7999999998137355,
+            "paintOpportunityMs": 28.799999999813735,
+            "providerToPaintMs": 29.98452148400247,
+            "coalescedEvents": 1,
+            "measuredAtMs": 1791564762408.9666
+          },
+          "firstSpeechToPaintMs": 2694.11767578125
+        }
+      ],
+      "frames": [
+        {
+          "atMs": 1791564759275.067,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 60.655517578125
+        },
+        {
+          "atMs": 1791564759336.8328,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 62.42138671875
+        },
+        {
+          "atMs": 1791564759397.4602,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 63.048828125
+        },
+        {
+          "atMs": 1791564759457.2358,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 62.824462890625
+        },
+        {
+          "atMs": 1791564759518.7964,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 64.385009765625
+        },
+        {
+          "atMs": 1791564759578.5618,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 64.150390625
+        },
+        {
+          "atMs": 1791564759639.0356,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 64.624267578125
+        },
+        {
+          "atMs": 1791564759700.7502,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 66.3388671875
+        },
+        {
+          "atMs": 1791564759761.5093,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 19830,
+          "queueWaitMs": 67.097900390625
+        },
+        {
+          "atMs": 1791564759822.0632,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 16451,
+          "queueWaitMs": 67.65185546875
+        },
+        {
+          "atMs": 1791564759883.4072,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 16382,
+          "queueWaitMs": 68.995849609375
+        },
+        {
+          "atMs": 1791564759944.217,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 17610,
+          "queueWaitMs": 69.8056640625
+        },
+        {
+          "atMs": 1791564760005.586,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 13024,
+          "queueWaitMs": 71.174560546875
+        },
+        {
+          "atMs": 1791564760065.0703,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 20775,
+          "queueWaitMs": 70.658935546875
+        },
+        {
+          "atMs": 1791564760125.575,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 16321,
+          "queueWaitMs": 71.16357421875
+        },
+        {
+          "atMs": 1791564760186.043,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 15743,
+          "queueWaitMs": 71.631591796875
+        },
+        {
+          "atMs": 1791564760247.5063,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 15421,
+          "queueWaitMs": 73.094970703125
+        },
+        {
+          "atMs": 1791564760307.9243,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 16992,
+          "queueWaitMs": 73.512939453125
+        },
+        {
+          "atMs": 1791564760369.5015,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 19192,
+          "queueWaitMs": 75.090087890625
+        },
+        {
+          "atMs": 1791564760430.077,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 21633,
+          "queueWaitMs": 75.66552734375
+        },
+        {
+          "atMs": 1791564760491.853,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 9461,
+          "queueWaitMs": 77.441650390625
+        },
+        {
+          "atMs": 1791564760552.4568,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 7528,
+          "queueWaitMs": 78.04541015625
+        },
+        {
+          "atMs": 1791564760614.0393,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 14503,
+          "queueWaitMs": 79.6279296875
+        },
+        {
+          "atMs": 1791564760675.6274,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 19568,
+          "queueWaitMs": 81.216064453125
+        },
+        {
+          "atMs": 1791564760736.617,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 11924,
+          "queueWaitMs": 82.20556640625
+        },
+        {
+          "atMs": 1791564760797.3296,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 13011,
+          "queueWaitMs": 82.918212890625
+        },
+        {
+          "atMs": 1791564760858.9136,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 14367,
+          "queueWaitMs": 84.502197265625
+        },
+        {
+          "atMs": 1791564760920.7224,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 18038,
+          "queueWaitMs": 86.31103515625
+        },
+        {
+          "atMs": 1791564760981.3184,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 15724,
+          "queueWaitMs": 86.906982421875
+        },
+        {
+          "atMs": 1791564761042.8892,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 13901,
+          "queueWaitMs": 88.477783203125
+        },
+        {
+          "atMs": 1791564761103.383,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 11639,
+          "queueWaitMs": 88.9716796875
+        },
+        {
+          "atMs": 1791564761164.6797,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 3674,
+          "queueWaitMs": 90.268310546875
+        },
+        {
+          "atMs": 1791564761224.8853,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 90.473876953125
+        },
+        {
+          "atMs": 1791564761286.181,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 91.76953125
+        },
+        {
+          "atMs": 1791564761347.5815,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 93.170166015625
+        },
+        {
+          "atMs": 1791564761407.2385,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 92.8271484375
+        },
+        {
+          "atMs": 1791564761468.143,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 93.731689453125
+        },
+        {
+          "atMs": 1791564761529.7327,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 95.3212890625
+        },
+        {
+          "atMs": 1791564761589.8945,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 95.483154296875
+        },
+        {
+          "atMs": 1791564761650.4744,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 96.06298828125
+        },
+        {
+          "atMs": 1791564761712.0005,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 97.589111328125
+        },
+        {
+          "atMs": 1791564761773.5845,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 99.173095703125
+        },
+        {
+          "atMs": 1791564761834.3594,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 99.947998046875
+        },
+        {
+          "atMs": 1791564761895.3838,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 100.972412109375
+        },
+        {
+          "atMs": 1791564761956.1687,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 101.75732421875
+        },
+        {
+          "atMs": 1791564762017.0244,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 102.613037109375
+        },
+        {
+          "atMs": 1791564762078.588,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 104.176513671875
+        },
+        {
+          "atMs": 1791564762139.2837,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 104.872314453125
+        },
+        {
+          "atMs": 1791564762200.9534,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 106.5419921875
+        },
+        {
+          "atMs": 1791564762262.554,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 108.142578125
+        },
+        {
+          "atMs": 1791564762323.3508,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 108.939453125
+        },
+        {
+          "atMs": 1791564762384.549,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 110.1376953125
+        },
+        {
+          "atMs": 1791564762445.0688,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 110.657470703125
+        },
+        {
+          "atMs": 1791564762506.6182,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 112.206787109375
+        },
+        {
+          "atMs": 1791564762566.3452,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 111.933837890625
+        },
+        {
+          "atMs": 1791564762627.8574,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 113.446044921875
+        },
+        {
+          "atMs": 1791564762688.486,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 114.07470703125
+        },
+        {
+          "atMs": 1791564762749.2412,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 114.829833984375
+        },
+        {
+          "atMs": 1791564762810.8376,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 116.42626953125
+        },
+        {
+          "atMs": 1791564762871.4895,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 117.078125
+        },
+        {
+          "atMs": 1791564762932.2163,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 117.804931640625
+        },
+        {
+          "atMs": 1791564762993.4473,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 119.035888671875
+        },
+        {
+          "atMs": 1791564763054.143,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 119.731689453125
+        },
+        {
+          "atMs": 1791564763115.3882,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 120.976806640625
+        },
+        {
+          "atMs": 1791564763176.8542,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 122.44287109375
+        },
+        {
+          "atMs": 1791564763237.4746,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 123.063232421875
+        },
+        {
+          "atMs": 1791564763297.7517,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 123.34033203125
+        },
+        {
+          "atMs": 1791564763358.359,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 123.947509765625
+        },
+        {
+          "atMs": 1791564763419.9043,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 125.492919921875
+        },
+        {
+          "atMs": 1791564763481.5283,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 127.116943359375
+        },
+        {
+          "atMs": 1791564763541.3286,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 126.917236328125
+        },
+        {
+          "atMs": 1791564763602.4207,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 128.00927734375
+        },
+        {
+          "atMs": 1791564763664.0176,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 129.606201171875
+        },
+        {
+          "atMs": 1791564763725.7305,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 131.319091796875
+        },
+        {
+          "atMs": 1791564763786.2632,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 131.851806640625
+        },
+        {
+          "atMs": 1791564763847.9194,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 133.508056640625
+        },
+        {
+          "atMs": 1791564763909.2056,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 134.794189453125
+        },
+        {
+          "atMs": 1791564763970.8276,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 136.416259765625
+        },
+        {
+          "atMs": 1791564764031.3013,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 136.889892578125
+        },
+        {
+          "atMs": 1791564764092.6077,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 138.1962890625
+        },
+        {
+          "atMs": 1791564764152.3389,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 137.927490234375
+        },
+        {
+          "atMs": 1791564764213.9602,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 139.548828125
+        },
+        {
+          "atMs": 1791564764275.688,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 141.276611328125
+        },
+        {
+          "atMs": 1791564764336.6086,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 142.197265625
+        },
+        {
+          "atMs": 1791564764397.4033,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 142.991943359375
+        },
+        {
+          "atMs": 1791564764458.3486,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 143.937255859375
+        },
+        {
+          "atMs": 1791564764519.9397,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 145.5283203125
+        },
+        {
+          "atMs": 1791564764581.556,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 147.14453125
+        },
+        {
+          "atMs": 1791564764642.469,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 148.0576171875
+        },
+        {
+          "atMs": 1791564764703.332,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 148.920654296875
+        },
+        {
+          "atMs": 1791564764764.9983,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 150.5869140625
+        },
+        {
+          "atMs": 1791564764825.9192,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 151.5078125
+        },
+        {
+          "atMs": 1791564764887.4758,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 153.064453125
+        },
+        {
+          "atMs": 1791564764948.4016,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 153.990234375
+        },
+        {
+          "atMs": 1791564765009.333,
+          "bytes": 1920,
+          "audioMs": 60,
+          "peak": 0,
+          "queueWaitMs": 154.921630859375
+        }
+      ],
+      "errors": [],
+      "reference": "Can you explain how database transactions prevent duplicate payments?",
+      "caseId": "capture-74-reported-bypass",
+      "accent": "Recorded local synthetic reference",
+      "source": "Isolated native MacBook Air Speakers reported-bypass",
+      "sourceClockAtMs": 1791564759214.4114,
+      "confirmed": true,
+      "speechOnsetAtMs": 1791564759714.8489,
+      "firstPartialMs": 405.881103515625,
+      "partialGapMs": {
+        "n": 1,
+        "p50": 1339.1552734375,
+        "p95": 1339.1552734375,
+        "max": 1339.1552734375
+      },
+      "firstSpeechToPaintMs": 428.261474609375,
+      "accuracy": {
+        "referenceWords": 9,
+        "wordErrors": 15,
+        "werPercent": 166.66666666666666
+      }
+    }
+  ]
+}

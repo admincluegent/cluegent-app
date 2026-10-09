@@ -1,0 +1,7 @@
+{
+  "native-module/index.darwin-arm64.node": true,
+  "native-module/src/speaker/core_audio.rs": true,
+  "native-module/src/silence_suppression.rs": true,
+  "functions/src/config/sttPolicy.ts": true,
+  "electron/audio/FirebaseManagedSTT.ts": true
+}

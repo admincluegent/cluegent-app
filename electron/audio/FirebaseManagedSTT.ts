@@ -1,3 +1,4 @@
+import { SttTiming } from './SttTiming';
 import { EventEmitter } from "events";
 import { randomUUID } from 'crypto';
 import WebSocket from "ws";
@@ -107,6 +108,7 @@ type AssemblyServerMessage =
   | Record<string, unknown>;
 
 export class FirebaseManagedSTT extends EventEmitter {
+  private readonly timing = new SttTiming();
   private ws: WebSocket | null = null;
   private isActive = false;
   private shouldReconnect = false;
@@ -219,6 +221,7 @@ export class FirebaseManagedSTT extends EventEmitter {
     this.isActive = false;
     this.isConnecting = false;
     this.isOpen = false;
+    this.timing.reset();
     this.buffer = [];
     this.outboundAudioQueue = [];
     this.outboundAudioBytes = 0;
@@ -229,6 +232,7 @@ export class FirebaseManagedSTT extends EventEmitter {
 
   public write(chunk: Buffer): void {
     if (!this.isActive) return;
+    this.timing.capture(chunk.length, chunk.length / Math.max(this.sampleRate * this.numChannels * 2, 1) * 1000);
 
     if (this.usageReportingEnabled) {
       this.sentAudioSeconds +=
@@ -238,7 +242,7 @@ export class FirebaseManagedSTT extends EventEmitter {
 
     if (!this.isOpen) {
       this.buffer.push(chunk);
-      if (this.buffer.length > 500) this.buffer.shift();
+      if (this.buffer.length > 500) this.timing.discard(this.buffer.shift()!.length);
 
       if (!this.isConnecting && !this.switchingModel && this.shouldReconnect && !this.reconnectTimer) {
         void this.connect();
@@ -469,6 +473,7 @@ export class FirebaseManagedSTT extends EventEmitter {
           text: transcript,
           isFinal: Boolean(turn.end_of_turn),
           confidence: 1,
+          timing: this.timing.transcript(requestedModel, Boolean(turn.end_of_turn), transcript.length),
         });
         return;
       }
@@ -595,7 +600,8 @@ export class FirebaseManagedSTT extends EventEmitter {
     }
 
     try {
-      this.ws.send(packet);
+      const sent = this.timing.send(packet.length, packet.length / Math.max(this.sampleRate * this.numChannels * 2, 1) * 1000, this.ws.bufferedAmount);
+      this.ws.send(packet, (error) => sent(error));
     } catch (error) {
       console.error("[FirebaseManagedSTT] Send error", error);
     }

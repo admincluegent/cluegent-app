@@ -56,7 +56,7 @@ function clientFixture() {
   const exports = {};
   const code = ts.transpileModule(fs.readFileSync('electron/audio/FirebaseManagedSTT.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText;
   vm.runInNewContext(code, {
-    exports, require: name => name === 'events' ? { EventEmitter } : name === 'crypto' ? {randomUUID:()=> `receipt-${requests.length}`} : name === 'ws' ? Socket : name.includes('languages') ? {RECOGNITION_LANGUAGES:{'english-us':{iso639:'en'},spanish:{iso639:'es'}}} : {FirebaseSessionManager:{getInstance:()=>({getIdToken:()=> idToken})}},
+    exports, require: name => name.includes('SttTiming') ? require('./stt-timing-fixture.cjs').loadTiming() : name === 'events' ? { EventEmitter } : name === 'crypto' ? {randomUUID:()=> `receipt-${requests.length}`} : name === 'ws' ? Socket : name.includes('languages') ? {RECOGNITION_LANGUAGES:{'english-us':{iso639:'en'},spanish:{iso639:'es'}}} : {FirebaseSessionManager:{getInstance:()=>({getIdToken:()=> idToken})}},
     Buffer, URL, Date, Promise, process:{env:{}}, console:{log(){},warn(){},error(){}},
     setTimeout:(fn,ms) => ms === 5000 ? 0 : setTimeout(fn,ms), clearTimeout,
     fetch: async (url,opts) => {

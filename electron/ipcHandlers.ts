@@ -1222,8 +1222,9 @@ export function initializeIpcHandlers(appState: AppState): void {
     try {
       const intelligenceManager = appState.getIntelligenceManager();
       // Question and imagePaths are now optional - IntelligenceManager infers from transcript
-      const answer = await intelligenceManager.runWhatShouldISay(question, 0.8, imagePaths, behaviorInstructions);
-      return { answer, question: question || 'inferred from context' };
+      const answer = await intelligenceManager.runWhatShouldISay(question, 0.8, imagePaths, behaviorInstructions, true);
+      return { answer, question: question || 'inferred from context',
+        error: intelligenceManager.didLastAnswerSucceed() ? undefined : (answer || 'Answer generation did not complete.') };
     } catch (error: any) {
       // Return graceful fallback instead of throwing
       return {

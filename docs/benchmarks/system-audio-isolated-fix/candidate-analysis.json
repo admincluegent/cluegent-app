@@ -1,0 +1,136 @@
+{
+  "machTimebase": {
+    "numer": 125,
+    "denom": 3
+  },
+  "rows": [
+    {
+      "device": "EarPods",
+      "variant": "candidate",
+      "publishedRate": 44100,
+      "timestampSampleRate": 44100.12439522763,
+      "timestampBufferRate": 44100.12439522763,
+      "channels": 1,
+      "callbackFrames": 512,
+      "callbackGapMs": {
+        "n": 530,
+        "p50": 11.609916666666665,
+        "p95": 11.610249999999999,
+        "max": 11.646374999999999
+      },
+      "packetBytes": 5292,
+      "packetAudioMs": 60,
+      "packetGapMs": {
+        "n": 84,
+        "p50": 60.13232421875,
+        "p95": 72.1044921875,
+        "max": 359.650634765625
+      },
+      "activePacketGapMs": {
+        "n": 68,
+        "p50": 60.2694091796875,
+        "p95": 69.026123046875,
+        "max": 72.52001953125
+      },
+      "toneHz": 749.9544488308534,
+      "pcmFrames": 226674,
+      "pcmDeliveredMs": 5140
+    },
+    {
+      "device": "EarPods",
+      "variant": "candidate-bypass",
+      "publishedRate": 44100,
+      "timestampSampleRate": 44100.18401683904,
+      "timestampBufferRate": 44100.18401683904,
+      "channels": 1,
+      "callbackFrames": 512,
+      "callbackGapMs": {
+        "n": 580,
+        "p50": 11.609916666666665,
+        "p95": 11.610083333333332,
+        "max": 11.641958333333331
+      },
+      "packetBytes": 5292,
+      "packetAudioMs": 60,
+      "packetGapMs": {
+        "n": 111,
+        "p50": 59.779296875,
+        "p95": 68.986572265625,
+        "max": 75.416259765625
+      },
+      "activePacketGapMs": {
+        "n": 66,
+        "p50": 60.0755615234375,
+        "p95": 71.34228515625,
+        "max": 75.416259765625
+      },
+      "toneHz": 750.0919399325774,
+      "pcmFrames": 297234,
+      "pcmDeliveredMs": 6740
+    },
+    {
+      "device": "MacBook Air Speakers",
+      "variant": "candidate",
+      "publishedRate": 48000,
+      "timestampSampleRate": 48000.28931304952,
+      "timestampBufferRate": 48000.28931304952,
+      "channels": 1,
+      "callbackFrames": 512,
+      "callbackGapMs": {
+        "n": 628,
+        "p50": 10.666625,
+        "p95": 10.666666666666666,
+        "max": 10.667416666666666
+      },
+      "packetBytes": 5760,
+      "packetAudioMs": 60,
+      "packetGapMs": {
+        "n": 86,
+        "p50": 61.7283935546875,
+        "p95": 160.006591796875,
+        "max": 353.2490234375
+      },
+      "activePacketGapMs": {
+        "n": 67,
+        "p50": 61.5947265625,
+        "p95": 67.461181640625,
+        "max": 68.700927734375
+      },
+      "toneHz": 750.0,
+      "pcmFrames": 251520,
+      "pcmDeliveredMs": 5240
+    },
+    {
+      "device": "MacBook Air Speakers",
+      "variant": "candidate-bypass",
+      "publishedRate": 48000,
+      "timestampSampleRate": 48000.27769557207,
+      "timestampBufferRate": 48000.27769557207,
+      "channels": 1,
+      "callbackFrames": 512,
+      "callbackGapMs": {
+        "n": 580,
+        "p50": 10.666625,
+        "p95": 10.666666666666666,
+        "max": 10.667541666666665
+      },
+      "packetBytes": 5760,
+      "packetAudioMs": 60,
+      "packetGapMs": {
+        "n": 102,
+        "p50": 61.39013671875,
+        "p95": 67.908447265625,
+        "max": 69.098388671875
+      },
+      "activePacketGapMs": {
+        "n": 67,
+        "p50": 61.386962890625,
+        "p95": 67.752197265625,
+        "max": 68.2724609375
+      },
+      "toneHz": 750.0,
+      "pcmFrames": 297600,
+      "pcmDeliveredMs": 6200
+    }
+  ]
+}

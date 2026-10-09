@@ -1,0 +1,436 @@
+{
+  "createdAt": "2026-10-09T15:11:06.799Z",
+  "method": "Two synthetic English interview clips with deterministic Gaussian noise at 10 dB and 0 dB signal-to-noise ratios; one run per model per condition. Other settings and audio pacing identical to clean runs.",
+  "limitations": "Small clean synthetic sample, one local network path. Does not establish real meeting/accent/noise accuracy or microphone-to-screen latency.",
+  "settings": {
+    "endpoint": "streaming.assemblyai.com",
+    "mode": "min_latency",
+    "sampleRate": 16000,
+    "chunkMs": 60,
+    "minTurnSilence": 128,
+    "maxTurnSilence": 640,
+    "continuousPartials": true
+  },
+  "summary": [
+    {
+      "model": "universal-3-5-pro",
+      "runs": 2,
+      "firstPartialMs": 710.5977290000001,
+      "medianPartialGapMs": 1262.0565625000008,
+      "finalAfterSpeechMs": 610.5871460000017,
+      "connectionReadyMs": 1195.0682289999986,
+      "wordErrors": 1,
+      "referenceWords": 70,
+      "werPercent": 1.4285714285714286
+    },
+    {
+      "model": "universal-3-6-pro",
+      "runs": 2,
+      "firstPartialMs": 706.7932709999986,
+      "medianPartialGapMs": 1265.9017505000002,
+      "finalAfterSpeechMs": 548.2931875000013,
+      "connectionReadyMs": 1235.3528749999991,
+      "wordErrors": 0,
+      "referenceWords": 70,
+      "werPercent": 0
+    }
+  ],
+  "results": [
+    {
+      "case": "interview-noise-10db",
+      "repeat": 1,
+      "requestedModel": "universal-3-5-pro",
+      "confirmedModel": "universal-3-5-pro",
+      "reference": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?",
+      "transcript": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?",
+      "speechDurationMs": 14680,
+      "metrics": {
+        "referenceWords": 35,
+        "wordErrors": 0,
+        "werPercent": 0,
+        "firstPartialMs": 463.1960830000007,
+        "medianPartialGapMs": 1288.5432920000003,
+        "finalAfterSpeechMs": 549.116667000002,
+        "connectionReadyMs": 1214.0519999999997,
+        "partialCount": 12
+      },
+      "events": [
+        {
+          "receivedAtMs": 463.1960830000007,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Good night."
+        },
+        {
+          "receivedAtMs": 1755.7336250000008,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you"
+        },
+        {
+          "receivedAtMs": 2930.6928750000006,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate"
+        },
+        {
+          "receivedAtMs": 4219.236167000001,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system?"
+        },
+        {
+          "receivedAtMs": 5392.477375,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system?"
+        },
+        {
+          "receivedAtMs": 6689.1675,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how to"
+        },
+        {
+          "receivedAtMs": 7925.812,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work."
+        },
+        {
+          "receivedAtMs": 9163.734833,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together."
+        },
+        {
+          "receivedAtMs": 10393.091417000001,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen"
+        },
+        {
+          "receivedAtMs": 11748.995958000001,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped working?"
+        },
+        {
+          "receivedAtMs": 13100.580208000001,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer?"
+        },
+        {
+          "receivedAtMs": 14509.916458000002,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the transaction?"
+        },
+        {
+          "receivedAtMs": 15618.790417000002,
+          "final": true,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?"
+        }
+      ]
+    },
+    {
+      "case": "interview-noise-10db",
+      "repeat": 1,
+      "requestedModel": "universal-3-6-pro",
+      "confirmedModel": "universal-3-6-pro",
+      "reference": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?",
+      "transcript": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?",
+      "speechDurationMs": 14680,
+      "metrics": {
+        "referenceWords": 35,
+        "wordErrors": 0,
+        "werPercent": 0,
+        "firstPartialMs": 459.78600000000006,
+        "medianPartialGapMs": 1295.358542,
+        "finalAfterSpeechMs": 549.932208000002,
+        "connectionReadyMs": 1294.2888329999996,
+        "partialCount": 12
+      },
+      "events": [
+        {
+          "receivedAtMs": 459.78600000000006,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Good morning,"
+        },
+        {
+          "receivedAtMs": 1693.7246250000007,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you"
+        },
+        {
+          "receivedAtMs": 2920.9444999999996,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate"
+        },
+        {
+          "receivedAtMs": 4214.564291999999,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system?"
+        },
+        {
+          "receivedAtMs": 5389.4326249999995,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system?"
+        },
+        {
+          "receivedAtMs": 6684.791166999999,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how to"
+        },
+        {
+          "receivedAtMs": 8045.6855,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries are handled."
+        },
+        {
+          "receivedAtMs": 9404.344792000002,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together."
+        },
+        {
+          "receivedAtMs": 10821.192583999999,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the"
+        },
+        {
+          "receivedAtMs": 12055.773125000002,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after"
+        },
+        {
+          "receivedAtMs": 13411.602625000001,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer?"
+        },
+        {
+          "receivedAtMs": 14814.844708999999,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the"
+        },
+        {
+          "receivedAtMs": 15615.575875,
+          "final": true,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?"
+        }
+      ]
+    },
+    {
+      "case": "interview-noise-0db",
+      "repeat": 1,
+      "requestedModel": "universal-3-5-pro",
+      "confirmedModel": "universal-3-5-pro",
+      "reference": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?",
+      "transcript": "Can you explain how you prevent dupli-cat payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?",
+      "speechDurationMs": 14680,
+      "metrics": {
+        "referenceWords": 35,
+        "wordErrors": 1,
+        "werPercent": 2.857142857142857,
+        "firstPartialMs": 957.9993749999994,
+        "medianPartialGapMs": 1235.5698330000014,
+        "finalAfterSpeechMs": 672.0576250000013,
+        "connectionReadyMs": 1176.0844579999975,
+        "partialCount": 12
+      },
+      "events": [
+        {
+          "receivedAtMs": 957.9993749999994,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain"
+        },
+        {
+          "receivedAtMs": 2187.1682919999985,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent"
+        },
+        {
+          "receivedAtMs": 3424.6295839999984,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments?"
+        },
+        {
+          "receivedAtMs": 4657.063125000001,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed"
+        },
+        {
+          "receivedAtMs": 5892.599917,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system?"
+        },
+        {
+          "receivedAtMs": 7128.169750000001,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions"
+        },
+        {
+          "receivedAtMs": 8362.438959,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work."
+        },
+        {
+          "receivedAtMs": 9597.912375,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together."
+        },
+        {
+          "receivedAtMs": 10954.166791999996,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if your"
+        },
+        {
+          "receivedAtMs": 12373.881000000001,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after"
+        },
+        {
+          "receivedAtMs": 13723.28525,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer, but"
+        },
+        {
+          "receivedAtMs": 15143.319666999996,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the receipt?"
+        },
+        {
+          "receivedAtMs": 15763.298834000001,
+          "final": true,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent dupli-cat payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?"
+        }
+      ]
+    },
+    {
+      "case": "interview-noise-0db",
+      "repeat": 1,
+      "requestedModel": "universal-3-6-pro",
+      "confirmedModel": "universal-3-6-pro",
+      "reference": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?",
+      "transcript": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?",
+      "speechDurationMs": 14680,
+      "metrics": {
+        "referenceWords": 35,
+        "wordErrors": 0,
+        "werPercent": 0,
+        "firstPartialMs": 953.8005419999972,
+        "medianPartialGapMs": 1236.4449590000004,
+        "finalAfterSpeechMs": 546.6541670000006,
+        "connectionReadyMs": 1176.4169169999986,
+        "partialCount": 12
+      },
+      "events": [
+        {
+          "receivedAtMs": 953.8005419999972,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain"
+        },
+        {
+          "receivedAtMs": 2301.2050839999974,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent"
+        },
+        {
+          "receivedAtMs": 3539.686708999998,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments"
+        },
+        {
+          "receivedAtMs": 4829.649916999995,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system?"
+        },
+        {
+          "receivedAtMs": 6004.283583999997,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system?"
+        },
+        {
+          "receivedAtMs": 7300.105041999996,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transaction"
+        },
+        {
+          "receivedAtMs": 8535.564375000002,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work"
+        },
+        {
+          "receivedAtMs": 9770.091833999999,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together."
+        },
+        {
+          "receivedAtMs": 11131.205958999999,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server"
+        },
+        {
+          "receivedAtMs": 12362.507916999995,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging?"
+        },
+        {
+          "receivedAtMs": 13591.751375,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but"
+        },
+        {
+          "receivedAtMs": 14828.196334,
+          "final": false,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the"
+        },
+        {
+          "receivedAtMs": 15626.709458999998,
+          "final": true,
+          "turnOrder": 0,
+          "text": "Can you explain how you prevent duplicate payments in a distributed system? Describe how transactions and retries work together. What would happen if the server stopped after charging the customer but before saving the response?"
+        }
+      ]
+    }
+  ]
+}

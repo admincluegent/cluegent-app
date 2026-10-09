@@ -42,7 +42,7 @@ ANSWER SHAPE: ${intentResult.answerShape}
 </intent_and_shape>`);
             }
 
-            if (temporalContext && temporalContext.hasRecentResponses) {
+            if (temporalContext && temporalContext.hasRecentResponses && !imagePaths?.length) {
                 // Keep recent answers available so short follow-ups like
                 // "give example" or "change that name" can resolve correctly.
                 const history = temporalContext.previousResponses.map((r, i) => `${i + 1}. "${r}"`).join('\n');
@@ -55,7 +55,7 @@ ANSWER SHAPE: ${intentResult.answerShape}
 
             const extraContext = contextParts.join('\n\n');
             const fullMessage = extraContext
-                ? `${extraContext}\n\nCONVERSATION:\n${cleanedTranscript}`
+                ? `${extraContext}\n\nCURRENT REQUEST (answer every supplied question):\n${cleanedTranscript}`
                 : cleanedTranscript;
 
             let profileContext: string | undefined;
@@ -75,16 +75,9 @@ ANSWER SHAPE: ${intentResult.answerShape}
             yield* this.llmHelper.streamChat(fullMessage, imagePaths, profileContext, FAST_LIVE_COPILOT_SYSTEM_PROMPT, true);
 
         } catch (error) {
-            console.error("[WhatToAnswerLLM] Stream failed:", error);
-            if (isPlanLimitError(error)) {
-                yield FREE_PLAN_LIMIT_REACHED_MESSAGE;
-                return;
-            }
-            if (imagePaths?.length) {
-                yield "I couldn't read the screenshot on this attempt. Please capture it again and make sure the question or code is visible.";
-                return;
-            }
-            yield "I couldn't generate a response from the current context. Please try again with a little more transcript or a typed question.";
+            // Let the engine report failure so the submitted speech remains pending.
+            console.error('[WhatToAnswerLLM] Stream failed:', error);
+            throw error;
         }
     }
 }

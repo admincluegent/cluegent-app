@@ -445,12 +445,12 @@ export class AppState {
 
         // General actions that are now global (stealth)
         } else if (actionId === 'general:process-screenshots') {
-          const allWindows = BrowserWindow.getAllWindows();
-          allWindows.forEach(win => {
-            if (!win.isDestroyed()) {
-              win.webContents.send('global-shortcut', { action: 'processScreenshots' });
-            }
-          });
+          // Only the current app surface owns the Answer request. Hidden windows
+          // may retain an older transcript and must not submit a competing request.
+          const targetWindow = this.getMainWindow();
+          if (targetWindow && !targetWindow.isDestroyed()) {
+            targetWindow.webContents.send('global-shortcut', { action: 'processScreenshots' });
+          }
         } else if (actionId === 'general:reset-cancel') {
           const allWindows = BrowserWindow.getAllWindows();
           allWindows.forEach(win => {
@@ -802,7 +802,7 @@ export class AppState {
     stt.on('stt-allowance', (seconds: number) => this.syncSttProAllowance(seconds));
 
     // Wire Transcript Events
-    stt.on('transcript', (segment: { text: string, isFinal: boolean, confidence: number }) => {
+    stt.on('transcript', (segment: { text: string, isFinal: boolean, confidence: number, timing?: { streamId: string; eventId: number; receivedAtMs: number } }) => {
       if (!this.isMeetingActive) {
         return;
       }
@@ -832,6 +832,7 @@ export class AppState {
         final: segment.isFinal,
         confidence: segment.confidence
       };
+      Object.assign(payload, segment.timing ? { timing: { ...segment.timing, ipcSentAtMs: Date.now(), speaker } } : {});
       helper.getLauncherWindow()?.webContents.send('native-audio-transcript', payload);
       helper.getOverlayWindow()?.webContents.send('native-audio-transcript', payload);
 
@@ -931,7 +932,7 @@ export class AppState {
 
     // Track successful transcripts — resets consecutive error counter
     // Broadcasts 'connected' whenever we recover from reconnecting/failed
-    stt.on('transcript', (segment: { text: string, isFinal: boolean, confidence: number }) => {
+    stt.on('transcript', (segment: { text: string, isFinal: boolean, confidence: number, timing?: { streamId: string; eventId: number; receivedAtMs: number } }) => {
       if (segment.isFinal) {
         _consecutiveErrors = 0; // Success — reset counter
         if (_lastState !== 'connected') {
@@ -2803,3 +2804,17 @@ async function initializeApp() {
 
 // Start the application
 initializeApp().catch(console.error)
+
+// Timing diagnostics are accepted only during an explicitly enabled profiling run.
+ipcMain.on('stt-ui-timing', (_event, metrics) => {
+  const timingEnabled = process.env.CLUEGENT_STT_TIMING === '1' ||
+    (process.env.NODE_ENV === 'development' && process.env.CLUEGENT_STT_TIMING !== '0');
+  if (!timingEnabled || !metrics || typeof metrics !== 'object') return;
+  const fields: Record<string, unknown> = { stage: 'ui', atMs: Date.now() };
+  for (const key of ['eventId', 'ipcMs', 'mainDispatchMs', 'commitMs', 'paintOpportunityMs', 'providerToPaintMs', 'coalescedEvents']) {
+    if (typeof metrics[key] === 'number' && Number.isFinite(metrics[key])) fields[key] = metrics[key];
+  }
+  if (metrics.speaker === 'user' || metrics.speaker === 'interviewer') fields.speaker = metrics.speaker;
+  if (typeof metrics.streamId === 'string') fields.streamId = metrics.streamId.slice(0, 36);
+  console.log('[SttTiming] ' + JSON.stringify(fields));
+});
