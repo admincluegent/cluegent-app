@@ -6,6 +6,8 @@ import { growthPostsBatch8, growthBacklinksBatch8 } from "./seo-growth-posts-bat
 import { competitorPostsBatch9, competitorBacklinksBatch9 } from "./seo-competitor-posts-batch-9.mjs";
 import { parakeetCtrSlugs } from "./seo-parakeet-ctr.mjs";
 import { usRecruiterSlug } from "./seo-us-recruiter.mjs";
+import { europeSlugs } from "./seo-europe-posts.mjs";
+import { marketSlugs } from "./seo-market-expansion.mjs";
 
 const origin = "https://www.cluegent.com";
 const key = readFileSync(new URL("../website/cluegent-indexnow-key.txt", import.meta.url), "utf8").trim();
@@ -14,7 +16,7 @@ const selectedPosts = process.argv.includes("--batch9") ? competitorPostsBatch9 
 const selectedBacklinks = process.argv.includes("--batch9") ? competitorBacklinksBatch9 : process.argv.includes("--batch8") ? growthBacklinksBatch8 : process.argv.includes("--batch7") ? growthBacklinksBatch7 : growthBacklinksBatch6;
 const paths = process.argv.includes("--batch6") || process.argv.includes("--batch7") || process.argv.includes("--batch8") || process.argv.includes("--batch9") ? ["/blog/", ...selectedPosts.map(post => `/blog/${post.slug}/`), ...selectedBacklinks.map(([slug]) => `/blog/${slug}/`)] : ["/blog/", "/blog/parakeet-ai/", "/blog/system-design-interview-questions-beginners/", "/blog/how-to-prepare-for-coding-interview-in-7-days/", ...discoveryClusters.flatMap(group => group.slugs.map(slug => `/blog/${slug}/`))];
 const defaultUrls = [...new Set(process.argv.includes("--parakeet-ctr") ? ["/blog/", ...parakeetCtrSlugs.map(slug=>`/blog/${slug}/`)] : paths)].map(path => origin + path);
-const urls = process.argv.includes("--us-recruiter") ? [`${origin}/blog/`, `${origin}/blog/${usRecruiterSlug}/`] : defaultUrls;
+const urls = process.argv.includes("--markets") ? [`${origin}/blog/`, ...marketSlugs.map(slug => `${origin}/blog/${slug}/`)] : process.argv.includes("--europe") ? [`${origin}/blog/`, ...europeSlugs.map(slug => `${origin}/blog/${slug}/`)] : process.argv.includes("--us-recruiter") ? [`${origin}/blog/`, `${origin}/blog/${usRecruiterSlug}/`] : defaultUrls;
 if (!/^[a-zA-Z0-9-]{8,128}$/.test(key)) throw new Error("Invalid IndexNow key format");
 if (!process.argv.includes("--submit")) {
   console.log(JSON.stringify({ mode: "preview", urlCount: urls.length, urls }, null, 2));

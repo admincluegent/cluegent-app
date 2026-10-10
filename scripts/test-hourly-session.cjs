@@ -15,7 +15,7 @@ function fixture(plan = 'hour3', failPermission = false, remaining = 100) {
   const calls = [];
   const api = Object.fromEntries(['setUndetectable','setRecognitionLanguage','profileSetMode','startMeeting','startListening','endMeeting'].map(name => [name, async () => { calls.push(name); return {success:true}; }]));
   api.setWindowMode = async mode => calls.push(mode);
-  api.prepareOverlayPermissions = async () => {calls.push('permissions'); return {microphone: failPermission ? 'denied' : 'granted', screen: 'granted'};};
+  api.prepareOverlayPermissions = async () => {calls.push('permissions'); return {microphone: failPermission === true || failPermission === 'microphone' ? 'denied' : 'granted', screen: failPermission === 'screen' ? 'denied' : 'granted'};};
   const context = {window: {electronAPI:api}, console:{log() {},error() {},warn() {}}, localStorage:{setItem() {}, getItem:() => null, removeItem() {}},
     getPlanStatus:async () => ({planStatus:{plan, remaining:{sttSeconds:remaining}}}),
     buildSessionContext:() => '', SESSION_CONTEXT_KEY:'context', sessionSource:{}, beginLocalMeeting() {}, finishCurrentLocalMeeting() {},
@@ -31,16 +31,23 @@ test('both hourly products open overlay, prepare permissions then start listenin
     assert.equal(f.calls.filter(call => call === 'startListening').length, 1);
   }
 });
-test('monthly/yearly and free sessions do not auto-start listening', async () => {
+test('monthly/yearly and free sessions auto-start listening after permissions', async () => {
   for (const plan of ['free','monthly200','quarterly200','annual200']) {
-    const f = fixture(plan); await f.start(); assert.equal(f.calls.includes('startListening'), false);
+    const f = fixture(plan); await f.start();
+    assert.ok(f.calls.indexOf('overlay') < f.calls.indexOf('permissions'));
+    assert.ok(f.calls.indexOf('permissions') < f.calls.indexOf('startListening'));
+    assert.equal(f.calls.filter(call => call === 'startListening').length, 1);
   }
 });
 test('permission denial keeps the overlay open without starting capture', async () => {
-  const f = fixture('hour3', true); await f.start();
-  assert.equal(f.calls.includes('startListening'), false);
-  assert.equal(f.calls.includes('endMeeting'), false);
-  assert.equal(f.calls.includes('launcher'), false);
+  for (const plan of ['free', 'hour3', 'hour10', 'monthly200', 'quarterly200', 'annual200']) {
+    for (const permission of ['microphone', 'screen']) {
+      const f = fixture(plan, permission); await f.start();
+      assert.equal(f.calls.includes('startListening'), false);
+      assert.equal(f.calls.includes('endMeeting'), false);
+      assert.equal(f.calls.includes('launcher'), false);
+    }
+  }
 });
 test('empty hourly balance prevents opening a session', async () => {
   const f = fixture('hour10', false, 0); await assert.rejects(f.start(), /balance is empty/);

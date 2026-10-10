@@ -1,3 +1,4 @@
+import "./startupProfile";
 import { prepareOverlayPermissions } from './services/OverlayPermissions';
 import { startCaptureReady } from './audio/captureReady';
 import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, systemPreferences, screen, desktopCapturer } from "electron"

@@ -125,7 +125,7 @@ export class SettingsWindowHelper {
     }
 
     public reposition(mainBounds: Electron.Rectangle): void {
-        if (!this.settingsWindow || !this.settingsWindow.isVisible() || this.settingsWindow.isDestroyed()) return;
+        if (!this.settingsWindow || this.settingsWindow.isDestroyed() || !this.settingsWindow.isVisible()) return;
 
         const newX = mainBounds.x + this.offsetX;
         const newY = mainBounds.y + mainBounds.height + this.offsetY;

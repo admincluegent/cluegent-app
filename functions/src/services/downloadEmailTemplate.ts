@@ -1,8 +1,8 @@
 import { appleDownloadIcon, windowsDownloadIcon } from './emailPlatformIcons.js';
 
 const windows = 'https://apps.microsoft.com/detail/9NXWZPN07THN';
-const appleSilicon = 'https://github.com/admincluegent/cluegent-app/releases/download/v1.0.14/Cluegent-1.0.14-arm64.dmg';
-const intel = 'https://github.com/admincluegent/cluegent-app/releases/download/v1.0.14/Cluegent-1.0.14.dmg';
+const appleSilicon = 'https://github.com/admincluegent/cluegent-app/releases/download/v1.0.15/Cluegent-1.0.15-arm64.dmg';
+const intel = 'https://github.com/admincluegent/cluegent-app/releases/download/v1.0.15/Cluegent-1.0.15.dmg';
 
 export function buildDownloadEmail() {
   const subject = 'Your Cluegent download links + quick start guide';

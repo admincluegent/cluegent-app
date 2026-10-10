@@ -14,6 +14,8 @@ import { growthPostsBatch8, growthBacklinksBatch8 } from "./seo-growth-posts-bat
 import { competitorPostsBatch9, competitorBacklinksBatch9 } from "./seo-competitor-posts-batch-9.mjs";
 import { improveParakeetCtr } from "./seo-parakeet-ctr.mjs";
 import { usRecruiterPost, usRecruiterSlug } from "./seo-us-recruiter.mjs";
+import { europePosts, europeSlugs } from "./seo-europe-posts.mjs";
+import { marketPosts, marketSlugs, renderLocalisedMarketArticle } from "./seo-market-expansion.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, "..");
@@ -21,8 +23,8 @@ const websiteDir = join(rootDir, "website");
 const siteUrl = "https://www.cluegent.com";
 const ga4MeasurementId = "G-CCH0Y2SN4G";
 const downloadUrl = "https://apps.microsoft.com/detail/9NXWZPN07THN";
-const macArmDownloadUrl = "https://github.com/admincluegent/cluegent-app/releases/download/v1.0.14/Cluegent-1.0.14-arm64.dmg";
-const macIntelDownloadUrl = "https://github.com/admincluegent/cluegent-app/releases/download/v1.0.14/Cluegent-1.0.14.dmg";
+const macArmDownloadUrl = "https://github.com/admincluegent/cluegent-app/releases/download/v1.0.15/Cluegent-1.0.15-arm64.dmg";
+const macIntelDownloadUrl = "https://github.com/admincluegent/cluegent-app/releases/download/v1.0.15/Cluegent-1.0.15.dmg";
 const generatedDate = "2026-08-13";
 const resourcePublishedDate = "2026-08-29";
 const defaultImage = "/assets/how-to-use-01.png";
@@ -5533,9 +5535,9 @@ function withTopDownloadCta(body) {
   return `${globalDownloadCta()}${body}`;
 }
 
-function pageShell({ title, description, canonical, image, schema, body, activePath, includeTopDownloadCta = true }) {
+function pageShell({ title, description, canonical, image, schema, body, activePath, includeTopDownloadCta = true, language = "en" }) {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${escapeHtml(language)}">
 ${head({ title, description, canonical, image, schema })}
 <body>
   <div class="page-shell seo-shell">
@@ -6658,6 +6660,10 @@ for (const post of blogPosts) {
 // Apply intent-specific edits last so discovery enrichment cannot overwrite them.
 improveParakeetCtr(blogPosts);
 blogPosts.unshift(usRecruiterPost);
+blogPosts.unshift(...europePosts);
+discoveryGroups.unshift({ title: "Interview preparation in Europe", posts: europePosts.slice(0, 9) });
+blogPosts.unshift(...marketPosts);
+discoveryGroups.unshift({ title: "Canada, Australia, Singapore, France and Spain", posts: marketPosts });
 
 function blogIndexTemplate() {
   const title = "Cluegent Blog | AI Interview Assistant Guides";
@@ -6757,6 +6763,7 @@ function renderPostContent(post) {
 }
 
 function articleTemplate(post) {
+  if (["fr-FR", "es-ES"].includes(post.language)) return renderLocalisedMarketArticle(post, { head, absolute, faqSchema, breadcrumbSchema });
   const canonical = `/blog/${post.slug}/`;
   const publishedDate = post.publishedDate || generatedDate;
   const modifiedDate = post.modifiedDate || generatedDate;
@@ -6767,6 +6774,7 @@ function articleTemplate(post) {
       "@context": "https://schema.org",
       "@type": "Article",
       headline: post.h1,
+      ...(post.language ? { inLanguage: post.language } : {}),
       description: post.description,
       datePublished: publishedDate,
       dateModified: modifiedDate,
@@ -6850,6 +6858,7 @@ function articleTemplate(post) {
     body,
     activePath: "/blog/",
     includeTopDownloadCta: false,
+    language: post.language || "en",
   });
 }
 
@@ -6956,11 +6965,15 @@ function editorialPolicyTemplate() {
   });
 }
 
+let writtenPageCount = 0;
 function writePage(relativePath, html) {
+  if (process.argv.includes("--markets") && !["blog/index.html", "sitemap.xml", ...marketSlugs.map(slug => `blog/${slug}/index.html`)].includes(relativePath)) return;
+  if (process.argv.includes("--europe") && !["blog/index.html", "sitemap.xml", ...europeSlugs.map(slug => `blog/${slug}/index.html`)].includes(relativePath)) return;
   if (process.argv.includes("--us-recruiter") && !["blog/index.html", "sitemap.xml", `blog/${usRecruiterSlug}/index.html`].includes(relativePath)) return;
   const fullPath = join(websiteDir, relativePath);
   mkdirSync(dirname(fullPath), { recursive: true });
   writeFileSync(fullPath, html.replace(/[ \t]+$/gm, ""));
+  writtenPageCount += 1;
 }
 
 function buildSitemap() {
@@ -7027,4 +7040,4 @@ writePage("editorial-policy/index.html", editorialPolicyTemplate());
 writePage("sitemap.xml", buildSitemap());
 writePage("robots.txt", buildRobots());
 
-console.log(`Generated ${landingPages.length + alternatives.length * 2 + blogPosts.length + prepResources.length + 7} SEO files in website/`);
+console.log(`Generated ${writtenPageCount} SEO files in website/`);

@@ -251,7 +251,7 @@ const App: React.FC = () => {
         // Keep the session open while macOS permission prompts are handled.
         try {
           const permissions = await window.electronAPI.prepareOverlayPermissions();
-          if (hourly && permissions.microphone === 'granted' && permissions.screen === 'granted') {
+          if (permissions.microphone === 'granted' && permissions.screen === 'granted') {
             const listening = await window.electronAPI.startListening({
               audio: { inputDeviceId, outputDeviceId: window.electronAPI.platform === 'darwin' ? 'sck' : outputDeviceId }
             });

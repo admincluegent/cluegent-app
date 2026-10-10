@@ -11,6 +11,8 @@ import { growthPostsBatch8, growthBacklinksBatch8 } from "./seo-growth-posts-bat
 import { competitorPostsBatch9, competitorBacklinksBatch9 } from "./seo-competitor-posts-batch-9.mjs";
 import { parakeetCtrSlugs } from "./seo-parakeet-ctr.mjs";
 import { usRecruiterSlug } from "./seo-us-recruiter.mjs";
+import { europeSlugs } from "./seo-europe-posts.mjs";
+import { marketSlugs } from "./seo-market-expansion.mjs";
 const cliRoot = process.env.FIREBASE_TOOLS_ROOT;
 if (!cliRoot) throw new Error("Set FIREBASE_TOOLS_ROOT to the installed firebase-tools directory");
 const require = createRequire(`${cliRoot}/package.json`);
@@ -43,7 +45,7 @@ const selectedPosts = batch9 ? competitorPostsBatch9 : batch8 ? growthPostsBatch
 const selectedBacklinks = batch9 ? competitorBacklinksBatch9 : batch8 ? growthBacklinksBatch8 : batch7 ? growthBacklinksBatch7 : growthBacklinksBatch6;
 const slugs = [...new Set(batch6 || batch7 || batch8 || batch9 ? [...selectedPosts.map(post => post.slug), ...selectedBacklinks.map(([slug]) => slug)] : [...discoveryClusters.flatMap(group => group.slugs), "parakeet-ai", "system-design-interview-questions-beginners", "how-to-prepare-for-coding-interview-in-7-days"])];
 const defaultPaths = parakeetCtr ? ["/blog/index.html", "/sitemap.xml", ...parakeetCtrSlugs.map(slug => `/blog/${slug}/index.html`)] : [...(batch6 || batch7 || batch8 || batch9 ? [] : ["/index.html", "/cluegent-indexnow-key.txt"]), "/blog/index.html", "/sitemap.xml", ...slugs.map(slug => `/blog/${slug}/index.html`)];
-const paths = process.argv.includes("--us-recruiter") ? ["/blog/index.html", "/sitemap.xml", `/blog/${usRecruiterSlug}/index.html`] : defaultPaths;
+const paths = process.argv.includes("--markets") ? ["/blog/index.html", "/sitemap.xml", ...marketSlugs.map(slug => `/blog/${slug}/index.html`)] : process.argv.includes("--europe") ? ["/blog/index.html", "/sitemap.xml", ...europeSlugs.map(slug => `/blog/${slug}/index.html`)] : process.argv.includes("--us-recruiter") ? ["/blog/index.html", "/sitemap.xml", `/blog/${usRecruiterSlug}/index.html`] : defaultPaths;
 const replacements = {}; const bodies = new Map();
 for (const path of paths) {
   const bytes = readFileSync(new URL(`../website${path}`, import.meta.url));
@@ -67,5 +69,5 @@ if (Object.keys(actual).length !== Object.keys(manifest).length || Object.entrie
 const current = await hosting.getChannel("-", site, "live");
 if (current.release.version.name !== base) throw new Error("Production changed during preparation; release stopped");
 await hosting.updateVersion(site, version.split("/").pop(), { status: "FINALIZED" });
-const release = await hosting.createRelease(site, "live", version, { message: process.argv.includes("--us-recruiter") ? "US recruiter-screen worksheet and sitemap: October 8" : parakeetCtr ? "Parakeet review, pricing, free and Reddit CTR improvements: October 6" : batch9 ? "10 source-checked competitor buyer guides and sitemap: October 5" : batch8 ? "20 language, mobile and data-platform guides: October 5" : batch7 ? "20 technical interview guides, related links and sitemap: October 3" : batch6 ? "20 original interview practice guides, related links and sitemap: September 29" : "SEO discovery links, Parakeet guide and IndexNow verification; preserve other production files" });
+const release = await hosting.createRelease(site, "live", version, { message: process.argv.includes("--markets") ? "Five market interview guides: Canada, Australia, Singapore, France and Spain" : process.argv.includes("--europe") ? "25 Europe interview guides, collection and sitemap: October 10" : process.argv.includes("--us-recruiter") ? "US recruiter-screen worksheet and sitemap: October 8" : parakeetCtr ? "Parakeet review, pricing, free and Reddit CTR improvements: October 6" : batch9 ? "10 source-checked competitor buyer guides and sitemap: October 5" : batch8 ? "20 language, mobile and data-platform guides: October 5" : batch7 ? "20 technical interview guides, related links and sitemap: October 3" : batch6 ? "20 original interview practice guides, related links and sitemap: September 29" : "SEO discovery links, Parakeet guide and IndexNow verification; preserve other production files" });
 console.log(JSON.stringify({ release: release.name, version, previousVersion: base, filesChanged: paths.length }));
