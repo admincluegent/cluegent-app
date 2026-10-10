@@ -133,12 +133,13 @@ test('billing tabs display server prices and checkout verifies its own order', a
       };
     });
     await exhausted.goto(`http://127.0.0.1:${server.address().port}`);
-    await exhausted.getByText('Hours exhausted',{exact:true}).waitFor();
+    await exhausted.getByRole('button',{name:'Add hours',exact:true}).first().waitFor();
+    assert.equal(await exhausted.getByText('Hours exhausted',{exact:true}).count(),0);
     assert.equal(await exhausted.getByRole('button',{name:'Add hours',exact:true}).first().isEnabled(),true);
-    await exhausted.getByRole('button',{name:'Switch to monthly',exact:true}).click();
+    await exhausted.getByRole('tab',{name:'Monthly',exact:true}).click();
     await exhausted.getByText('₹3,499',{exact:true}).waitFor();
     assert.equal(await exhausted.getByRole('button',{name:'Upgrade',exact:true}).first().isEnabled(),true);
-    await exhausted.getByRole('button',{name:'Buy hourly pack',exact:true}).click();
+    await exhausted.getByRole('tab',{name:'Hourly',exact:true}).click();
     await exhausted.getByRole('button',{name:'Add hours',exact:true}).first().click();
     await exhausted.getByText('Payment verified. Your plan is active.').waitFor();
     const offline = await browser.newPage();

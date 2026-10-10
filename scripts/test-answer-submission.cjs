@@ -16,7 +16,7 @@ function harness(api, attachments = []) {
   buffer.receive('interviewer', 'Explain idempotency for retries', false);
   const ctx = {
     blockHourlyAssistantAction: () => false, isProcessing: false, chatSubmissionInProgress: { current: false },
-    lastScreenshotContextRef: {current:null}, refersToScreenshot:followUpExports.refersToScreenshot, setInputValue() {},
+    lastAnswerRequestRef: {current:null}, lastScreenshotContextRef: {current:null}, refersToScreenshot:followUpExports.refersToScreenshot, setInputValue() {},
     getLatestRollingTranscript: () => 'Interviewer: OLD question\nYou: OLD reply',
     answerTranscriptBufferRef: { current: buffer },
     transcript: 'Interviewer: Explain idempotency for retries',
@@ -147,4 +147,16 @@ test('new successful screenshot replaces old screenshot memory', async () => {
 test('exhausted hourly plan blocks requests before creating a response or consuming speech', async () => {
  let calls=0; const ctx=harness(async()=>{calls++;return {answer:'must not generate'};}); ctx.blockHourlyAssistantAction=()=>true;
  await ctx.submit(); assert.equal(calls,0); assert.equal(ctx.messages.length,1); assert.match(ctx.answerTranscriptBufferRef.current.snapshot().request,/idempotency/);
+});
+
+test('Answer shortcut matches toolbar transcript submission and retains typed/dictation handling', () => {
+ const start=source.indexOf('    const handleAnswerShortcut =');
+ const end=source.indexOf('\n    const ',start+10);
+ const code=ts.transpileModule(source.slice(start,end)+'\nglobalThis.shortcut = handleAnswerShortcut;', {compilerOptions:{target:ts.ScriptTarget.ES2020}}).outputText;
+ for(const [recording,input,attached,expected] of [[false,'',false,'answer'],[false,'typed question',false,'manual'],[false,'',true,'manual'],[true,'',false,'dictation']]) {
+  const calls=[];
+  const ctx={isManualRecording:recording,inputValue:input,attachedContextRef:{current:attached?[{path:'/shot.png'}]:[]},
+   handleAnswerNow:()=>calls.push('dictation'),handleManualSubmit:()=>calls.push('manual'),handleWhatToSay:()=>calls.push('answer')};
+  vm.runInNewContext(code,ctx);ctx.shortcut();assert.deepEqual(calls,[expected]);
+ }
 });

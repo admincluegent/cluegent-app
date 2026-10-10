@@ -49,3 +49,18 @@ test('macOS workspace setup preserves hidden process type across auxiliary windo
   const code=fs.readFileSync('electron/WindowHelper.ts','utf8');
   assert.ok(code.includes("inactive || (process.platform === 'darwin' && this.appState.getUndetectable())"));
 });
+
+test('macOS startup hides Dock regardless of saved overlay protection',()=>{
+ const code=fs.readFileSync('electron/main.ts','utf8');
+ const start=code.indexOf('  // Keep macOS startup out of the Dock');
+ const end=code.indexOf('  // 3. Initialize Managers',start);
+ assert.ok(start>=0 && end>start);
+ for(const platform of ['darwin','win32']) {
+  let hides=0;
+  vm.runInNewContext(code.slice(start,end),{process:{platform},app:{dock:{hide:()=>hides++}}});
+  assert.equal(hides,platform==='darwin'?1:0);
+ }
+ const activate=code.slice(code.search(/app\.on\(['"]activate['"]/),code.indexOf('// Quit when all windows are closed'));
+ assert.ok(activate.includes('app.dock.hide()'));
+ assert.ok(!activate.includes('app.dock.show()'));
+});

@@ -2606,7 +2606,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
             return;
         }
 
-        void handleAnswerNow();
+        void handleWhatToSay();
     };
 
     const clearChat = () => {

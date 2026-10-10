@@ -2650,16 +2650,10 @@ async function initializeApp() {
   // 2. Wait for app to be ready
   await app.whenReady()
 
-  // 2a. PRE-EMPTIVE dock hide: must happen before ANY operation that causes macOS to
-  // register a dock entry (app.setName, BrowserWindow creation, etc.).
-  // We read isUndetectable directly from settings here — AppState singleton isn't
-  // constructed yet, so we cannot call appState.getUndetectable().
+  // Keep macOS startup out of the Dock, including the development Electron icon.
+  // Do this before creating any windows, independently of saved overlay protection.
   if (process.platform === 'darwin') {
-    // SettingsManager is already statically imported — no require() needed.
-    const isUndetectableOnStartup = SettingsManager.getInstance().get('isUndetectable') ?? false;
-    if (isUndetectableOnStartup) {
-      app.dock.hide();
-    }
+    app.dock.hide();
   }
 
   // 3. Initialize Managers
@@ -2700,19 +2694,20 @@ async function initializeApp() {
 
   appState.createWindow()
 
-  // Apply initial stealth state based on isUndetectable setting.
-  // NOTE: app.dock.hide() was already called pre-emptively before createWindow()
-  // when isUndetectable=true. Here we only need to initialize the tray for non-stealth mode.
+  // Startup keeps the Dock hidden. Initialize the tray for non-stealth mode.
   if (!appState.getUndetectable()) {
-    // Normal mode: show tray (dock is already showing — no need to call dock.show() again)
+    // Normal mode retains the tray; startup keeps the Dock hidden.
     appState.showTray();
   }
-  // Stealth mode: dock is already hidden, tray stays hidden, no action needed here.
+  // Stealth mode also keeps the tray hidden.
   // Register global shortcuts using KeybindManager
   KeybindManager.getInstance().registerGlobalShortcuts()
 
   // Pre-create settings window in background for faster first open
   appState.settingsWindowHelper.preloadWindow()
+
+  // Window creation or app naming can restore a Dock entry during startup.
+  if (process.platform === 'darwin') app.dock.hide();
 
   // Permissions are requested only after the session overlay is shown.
 
@@ -2753,9 +2748,8 @@ async function initializeApp() {
     if (process.platform === 'darwin') {
       // Do NOT call dock.show() while a meeting is running — the dock icon
       // appearing mid-meeting is a critical stealth failure.
-      if (!appState.getUndetectable() && !appState.getIsMeetingActive()) {
-        app.dock.show();
-      }
+      // Reopening the launcher must not restore the Electron/Cluegent Dock icon.
+      app.dock.hide();
     }
     
     // If no window exists, create it
