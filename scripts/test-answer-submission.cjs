@@ -15,7 +15,7 @@ function harness(api, attachments = []) {
   const buffer = new bufferExports.AnswerTranscriptBuffer();
   buffer.receive('interviewer', 'Explain idempotency for retries', false);
   const ctx = {
-    blockHourlyAssistantAction: () => false, isProcessing: false, chatSubmissionInProgress: { current: false },
+    setAnswerNotice() {}, blockHourlyAssistantAction: () => false, isProcessing: false, chatSubmissionInProgress: { current: false },
     lastAnswerRequestRef: {current:null}, lastScreenshotContextRef: {current:null}, refersToScreenshot:followUpExports.refersToScreenshot, setInputValue() {},
     getLatestRollingTranscript: () => 'Interviewer: OLD question\nYou: OLD reply',
     answerTranscriptBufferRef: { current: buffer },

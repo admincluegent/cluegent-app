@@ -487,16 +487,20 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
         }
     };
 
-    const handleDeleteAccountAndQuit = async () => {
+    const handleDeleteAccountAndSignOut = async () => {
         setIsDeletingAccount(true);
         setDeleteAccountError(null);
 
         try {
             await deleteAccount();
+            // Stop capture before clearing authentication; keep the app open for login.
+            await window.electronAPI.endMeeting().catch(() => undefined);
             localStorage.clear();
-            await logoutUser().catch(() => undefined);
             await window.electronAPI?.setFirebaseAuthToken?.(null).catch(() => undefined);
-            await window.electronAPI.quitApp();
+            await window.electronAPI.setWindowMode('launcher');
+            setIsDeleteAccountConfirmOpen(false);
+            onClose();
+            await logoutUser();
         } catch (error) {
             setDeleteAccountError(
                 error instanceof Error
@@ -1464,19 +1468,12 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                             </div>
 
                             <div className="shrink-0 p-4 border-t border-border-subtle">
-                                <button
-                                    onClick={() => {
-                                        if (!profile) {
-                                            void window.electronAPI.quitApp();
-                                            return;
-                                        }
-                                        setDeleteAccountError(null);
-                                        setIsDeleteAccountConfirmOpen(true);
-                                    }}
+                                {/* <button
+                                    onClick={() => { void window.electronAPI.quitApp(); }}
                                     className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-3"
                                 >
-                                    <LogOut size={16} /> Quit Cluegent
-                                </button>
+                                    <Power size={16} /> Close Cluegent
+                                </button> */}
                                 <button onClick={onClose} className="group mt-2 w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-bg-item-active/50 transition-colors flex items-center gap-3">
                                     <X size={18} className="group-hover:text-red-500 transition-colors" /> Close
                                 </button>
@@ -1603,6 +1600,16 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                         </div>
 
                                     </div>
+                                    <section aria-labelledby="delete-account-heading" className="rounded-2xl border border-red-500/25 bg-bg-card p-6">
+                                        <h3 id="delete-account-heading" className="text-base font-semibold text-text-primary">Delete account</h3>
+                                        <p className="mt-2 text-sm leading-relaxed text-text-secondary">Permanently delete your Cluegent account and account data. Any active subscription will be cancelled. This cannot be undone.</p>
+                                        <button type="button" disabled={!profile || isDeletingAccount} onClick={() => {
+                                            setDeleteAccountError(null);
+                                            setIsDeleteAccountConfirmOpen(true);
+                                        }} className="mt-4 inline-flex items-center gap-2 rounded-lg border border-red-500/30 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            <Trash2 size={16} /> Delete account
+                                        </button>
+                                    </section>
                                 </div>
                             )}
                             {activeTab === 'general' && (
@@ -3628,7 +3635,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                     </h3>
                                     <p className="mt-3 text-sm leading-6 text-slate-300">
                                         This deletes your Cluegent account data, removes local app data on this device,
-                                        cancels any active Razorpay subscription immediately, signs you out, and quits the app.
+                                        cancels any active Razorpay subscription immediately, signs you out, and returns you to the login page.
                                     </p>
                                 </div>
                             </div>
@@ -3651,7 +3658,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        void handleDeleteAccountAndQuit();
+                                        void handleDeleteAccountAndSignOut();
                                     }}
                                     disabled={isDeletingAccount}
                                     className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-500 px-5 py-3 text-sm font-black text-white transition hover:bg-red-400 disabled:opacity-60"

@@ -18,7 +18,7 @@ function fixture() {
   let id = 0;
   const calls = [];
   const context = {
-    blockHourlyAssistantAction: () => false, isProcessing: false,
+    setAnswerNotice() {}, blockHourlyAssistantAction: () => false, isProcessing: false,
     chatSubmissionInProgress: {current:false}, answerTranscriptBufferRef: {current:buffer},
     lastAnswerRequestRef: {current:null}, attachedContextRef: {current:[]}, pendingCaptureRef:{current:null},
     lastScreenshotContextRef:{current:null}, localMeetingIdRef:{current:'meeting'}, streamingResponseTextRef:{current:''},
@@ -72,4 +72,11 @@ test('repeat Answer honors quota and in-flight guards and clears with the sessio
   c.blockHourlyAssistantAction=()=>false; c.chatSubmissionInProgress.current=true; await c.answer();
   c.chatSubmissionInProgress.current=false; c.lastAnswerRequestRef.current=null; await c.answer();
   assert.equal(calls.length,1);
+});
+
+test('empty Answer displays guidance without calling the LLM; a later transcript clears it',async()=>{
+ const {context:c,buffer:b,calls}=fixture();let notice='';c.setAnswerNotice=value=>notice=value;
+ await c.answer();assert.equal(calls.length,0);assert.equal(c.chatSubmissionInProgress.current,false);
+ assert.equal(notice,'No speech received yet. Speak, type a question, or attach a screenshot.');
+ b.receive('user','Explain React?',true);await c.answer();assert.equal(notice,'');assert.equal(calls.length,1);
 });

@@ -312,23 +312,22 @@ export class WindowHelper {
       }
     })
 
-    // On Windows/Linux, closing the launcher should quit when idle. During an
-    // active meeting, keep the close action as a lightweight hide path.
+    // The macOS launcher's red close button exits the app, including hidden windows.
+    // Preserve Windows/Linux's active-session hide behavior.
+    this.launcherWindow.on('close', (e) => {
+      if (!this.appState.isQuitting() && process.platform !== 'darwin' && this.appState.getIsMeetingActive()) {
+        e.preventDefault();
+        this.launcherWindow?.hide();
+        this.isWindowVisible = false;
+        return;
+      }
+      if (!this.appState.isQuitting()) {
+        this.appState.setQuitting(true);
+        app.quit();
+      }
+    });
+
     if (process.platform !== 'darwin') {
-      this.launcherWindow.on('close', (e) => {
-        if (!this.appState.isQuitting() && this.appState.getIsMeetingActive()) {
-          e.preventDefault();
-          this.launcherWindow?.hide();
-          this.isWindowVisible = false;
-          return;
-        }
-
-        if (!this.appState.isQuitting()) {
-          this.appState.setQuitting(true);
-          app.quit();
-        }
-      });
-
       // Sync maximize state to renderer so WindowControls stays in sync (Windows/Linux only)
       this.launcherWindow.on('maximize', () => {
         this.launcherWindow?.webContents.send('window-maximized-changed', true);
@@ -371,6 +370,7 @@ export class WindowHelper {
       });
 
       this.overlayWindow.on('close', (e) => {
+        if (this.appState.isQuitting()) return;
         if (this.overlayWindow?.isVisible()) {
           e.preventDefault();
           if (this.appState.getIsMeetingActive()) {

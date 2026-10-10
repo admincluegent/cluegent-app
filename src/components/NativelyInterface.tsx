@@ -362,6 +362,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
     const [rollingTranscript, setRollingTranscript] = useState('');  // For interviewer rolling text bar
     const [liveTranscriptTurns, setLiveTranscriptTurns] = useState<LiveTranscriptTurn[]>([]);
     const answerTranscriptBufferRef = useRef(new AnswerTranscriptBuffer());
+    const [answerNotice, setAnswerNotice] = useState('');
     const lastAnswerRequestRef = useRef<{ prompt?: string; imagePaths?: string[]; instructions: string; answer: string } | null>(null);
     const [listeningSources, setListeningSources] = useState({ systemEnabled: true, micEnabled: true });
     const listeningSourcesRef = useRef(listeningSources);
@@ -398,6 +399,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
 
     // Latent Context State (Screenshots attached but not sent)
     const [attachedContext, setAttachedContextState] = useState<ScreenshotAttachment[]>([]);
+    useEffect(() => { setAnswerNotice(''); }, [inputValue, attachedContext, liveTranscriptTurns]);
     const attachedContextRef = useRef<ScreenshotAttachment[]>([]);
     const setAttachedContext = (
         next: ScreenshotAttachment[] | ((prev: ScreenshotAttachment[]) => ScreenshotAttachment[])
@@ -958,6 +960,7 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         const unsubscribe = window.electronAPI.onSessionReset(() => {
             setLiveTranscriptTurns([]);
             answerTranscriptBufferRef.current.clear();
+        setAnswerNotice('');
         lastAnswerRequestRef.current = null;
         lastScreenshotContextRef.current = null;
             chatSubmissionInProgress.current = false;
@@ -1588,7 +1591,11 @@ const NativelyInterface: React.FC<NativelyInterfaceProps> = ({ onEndMeeting, ove
         const transcriptSnapshot = answerTranscriptBufferRef.current.snapshot();
         const previousRequest = !typedFollowUp?.trim() && !transcriptSnapshot.request && !attachedContextRef.current.length && !pendingCaptureRef.current
             ? lastAnswerRequestRef.current : null;
-        if (!previousRequest && !typedFollowUp?.trim() && !transcriptSnapshot.request && !attachedContextRef.current.length && !pendingCaptureRef.current) return;
+        if (!previousRequest && !typedFollowUp?.trim() && !transcriptSnapshot.request && !attachedContextRef.current.length && !pendingCaptureRef.current) {
+            setAnswerNotice('No speech received yet. Speak, type a question, or attach a screenshot.');
+            return;
+        }
+        setAnswerNotice('');
         chatSubmissionInProgress.current = true;
         const liveTranscriptForScreenshot = previousRequest ? previousRequest.prompt : [typedFollowUp?.trim(), transcriptSnapshot.request].filter(Boolean).join('\n') || undefined;
         if (typedFollowUp) setInputValue('');
@@ -3312,6 +3319,7 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
     const clearRollingTranscript = () => {
         setLiveTranscriptTurns([]);
         answerTranscriptBufferRef.current.clear();
+        setAnswerNotice('');
         lastAnswerRequestRef.current = null;
         lastScreenshotContextRef.current = null;
         setRollingTranscript('');
@@ -3508,6 +3516,10 @@ ${buildLiveCopilotContext(scenarioBehavior)}`;
                                         </button>
                                     </div>
                                 </div>
+                            )}
+
+                            {answerNotice && (
+                                <p role="status" aria-live="polite" className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm overlay-text-secondary">{answerNotice}</p>
                             )}
 
                             {/* Rolling Transcript Bar â€” includes STT status indicator inline */}
