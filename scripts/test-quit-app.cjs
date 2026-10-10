@@ -1,17 +1,17 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),ts=require('typescript'),vm=require('node:vm');
-test('Settings Close Cluegent exits without invoking account deletion for signed-in users',()=>{
+test('Settings Close dismisses settings without quitting or deleting the signed-in account',()=>{
  const source=ts.createSourceFile('SettingsOverlay.tsx',fs.readFileSync('src/components/SettingsOverlay.tsx','utf8'),ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
  let handler;
  const visit=node=>{
-  if(ts.isJsxElement(node)&&node.openingElement.tagName.getText(source)==='button'&&node.children.some(child=>ts.isJsxText(child)&&child.text.includes('Close Cluegent'))){
+  if(ts.isJsxElement(node)&&node.openingElement.tagName.getText(source)==='button'&&node.children.some(child=>ts.isJsxText(child)&&child.text.trim()==='Close')){
    const attr=node.openingElement.attributes.properties.find(p=>p.name?.getText(source)==='onClick');handler=attr.initializer.expression.getText(source);
   }
   ts.forEachChild(node,visit);
  };
  visit(source);assert(handler);
- let quits=0;
- const ctx={profile:{uid:'user'},window:{electronAPI:{quitApp:()=>quits++}},setDeleteAccountConfirmOpen:()=>assert.fail('Quit must not open deletion'),deleteAccount:()=>assert.fail('Quit must not delete account')};
- vm.runInNewContext(ts.transpileModule(`globalThis.quit = ${handler}`,{compilerOptions:{target:ts.ScriptTarget.ES2020}}).outputText,ctx);ctx.quit();assert.equal(quits,1);
+ let closes=0;
+ const ctx={profile:{uid:'user'},onClose:()=>closes++,window:{electronAPI:{quitApp:()=>assert.fail('Close settings must not quit')}},setDeleteAccountConfirmOpen:()=>assert.fail('Quit must not open deletion'),deleteAccount:()=>assert.fail('Quit must not delete account')};
+ vm.runInNewContext(ts.transpileModule(`globalThis.quit = ${handler}`,{compilerOptions:{target:ts.ScriptTarget.ES2020}}).outputText,ctx);ctx.quit();assert.equal(closes,1);
 });
 
 test('Delete account section opens confirmation without deleting immediately',()=>{
